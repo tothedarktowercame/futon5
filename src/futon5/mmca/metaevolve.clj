@@ -394,7 +394,7 @@
         {:aif/regime-score regime-score
          :aif/regime-bonus bonus
          :aif/regime-mid-area mid-area
-         :aif/regime-components comp-count})))))
+         :aif/regime-components comp-count}))))
 
 (defn- trail-score [summary]
   (let [temporal (double (or (:temporal-autocorr summary) 0.0))
