@@ -3,6 +3,8 @@
   (:require [clojure.string :as str]
             [futon5.ca.core :as ca]))
 
+(def ^:dynamic *pulses-enabled* true)
+
 (defn- clamp [x lo hi]
   (max lo (min hi x)))
 
@@ -170,10 +172,11 @@
       :observe
       (fn [& {:keys [world meta]}]
         (let [entropy (get-in world [:metrics :entropy] 0.0)
-              step (inc (:step meta 0))
-              pulse? (or (>= step pulse-period)
-                         (< entropy entropy-low)
-                         (> entropy entropy-high))]
+              step (if *pulses-enabled* (inc (:step meta 0)) 0)
+              pulse? (and *pulses-enabled*
+                          (or (>= step pulse-period)
+                              (< entropy entropy-low)
+                              (> entropy entropy-high)))]
           {:meta (assoc meta
                         :step (if pulse? 0 step)
                         :last-entropy entropy
@@ -377,13 +380,47 @@
                 evolved))
     evolved))
 
+(defn- local-activation-mask [genotype sigil radius threshold]
+  (let [chars (string-chars genotype)
+        len (count chars)
+        sigil (when (seq sigil) (first sigil))]
+    (if (or (zero? len) (nil? sigil))
+      []
+      (mapv (fn [idx]
+              (let [start (max 0 (- idx radius))
+                    end (min (dec len) (+ idx radius))
+                    window (subvec chars start (inc end))
+                    matches (count (filter #(= % sigil) window))
+                    density (/ (double matches) (double (count window)))]
+                (>= density threshold)))
+            (range len)))))
+
+(defn- apply-mask [genotype evolved mask rate]
+  (if (and (string? genotype)
+           (string? evolved)
+           (= (count genotype) (count evolved))
+           (seq mask))
+    (apply str
+           (map-indexed (fn [idx ch]
+                          (if (and (nth mask idx) (< (rand) rate))
+                            (nth evolved idx)
+                            ch))
+                        genotype))
+    genotype))
+
 (defn learned-sigil-op
   [{:keys [sigil parameters source]}]
   (let [params (merge {:pulse_period 6
-                       :apply_rate 0.35}
+                       :apply_rate 0.35
+                       :trigger_mode :local
+                       :local_radius 2
+                       :local_threshold 0.25}
                       parameters)
         period (int-param params :pulse_period 6)
         apply-rate (ratio-param params :apply_rate 0.35)
+        trigger-mode (keyword (or (:trigger_mode params) (:trigger-mode params) :local))
+        local-radius (int-param params :local_radius 2)
+        local-threshold (ratio-param params :local_threshold 0.25)
         rule (ca/safe-sigil sigil)]
     {:sigil sigil
      :pattern "learned-sigil"
@@ -396,19 +433,29 @@
                       :fire? false}})
       :observe
       (fn [& {:keys [meta]}]
-        (let [step (inc (:step meta 0))
-              fire? (>= step period)]
+        (let [pulse? (and *pulses-enabled* (= trigger-mode :pulse))
+              step (if pulse? (inc (:step meta 0)) 0)
+              fire? (and pulse? (>= step period))]
           {:meta (assoc meta :step (if fire? 0 step) :fire? fire?)
            :metrics {:learned-sigil/period period
-                     :learned-sigil/fire fire?}}))
+                     :learned-sigil/fire fire?
+                     :learned-sigil/trigger trigger-mode}}))
       :decide (fn [& _] {})
       :act
       (fn [& {:keys [world meta]}]
-        (if (:fire? meta)
-          (let [genotype (:genotype world)
-                evolved (evolve-with-rule-sigil genotype rule)
-                blended (blend-genotype genotype evolved apply-rate)]
-            {:grid blended
-             :metrics {:learned-sigil/applied true
-                       :learned-sigil/rate apply-rate}})
-          {:metrics {:learned-sigil/applied false}}))}}))
+        (let [genotype (:genotype world)
+              evolved (evolve-with-rule-sigil genotype rule)
+              mask (when (= trigger-mode :local)
+                     (local-activation-mask genotype rule local-radius local-threshold))
+              active? (if (= trigger-mode :local)
+                        (some true? mask)
+                        (:fire? meta))]
+          (if active?
+            (let [blended (if (= trigger-mode :local)
+                            (apply-mask genotype evolved mask apply-rate)
+                            (blend-genotype genotype evolved apply-rate))]
+              {:grid blended
+               :metrics {:learned-sigil/applied true
+                         :learned-sigil/rate apply-rate
+                         :learned-sigil/active-count (when mask (count (filter true? mask)))}})
+            {:metrics {:learned-sigil/applied false}})))}}))

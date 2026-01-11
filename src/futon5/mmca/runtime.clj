@@ -1,7 +1,8 @@
 (ns futon5.mmca.runtime
   "MetaMetaCA runtime that wires compiled pattern operators into the CA loop."
   (:require [futon5.ca.core :as ca]
-            [futon5.mmca.functor :as functor]))
+            [futon5.mmca.functor :as functor]
+            [futon5.mmca.operators :as operators]))
 
 (def ^:private default-generations 32)
 (def ^:private default-kernel :mutating-template)
@@ -414,88 +415,25 @@
 
   Returns a map containing genotype history, phenotype history, metrics, and
   the final meta-state for each operator."
-  [{:keys [genotype generations mode lesion] :as opts}]
+  [{:keys [genotype generations mode lesion pulses-enabled] :as opts}]
   (let [genotype (ensure-genotype genotype)
         generations (or generations default-generations)
         operators (resolve-operators opts genotype)
         mode (or mode default-mode)
+        pulses-enabled (not (false? pulses-enabled))
         lesion (when lesion (merge {:tick (quot generations 2)
                                     :half :left
                                     :mode :zero}
                                    lesion))
         initial-state (prepare-initial-state (assoc opts :genotype genotype))
         {:keys [state metas proposals]}
-        (let [world (build-world initial-state {})]
-          (run-operators operators [:init] world initial-state {} mode {}))
+        (binding [operators/*pulses-enabled* pulses-enabled]
+          (let [world (build-world initial-state {})]
+            (run-operators operators [:init] world initial-state {} mode {})))
         ;; After init hooks, refresh metrics in case they mutated the world
         state (refresh-metrics state)
         result
-        (loop [state state
-               metas metas
-               proposals proposals
-               tick 0
-               lesion-applied? false
-               operators operators]
-          (if (= tick generations)
-            {:state state :metas metas :proposals proposals :operators operators}
-            (let [operators (if (dynamic-operators? opts)
-                              (resolve-operators opts (:genotype state))
-                              operators)
-                  world (build-world state metas)
-                  {:keys [state metas proposals]} (run-operators operators [:observe :decide :act]
-                                                               world state metas mode proposals)
-                  state (refresh-metrics state)
-                  lesion-now? (and lesion (not lesion-applied?) (= tick (:tick lesion)))
-                  state (if lesion-now?
-                          (refresh-metrics (apply-lesion state lesion) true)
-                          state)
-                  state (advance-world state)
-                  state (refresh-metrics state true)]
-              (recur state metas proposals (inc tick) (or lesion-applied? lesion-now?) operators))))]
-    (let [{:keys [state metas proposals operators]} result
-          {:keys [history metrics-history kernel]} state]
-      {:kernel kernel
-       :generations generations
-       :mode mode
-       :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
-                       operators)
-       :meta-states metas
-       :gen-history (:genotypes history)
-       :phe-history (:phenotypes history)
-       :metrics-history metrics-history
-       :proposals (not-empty proposals)
-       :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))
-
-(defn run-mmca-stream
-  "Run a MetaMetaCA simulation and call step-fn with each generation state.
-
-  step-fn receives a map with :phase (:init or :tick), :tick, :state, :metas,
-  :proposals, and :operators."
-  [{:keys [genotype generations mode lesion] :as opts} step-fn]
-  (let [genotype (ensure-genotype genotype)
-        generations (or generations default-generations)
-        operators (resolve-operators opts genotype)
-        mode (or mode default-mode)
-        lesion (when lesion (merge {:tick (quot generations 2)
-                                    :half :left
-                                    :mode :zero}
-                                   lesion))
-        initial-state (prepare-initial-state (assoc opts :genotype genotype))
-        emit (fn [phase tick state metas proposals operators]
-               (when step-fn
-                 (step-fn {:phase phase
-                           :tick tick
-                           :state state
-                           :metas metas
-                           :proposals proposals
-                           :operators operators})))
-        {:keys [state metas proposals]}
-        (let [world (build-world initial-state {})]
-          (run-operators operators [:init] world initial-state {} mode {}))
-        ;; After init hooks, refresh metrics in case they mutated the world
-        state (refresh-metrics state)]
-    (emit :init 0 state metas proposals operators)
-    (let [result
+        (binding [operators/*pulses-enabled* pulses-enabled]
           (loop [state state
                  metas metas
                  proposals proposals
@@ -516,10 +454,79 @@
                             (refresh-metrics (apply-lesion state lesion) true)
                             state)
                     state (advance-world state)
-                    state (refresh-metrics state true)
-                    next-tick (inc tick)]
-                (emit :tick next-tick state metas proposals operators)
-                (recur state metas proposals next-tick (or lesion-applied? lesion-now?) operators))))]
+                    state (refresh-metrics state true)]
+                (recur state metas proposals (inc tick) (or lesion-applied? lesion-now?) operators)))))]
+    (let [{:keys [state metas proposals operators]} result
+          {:keys [history metrics-history kernel]} state]
+      {:kernel kernel
+       :generations generations
+       :mode mode
+       :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
+                       operators)
+       :meta-states metas
+       :gen-history (:genotypes history)
+       :phe-history (:phenotypes history)
+       :metrics-history metrics-history
+       :proposals (not-empty proposals)
+       :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))
+
+(defn run-mmca-stream
+  "Run a MetaMetaCA simulation and call step-fn with each generation state.
+
+  step-fn receives a map with :phase (:init or :tick), :tick, :state, :metas,
+  :proposals, and :operators."
+  [{:keys [genotype generations mode lesion pulses-enabled] :as opts} step-fn]
+  (let [genotype (ensure-genotype genotype)
+        generations (or generations default-generations)
+        operators (resolve-operators opts genotype)
+        mode (or mode default-mode)
+        pulses-enabled (not (false? pulses-enabled))
+        lesion (when lesion (merge {:tick (quot generations 2)
+                                    :half :left
+                                    :mode :zero}
+                                   lesion))
+        initial-state (prepare-initial-state (assoc opts :genotype genotype))
+        emit (fn [phase tick state metas proposals operators]
+               (when step-fn
+                 (step-fn {:phase phase
+                           :tick tick
+                           :state state
+                           :metas metas
+                           :proposals proposals
+                           :operators operators})))
+        {:keys [state metas proposals]}
+        (binding [operators/*pulses-enabled* pulses-enabled]
+          (let [world (build-world initial-state {})]
+            (run-operators operators [:init] world initial-state {} mode {})))
+        ;; After init hooks, refresh metrics in case they mutated the world
+        state (refresh-metrics state)]
+    (emit :init 0 state metas proposals operators)
+    (let [result
+          (binding [operators/*pulses-enabled* pulses-enabled]
+            (loop [state state
+                   metas metas
+                   proposals proposals
+                   tick 0
+                   lesion-applied? false
+                   operators operators]
+              (if (= tick generations)
+                {:state state :metas metas :proposals proposals :operators operators}
+                (let [operators (if (dynamic-operators? opts)
+                                  (resolve-operators opts (:genotype state))
+                                  operators)
+                      world (build-world state metas)
+                      {:keys [state metas proposals]} (run-operators operators [:observe :decide :act]
+                                                                   world state metas mode proposals)
+                      state (refresh-metrics state)
+                      lesion-now? (and lesion (not lesion-applied?) (= tick (:tick lesion)))
+                      state (if lesion-now?
+                              (refresh-metrics (apply-lesion state lesion) true)
+                              state)
+                      state (advance-world state)
+                      state (refresh-metrics state true)
+                      next-tick (inc tick)]
+                  (emit :tick next-tick state metas proposals operators)
+                  (recur state metas proposals next-tick (or lesion-applied? lesion-now?) operators)))))]
       (let [{:keys [state metas proposals operators]} result
             {:keys [history metrics-history kernel]} state]
         {:kernel kernel
@@ -529,7 +536,7 @@
                          operators)
          :meta-states metas
          :gen-history (:genotypes history)
-        :phe-history (:phenotypes history)
-        :metrics-history metrics-history
-        :proposals (not-empty proposals)
-        :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))}))))
+         :phe-history (:phenotypes history)
+         :metrics-history metrics-history
+         :proposals (not-empty proposals)
+         :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))}))))

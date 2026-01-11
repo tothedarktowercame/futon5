@@ -47,6 +47,7 @@
     "  --aif-guide-min P    Minimum AIF score (0-100) to fully accept sigils."
     "  --aif-mutate         Use AIF deficits to steer kernel selection."
     "  --aif-mutate-min P   Apply AIF steering when score below P (0-100)."
+    "  --no-pulses          Disable pulse-based operators (global events)."
     "  --save-top N         Save the top N runs (EDN + image)."
     "  --save-top-dir PATH  Directory for saved runs (default ./mmca_top_runs)."
     "  --save-top-pdf PATH  Render saved images into a PDF (optional)."
@@ -132,6 +133,9 @@
 
           (= "--aif-mutate-min" flag)
           (recur (rest more) (assoc opts :aif-mutate-min (Double/parseDouble (first more))))
+
+          (= "--no-pulses" flag)
+          (recur more (assoc opts :no-pulses true))
 
           (= "--save-top" flag)
           (recur (rest more) (assoc opts :save-top (parse-int (first more))))
@@ -268,6 +272,9 @@
         period (max 2 (int (Math/round (- 10 (* 7 strength)))))]
     {:apply_rate apply-rate
      :pulse_period period
+     :trigger_mode :local
+     :local_radius 2
+     :local_threshold 0.25
      :strength strength}))
 
 (defn- learned-spec [sigil counts]
@@ -509,7 +516,7 @@
       (vec ranked))
     top-runs))
 
-(defn- build-run-opts [rule length generations ^java.util.Random rng lesion feedback-sigils learned-specs]
+(defn- build-run-opts [rule length generations ^java.util.Random rng lesion feedback-sigils learned-specs pulses-enabled]
   (let [genotype (if (= :global-rule (:genotype-mode rule))
                    (apply str (repeat length (rule->sigil (:global-rule rule))))
                    (rng-sigil-string rng length))
@@ -536,7 +543,8 @@
         opts (cond-> (dissoc merged :use-operators)
                (not use-operators?) (assoc :operators [])
                (and use-operators? (seq learned-operators)) (assoc :learned-operators learned-operators)
-               (and use-operators? (seq learned-sigils)) (update :pattern-sigils merge-sigils learned-sigils))]
+               (and use-operators? (seq learned-sigils)) (update :pattern-sigils merge-sigils learned-sigils)
+               (false? pulses-enabled) (assoc :pulses-enabled false))]
     {:opts opts
      :genotype genotype
      :phenotype phenotype}))
@@ -546,9 +554,9 @@
         bytes (.digest md (.getBytes (str s) "UTF-8"))]
     (apply str (map #(format "%02x" (bit-and % 0xff)) bytes))))
 
-(defn- evaluate-rule [rule length generations run-seed lesion feedback-sigils feedback-top learned-specs aif-weight capture-run?]
+(defn- evaluate-rule [rule length generations run-seed lesion feedback-sigils feedback-top learned-specs aif-weight capture-run? pulses-enabled]
   (let [rng (java.util.Random. (long run-seed))
-        {:keys [opts genotype phenotype]} (build-run-opts rule length generations rng lesion feedback-sigils learned-specs)
+        {:keys [opts genotype phenotype]} (build-run-opts rule length generations rng lesion feedback-sigils learned-specs pulses-enabled)
         result (mmca/run-mmca opts)
         summary (metrics/summarize-run result)
         mmca-score (:composite-score summary)
@@ -659,7 +667,7 @@
                    (double (or (:temporal-autocorr summary) 0.0))))
   (flush))
 
-(defn evolve-meta-rules [runs length generations seed no-freeze? require-phenotype? require-gate? baldwin-share lesion feedback-top initial-feedback aif-weight aif-guide? aif-guide-min aif-mutate? aif-mutate-min save-top]
+(defn evolve-meta-rules [runs length generations seed no-freeze? require-phenotype? require-gate? baldwin-share lesion feedback-top initial-feedback aif-weight aif-guide? aif-guide-min aif-mutate? aif-mutate-min pulses-enabled save-top]
   (loop [i 0
          best nil
          history []
@@ -690,7 +698,7 @@
                         candidate)
             candidate (aif-guided-rule candidate last-summary guide-rng aif-mutate? aif-mutate-min)
             run-seed (+ seed i 1000)
-            result (assoc (evaluate-rule candidate length generations run-seed lesion feedback-sigils feedback-top learned-specs aif-weight (pos? (long (or save-top 0))))
+            result (assoc (evaluate-rule candidate length generations run-seed lesion feedback-sigils feedback-top learned-specs aif-weight (pos? (long (or save-top 0))) pulses-enabled)
                           :policy policy)
             best' (if (or (nil? best)
                           (> (get-in result [:summary :composite-score])
@@ -765,6 +773,7 @@
                 lesion lesion-tick lesion-target lesion-half lesion-mode
                 feedback-top feedback-edn feedback-load aif-weight
                 aif-guide aif-guide-min aif-mutate aif-mutate-min
+                no-pulses
                 save-top save-top-dir save-top-pdf]} (parse-args args)]
     (cond
       help
@@ -785,6 +794,7 @@
             aif-guide-min (when (number? aif-guide-min) aif-guide-min)
             aif-mutate-min (when (number? aif-mutate-min) aif-mutate-min)
             save-top (when (number? save-top) save-top)
+            pulses-enabled (not (boolean no-pulses))
             lesion-map (when (or lesion lesion-tick lesion-target lesion-half lesion-mode)
                          (cond-> {}
                            lesion-tick (assoc :tick lesion-tick)
@@ -793,7 +803,7 @@
                            lesion-mode (assoc :mode lesion-mode)))
             initial-feedback (when feedback-load (load-feedback feedback-load))
             {:keys [ranked history feedback-sigils learned-specs top-runs] :as result}
-            (evolve-meta-rules runs length generations seed no-freeze require-phenotype require-gate baldwin-share lesion-map feedback-top initial-feedback aif-weight aif-guide aif-guide-min aif-mutate aif-mutate-min save-top)]
+            (evolve-meta-rules runs length generations seed no-freeze require-phenotype require-gate baldwin-share lesion-map feedback-top initial-feedback aif-weight aif-guide aif-guide-min aif-mutate aif-mutate-min pulses-enabled save-top)]
         (println (format "Evolved %d runs | length %d | generations %d" runs length generations))
         (report-baseline history)
         (report-top ranked)
@@ -823,6 +833,7 @@
                          :aif-guide-min aif-guide-min
                          :aif-mutate (boolean aif-mutate)
                          :aif-mutate-min aif-mutate-min
+                         :pulses-enabled pulses-enabled
                          :ranked ranked
                          :learned-specs learned-specs
                          :runs-detail history
