@@ -432,10 +432,10 @@
         {:aif/keys [biodiversity biodiversity-score]} (biodiversity-score summary)
         food-score (* new-mass (+ 0.4 (* 0.3 quality) (* 0.3 trail-score)))
         base-score (* 100.0 (+ (* 0.7 food-score) (* 0.3 biodiversity-score)))
-        {:keys [aif/regime-score aif/regime-bonus aif/regime-mid-area aif/regime-components]}
+        {:aif/keys [regime-score regime-bonus regime-mid-area regime-components]}
         (regime-score gen-history)
         score (max 0.0 (+ (* base-score (- 1.0 (* 0.6 sticky-penalty)))
-                          aif/regime-bonus))]
+                          regime-bonus))]
     {:aif/food-mass new-mass
      :aif/food-count (count new-sigils)
      :aif/food-quality quality
@@ -449,10 +449,10 @@
      :aif/sticky-change sticky-change
      :aif/biodiversity biodiversity
      :aif/biodiversity-score biodiversity-score
-     :aif/regime-score aif/regime-score
-     :aif/regime-bonus aif/regime-bonus
-     :aif/regime-mid-area aif/regime-mid-area
-     :aif/regime-components aif/regime-components
+     :aif/regime-score regime-score
+     :aif/regime-bonus regime-bonus
+     :aif/regime-mid-area regime-mid-area
+     :aif/regime-components regime-components
      :aif/score score}))
 
 (defn- blend-score [mmca-score aif-score weight]
