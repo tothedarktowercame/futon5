@@ -18,6 +18,44 @@ The utility reads `sigils.edn` plus `sigil_patterns.edn` and prints the sigil,
 role, and pattern identifier for every reserved slot, along with the remaining
 free capacity (out of 256).
 
+### MMCA Meta-Evolve (AIF-guided)
+
+Run the outer-loop MetaMetaCA search with AIF guidance:
+
+```
+bb -cp src:resources -m futon5.mmca.metaevolve \
+  --runs 50 --length 50 --generations 50 \
+  --baldwin-share 0.5 --lesion --lesion-target both \
+  --aif-weight 0.2 --aif-guide --aif-guide-min 35 \
+  --aif-mutate --aif-mutate-min 45 \
+  --feedback-top 5 --feedback-load /tmp/mmca_feedback_next.edn \
+  --feedback-edn /tmp/mmca_feedback_next.edn \
+  --report /tmp/mmca_meta_report_heavy.edn
+```
+
+Save top runs as images + PDF (requires ImageMagick `convert`):
+
+```
+bb -cp src:resources -m futon5.mmca.metaevolve \
+  --runs 50 --length 50 --generations 50 \
+  --aif-weight 0.2 --aif-guide --aif-guide-min 35 \
+  --aif-mutate --aif-mutate-min 45 \
+  --save-top 5 --save-top-dir /tmp/mmca_top_runs \
+  --save-top-pdf /tmp/mmca_top_runs.pdf
+```
+
+### Render Single Runs
+
+Render a deterministic run to a PPM image (seed-driven):
+
+```
+bb -cp src:resources -m futon5.mmca.render-cli \
+  --seed 4242 --length 80 --phenotype-length 80 --generations 80 \
+  --out /tmp/mmca.ppm --save-run /tmp/mmca_run_4242.edn
+```
+
+Use `convert /tmp/mmca.ppm /tmp/mmca.png` if you need PNG.
+
 ### LLM Relay (experimental)
 
 ```
