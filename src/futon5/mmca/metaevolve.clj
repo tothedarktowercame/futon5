@@ -299,6 +299,103 @@
     {:aif/biodiversity avg-unique
      :aif/biodiversity-score diversity}))
 
+(defn- log2 [x]
+  (/ (Math/log x) (Math/log 2.0)))
+
+(defn- entropy-norm [samples]
+  (let [total (double (count samples))]
+    (if (pos? total)
+      (let [counts (frequencies samples)
+            entropy (- (reduce (fn [acc [_ cnt]]
+                                 (let [p (/ cnt total)]
+                                   (if (pos? p)
+                                     (+ acc (* p (log2 p)))
+                                     acc)))
+                               0.0
+                               counts))
+            denom (log2 (max 2.0 (min 256.0 total)))]
+        (if (pos? denom)
+          (/ entropy denom)
+          0.0))
+      0.0)))
+
+(defn- classify-entropy [entropy-n]
+  (cond
+    (< entropy-n 0.25) :low
+    (< entropy-n 0.65) :mid
+    :else :high))
+
+(defn- mid-cells
+  [grid radius]
+  (let [rows (count grid)
+        cols (count (first grid))]
+    (reduce (fn [acc [r c]]
+              (let [r0 (max 0 (- r radius))
+                    r1 (min (dec rows) (+ r radius))
+                    c0 (max 0 (- c radius))
+                    c1 (min (dec cols) (+ c radius))
+                    window (for [rr (range r0 (inc r1))
+                                 cc (range c0 (inc c1))]
+                             (get-in grid [rr cc]))
+                    cls (classify-entropy (entropy-norm window))]
+                (if (= cls :mid)
+                  (conj acc [r c])
+                  acc)))
+            #{}
+            (for [r (range rows)
+                  c (range cols)]
+              [r c]))))
+
+(defn- neighbors [[r c]]
+  [[(dec r) c] [(inc r) c] [r (dec c)] [r (inc c)]])
+
+(defn- component-sizes [cells]
+  (loop [remaining cells
+         sizes []]
+    (if (empty? remaining)
+      sizes
+      (let [start (first remaining)
+            visited (loop [queue [start]
+                           seen #{start}]
+                      (if (empty? queue)
+                        seen
+                        (let [node (peek queue)
+                              rest-queue (pop queue)
+                              nexts (filter remaining (neighbors node))
+                              new (remove seen nexts)
+                              queue' (into rest-queue new)
+                              seen' (into seen new)]
+                          (recur queue' seen'))))
+            remaining' (reduce disj remaining visited)]
+        (recur remaining' (conj sizes (count visited)))))))
+
+(defn- regime-score [gen-history]
+  (let [rows (count gen-history)
+        cols (count (or (first gen-history) ""))]
+    (if (or (zero? rows) (zero? cols))
+      {:aif/regime-score 0.0
+       :aif/regime-bonus 0.0
+       :aif/regime-mid-area 0.0
+       :aif/regime-components 0}
+      (let [grid (mapv vec gen-history)
+            radius 2
+            mids (mid-cells grid radius)
+            total (* rows cols)
+            mid-count (count mids)
+            mid-area (if (pos? total) (/ (double mid-count) total) 0.0)
+            components (component-sizes mids)
+            comp-count (count components)
+            avg-size (if (pos? comp-count) (/ (double mid-count) comp-count) 0.0)
+            size-ratio (if (pos? total) (/ avg-size total) 0.0)
+            area-score (metrics/centered-score (clamp-01 (/ mid-area 0.6)))
+            size-score (metrics/centered-score (clamp-01 (/ size-ratio 0.12)))
+            regime-score (max 0.0 (+ (* 0.6 area-score) (* 0.4 size-score)))
+            bonus (* 12.0 regime-score)]
+        {:aif/regime-score regime-score
+         :aif/regime-bonus bonus
+         :aif/regime-mid-area mid-area
+         :aif/regime-components comp-count})))))
+
 (defn- trail-score [summary]
   (let [temporal (double (or (:temporal-autocorr summary) 0.0))
         change (double (or (:avg-change summary) (:phe-change summary) 0.0))
@@ -308,7 +405,17 @@
      :trail-autocorr temporal
      :trail-change change}))
 
-(defn- aif-food-score [meta-lift learned-specs mmca-score summary]
+(defn- sticky-penalty [summary]
+  (let [temporal (double (or (:temporal-autocorr summary) 0.0))
+        change (double (or (:avg-change summary) (:phe-change summary) 0.0))
+        autocorr-bad (clamp-01 (/ (- temporal 0.8) 0.15))
+        change-bad (clamp-01 (/ (- 0.18 change) 0.18))
+        penalty (* autocorr-bad change-bad)]
+    {:sticky-penalty penalty
+     :sticky-autocorr temporal
+     :sticky-change change}))
+
+(defn- aif-food-score [meta-lift learned-specs mmca-score summary gen-history]
   (let [counts (normalize-counts (:sigil-counts meta-lift))
         total (double (reduce + 0.0 (vals counts)))
         learned (set (keys (or learned-specs {})))
@@ -321,9 +428,14 @@
                    0.0)
         quality (clamp-01 (when (number? mmca-score) (/ mmca-score 100.0)))
         {:keys [trail-score trail-autocorr trail-change]} (trail-score summary)
+        {:keys [sticky-penalty sticky-autocorr sticky-change]} (sticky-penalty summary)
         {:aif/keys [biodiversity biodiversity-score]} (biodiversity-score summary)
         food-score (* new-mass (+ 0.4 (* 0.3 quality) (* 0.3 trail-score)))
-        score (* 100.0 (+ (* 0.7 food-score) (* 0.3 biodiversity-score)))]
+        base-score (* 100.0 (+ (* 0.7 food-score) (* 0.3 biodiversity-score)))
+        {:keys [aif/regime-score aif/regime-bonus aif/regime-mid-area aif/regime-components]}
+        (regime-score gen-history)
+        score (max 0.0 (+ (* base-score (- 1.0 (* 0.6 sticky-penalty)))
+                          aif/regime-bonus))]
     {:aif/food-mass new-mass
      :aif/food-count (count new-sigils)
      :aif/food-quality quality
@@ -332,8 +444,15 @@
      :aif/trail-score trail-score
      :aif/trail-autocorr trail-autocorr
      :aif/trail-change trail-change
+     :aif/sticky-penalty sticky-penalty
+     :aif/sticky-autocorr sticky-autocorr
+     :aif/sticky-change sticky-change
      :aif/biodiversity biodiversity
      :aif/biodiversity-score biodiversity-score
+     :aif/regime-score aif/regime-score
+     :aif/regime-bonus aif/regime-bonus
+     :aif/regime-mid-area aif/regime-mid-area
+     :aif/regime-components aif/regime-components
      :aif/score score}))
 
 (defn- blend-score [mmca-score aif-score weight]
@@ -440,7 +559,7 @@
                         (map first)
                         (normalize-sigils))
         learned-sigils (vec (distinct (keep :sigil (vals (or learned-specs {})))))
-        aif (aif-food-score lift learned-specs mmca-score summary)
+        aif (aif-food-score lift learned-specs mmca-score summary (:gen-history result))
         composite (blend-score mmca-score (:aif/score aif) aif-weight)
         summary (-> summary
                     (assoc :mmca-score mmca-score
@@ -521,6 +640,12 @@
                      (double trail)
                      (double (or (:aif/trail-autocorr summary) 0.0))
                      (double (or (:aif/trail-change summary) 0.0)))))
+  (when-let [sticky (:aif/sticky-penalty summary)]
+    (when (pos? (double sticky))
+      (println (format "  sticky %.2f | autocorr %.3f | change %.3f"
+                       (double sticky)
+                       (double (or (:aif/sticky-autocorr summary) 0.0))
+                       (double (or (:aif/sticky-change summary) 0.0))))))
   (when-let [biodiversity (:aif/biodiversity-score summary)]
     (println (format "  biodiversity %.2f | avg-unique %.3f"
                      (double biodiversity)

@@ -17,3 +17,4 @@
 - Trail branching: bonus for multiple mid-strength autocorr regimes; penalize a single dominant regime.
 - Colony health: tie phenotype stability to trail quality without freezing (healthy colony signal).
 - White-space penalty: explicit penalty when change-rate stays below a floor for too long.
+- Computational regime bonus (risky, god-mode): reward coherent color regimes in space-time (entropy-class patches or sigil clusters); keep opaque to runner.
