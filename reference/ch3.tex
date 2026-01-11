@@ -1,0 +1,2510 @@
+\chapter{Categorical Data Types}
+\label{ch-cdt}
+
+In chapter~\ref{ch-csl}, we introduced categorical data types from a
+point of view of a specification language defining categories.  Although
+the specification language CSL is a rigorous language, it is rather
+tedious and categoritians may never define categories in that way.  In
+this chapter, we will give another presentation of categorical data
+types, which will be simpler and more intuitive.  This is also the way
+Categorical Data Types originated.  Note that we are not discarding CSL
+completely and that the semantics of categorical data types will be
+given in terms of CSL.
+
+Section~\ref{sec-what-cdt} is an extended introduction to categorical
+data types.  We will investigate some conventional data types and
+introduce a new uniform categorical way of defining data types.  In
+section~\ref{sec-decl-CDT}, we will make this new way into the CDT
+declaration mechanism.  Section~\ref{sec-ex-CDT} will give various
+examples of CDT declarations.  In section~\ref{sec-CDT-as-CSL}, CDT
+declarations will be connected to CSL theories, and finally in
+section~\ref{sec-exist-left-right} we will give a construction of CDT
+data types.
+
+\section{What are Categorical Data Types?}
+\label{sec-what-cdt}
+
+The need for pairs of two (or more) items of data often arises when we
+write programs.  It is often the case that a function or procedure
+takes more than one argument and this means that a pair (or a record)
+of data needs to be passed to the function or procedure.  In another
+situation, we may want to declare a new data type whose element is a
+pair of elements of other data types.  In PASCAL, we can define such
+data types using its {\tt record}~\ldots~{\tt end} construct.  For
+example,
+{\tt intchar} whose element is a pair of an integer and a character can
+be declared as:
+\begin{quote}
+\begin{verbatim}
+type intchar = record
+                   first: integer;
+                   second: char
+               end;
+\end{verbatim}
+\end{quote}
+In ML, this can be done by
+\begin{quote}
+\begin{verbatim}
+type intchar = int * string;
+\end{verbatim}
+\end{quote}
+(where since ML does not have a type for representing characters, we
+have to use `{\tt string}' type whose element is a sequence of
+characters).  These two languages have the means of constructing data
+types of pairs from already-existing data types.  Let us call the
+constructors {\it product type constructors}.  Most of the current
+programming languages have product type constructors in one way or
+another as their built-in primitives because they are so essential that
+we can even say that no programming language is complete without them.
+
+In order to understand the nature of product type constructors, let us
+suppose a programming language which does not have them as primitives
+and that we have to define them in terms of others.  This might mean
+that we need in the language some kind of one level higher operations
+which can define not types but type constructors.  Let us refer to an
+algebraic specification language CLEAR,\footnote{CLEAR can be
+institution independent, but here we refer the one that uses the
+equational algebraic institution.} and see its ability to define a
+product type constructor.
+\begin{quote}
+\begin{verbatim}
+constant Triv =
+    theory
+        sort element
+    endth
+
+procedure Prod(A:Triv,B:Triv) =
+    theory
+        data sort prod
+        opns pair: element of A,element of B -> prod
+             pi1 : prod -> element of A
+             pi2 : prod -> element of B
+        eqns all a:element of A,b:element of B,
+                                   pi1(pair(a,b)) = a
+             all a:element of A,b:element of B,
+                                   pi2(pair(a,b)) = b
+    endth
+\end{verbatim}
+\end{quote}
+This defines an algebra $P$ of three sorts: two `{\tt element}' sorts
+(let us call them `{\tt A-element}' and `{\tt B-element}' to distinguish
+them) and a `{\tt prod}' sort.  The underlying set $|P|_{\tt prod}$ is
+the (set) product of two sets $|P|_{\tt A-element}$ and $|P|_{\tt
+B-element}$.  The declaration also defines three operations (or
+functions), `{\tt pair}', `{\tt pi1}' and `{\tt pi2}', satisfying the
+two equations listed.  Note that the following equation can be proved
+using induction on `{\tt prod}' sort (we have the induction principle on
+this sort because of the initial data constraint).
+\begin{center}
+\verb"all x: prod, pair(pi1(x),pi2(x)) = x"
+\end{center}
+
+An algebraic specification language like CLEAR is powerful enough to
+allow us to define all kinds of type constructors (including ordinary
+data types as constant type constructors) in a uniform way without
+having any particular primitives.  However, because
+of its use of equations, we cannot adopt its declaration mechanism in
+ordinary programming languages.\footnote{There is a programming language
+OBJ \cite{goguen-tardo-79} which treats equations as a kind of
+programs (as rewrite rules).} We might be puzzled that we need equations
+even to define such very basic data types as products.
+
+Let us find whether there is any other ways of defining product type
+constructors by examining the foundation, namely mathematics.  Modern
+mathematics uses set theory extensively because of its power.  Set
+theory does not have a product type constructor as its primitive
+construct either, so it is defined by means of other constructs.
+For sets $A$ and $B$, their (set) product is defined as:
+\begin{displaymath}
+A\times B \defeq \{\; (x,y) \mid x \in A,\; y \in B \;\}
+\end{displaymath}
+where $(x,y)$ is really an abbreviation of $\{ \{ x \} \; \{ x \; y \}
+\}$.  Although this looks very simple, it actually needs some
+work to show from the axioms of set theory that this is actually a set.
+Set theory uses the power of first order logic so heavily that it is
+much harder to put the set theory formalism into a programming language
+than to put the algebraic specification formalism.  As an example, let
+$\phi(x)$ be a first order formula.  Then, from the comprehension axiom
+(or the replacement axiom), we have the set
+\begin{displaymath}
+\{\; x \in A \mid \phi(x) \;\}
+\end{displaymath}
+where $A$ is a set.  $\phi(x)$ can be anything expressible by first
+order logic (using quantifiers and negations), and this is too much
+powerful to investigate the basic property of data types.  It disfigures
+the beauty behind this powerful definition mechanism and we cannot see
+through it easily.
+
+Set theory has achieved a firm position as the foundation of
+mathematics, but there are some alternatives.  Category theory is one of
+them.  It has been proved that category theory has a remarkable ability
+to disclose true nature of mathematical objects.  For example, a product
+constructor (or categorically a functor $\cC\times\cC \rightarrow \cC$)
+is beautifully characterized as the right adjoint of the diagonal
+functor $\cC \rightarrow \cC\times\cC$.\footnote{There may be more than
+one right adjoint of the diagonal functor, but they are isomorphic.
+Therefore, we say `{\it the\/}' right adjoint rather than `{\it a\/}'
+right adjoint.} Expanding the definition of adjunctions, this means that
+we have the following natural isomorphism:
+\begin{displaymath}
+\Hom{\cC}{C}{A}\times\Hom{\cC}{C}{B} \simeq \Hom{\cC}{C}{{\rm
+prod}(A,B)}\eqno(*)
+\end{displaymath}
+(natural in $A$, $B$ and $C$).  We use `prod' for the product functor to
+follow the notation we use later.  The isomorphic function from the
+left-hand side to the right-hand side  is the factorizer of this
+adjunction and we write `pair' for it.  We can rewrite this adjoint
+situation as the following rule:
+\begin{displaymath}
+\logicrule{C \rubberrightarrow{f} A \qquad C \rubberrightarrow{g}
+B}{C \rubberrightarrow{{\rm pair}(f,g)} {\rm
+prod}(A,B)}\eqno(**)
+\end{displaymath}
+Given two morphisms $f: C \rightarrow A$ and $g: C \rightarrow B$, ${\rm
+pair}(f,g)$ give a morphism of $C \rightarrow {\rm prod}(A,B)$.  This
+correspondence is one-to-one and is natural in $A$, $B$ and $C$.
+
+Comparing with the product type constructor `{\tt Prod}' defined by
+CLEAR, we have the same `pair' though the previous one takes two
+elements as the arguments and this one takes two morphisms instead, and
+now we can find the things corresponding to two projections `{\tt pi1}'
+and `{\tt pi2}' as well.  Replacing $C$ by ${\rm prod}(A,B)$ in $(*)$,
+we get:
+\begin{displaymath}
+\displaylines{
+\qquad \Hom{\cC}{{\rm prod}(A,B)}{A} \times \Hom{\cC}{{\rm prod}(A,B)}{B}
+\simeq {} \hfill \cr
+\hfill \Hom{\cC}{{\rm prod}(A,B)}{{\rm prod}(A,B)}. \qquad \cr}
+\end{displaymath}
+We have a very special morphism in $\Hom{\cC}{{\rm prod}(A,B)}{{\rm
+prod}(A,B)}$, namely the identity.  Because of the isomorphism, there
+exist unique morphisms of ${\rm prod}(A,B) \rightarrow A$ and ${\rm
+prod}(A,B) \rightarrow B$ which are mapped to the identity by `pair',
+and these are the projections.  We name them `pi1' and `pi2' as well.
+Because of the very way they are defined, it is trivial that
+\begin{displaymath}
+{\rm pair}({\rm pi1},{\rm pi2}) = {\bf I}.\eqno(+)
+\end{displaymath}
+Furthermore, from the naturality in $C$ of $(*)$, we have the rule
+\begin{displaymath}
+\logicrule{C \rubberrightarrow{{\rm pair}(f,g)} {\rm prod}(A,B)
+\rubberrightarrow{{\rm pi1}} A \qquad C \rubberrightarrow{{\rm
+pair}(f,g)} {\rm prod}(A,B) \rubberrightarrow{{\rm pi2}}
+B}{C \rubberrightarrow{{\rm pair}(f,g)} {\rm prod}(A,B)
+\rubberrightarrow{{\rm pair}({\rm pi1},{\rm pi2})} {\rm prod}(A,B)},
+\end{displaymath}
+and, if we express it by equations and use $(+)$,
+\begin{displaymath}
+{\rm pair}({\rm pi1}\circ{\rm pair}(f,g),{\rm pi2}\circ{\rm
+pair}(f,g)) = {\rm pair}({\rm pi1},{\rm pi2})\circ{\rm pair}(f,g) =
+{\rm pair}(f,g).
+\end{displaymath}
+Since `pair' is isomorphic, we can conclude that the following
+equations hold:
+\begin{displaymath}
+{\rm pi1}\circ{\rm pair}(f,g) = f \quad{\rm and}\quad {\rm pi2}\circ{\rm
+pair}(f,g) = g.
+\end{displaymath}
+These are exactly the ones which we listed when defining `{\tt Prod}' in
+CLEAR.  Note that this time they are derived equations.  By saying that
+`prod' is the right adjoint to the diagonal functor, we get these
+equations automatically.  This shows how neat the categorical definition
+is.
+
+Another advantage of categorical definition is that we can form the dual
+definition easily.  We defined the product functor as the right adjoint
+of the diagonal functor.  Then, it is natural to ask what is the left
+adjoint of the diagonal functor.  It is the coproduct functor
+$\cC\times\cC \rightarrow \cC$.  In the category of sets, the copoduct
+of two sets $A$ and $B$ is their disjoint sum
+\begin{displaymath}
+A + B \defeq \{\; 0 \;\} \times A \bigcup \{\; 1 \;\} \times B.
+\end{displaymath}
+It is not easy to see in set theory that this is the dual of $A \times
+B$.  In PASCAL, we can define coproducts by means of variant record.  In
+ML, we used to have a built-in coproduct type constructor `{\tt +}', but
+the new Standard ML does not.  Instead, `{\tt +}' can be defined by the
+following `{\tt datatype}' declaration.
+\begin{center}
+\verb"datatype 'a + 'b = in1 of 'a | in2 of 'b;"
+\end{center}
+We cannot define the product type constructor by a `{\tt datatype}'
+declaration in ML, but we can define its dual.  ML looks non-symmetric
+from this.  In CLEAR, we can define a coproduct type constructor as
+follows:
+\begin{quote}
+\begin{verbatim}
+Procedure CoProd(A:Triv,B:Triv) =
+    theory
+        data sort coprod
+        opns in1: element of A -> coprod
+             in2: element of B -> coprod
+    endth
+\end{verbatim}
+\end{quote}
+Again, this cannot be seen as the dual of `{\tt Prod}' we defined
+earlier; here we do not use equations; we have only two operations
+whereas we had three.  This shows that CLEAR is not symmetric either.
+
+Now, in category theory, the coproduct functor $\cC\times\cC \rightarrow
+\cC$ which we call `coprod' is defined by the dual of $(*)$, by just
+changing the direction of arrows.
+\begin{displaymath}
+\Hom{\cC}{A}{C}\times\Hom{\cC}{B}{C} \simeq \Hom{\cC}{{\rm coprod}(A,B)}{C}
+\end{displaymath}
+We name the isomorphic function going from the left-hand side to the
+right-hand side `case' (we could call it `copair' to emphasize the
+duality to `pair', but, since it plays a role of `{\tt case}' statements
+of ML or C (or PASCAL), we call it `case').  Writing the adjunction as a
+rule,
+\begin{displaymath}
+\logicrule{A \rubberrightarrow{f} C \qquad B \rubberrightarrow{g}
+C}{{\rm coprod}(A,B) \rubberrightarrow{{\rm case}(f,g)} C}.
+\end{displaymath}
+Two injections ${\rm in1}: A \rightarrow {\rm coprod}(A,B)$ and ${\rm
+in2}: B \rightarrow {\rm coprod}(A,B)$ are defined as the morphisms
+which `case' maps to the identity of ${\rm coprod}(A,B)$.  As before, we
+can derive some equations easily.
+
+From what we have looked at, it seems a good idea to design a category
+theory based (programming or specification) language which has the
+ability to define functors by means of adjunctions.  Since it is
+convenient to introduce names for unit natural transformations and
+factorizers at the same time, we regard an adjunction as a triple of a
+functor, a unit natural transformation and a factorizer (see, for
+example, \cite{maclane-71} for many equivalent ways of defining
+adjunctions).  Therefore, a category theory based language may have the
+following two forms of declaring new functors:
+\begin{center}
+\begin{tabular}{l}
+let $\pair{F,\alpha,\psi}$ be right adjoint of $G$ \\
+let $\pair{F,\alpha,\psi}$ be left adjoint of $G$
+\end{tabular}
+\end{center}
+where $G$ is a functor we already have, $F$ is the new functor we are
+defining, $\alpha$ is the associated unit natural transformation and
+$\psi$ is the associated factorizer.  One problem is that we need to
+have some primitive functors with which we start.  We definitely need
+diagonal functors for we want to define product and coproduct functors.  In
+order to define the natural number object (which is a constant functor),
+we need a pretty complicated functor $G$.  The problem is how to
+represent such $G$.
+
+Let us investigate how other languages and theories define the data type
+of natural numbers.  In set theory, it has the axiom of infinity which
+says the existence of natural numbers.  This may look rather artificial.
+In PASCAL, there is no intuitively easy way to define it.  In ML, though
+it is a built-in data type for efficiency, we could define it as:
+\begin{center}
+\verb"datatype nat = zero | succ of nat;"
+\end{center}
+Note the recursiveness in this definition.  Essentially, we need some
+kind of recursiveness to define a data type of natural numbers.  In
+CLEAR, one can define it as
+\begin{quote}
+\begin{verbatim}
+constant Nat =
+  theory
+    data sort nat
+    opns zero: nat
+         succ: nat -> nat
+  endth
+\end{verbatim}
+\end{quote}
+This is very much similar to the one in ML, though we often think that
+the CLEAR definition is based on the initial algebra semantics whereas
+the ML definition is based on domain theory.  In domain theory, a data
+type of natural numbers can be defined as the solution of the following
+domain equation
+\begin{displaymath}
+N \iso 1 + N.\eqno(*)
+\end{displaymath}
+The initial solution of $(*)$ can be calculated as a colimit of a
+sequence of domains, but we do not go into its detail here.  As a
+connection to the initial algebra semantics, the initial solution can be
+characterized as the initial $T$-algebra, where $T$ is a functor $T(X)
+\defeq 1+X$ in this case.  In general, given a category and an
+endo-functor $T$, we can form a category of $T$-algebras.
+\begin{definition}
+\label{def-T-alg}
+For a category $\cC$ and an endo-functor $T: \cC \rightarrow \cC$, the
+category of $T$-algebras is defined
+\begin{enumerate}
+\item its objects are pairs $\pair{A,f}$ where $A$ is a $\cC$ object and
+$f$ is a $\cC$ morphism $T(A) \rightarrow A$, and
+\item its morphisms $h: \pair{A,f} \rightarrow \pair{B,g}$ are $\cC$
+morphisms $h: A \rightarrow B$ which make the following diagram commute.
+\begin{displaymath}
+\sqdiagram{T(A)}{f}{A}{T(h)}{h}{T(B)}{g}{B}{}
+\end{displaymath}
+\end{enumerate}
+Note that this is a weaker version of the category of $T$-algebras
+defined in many category theory books (e.g.\ \cite{maclane-71}) where
+$T$ needs to be a monad.
+\end{definition}
+
+We can dualize definition~\ref{def-T-alg} to define $T$-coalgebras.
+However, in the theory of categorical data types (`CDT theory' for
+short), we combine the two definitions together.
+\begin{definition}
+\label{def-dbl-alg}
+Let $\cC$ and $\cD$ be categories and both $F$ and $G$ be functors from
+$\cC$ to $\cD$.  We define an $F,G$-dialgebra\footnote{The name {\it
+dialgebra} was suggested by Bob McKay.} as
+\begin{enumerate}
+\item its objects are pairs $\pair{A,f}$ where $A$ is a $\cC$ object and
+$f$ is a $\cD$ morphism of $F(A) \rightarrow G(A)$, and
+\item its morphisms $h: \pair{A,f} \rightarrow \pair{B,g}$ are $\cC$
+morphisms $h: A \rightarrow B$ such that the following diagram commutes.
+\begin{displaymath}
+\sqdiagram{F(A)}{f}{G(A)}{F(h)}{G(h)}{F(B)}{g}{G(B)}{}
+\end{displaymath}
+In the case where $F$ or $G$ is contravariant, we have to modify the
+direction of some arrows.
+\end{enumerate}
+It is easy to show that it is a category; let us write ${\bf
+DAlg}(F,G)$ for it.  Note that ${\bf DAlg}(T,{\bf I})$ is the category
+of $T$-algebras and ${\bf DAlg}({\bf I},T)$ is the category of
+$T$-coalgebras.
+\end{definition}
+This is a very simple extension of definition~\ref{def-T-alg}, yet its
+symmetry and dividing the source category from the target one give us
+greater freedom.  With $T$-algebras, we need to use the coproduct
+functor to define the domain of natural numbers, but by $F,G$-dialgebra we
+do not.  Let $\cC$ be any category and $\cD$ be its product
+$\cC\times\cC$.  We define the functors $F$ and $G$ as
+\begin{displaymath}
+F(A) \defeq \pair{1,A} \quad\mbox{and}\quad G(A) \defeq \pair{A,A}.
+\end{displaymath}
+Let $\pair{{\rm nat},\pair{{\rm zero},{\rm succ}}}$ be the initial
+$F,G$-dialgebra.  From the definition, `nat' is a $\cC$ object, `zero'
+is a $\cC$ morphism of $1 \rightarrow {\rm nat}$ and `succ' is a $\cC$
+morphism of ${\rm nat} \rightarrow {\rm nat}$.  The initiality means
+that for any ${\bf DAlg}(F,G)$ object $\pair{A,\pair{f,g}}$ there exists
+a unique ${\bf DAlg}(F,G)$ morphism $h: \pair{{\rm nat},\pair{{\rm
+zero},{\rm succ}}} \rightarrow \pair{A,\pair{f,g}}$.  If we spell out
+the definition, this means that for any $\cC$ object $A$ and any $\cC$
+morphisms $f: 1
+\rightarrow A$ and $g: A \rightarrow A$ there exists a unique $\cC$
+morphism $h: {\rm nat} \rightarrow A$ which makes the following diagram
+commute.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(75,45)(0,2.5)
+\put(5,40){\makebox(0,0){1}}
+\put(20,42){\makebox(0,0)[b]{zero}}
+\put(35,40){\makebox(0,0){nat}}
+\put(50,42){\makebox(0,0)[b]{succ}}
+\put(65,40){\makebox(0,0){nat}}
+\put(15,22){\makebox(0,0){$f$}}
+\put(25,30){\makebox(0,0){\commute}}
+\put(37,25){\makebox(0,0)[l]{$h$}}
+\put(50,25){\makebox(0,0){\commute}}
+\put(67,25){\makebox(0,0)[l]{$h$}}
+\put(35,10){\makebox(0,0){$A$}}
+\put(65,10){\makebox(0,0){$A$}}
+\put(50,8){\makebox(0,0)[t]{$g$}}
+\put(7.5,40){\vector(1,0){22.5}}
+\put(40,40){\vector(1,0){20}}
+\put(7.5,37.5){\vector(1,-1){25}}
+\put(40,10){\vector(1,0){20}}
+\multiput(35,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,17.5){\vector(0,-1){5}}
+\multiput(65,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(65,17.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+This is exactly the definition of `nat' being a natural number object
+in category theory.
+
+To get further generality of $F,G$-dialgebras, we parametrize $F$ and $G$.
+\begin{definition}
+\label{def-Right-Left}
+Let $\cC$, $\cD$ and $\cE$ be categories, and let $F: \cC\times\cD \rightarrow
+\cE$ and $G: \cC\times\cD^- \rightarrow \cE$ be functors.  We define
+$\pair{{\bf Left}[F,G](A),\eta_A}$ for a $\cD$ object $A$ to be the
+initial object in the category ${\bf
+DAlg}(F(\;\cdot\;,A),G(\;\cdot\;,A))$.  Dually, we define
+$\pair{{\bf Right}[F,G](A),\epsilon_A}$ to be the final object.  We may
+write ${\bf Right}(A)$ for ${\bf Right}[F,G](A)$ and ${\bf Left}(A)$ for
+${\bf Left}[F,G](A)$ if the context makes $F$ and $G$ clear.
+\end{definition}
+
+\begin{proposition}
+\label{prop-Right-Left}
+If ${\bf Left}[F,G](A)$ exists for every object $A \in |\cD|$, ${\bf
+Left}[F,G]$ denotes a functor $\cD \rightarrow \cC$ (i.e.\ we can extend
+it to $\cD$ morphisms).  Dually, if ${\bf Right}[F,G](A)$ exists for
+every $A \in |\cD|$, ${\bf Right}[F,G]$ denotes a functor $\cD^-
+\rightarrow \cC$. \\
+{\bf Proof:} We first need to define what ${\bf Left}[F,G](f)$ is for a
+$\cD$ morphism $f: A \rightarrow B$.  We define it as the morphism $h: {\bf
+Left}(A) \rightarrow {\bf Left}(B)$ which fills in the following
+diagram.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(140,75)(0,2.5)
+\put(15,70){\makebox(0,0){$F({\bf Left}(A),A)$}}
+\put(35,72){\makebox(0,0)[b]{$\eta_A$}}
+\put(55,70){\makebox(0,0){$G({\bf Left}(A),A)$}}
+\put(105,70){\makebox(0,0){$\pair{{\bf Left}(A),\eta_A}$}}
+\put(13,55){\makebox(0,0)[r]{$F(h,{\bf I})$}}
+\put(57,55){\makebox(0,0)[l]{$G(h,{\bf I})$}}
+\put(107,55){\makebox(0,0)[l]{$h$}}
+\put(15,40){\makebox(0,0){$F({\bf Left}(B),A)$}}
+\put(55,40){\makebox(0,0){$G({\bf Left}(B),A)$}}
+\put(105,40){\makebox(0,0){$\pair{{\bf Left}(B),G({\bf I},f) \circ
+\eta_B \circ F({\bf I},f)}$}}
+\put(13,25){\makebox(0,0)[r]{$F({\bf I},f)$}}
+\put(57,25){\makebox(0,0)[l]{$G({\bf I},f)$}}
+\put(15,10){\makebox(0,0){$F({\bf Left}(B),B)$}}
+\put(35,8){\makebox(0,0)[t]{$\eta_B$}}
+\put(55,10){\makebox(0,0){$G({\bf Left}(B),B)$}}
+\put(30,70){\vector(1,0){10}}
+\multiput(15,67.5)(0,-5){4}{\line(0,-1){3}}
+\put(15,47.5){\vector(0,-1){5}}
+\multiput(55,67.5)(0,-5){4}{\line(0,-1){3}}
+\put(55,47.5){\vector(0,-1){5}}
+\multiput(105,67.5)(0,-5){4}{\line(0,-1){3}}
+\put(105,47.5){\vector(0,-1){5}}
+\put(15,37.5){\vector(0,-1){25}}
+\put(55,12.5){\vector(0,1){25}}
+\put(30,10){\vector(1,0){10}}
+\end{picture}
+\end{displaymath}
+The unique existence of the morphism is provided because $\pair{{\bf
+Left}(A),\eta_A}$ is the initial object of ${\bf
+DAlg}(F(\;\cdot\;,A),G(\;\cdot\;,A))$.  In other words, ${\bf
+Left}(f)$ is the unique morphism which satisfies
+\begin{displaymath}
+G({\bf Left}(f),f) \circ \eta_B \circ F({\bf Left}(f),f) = \eta_A.
+\end{displaymath}
+Let us check that {\bf Left} is in fact a functor.  Trivially,
+\begin{displaymath}
+G({\bf I},{\bf I}) \circ \eta_A \circ F({\bf I},{\bf I}) = \eta_A.
+\end{displaymath}
+Therefore, ${\bf Left}({\bf I}_A) = {\bf I}_{{\bf Left}(A)}$.  For
+morphisms $f: A \rightarrow B$ and $g: B \rightarrow C$,
+\begin{displaymath}
+\begin{array}{rl}
+& G({\bf Left}(g)\circ{\bf Left}(f),g\circ f) \circ \eta_C \circ F({\bf
+Left}(g)\circ{\bf Left}(f),g\circ f) \\
+=\;& G({\bf Left}(f),f) \circ G({\bf Left}(g),g)\circ \eta_C \circ F({\bf
+Left}(g),g) \circ F({\bf Left}(f),f) \\
+=\;& G({\bf Left}(f),f) \circ \eta_B \circ F({\bf Left}(f),f) \\
+=\;& \eta_A \\
+\end{array}
+\end{displaymath}
+Therefore, ${\bf Left}(g)\circ{\bf Left}(f) = {\bf Left}(g\circ f)$.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(115,70)(0,2.5)
+\put(40,65){\makebox(0,0){$F({\bf Left}(A),A)$}}
+\put(80,65){\makebox(0,0){$G({\bf Left}(A),A)$}}
+\put(40,35){\makebox(0,0){$F({\bf Left}(B),B)$}}
+\put(80,35){\makebox(0,0){$G({\bf Left}(B),B)$}}
+\put(40,5){\makebox(0,0){$F({\bf Left}(C),C)$}}
+\put(80,5){\makebox(0,0){$G({\bf Left}(C),C)$}}
+\put(60,67){\makebox(0,0)[b]{$\eta_A$}}
+\put(60,37){\makebox(0,0)[b]{$\eta_B$}}
+\put(60,7){\makebox(0,0)[b]{$\eta_C$}}
+\put(38,50){\makebox(0,0)[r]{$F({\bf Left}(f),f)$}}
+\put(82,50){\makebox(0,0)[l]{$G({\bf Left}(f),f)$}}
+\put(38,20){\makebox(0,0)[r]{$F({\bf Left}(g),g)$}}
+\put(82,20){\makebox(0,0)[l]{$G({\bf Left}(g),g)$}}
+\put(25,35){\makebox(0,0)[r]{$F({\bf Left}(g\circ f),g\circ f)$}}
+\put(95,35){\makebox(0,0)[l]{$G({\bf Left}(g\circ f),g\circ f)$}}
+\put(55,65){\vector(1,0){10}}
+\put(55,35){\vector(1,0){10}}
+\put(55,5){\vector(1,0){10}}
+\put(40,62.5){\vector(0,-1){25}}
+\put(80,62.5){\vector(0,-1){25}}
+\put(40,32.5){\vector(0,-1){25}}
+\put(80,32.5){\vector(0,-1){25}}
+\put(25,65){\line(-1,0){20}}
+\put(5,65){\line(0,-1){27.5}}
+\put(5,32.5){\line(0,-1){27.5}}
+\put(5,5){\vector(1,0){20}}
+\put(95,65){\line(1,0){20}}
+\put(115,65){\line(0,-1){27.5}}
+\put(115,32.5){\line(0,-1){27.5}}
+\put(115,5){\vector(-1,0){20}}
+\end{picture}
+\end{displaymath}
+Dually, we can prove that ${\bf Right}$ is a functor.
+\end{proposition}
+
+`{\bf Left}' and `{\bf Right}' may suggest a connection with left and
+right adjoint functors.  In fact,
+\begin{proposition}
+For a functor $F: \cC \rightarrow \cD$, its left adjoint functor can be
+denoted by
+\begin{displaymath}
+{\bf Left}[\lambda(X,Y).Y,\lambda(X,Y).F(X)]
+\end{displaymath}
+and, dually, its right adjoint functor can be denoted by
+\begin{displaymath}
+{\bf Right}[\lambda(X,Y).F(X),\lambda(X,Y).Y].
+\end{displaymath}
+{\bf Proof:} Let us only check the left adjoint case.  We see
+$\lambda(X,Y).Y$ as a functor $\cC\times\cD \rightarrow \cD$ and
+$\lambda(X,Y).F(X)$ as a functor $\cC\times\cD^- \rightarrow \cD$.  From
+definition~\ref{def-Right-Left}, {\bf Left} is a functor $\cD
+\rightarrow \cC$.  If we spell out the condition of $\pair{{\bf
+Left}(A),\eta_A}$ being the initial algebra, it means that for any
+$\cC$ object $B$ and a $\cC$ morphism $f: A \rightarrow F(B)$ there
+exists a unique $\cC$ morphism $h: {\bf Left}(A) \rightarrow B$ such that
+the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(5,35){\makebox(0,0){$A$}}
+\put(15,37){\makebox(0,0)[b]{$\eta_A$}}
+\put(35,35){\makebox(0,0){$F({\bf Left}(A))$}}
+\put(65,35){\makebox(0,0){${\bf Left}(A)$}}
+\put(5,5){\makebox(0,0){$A$}}
+\put(35,5){\makebox(0,0){$F(B)$}}
+\put(65,5){\makebox(0,0){$B$}}
+\put(20,3){\makebox(0,0)[t]{$f$}}
+\put(20,20){\makebox(0,0){\commute}}
+\put(37,20){\makebox(0,0)[l]{$F(h)$}}
+\put(67,20){\makebox(0,0)[l]{$h$}}
+\put(7.5,35){\vector(1,0){17.5}}
+\put(4.5,32.5){\line(0,-1){25}}
+\put(5.5,32.5){\line(0,-1){25}}
+\put(7.5,5){\vector(1,0){22.5}}
+\multiput(35,33.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,12.5){\vector(0,-1){5}}
+\multiput(65,33.5)(0,-5){4}{\line(0,-1){3}}
+\put(65,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+This is exactly the condition of {\bf Left} being the left adjoint
+functor of $F$.  Dually, we can prove that ${\bf
+Right}[\lambda(X,Y).F(X),\lambda(X,Y).Y]$ is the right adjoint.
+\end{proposition}
+
+Hence, definition~\ref{def-dbl-alg} of $F,G$-dialgebras covers both
+$T$-algebras and adjoints so that it enables us to define products,
+coproducts, natural number object, and so on in a uniform way.
+
+\section[Data Type Declarations in Categorical Data Types]{Data Type
+Declarations in\\ Categorical Data Types}
+\label{sec-decl-CDT}
+
+In the previous section, we have looked at some ways of defining data
+types in some languages.  In this section, we will introduce
+how to define data types in CDT.
+
+If we were only interested in functors, only ${\bf Left}[F,G]$ and ${\bf
+Right}[F,G]$ defined in the previous section would be needed, but we do
+want morphisms (or natural transformations) and factorizers which will
+make up some kind of programs, the meaning of which we will examine in
+chapter~\ref{ch-cpl} (e.g.\ how to execute them).
+
+${\bf Left}[F,G]$ and ${\bf Right}[F,G]$ have been defined for functors
+$F: \cC\times\cD \rightarrow \cE$ and $G: \cC\times\cD^- \rightarrow
+\cE$, where $\cC$, $\cD$ and $\cE$ are some categories.  Remember the
+aim of CDT; we would like to define (or specify, or study) a category of
+data types.  Therefore, $\cC$, $\cD$ and $\cE$ should somehow be related
+to this category.  The simplest we can think of is that they are the
+product categories of this category and all the functors are in the form
+of $\cC^s \rightarrow \cC$, where $s$ is a sequence of variances (i.e.\
+$s \in {\bf Var}^\ast$) and $\cC^{v_1\ldots v_n} \defeq
+\cC^{v_1}\times\cdots\times \cC^{v_n}$.
+
+In order to simplify the presentation, let us use the vector notation
+and write, for example, $\vec F$ for a sequence of functors
+$\pair{F_1,\ldots,F_n}$ where all of them have the same type $\cC^s
+\rightarrow \cC$, that is, $\vec F$ is a functor of $\cC^s \rightarrow
+\cC^n$.
+
+From definition~\ref{def-Right-Left}, for $\vec F: \cC\times\cC^s
+\rightarrow \cC^n$ and $\vec G: \cC\times\cC^{-\bullet s} \rightarrow
+\cC^n$, ${\bf Left}[F,G]$ is a functor $\cC^s \rightarrow \cC$ and ${\bf
+Right}[F,G]$ is a functor $\cC^{-\bullet s} \rightarrow \cC$, where $u
+\bullet {v_1\ldots v_n} \defeq u\bullet v_1 \ldots u\bullet v_n$.
+
+Hence, we come to the definition of CDT declarations.
+\begin{definition}
+\label{def-CDT-decl}
+In CDT theory, there are two forms of declaring new functors.  One is to
+define a functor $L: \cC^s \rightarrow \cC$ by
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(\vec X)$ with $\psi$ is \\
+$\qquad \vec\alpha: \vec F(L,\vec X) \rightarrow \vec G(L,\vec X)$ \\
+end object \\
+\end{tabular}
+\eqno(*)
+\end{displaymath}
+and the other is to define a functor $R: \cC^{-\bullet s} \rightarrow
+\cC$ by
+\begin{center}
+\begin{tabular}{l}
+right object $R(\vec X)$ with $\psi$ is \\
+$\qquad \vec\alpha: \vec F(R,\vec X) \rightarrow \vec G(R,\vec X)$ \\
+end object \\
+\end{tabular}
+\end{center}
+where $\vec X$ is a sequence $\pair{X_1,\ldots,X_n}$ of variables,
+$\psi$ is the associated factorizer, $\vec\alpha$ is a sequence
+$\pair{\alpha_1,\ldots,\alpha_m}$ of the associated natural
+transformations, and $\vec F$ and $\vec G$ are sequences
+$\pair{F_1,\ldots,F_m}$ and $\pair{G_1,\ldots,G_m}$, respectively, of
+functors which we have as primitives or we have already defined and
+whose type is $F_i: \cC\times\cC^s \rightarrow \cC$ and $G_i:
+\cC\times\cC^{-\bullet s} \rightarrow \cC$, respectively.  Semantically,
+$L$ is ${\bf Left}[\vec F,\vec G]$ and $R$ is ${\bf Right}[\vec F,\vec G]$.
+We may call $L$ left functor or left object and $R$ right functor or
+right object.
+\end{definition}
+
+If we expand the definition of {\bf Left}, $(*)$ defines for any $\cC$
+objects $\vec A = \pair{A_1,\ldots,A_n}$ an object $L(\vec A)$ and a
+morphism
+\begin{displaymath}
+\ardiagram{\vec F(L(\vec A),\vec A)}{\vec\alpha_{\vec A}}{\vec G(L(\vec
+A),\vec A),}
+\end{displaymath}
+and for any object $B$ and a sequence of morphisms $\vec f: \vec
+F(B,\vec A) \rightarrow \vec G(B,\vec A)$, $\psi(\vec f)$ denotes the
+unique morphism which makes the following diagram commute.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(95,40)(0,2.5)
+\put(10,35){\makebox(0,0){$\vec F(L(\vec A),\vec A)$}}
+\put(32.5,37){\makebox(0,0)[b]{$\vec\alpha_{\vec A}$}}
+\put(55,35){\makebox(0,0){$\vec G(L(\vec A),\vec A)$}}
+\put(90,35){\makebox(0,0){$L(\vec A)$}}
+\put(8,20){\makebox(0,0)[r]{$\vec F(\psi(\vec f),\vec A)$}}
+\put(32.5,20){\makebox(0,0){\commute}}
+\put(57,20){\makebox(0,0)[l]{$\vec G(\psi(\vec f),\vec A)$}}
+\put(92,20){\makebox(0,0)[l]{$\psi(\vec f)$}}
+\put(10,5){\makebox(0,0){$\vec F(B,\vec A)$}}
+\put(32.5,3){\makebox(0,0)[t]{$\vec f$}}
+\put(55,5){\makebox(0,0){$\vec G(B,\vec A)$}}
+\put(90,5){\makebox(0,0){$B$}}
+\put(22.5,35){\vector(1,0){20}}
+\put(17.5,5){\vector(1,0){30}}
+\multiput(10,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(10,12.5){\vector(0,-1){5}}
+\multiput(55,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(55,12.5){\vector(0,-1){5}}
+\multiput(90,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(90,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+
+In definition~\ref{def-CDT-decl}, it is not immediately clear what kind
+of $\vec F$ and $\vec G$ is allowed.  We vaguely stated that they are
+primitive or have been defined already.  In order to clarify this point,
+we go back to CSL and regard a CDT declaration as an extension of a
+given CSL signature.
+\begin{definition}
+\label{def-CDT-CSL}
+Let $\pair{\Gamma,\Delta,\Psi}$ be a CSL signature.  A CDT declaration
+$D \in {\bf Decl}$ is given by the following BNF expression.
+\begin{quote}
+\begin{tabbing}
+$D \coloneq {}$ \= $\{$ left \=$\mid$ right $\}$ object
+$F(X_1,\ldots,X_n)$ with $\psi$ is \\
+\>\> $\alpha_1: E_1 \rightarrow E'_1$ \\
+\>\> $\qquad \ldots$ \\
+\>\> $\alpha_m: E_m \rightarrow E'_m$ \\
+\> end object \\
+\end{tabbing}
+\end{quote}
+where $F$ is a new functor symbol, $\psi$ is a new factorizer symbol,
+$\alpha_1,\ldots,a_m$ are new natural transformation symbols, and  $E_i$
+and $E'_i$ ($i=1,\ldots,m$) are well-formed functorial expressions
+(under this signature $\pair{\Gamma,\Delta,\Psi}$) whose variables are
+$X_1,\ldots,X_n$ and $F$ (here we use $F$ as a formal parameter like we
+use its function name inside a function body in PASCAL).
+\end{definition}
+
+We need to put restriction on the variance of $F$ in the functorial
+expressions such that for each $i = 1,\ldots,m$
+\begin{enumerate}
+\item the variance of $F$ in $E_i$ should be either covariant or free,
+\item the variance of $F$ in $E'_i$ should also be either covariant or
+free, and
+\item either the variance of $F$ in $E_i$ should be covariant or that in
+$E'_i$ should be covariant.
+\end{enumerate}
+We could have allowed $F$ to be contravariant (as indeed the original
+definition of CDT did), but it turned out that the generality by
+contravariance was of very little use, so, because it simplifies the
+following argument, we restrict ourselves only to covariant functors.
+The third condition above is to make the extension consistent (each
+$\alpha_i$ should somehow relate to the functor we are declaring).
+
+Let us calculate the variance of $F$. If the variance of
+$\lambda(F,X_1,\ldots,X_n).E_i$ is $v_i s_i$ ($v_i \in {\bf Var}$ for
+the variance of $F$ and $s_i \in {\bf Var}^\ast$ for the variance of
+$X_1,\ldots,X_n$) and that of $\lambda(F,X_1,\ldots,X_n).E'_i$ is $v'_i
+s'_i$, $\lambda(F,X_1,\ldots,X_n).E_i$ denotes a functor
+$\cC^{v_i}\times\cC^{s_i} \rightarrow \cC$ and
+$\lambda(F,X_1,\ldots,X_n).E'_i$ denotes a functor
+$\cC^{v'_i}\times\cC^{s'_i} \rightarrow \cC$.  The restriction above
+states that $v_i\lub v'_i = {+}$.  From
+proposition~\ref{prop-Right-Left}, the variance of $F$ in case that it
+is declared by a left CDT declaration should be
+\begin{displaymath}
+\Lub\limits_{i=1}^{m} s_i\lub -\bullet s'_i,\eqno(*)
+\end{displaymath}
+and in case that it is declared by a right one, the variance should be
+\begin{displaymath}
+\Lub\limits_{i=1}^{m} -\bullet s_i\lub s'_i,\eqno(**)
+\end{displaymath}
+where ${\bf Var}^\ast$ is a partially ordered set with the ordering
+given by $u_1\ldots u_n \lleq v_1\ldots v_n$ if and only if $u_1\lleq
+v_1$, \ldots and $u_n \lleq v_n$.
+
+\begin{contdefinition}{\ref{def-CDT-CSL}}
+A CDT declaration gives an extension of CSL signature.
+\begin{displaymath}
+\pair{\Gamma,\Delta,\Psi} \hookrightarrow \pair{\Gamma \cup \{\; F \;\},
+\Delta \cup \{\; \alpha_1,\ldots,\alpha_m \;\}, \Psi \cup \{\; \psi \;\}}
+\end{displaymath}
+where the variance of $F$ is given by $(*)$ or $(**)$, the type of
+$\alpha_i$ is
+\begin{displaymath}
+\lambda(X_1,\ldots,X_n).E_i[F(X_1,\ldots,X_n)/F] \natrightarrow
+\lambda(X_1,\ldots,X_n).E'_i[F(X_1,\ldots,X_n)/F],
+\end{displaymath}
+and the type of $\psi$ is
+\begin{displaymath}
+\logicrule{f_i: \lambda(X,X_1,\ldots,X_n).E_i[X/F] \rightarrow
+\lambda(X,X_1,\ldots,X_n).E'_i[X/F] \quad (i =
+1,\ldots,m)}{\psi(f_1,\ldots,f_m):
+\lambda(X,X_1,\ldots,X_n).F(X_1,\ldots,X_n) \rightarrow
+\lambda(X,X_1,\ldots,X_n).X}
+\end{displaymath}
+by a left CDT declaration and
+\begin{displaymath}
+\logicrule{f_i: \lambda(X,X_1,\ldots,X_n).E_i[X/F] \rightarrow
+\lambda(X,X_1,\ldots,X_n).E'_i[X/F] \quad (i =
+1,\ldots,m)}{\psi(f_1,\ldots,f_m):
+\lambda(X,X_1,\ldots,X_n).X \rightarrow
+\lambda(X,X_1,\ldots,X_n).F(X_1,\ldots,X_n)}
+\end{displaymath}
+by a right one.
+\end{contdefinition}
+
+We will see in section~\ref{sec-CDT-as-CSL} a CDT declaration
+as a CSL theory extension so that the semantics of a CDT declaration can
+be given by a CSL structure.
+
+\section{Examples of Categorical Data Types}
+\label{sec-ex-CDT}
+
+In this section, we will present several examples of categorical data
+types declared by
+\begin{displaymath}
+\begin{tabular}{l}
+left object $F(X_1,\ldots,X_n)$ with $\psi$ is \\
+$\qquad \alpha_1: E_1 \rightarrow E'_1$ \\
+$\qquad \qquad \ldots$ \\
+$\qquad \alpha_m: E_m \rightarrow E'_m$ \\
+end object \\
+\end{tabular}
+\eqno(*)
+\end{displaymath}
+for left objects and by
+\begin{displaymath}
+\begin{tabular}{l}
+right object $F(X_1,\ldots,X_n)$ with $\psi$ is \\
+$\qquad \alpha_1: E_1 \rightarrow E'_1$ \\
+$\qquad \qquad \ldots$ \\
+$\qquad \alpha_m: E_m \rightarrow E'_m$ \\
+end object \\
+\end{tabular}
+\eqno(**)
+\end{displaymath}
+for right objects.
+
+\subsection{Terminal and Initial Objects}
+\label{ssec-terminal-initial}
+
+Let us start with an empty CSL signature
+$\pair{\emptyset,\emptyset,\emptyset}$.  The simplest case of $(*)$ and
+$(**)$ is when $n = m = 0$.  If we consider the case when $n = m = 0$ in
+$(**)$, we get the declaration of the terminal object.
+\begin{center}
+\begin{tabular}{l}
+right object 1 with ! \\
+end object \\
+\end{tabular}
+\end{center}
+(We omitted the keyword `is' to make the declaration look nicer.)  From
+the definition, this defines an object `1' and for any object $A$ there
+is a unique morphism `!' from $A$ to `1'.
+\begin{displaymath}
+\ardiagram{A}{\rm !}{\rm 1}
+\end{displaymath}
+Therefore, it really is the terminal object.
+
+Dually, if we change the keyword `right' to `left' in the definition of
+the terminal object, we get the definition of the initial object.
+\begin{center}
+\begin{tabular}{l}
+left object 0 with !! \\
+end object \\
+\end{tabular}
+\end{center}
+The factorizer `!!' gives a unique morphism from `0' to any object $A$.
+\begin{displaymath}
+\ardiagram{\rm 0}{\rm !!}{A}
+\end{displaymath}
+
+\subsection{Products and CoProducts}
+\label{ssec-product-coproduct}
+
+Next, we define products and coproducts.  The binary product functor can
+be declared as the following right object.
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm prod}(X,Y)$ with pair is \\
+$\qquad {\rm pi1}: {\rm prod} \rightarrow X$ \\
+$\qquad {\rm pi2}: {\rm prod} \rightarrow Y$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+From definition~\ref{def-CDT-CSL}, this defines a functor symbol `prod'
+whose variance is `${+}{+}$' (i.e.\ covariant in both arguments), two
+natural transformation symbols `pi1' and `pi2' whose types are
+\begin{displaymath}
+{\rm pi1}: \lambda(X,Y).{\rm prod}(X,Y) \natrightarrow \lambda(X,Y).X
+\end{displaymath}
+\begin{displaymath}
+{\rm pi2}: \lambda(X,Y).{\rm prod}(X,Y) \natrightarrow \lambda(X,Y).Y
+\end{displaymath}
+and a factorizer symbol `pair' whose type is
+\begin{displaymath}
+\logicrule{f: \lambda(Z,X,Y).Z \rightarrow \lambda(Z,X,Y).X \qquad
+g: \lambda(Z,X,Y).Z \rightarrow \lambda(Z,X,Y).Y}{{\rm pair}(f,g):
+\lambda(Z,X,Y).Z \rightarrow \lambda(Z,X,Y).{\rm prod}(X,Y)}.
+\end{displaymath}
+If we write this down in a more understandable way, it becomes the
+familiar definition of the binary product, that is `prod' has two unit
+morphisms
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,10)(0,2.5)
+\put(5,5){\makebox(0,0){$A$}}
+\put(35,5){\makebox(0,0){${\rm prod}(A,B)$}}
+\put(65,5){\makebox(0,0){$B$}}
+\put(17,7){\makebox(0,0)[b]{pi1}}
+\put(53,7){\makebox(0,0)[b]{pi2}}
+\put(25,5){\vector(-1,0){17.5}}
+\put(45,5){\vector(1,0){17.5}}
+\end{picture}
+\end{displaymath}
+and ${\rm pair}(f,g)$ gives the unique morphism for any morphisms $f: C
+\rightarrow A$ and $g: C \rightarrow B$ such that the following diagram
+commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(5,35){\makebox(0,0){$A$}}
+\put(35,35){\makebox(0,0){${\rm prod}(A,B)$}}
+\put(65,35){\makebox(0,0){$B$}}
+\put(17,37){\makebox(0,0)[b]{pi1}}
+\put(53,37){\makebox(0,0)[b]{pi2}}
+\put(25,35){\vector(-1,0){17.5}}
+\put(45,35){\vector(1,0){17.5}}
+\put(35,5){\makebox(0,0){$C$}}
+\put(17.5,17.5){\makebox(0,0){$f$}}
+\put(52.5,17.5){\makebox(0,0){$g$}}
+\put(35,20){\makebox(0,0){${\rm pair}(f,g)$}}
+\put(22.5,27.5){\makebox(0,0){\commute}}
+\put(47.5,27.5){\makebox(0,0){\commute}}
+\put(32.5,7.5){\vector(-1,1){25}}
+\put(37.5,7.5){\vector(1,1){25}}
+\multiput(35,7.5)(0,5){2}{\line(0,1){3}}
+\put(35,22.5){\line(0,1){3}}
+\put(35,27.5){\vector(0,1){5}}
+\end{picture}
+\end{displaymath}
+
+Note that the CDT declaration of the binary product functor is very
+similar to the `Prod' theory in CLEAR defined in~\ref{sec-what-cdt}.
+One of the differences is that in CLEAR `pair' is treated as a function
+in the same class as `pi1' and `pi2' but in CDT `pair' is quite
+different from `pi1' and `pi2'.  Another one is that in CLEAR `Prod' is
+declared as the initial algebra so it is close to CDT's left object but
+in CDT `prod' is naturally a right object because the product functor is
+the {\it right} adjoint of the diagonal functor.
+
+Dually, we can define the binary coproduct functor as a left object.
+\begin{displaymath}
+\begin{tabular}{l}
+left object ${\rm coprod}(X,Y)$ with case is \\
+$\qquad {\rm in1}: X \rightarrow {\rm coprod}$ \\
+$\qquad {\rm in2}: Y \rightarrow {\rm coprod}$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+Again, this declaration looks very close to the one in CLEAR (defined in
+section~\ref{sec-what-cdt}), but note that we have `case' in CDT so that
+we can use it to write programs or to specify some properties.
+
+Just writing the situation as a diagram,
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(5,35){\makebox(0,0){$A$}}
+\put(35,35){\makebox(0,0){${\rm coprod}(A,B)$}}
+\put(65,35){\makebox(0,0){$B$}}
+\put(17,37){\makebox(0,0)[b]{in1}}
+\put(53,37){\makebox(0,0)[b]{in2}}
+\put(7.5,35){\vector(1,0){14}}
+\put(62.5,35){\vector(-1,0){14}}
+\put(35,5){\makebox(0,0){$C$}}
+\put(17.5,17.5){\makebox(0,0){$f$}}
+\put(52.5,17.5){\makebox(0,0){$g$}}
+\put(35,20){\makebox(0,0){${\rm case}(f,g)$}}
+\put(22.5,27.5){\makebox(0,0){\commute}}
+\put(47.5,27.5){\makebox(0,0){\commute}}
+\put(7.5,32.5){\vector(1,-1){25}}
+\put(62.5,32.5){\vector(-1,-1){25}}
+\multiput(35,32.5)(0,-5){2}{\line(0,-1){3}}
+\put(35,17.5){\line(0,-1){3}}
+\put(35,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+
+\subsection{Exponentials}
+\label{ssec-exponential}
+
+One of the objections against algebraic specification methods is that it
+cannot handle function spaces.  CDT's declaration mechanism
+looks very close to that of algebraic specification methods, but CDT is
+based on category theory not on many-sorted algebras, and in category
+theory function spaces can be defined as exponentials.  For objects $A$
+and $B$, the exponential of $B$ by $A$ is written as ${\rm
+exp}(A,B)$\footnote{Many category theory books use the notation $B^A$
+for the exponential of $B$ by $A$.} satisfies the following natural
+isomorphism.
+\begin{displaymath}
+\Hom{\cC}{{\rm prod}(C,A)}{B} \simeq \Hom{\cC}{C}{{\rm exp}(A,B)}
+\end{displaymath}
+In other words, The functor ${\rm exp}(A,\;\cdot\;)$ is the right
+adjoint of ${\rm prod}(\;\cdot\;,A)$.  We write `curry' for the
+factorizer and `eval' for the counit natural transformation.  Then, for
+any object $C$ and any morphism $f: {\rm prod}(C,A) \rightarrow B$,
+${\rm curry}(f)$ is the unique morphism from ${\rm exp}(A,B)$ to $C$ such that
+the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(90,40)(0,2.5)
+\put(10,35){\makebox(0,0){$C$}}
+\put(10,5){\makebox(0,0){${\rm exp}(A,B)$}}
+\put(8,20){\makebox(0,0)[r]{${\rm curry}(f)$}}
+\multiput(10,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(10,12.5){\vector(0,-1){5}}
+\put(50,35){\makebox(0,0){${\rm prod}(C,A)$}}
+\put(50,5){\makebox(0,0){${\rm prod}({\rm exp}(A,B),A)$}}
+\put(90,5){\makebox(0,0){$B$}}
+\put(48,20){\makebox(0,0)[r]{${\rm prod}({\rm curry}(f),{\bf I})$}}
+\put(72,22){\makebox(0,0)[bl]{$f$}}
+\put(62.5,17.5){\makebox(0,0){\commute}}
+\put(75,3){\makebox(0,0)[t]{eval}}
+\put(55,31){\vector(4,-3){32.5}}
+\put(70,5){\vector(1,0){17.5}}
+\multiput(50,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(50,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+The reason why the exponentials are function spaces is that their global
+elements are just morphisms.\footnote{A {\it global element} of an
+object $A$ is a morphism from the terminal object to $A$.}
+\begin{displaymath}
+\Hom{\cC}{1}{{\rm exp}(A,B)} \simeq \Hom{\cC}{{\rm prod}(1,A)}{B} \simeq
+\Hom{\cC}{A}{B}
+\end{displaymath}
+
+Let us write down the definition as a CDT declaration.  Assume a CSL
+signature $\pair{\Gamma,\Delta,\Psi}$ which contains the definition of
+the binary product functor as we defined in
+subsection~\ref{ssec-product-coproduct}.  Then, the exponential functor
+can be declared as follows.
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm exp}(X,Y)$ with curry is \\
+$\qquad {\rm eval}: {\rm prod}({\rm exp},X) \rightarrow Y$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+This is so far the most complicated CDT declaration.  In the previous
+examples, functorial expressions $E_i$ and $E'_i$ in $(*)$ and $(**)$
+are all simply variables.  From definition~\ref{def-CDT-CSL}, the CDT
+declaration above defines a functor symbol `exp' of type ${-}{+}$, a
+natural transformation `eval' of type
+\begin{displaymath}
+\lambda(X,Y).{\rm prod}({\rm exp}(X,Y),X) \natrightarrow \lambda(X,Y).Y
+\end{displaymath}
+and a factorizer `curry' of type
+\begin{displaymath}
+\logicrule{f: \lambda(Z,X,Y).{\rm prod}(Z,X) \rightarrow
+\lambda(Z,X,Y).Y}{{\rm curry}(f): \lambda(Z,X,Y).Z \rightarrow
+\lambda(Z,X,Y).{\rm exp}(X,Y)}.
+\end{displaymath}
+These types are what we expect them to be from the exponential
+adjunction.  Let us once more convince ourselves that the semantics by
+$F,G$-dialgebras really defines the exponentials.  $\pair{{\rm
+exp}(A,B),{\rm eval}_{A,B}}$ is the final $F,G$-dialgebra where $F(C)
+\defeq {\rm prod}(C,A)$ and $G(C) \defeq B$.  This means that, for any
+$\pair{C,f}$ where $C$ is an object and $f$ is a morphism of $F(C)
+\rightarrow G(C)$, ${\rm curry}(f)$ is the unique morphism of
+\begin{displaymath}
+\pair{{\rm exp}(A,B),{\rm eval}_{A,B}} \rightarrow \pair{C,f}.
+\end{displaymath}
+From definition~\ref{def-dbl-alg} of $F,G$-dialgebras, ${\rm curry}(f)$ is
+the unique morphism $C \rightarrow {\rm exp}(A,B)$ which makes the
+following diagram commute.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(90,40)(-20,2.5)
+\put(12.5,35){\makebox(0,0){$\llap{$F(C)={}$}{\rm prod}(C,A)$}}
+\put(60,35){\makebox(0,0){$B\rlap{${}=G(C)$}$}}
+\put(37.5,37){\makebox(0,0)[b]{$f$}}
+\put(12.5,5){\makebox(0,0){$\llap{$F({\rm exp}(A,B))={}$}{\rm prod}({\rm
+exp}(A,B),A)$}}
+\put(60,5){\makebox(0,0){$B\rlap{${}=G({\rm exp}(A,B))$}$}}
+\put(42.5,3){\makebox(0,0)[t]{${\rm eval}_{A,B}$}}
+\put(10.5,20){\makebox(0,0)[r]{$F({\rm curry}(f)) = {\rm prod}({\rm
+curry}(f),{\bf I})$}}
+\put(40,20){\makebox(0,0){\commute}}
+\put(62.5,20){\makebox(0,0)[l]{${\bf I} = G({\rm curry}(f))$}}
+\put(22.5,35){\vector(1,0){35}}
+\put(30,5){\vector(1,0){27.5}}
+\put(12.5,32.5){\vector(0,-1){25}}
+\put(59.5,32.5){\line(0,-1){25}}
+\put(60.5,32.5){\line(0,-1){25}}
+\end{picture}
+\end{displaymath}
+This is exactly the condition of `exp' being the exponential functor.
+
+The declaration of the exponential functor in CDT very much looks like
+a declaration in a algebraic specification
+language (e.g.\ in CLEAR), but, as is well-known, we cannot define function
+spaces as algebras.  The essential difference lies in that `exp' is a right
+object, in other words, defined by the terminal data constraint rather
+than the initial one which CLEAR uses and in the availability of the
+factorizer `curry'.  If we define `curry' as an ordinary function (or an
+ML function), its type is
+\begin{displaymath}
+(C\times A \rightarrow B) \rightarrow (C \rightarrow (A \rightarrow B))
+\end{displaymath}
+and this could never be a type of algebraic functions (i.e.\ functions
+defined by algebraic specification methods).
+
+\subsection{Natural Number Object}
+\label{ssec-NNO}
+
+As we have already shown that the natural number object can be given by
+`{\bf Left}', let us write it down as a CDT declaration.  Although we
+can define the natural number object if we have only the terminal
+object, it is often very convenient to assume that a CSL signature
+$\pair{\Gamma,\Delta,\Psi}$ contains not only the terminal object but
+also the product functor and the exponential functor.  The declaration
+of the natural number object as a CDT is
+\begin{displaymath}
+\begin{tabular}{l}
+left object nat with pr is \\
+$\qquad {\rm zero}: 1 \rightarrow {\rm nat}$\\
+$\qquad {\rm succ}: {\rm nat} \rightarrow {\rm nat}$\\
+end object \\
+\end{tabular}
+\end{displaymath}
+which defines a constant functor (i.e.\ an object) `nat' with two
+morphisms `zero' and `succ'.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(50,20)(0,2.5)
+\put(5,10){\makebox(0,0){1}}
+\put(35,10){\makebox(0,0){nat}}
+\put(17.5,12){\makebox(0,0)[b]{zero}}
+\put(47,10){\makebox(0,0)[l]{succ}}
+\put(7.5,10){\vector(1,0){22.5}}
+\put(35,12.5){\line(0,1){2.5}}
+\put(40,15){\oval(10,10)[t]}
+\put(45,15){\line(0,-1){10}}
+\put(40,5){\oval(10,10)[b]}
+\put(35,5){\vector(0,1){2.5}}
+\end{picture}
+\end{displaymath}
+In addition, the factorizer `pr' (standing for {\it p\/}rimitive {\it
+r\/}ecursion) gives for any morphisms $f: 1 \rightarrow A$ and $g: A
+\rightarrow A$ a unique morphism ${\rm pr}(f,g): {\rm nat} \rightarrow A$
+such that the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(75,45)(0,2.5)
+\put(5,40){\makebox(0,0){1}}
+\put(20,42){\makebox(0,0)[b]{zero}}
+\put(35,40){\makebox(0,0){nat}}
+\put(50,42){\makebox(0,0)[b]{succ}}
+\put(65,40){\makebox(0,0){nat}}
+\put(15,22){\makebox(0,0){$f$}}
+\put(25,30){\makebox(0,0){\commute}}
+\put(37,25){\makebox(0,0)[l]{${\rm pr}(f,g)$}}
+\put(55,25){\makebox(0,0){\commute}}
+\put(67,25){\makebox(0,0)[l]{${\rm pr}(f,g)$}}
+\put(35,10){\makebox(0,0){$A$}}
+\put(65,10){\makebox(0,0){$A$}}
+\put(50,8){\makebox(0,0)[t]{$g$}}
+\put(7.5,40){\vector(1,0){22.5}}
+\put(40,40){\vector(1,0){20}}
+\put(7.5,37.5){\vector(1,-1){25}}
+\put(40,10){\vector(1,0){20}}
+\multiput(35,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,17.5){\vector(0,-1){5}}
+\multiput(65,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(65,17.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+As is well-known (e.g.~\cite{goldblatt-79} chapter 13), `pr' provides us
+to define any primitive recursive function.
+\begin{definition}
+\label{def-pr-rec}
+For a category $\cC$ with the natural number object `nat', the terminal
+object `1' and the binary product functor `prod', a morphism $f$ is {\it
+primitive recursive} (on natural numbers) if it can be generated after
+finitely many steps by means of the following rules:
+\begin{enumerate}
+\item $f = {\bf I}_{\rm nat}: {\rm nat} \rightarrow {\rm nat}$,
+\item $f = {\rm zero}: 1 \rightarrow {\rm nat}$,
+\item $f = {\rm succ}: {\rm nat} \rightarrow {\rm nat}$,
+\item $f = {\rm pi1}: {\rm prod}({\rm nat},{\rm nat}) \rightarrow {\rm
+nat}$,
+\item $f = {\rm pi2}: {\rm prod}({\rm nat},{\rm nat}) \rightarrow {\rm
+nat}$,
+\item $f = g\circ{\rm pair}(h,k): A \rightarrow {\rm nat}$ for primitive
+recursive morphisms\\
+$g: {\rm prod}({\rm nat},{\rm nat}) \rightarrow {\rm nat}$, $h: A
+\rightarrow {\rm nat}$ and $k: A \rightarrow {\rm nat}$,
+\item $f = g\circ{\rm prod}(h,k): {\rm prod}(A,B) \rightarrow {\rm nat}$
+for primitive recursive morphisms\\
+$g: {\rm prod}({\rm nat},{\rm nat}) \rightarrow {\rm nat}$, $h: A
+\rightarrow {\rm nat}$ and $k: B \rightarrow {\rm nat}$, and
+\item $f: {\rm prod}({\rm nat},A) \rightarrow {\rm nat}$ satisfying
+\begin{enumerate}
+\item $f\circ{\rm pair}({\rm zero}\circ{\rm !},{\bf I}) = g$, and
+\item $f\circ{\rm pair}({\rm succ}\circ{\rm pi1},{\rm pi2}) =
+h\circ{\rm pair}(f,{\bf I})$
+\end{enumerate}
+for primitive recursive $g: A \rightarrow {\rm nat}$ and $h:
+{\rm prod}({\rm nat},{\rm prod}({\rm nat},A)) \rightarrow {\rm nat}$. \qed
+\end{enumerate}
+\end{definition}
+This is a straight copy of the standard definition of primitive
+recursive functions on natural numbers.
+\begin{proposition}
+If a cartesian closed category $\cC$ has the natural number object, it
+has all the primitive recursive morphisms. \\
+{\bf Proof:} It is suffice to show that there exists a morphism $f: {\rm
+prod}({\rm nat},A) \rightarrow {\rm nat}$ for any morphisms $g: A
+ \rightarrow {\rm nat}$ and $h: {\rm  prod}({\rm nat},{\rm prod}({\rm
+nat},A)) \rightarrow {\rm nat}$ such that
+\begin{enumerate}
+\item $f\circ{\rm pair}({\rm zero}\circ{\rm !},{\bf I}) = g$, and
+\item $f\circ{\rm pair}({\rm succ}\circ{\rm pi1},{\rm pi2}) =
+h\circ{\rm pair}(f,{\bf I})$.
+\end{enumerate}
+There is a morphism $k: {\rm nat} \rightarrow {\rm prod}({\rm
+exp}(A,{\rm nat}),{\rm nat})$ such that the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(115,40)(0,2.5)
+\put(2.5,35){\makebox(0,0){1}}
+\put(32.5,35){\makebox(0,0){nat}}
+\put(97.5,35){\makebox(0,0){nat}}
+\put(32.5,5){\makebox(0,0){${\rm prod}({\rm exp}(A,{\rm nat}),{\rm nat})$}}
+\put(97.5,5){\makebox(0,0){${\rm prod}({\rm exp}(A,{\rm nat}),{\rm nat})$}}
+\put(17.5,37){\makebox(0,0)[b]{zero}}
+\put(65,37){\makebox(0,0)[b]{succ}}
+\put(34.5,20){\makebox(0,0)[l]{$k$}}
+\put(99.5,20){\makebox(0,0)[l]{$k$}}
+\put(15,20){\makebox(0,0)[tr]{$g'$}}
+\put(65,3){\makebox(0,0)[t]{$h'$}}
+\put(25,25){\makebox(0,0){\commute}}
+\put(65,20){\makebox(0,0){\commute}}
+\put(5,35){\vector(1,0){22.5}}
+\put(37.5,35){\vector(1,0){55}}
+\put(5,32.5){\vector(1,-1){22.5}}
+\put(32.5,32.5){\vector(0,-1){25}}
+\put(97.5,32.5){\vector(0,-1){25}}
+\put(55,5){\vector(1,0){20}}
+\end{picture}
+\end{displaymath}
+where $g'$ and $h'$ are
+\begin{displaymath}
+\end{displaymath}
+\begin{displaymath}
+\begin{array}{llll}
+\multicolumn{4}{l}{g' \defeq {\rm pair}({\rm curry}(g\circ{\rm pi2}),{\rm
+zero})} \\
+h' \defeq {\rm pair}( & {\rm curry}(h\circ{\rm pair}( & {\rm eval}\circ{\rm
+pair}( & {\rm pi2}, \\
+& & & {\rm pi1}\circ{\rm pi1}), \\
+& & \multicolumn{2}{l}{{\rm pi2}\circ{\rm pi1})),} \\
+& \multicolumn{3}{l}{{\rm succ}\circ{\rm pi2}).} \\
+\end{array}
+\end{displaymath}
+Therefore, $k$ is ${\rm pr}(g',h')$.  Then, $f \defeq {\rm eval}\circ{\rm
+prod}({\rm pi1}\circ k,{\bf I})$.  We can easily show that this is what
+we wanted.
+\end{proposition}
+For example, the morphism `add' corresponding to the addition function
+of natural numbers can be given as
+\begin{displaymath}
+{\rm add} \defeq {\rm eval}\circ{\rm prod}({\rm pr}({\rm curry}({\rm
+pi2}),{\rm curry}({\rm succ}\circ{\rm eval})),{\bf I}).
+\end{displaymath}
+It corresponds to the following usual definition of `add'.
+\begin{displaymath}
+\begin{array}{l}
+{\rm add}(0,y) = y \\
+{\rm add}(x+1,y) = {\rm add}(x,y)+1 \\
+\end{array}
+\end{displaymath}
+Furthermore, we can easily prove categorically that `add' satisfies
+familiar laws like commutativity (categorically ${\rm add} \circ
+{\rm pair}({\rm pi2},{\rm pi1}) = {\rm add}$) and so on.
+
+\subsection{Lists}
+\label{ssec-list}
+
+We have defined the data type of natural numbers in the previous
+subsection.  Another algebraic data type which is often used in
+programming is the data type of lists.  In CDT, the data type of lists
+is defined as follows:
+\begin{displaymath}
+\begin{tabular}{l}
+left object ${\rm list}(X)$ with prl is \\
+$\qquad{\rm nil}: 1 \rightarrow {\rm list}$ \\
+$\qquad{\rm cons}: {\rm prod}(X,{\rm list}) \rightarrow {\rm list}$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+We needed to assume a CSL signature having the terminal object and the
+product functor.  The declaration above defines a one argument covariant
+functor `list', two natural transformations
+\begin{displaymath}
+{\rm nil}: \lambda(X).1 \natrightarrow \lambda(X).{\rm list}(X)
+\quad\mbox{and}\quad
+{\rm cons}: \lambda(X).{\rm prod}(X,{\rm list}(X)) \natrightarrow
+\lambda(X).{\rm list}(X)
+\end{displaymath}
+and a factorizer `prl' (standing for {\it p\/}rimitive {\it r\/}ecursion
+on {\it l\/}ist) whose type is
+\begin{displaymath}
+\logicrule{f: \lambda(Y,X).1 \rightarrow \lambda(Y,X).Y \qquad g:
+\lambda(Y,X).{\rm prod}(X,Y) \rightarrow \lambda(Y,X).Y}{{\rm prl}(f,g):
+\lambda(Y,X).{\rm list}(X) \rightarrow \lambda(Y,X).Y}.
+\end{displaymath}
+As usual, we can express the situation as a diagram.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(100,35)(0,2.5)
+\put(5,35){\makebox(0,0){1}}
+\put(35,35){\makebox(0,0){${\rm list}(A)$}}
+\put(72.5,35){\makebox(0,0){${\rm prod}(A,{\rm list}(A))$}}
+\put(35,5){\makebox(0,0){$B$}}
+\put(72.5,5){\makebox(0,0){${\rm prod}(A,B)$}}
+\put(20,37){\makebox(0,0)[b]{nil}}
+\put(50,37){\makebox(0,0)[b]{cons}}
+\put(20,20){\makebox(0,0)[tr]{$f$}}
+\put(25,25){\makebox(0,0){\commute}}
+\put(37,20){\makebox(0,0)[l]{${\rm prl}(f,g)$}}
+\put(57.5,20){\makebox(0,0){\commute}}
+\put(74.5,20){\makebox(0,0)[l]{${\rm prod}({\bf I},{\rm prl}(f,g))$}}
+\put(50,3){\makebox(0,0)[t]{$g$}}
+\put(7.5,35){\vector(1,0){20}}
+\put(7.5,32.5){\vector(1,-1){25}}
+\put(57.5,35){\vector(-1,0){15}}
+\put(60,5){\vector(-1,0){22.5}}
+\multiput(35,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,12.5){\vector(0,-1){5}}
+\multiput(72.5,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(72.5,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+A global element of ${\rm list}(A)$ is normally constructed from
+`nil' and `cons'.  For example, ${\rm list}({\rm nat})$ has
+\begin{displaymath}
+{\rm cons}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm cons}\circ{\rm
+pair}({\rm succ}\circ{\rm succ}\circ{\rm zero},{\rm nil}))
+\end{displaymath}
+as a global element (in plain words, this element is the list of 1 and
+2).  `nil' and `cons' are usually called constructors of `list'.  We can
+see in general to define an algebraic CDT by listing its constructors.
+Destructors are defined using factorizers.  In the case of `list', `hd'
+({\it h\/}ea{\it d\/}) and `tl' ({\it t\/}ai{\it l\/}) can be defined as
+follows.
+\begin{displaymath}
+\begin{array}{l}
+{\rm hd} \defeq {\rm prl}({\rm in2},{\rm in1}\circ{\rm pi1}) \\
+{\rm tl} \defeq {\rm coprod}({\rm pi2},{\bf I})\circ{\rm prl}({\rm
+in2},{\rm in1}\circ{\rm prod}({\bf I},{\rm case}({\rm cons},{\rm nil}))) \\
+\end{array}
+\end{displaymath}
+Note that we have to define `hd' and `tl' as total functions (in a
+sense).  The type of `hd' is ${\rm list}(A) \rightarrow {\rm
+coprod}(A,1)$ and is not ${\rm list}(A) \rightarrow A$.  The type of
+`tl' is also ${\rm list}(A) \rightarrow {\rm coprod}({\rm list}(A),1)$.
+The type `1' is for error (like $\bot$ in a domain) and, for example,
+${\rm hd} \circ {\rm nil} = {\rm in2}$.
+
+As `list' is a covariant functor, for a morphism $f: A \rightarrow B$ ${\rm
+list}(f): {\rm list}(A) \rightarrow {\rm list}(B)$ transforms a list of
+$A$ elements to a list of $B$ elements by applying $f$ to each element.
+For example, ${\rm list}({\rm succ}): {\rm list}({\rm nat}) \rightarrow
+{\rm list}({\rm nat})$ increments every element in a given list by one.
+In general, we have the following equations:
+\begin{displaymath}
+\begin{array}{l}
+{\rm list}(f) = {\rm prl}({\rm nil},{\rm cons}\circ{\rm prod}(f,{\bf
+I})) \\
+{\rm list}(f)\circ{\rm nil} = {\rm nil} \\
+{\rm list}(f)\circ{\rm cons}\circ{\rm pair}(x,l) = {\rm cons}\circ{\rm
+pair}(f\circ x,{\rm list}(f)\circ l)
+\end{array}
+\end{displaymath}
+`list' corresponds to `{\tt map}' function in ML and `{\tt MAPCAR}' in
+LISP.
+
+\subsection{Final Co-Algebras (Infinite Lists and Co-Natural Number
+Object)}
+\label{ssec-final-coalg}
+
+The objects we defined in the preceding subsections are all familiar
+either in category theory or in programming languages.  Particularly, we
+have seen in subsection~\ref{ssec-NNO} and~\ref{ssec-list} the natural
+number object and the data type of lists, which are typical initial
+algebras.  Recently, several works have been done about final
+coalgebras, which are the dual of initial algebras (see
+\cite{arbib-manes-80}).  From their symmetry of CDT declarations, we can
+easily define final coalgebras in CDT as well as initial algebras.
+
+Let us dualize the declaration of the natural number object defined in
+subsection~\ref{ssec-NNO} by
+\begin{displaymath}
+\begin{tabular}{l}
+left object nat with pr is \\
+$\qquad {\rm zero}: 1 \rightarrow {\rm nat}$\\
+$\qquad {\rm succ}: {\rm nat} \rightarrow {\rm nat}$\\
+end object \\
+\end{tabular}
+\end{displaymath}
+If we simply replace `left' by `right' and change the direction of
+arrows, we get
+\begin{displaymath}
+\begin{tabular}{l}
+right object conat with copr is \\
+$\qquad {\rm cozero}: {\rm nat} \rightarrow 1$\\
+$\qquad {\rm cosucc}: {\rm nat} \rightarrow {\rm nat}$\\
+end object \\
+\end{tabular}
+\end{displaymath}
+Unfortunately, this is not an exciting object.  We can prove that
+`conat' is isomorphic to the terminal object as follows: from the
+uniqueness of terminal objects up to isomorphism in any category, we
+simply need to show that `1' is the terminal $F,G$-dialgebra for these
+particular $F$ and $G$, that is, for any object $A$ and morphisms $f: A
+\rightarrow 1$ and $g: A \rightarrow A$, there exists a unique morphism
+$h: A \rightarrow 1$ such that the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(5,35){\makebox(0,0){$A$}}
+\put(20,37){\makebox(0,0)[b]{$g$}}
+\put(35,35){\makebox(0,0){$A$}}
+\put(3,20){\makebox(0,0)[r]{$h$}}
+\put(20,20){\makebox(0,0){\commute}}
+\put(33,20){\makebox(0,0)[r]{$h$}}
+\put(45,15){\makebox(0,0){\commute}}
+\put(52.5,27.5){\makebox(0,0){$f$}}
+\put(5,5){\makebox(0,0){1}}
+\put(35,5){\makebox(0,0){1}}
+\put(65,5){\makebox(0,0){1}}
+\put(20,3){\makebox(0,0)[t]{cosucc}}
+\put(50,3){\makebox(0,0)[t]{cozero}}
+\put(7.5,35){\vector(1,0){25}}
+\put(7.5,5){\vector(1,0){25}}
+\put(37.5,5){\vector(1,0){25}}
+\put(37.5,32.5){\vector(1,-1){25}}
+\multiput(5,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(5,12.5){\vector(0,-1){5}}
+\multiput(35,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+Indeed, we have this unique morphism $A \rightarrow 1$ because `1' is
+the terminal object and the above diagram trivially commutes.
+
+Although the exact dual of the natural number object is not an
+interesting thing, we can modify it to get a CDT data type of infinite
+lists.
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm inflist}(X)$ with fold is \\
+$\qquad {\rm head}: {\rm inflist} \rightarrow X$ \\
+$\qquad {\rm tail}: {\rm inflist} \rightarrow {\rm inflist}$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+The diagram of explaining `inflist' is
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(90,40)(0,2.5)
+\put(15,35){\makebox(0,0){$B$}}
+\put(55,35){\makebox(0,0){$B$}}
+\put(13,20){\makebox(0,0)[r]{${\rm fold}(f,g)$}}
+\put(53,20){\makebox(0,0)[r]{${\rm fold}(f,g)$}}
+\put(72.5,22.5){\makebox(0,0){$f$}}
+\put(30,20){\makebox(0,0){\commute}}
+\put(65,15){\makebox(0,0){\commute}}
+\put(15,5){\makebox(0,0){${\rm inflist}(A)$}}
+\put(55,5){\makebox(0,0){${\rm inflist}(A)$}}
+\put(85,5){\makebox(0,0){$A$}}
+\put(35,3){\makebox(0,0)[t]{tail}}
+\put(75,3){\makebox(0,0)[t]{head}}
+\put(17.5,35){\vector(1,0){35}}
+\put(25,5){\vector(1,0){20}}
+\put(65,5){\vector(1,0){17.5}}
+\put(57.5,32.5){\vector(1,-1){25}}
+\put(35,37){\makebox(0,0)[b]{$g$}}
+\multiput(15,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(15,12.5){\vector(0,-1){5}}
+\multiput(55,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(55,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+
+Since the functor `inflist' is not so familiar in category theory or in
+conventional programming languages, let us find out what it is in the
+category of sets.  We expect it to be a set of {\it infinite lists} in some
+sense.
+\begin{proposition}
+\label{prop-inflist-set}
+In the category of sets, for a set $A$, ${\rm inflist}(A)$ is the
+following set of $\omega$-infinite sequences of elements in $A$.
+\begin{displaymath}
+\{\; (x_0,x_1,\ldots,x_n,\ldots) \mid x_i \in A \;\}
+\end{displaymath}
+{\bf Proof:} We define `head' and `tail' as follows:
+\begin{displaymath}
+\begin{array}{l}
+{\rm head}((x_0,x_1,\ldots,x_n,\ldots)) \defeq x_0 \\
+{\rm tail}((x_0,x_1,\ldots,x_n,\ldots)) \defeq
+(x_1,x_2,\ldots,x_{n+1},\ldots) \\
+\end{array}
+\end{displaymath}
+Let ${\rm fold}(f,g)(x)$ be a sequence
+$(h_0(x),h_1(x),\ldots,h_n(x),\ldots)$ for functions $f: B \rightarrow
+A$ and $g: B \rightarrow B$.  The commutativity of the diagram above
+forces the following equations.
+\begin{displaymath}
+\begin{array}{l}
+h_0(x) = f(x) \\
+(h_1(x),h_2(x),\ldots,h_{n+1}(x),\ldots) =
+(h_0(x),h_1(x),\ldots,h_n(x),\ldots) \\
+\end{array}
+\end{displaymath}
+Therefore, ${\rm fold}(f,g)(x)$ is uniquely determined as
+\begin{displaymath}
+{\rm fold}(f,g)(x) \defeq (f(x),f(g(x)),\ldots,f(g^n(x)),\ldots)
+\rlap{\qquad \qquad \qed}
+\end{displaymath}
+\end{proposition}
+Hence, at least in the category of sets, ${\rm inflist}(A)$ is really the
+data type of infinite lists of $A$ elements.
+
+More generally,
+\begin{proposition}
+In a cartesian closed category $\cC$ with the natural number object,
+${\rm inflist}(A)$ is isomorphic to ${\rm exp}({\rm nat},A)$. \\
+{\bf Proof:} Let us define $h: {\rm exp}({\rm nat},A) \rightarrow {\rm
+inflist}(A)$ to be the fill-in morphism of the following diagram.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(90,40)(0,2.5)
+\put(10,35){\makebox(0,0){${\rm exp}({\rm nat},A)$}}
+\put(35,37){\makebox(0,0)[b]{${\rm tail}'$}}
+\put(60,35){\makebox(0,0){${\rm exp}({\rm nat},A)$}}
+\put(8,20){\makebox(0,0)[r]{$h$}}
+\put(35,20){\makebox(0,0){\commute}}
+\put(58,20){\makebox(0,0)[r]{$h$}}
+\put(77,22){\makebox(0,0)[bl]{${\rm head}'$}}
+\put(70,15){\makebox(0,0){\commute}}
+\put(10,5){\makebox(0,0){${\rm inflist}(A)$}}
+\put(35,3){\makebox(0,0)[t]{tail}}
+\put(60,5){\makebox(0,0){${\rm inflist}(A)$}}
+\put(77.5,3){\makebox(0,0)[t]{head}}
+\put(90,5){\makebox(0,0){$A$}}
+\put(22.5,35){\vector(1,0){25}}
+\put(20,5){\vector(1,0){30}}
+\put(70,5){\vector(1,0){17.5}}
+\put(62.5,32.5){\vector(1,-1){25}}
+\multiput(10,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(10,12.5){\vector(0,-1){5}}
+\multiput(60,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(60,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+where `${\rm head}'$' and `${\rm tail}'$' are
+\begin{displaymath}
+\begin{array}{l}
+{\rm head}' \defeq {\rm eval}\circ{\rm pair}({\bf I},{\rm zero}\circ{\rm
+!}), \\
+{\rm tail}' \defeq {\rm curry}({\rm eval}\circ{\rm prod}({\bf I},{\rm
+succ})). \\
+\end{array}
+\end{displaymath}
+We define $h': {\rm inflist}(A) \rightarrow {\rm exp}({\rm nat},A)$ to
+be
+\begin{displaymath}
+h' \defeq {\rm curry}({\rm eval}\circ{\rm pair}({\rm pr}({\rm
+curry}({\rm head}\circ{\rm pi2}),{\rm exp}({\rm tail},{\bf I}))\circ{\rm
+pi2},{\rm pi1})).
+\end{displaymath}
+After some calculation, we can show that $h\circ h' = {\bf I}$ and
+$h'\circ h = {\bf I}$, so ${\rm inflist}(A)$ is isomorphic to ${\rm
+exp}({\rm nat},A)$.
+\end{proposition}
+This proposition tells us that
+\begin{displaymath}
+{\rm inflist}(A) \iso A\times A\times\cdots\times A\times\cdots \iso
+\prod_{i=1}^{\infty} A.
+\end{displaymath}
+Indeed, this is the dual of $\sum_{i=1}^{\infty} A$, the special case of
+which is the natural number object, ${\rm nat} \iso \sum_{i=1}^{\infty}
+1$.
+
+We started this subsection by considering the dual of the natural number
+object.  It led us to the CDT data type of infinite lists.  We still
+have a different question whether there is a final coalgebra which
+resembles a data type of natural numbers.  The answer is yes.  The
+following right object defines a CDT data type of natural numbers plus
+alpha.
+\begin{displaymath}
+\begin{tabular}{l}
+right object conat with copr is \\
+$\qquad {\rm pred}: {\rm conat} \rightarrow {\rm coprod}(1,{\rm conat})$
+\\
+end object \\
+\end{tabular}
+\end{displaymath}
+The situation can be written as a diagram
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(110,40)(0,2.5)
+\put(20,35){\makebox(0,0){$A$}}
+\put(40,37){\makebox(0,0)[b]{$f$}}
+\put(70,35){\makebox(0,0){${\rm coprod}(1,A)$}}
+\put(18,20){\makebox(0,0)[r]{${\rm copr}(f)$}}
+\put(45,20){\makebox(0,0){\commute}}
+\put(72,20){\makebox(0,0)[l]{${\rm coprod}(1,{\rm copr}(f))$}}
+\put(20,5){\makebox(0,0){conat}}
+\put(40,3){\makebox(0,0)[t]{pred}}
+\put(70,5){\makebox(0,0){${\rm coprod}(1,{\rm conat})$}}
+\put(22.5,35){\vector(1,0){35}}
+\put(27.5,5){\vector(1,0){25}}
+\multiput(20,32.5)(0,-5){4}{\line(0,-1){5}}
+\put(20,12.5){\vector(0,-1){5}}
+\multiput(70,32.5)(0,-5){4}{\line(0,-1){5}}
+\put(70,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+The natural transformation `pred' is the predecessor function and there
+is a morphism from `nat' to `conat' given by
+\begin{displaymath}
+{\rm copr}({\rm pr}({\rm in1},{\rm in2}\circ{\rm case}({\rm zero},{\rm
+succ})))
+\end{displaymath}
+which we expect to be injective, but so far the author has been able
+neither to prove it nor to give a counter example.  Note that there is
+always a morphism from the left object to its corresponding right
+object.  `Conat' has an interesting extra element, namely the infinity
+($\infty$).  The ground element to denote it is
+\begin{displaymath}
+{\rm infinity} \defeq {\rm copr}({\rm in2})
+\end{displaymath}
+It is easy to prove that the predecessor of the infinity is itself (i.e.
+${\rm pred}\circ{\rm infinity} = {\rm in2}\circ{\rm infinity}$).
+
+In the category of sets, `conat' is really the set of natural numbers
+and the infinity.
+\begin{proposition}
+In {\bf Set}, `conat' is `${\rm nat} \cup \{\; \infty \;\}$'. \\
+{\bf Proof:} The predecessor function is defined as usual.  Roughly
+speaking, for any function $f : A \rightarrow {\rm coprod}(1,A)$, ${\rm
+copr}(f)(x)$ is the number of applications of $f$ to $x$ to get the
+element of 1
+\begin{displaymath}
+{\rm copr}(f)(x) = n \qquad\mbox{where}\quad f^n(x) \in 1,
+\end{displaymath}
+and, if it never results in the element of 1, ${\rm copr}(f)(x) =
+\infty$.  We can easily show that this is the unique function which makes
+the `conat' diagram commute.
+\end{proposition}
+Therefore, in the category of sets, `conat' is isomorphic to `nat', but
+this is not the case for all the categories.  There are some categories
+where `conat' and `nat' are not isomorphic.
+\begin{proposition}
+In category {\bf TRF} of subsets of natural numbers as objects and total
+recursive functions as morphisms, there exists the natural number object
+but does not exist the co-natural number object. \\ {\bf Proof:} {\bf
+TRF}'s terminal object, initial object, product functor and coproduct
+functor are all the same as those of {\bf Set}.  For example, injections
+`in1' and `in2' for ${\rm coprod}(A,B)$ are trivially total and
+recursive, and for any two total recursive functions $f: A \rightarrow
+C$ and $g: B \rightarrow C$ ${\rm case}(f,g)$ is also total recursive
+function.  We can write it down as a kind of program.
+\begin{displaymath}
+\setlength{\tabcolsep}{0pt}
+\begin{tabular}{rl}
+${\rm case}(f,g)(x) \defeq {}$ & if $x \in A$ then $f(x)$ \\
+& else $g(x)$ \\
+\end{tabular}
+\end{displaymath}
+The natural number object `nat' in {\bf TRF} is also the ordinary set of
+natural numbers.  `Zero' and `succ' are total recursive functions from
+the very definition of recursive functions and for $f: 1 \rightarrow A$
+and $g: A \rightarrow A$ of total recursive functions, ${\rm pr}(f,g)$
+can be written as the following program.
+\begin{displaymath}
+\setlength{\tabcolsep}{0pt}
+\begin{tabular}{rl}
+${\rm pr}(f,g)(n) \defeq {}$ & if $n=0$ then $f()$ \\
+& else $g({\rm pr}(f,g)(n-1))$ \\
+\end{tabular}
+\end{displaymath}
+which defines a total recursive function.
+
+However, we cannot have the co-natural number object in {\bf TRF}.  The
+program of ${\rm copr}(f)$ for a total recursive function $f: A \rightarrow
+{\rm coprod}(1,A)$ can only be
+\begin{displaymath}
+\setlength{\tabcolsep}{0pt}
+\begin{tabular}{rl}
+${\rm copr}(f)(x) \defeq {}$ & if $f(x) \in 1$ then 0 \\
+& else ${\rm copr}(f)(f(x))+1$ \\
+\end{tabular}
+\end{displaymath}
+which is recursive but not total.
+\end{proposition}
+There is also a category which has both `nat' and `conat' and in which
+they are non-isomorphic.  We will show this in chapter~\ref{ch-cpl}.
+
+From the point of view of finding fixed points of functors, `nat' is
+the initial fixed point of $F(X) \defeq 1+X$ and `conat' is the final
+fixed point of the same functor.
+
+\subsection{Automata}
+\label{ssec-automata}
+
+The declarations of initial algebras and final coalgebras do not use the
+full power of the CDT declaration mechanism.  Their unit and counit
+natural transformations always have the form
+\begin{displaymath}
+\alpha: E \rightarrow F
+\end{displaymath}
+for initial algebras and have the form
+\begin{displaymath}
+\alpha: F \rightarrow E
+\end{displaymath}
+for final coalgebras, where $E$ is any functorial expression but F is a
+variable (more specially, the variable which denotes the object we
+declare).  Therefore, all we are doing is just listing constructors for
+initial algebras and listing destructors for final coalgebras.  We will
+see what kinds of form define sensible functors in
+section~\ref{sec-exist-left-right}.  So far, the only exception was the
+exponentials.  We will see another example in this subsection.
+
+One of the interesting applications of category theory to computer
+science is to automata theory.  \cite{arbib-manes-75} presents the
+category ${\bf Dyn}(I)$ of $I$-dynamics whose object is
+\begin{displaymath}
+\ardiagram{Q \times I}{\delta}{Q,}
+\end{displaymath}
+where $Q$ is the set of states, $I$ is the set of inputs and $\delta$ is
+a {\it dynamics} which is a function determining the next state of the
+automaton according to the current state and input.
+
+From this, we can construct a categorical data type of automata.
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm dyn}(I)$ with univ is \\
+$\qquad {\rm next}: {\rm prod}({\rm dyn},I) \rightarrow {\rm dyn}$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+Note that our ${\rm dyn}(I)$ for an object $I$ is just an object; it is not a
+category like ${\bf Dyn}(I)$ is.  The diagram which explains this right
+object is
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(20,35){\makebox(0,0){${\rm prod}(Q,I)$}}
+\put(42.5,37){\makebox(0,0)[b]{$\delta$}}
+\put(60,35){\makebox(0,0){$Q$}}
+\put(18,20){\makebox(0,0)[r]{${\rm prod}({\rm univ}(\delta),I)$}}
+\put(42.5,20){\makebox(0,0){\commute}}
+\put(62,20){\makebox(0,0)[l]{${\rm univ}(\delta)$}}
+\put(20,5){\makebox(0,0){${\rm prod}({\rm dyn}(I),I)$}}
+\put(42.5,3){\makebox(0,0)[t]{next}}
+\put(60,5){\makebox(0,0){dyn}}
+\put(30,35){\vector(1,0){27.5}}
+\put(32.5,5){\vector(1,0){22.5}}
+\multiput(20,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(20,12.5){\vector(0,-1){5}}
+\multiput(60,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(60,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+For any dynamics $\delta: {\rm prod}(Q,I) \rightarrow Q$ and an
+initial state $q_0: 1 \rightarrow Q$, we get an automaton
+\begin{displaymath}
+\ardiagram{\rm 1}{{\rm univ}(\delta)\circ q_0}{{\rm dyn}(I)}
+\end{displaymath}
+as a global element of ${\rm dyn}(I)$.  Though we can put this
+automaton into the next state by applying `next', we are never ever able
+to see its behaviour from the outside.  Moreover, because of this
+non-observability, we can easily prove that ${\rm dyn}(I)$ is in fact
+isomorphic to the terminal object.  In order to make `dyn' a more
+sensible object, we need to add an output function.  The new categorical data
+type of automata is\footnote{The original definition we used was
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm dyn}'(I,O)$ with ${\rm univ}'$ is \\
+$\qquad{\rm next}': {\rm prod}({\rm dyn}',I) \rightarrow
+{\rm prod}({\rm dyn}',O)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+which gave us the categorical data type of Mealy automata.
+The current definition gives us the data type of Moore automata.}
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm dyn}'(I,O)$ with ${\rm univ}'$ is \\
+$\qquad {\rm next}': {\rm prod}({\rm dyn}',I) \rightarrow {\rm dyn}'$ \\
+$\qquad {\rm output}': {\rm dyn}' \rightarrow O$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+For any dynamics $\delta: {\rm prod}(Q,I) \rightarrow Q$, any
+output function $\beta: Q \rightarrow O$ and an initial state
+$q_0: 1 \rightarrow Q$, we have a global element in ${\rm dyn}'(I,O)$
+\begin{displaymath}
+\ardiagram{1}{{\rm univ}'(\delta,\beta)\circ q_0}{{\rm dyn}'(I,O).}
+\end{displaymath}
+We can obtain its next state by applying `${\rm next}'$' and its output
+by `$\rm{output}'$'.  In addition, the following proposition holds.
+\begin{proposition}
+In a cartesian closed category, the categorical data type of Moore automata,
+${\rm dyn}'(I,O)$, is isomorphic to ${\rm exp}({\rm list}(I),O)$. \\
+{\bf Proof:} By defining two morphisms between them and proving
+that they form an isomorphism.
+\end{proposition}
+
+\subsection{Obscure Categorical Data Types}
+\label{ssec-obscure}
+
+We have defined more or less familiar data types as categorical data
+types in the preceding subsections.  One might ask whether CDT can
+define any data types which are unable to be defined in other languages
+or methods.  The data type of automata is such an example and we can
+invent similar examples more, but still they are familiar (or we are
+just trying to express our familiar data types in CDT).  In fact, CDT
+allows us very obscure data types, some of which may not be
+conceptualized in the human brain (at least not in the author's brain).
+
+From the prime requirement of CDT, it can define right and left adjoint
+functors of any existing functors, and in subsection~\ref{ssec-list}, we
+defined `list' as a covariant functor, so that we can declare its left
+and right adjoint functors in CDT as follows.
+\begin{displaymath}
+\begin{tabular}{l}
+left object ${\rm ladjlist}(X)$ with $\psi$ is \\
+$\qquad \alpha: X \rightarrow {\rm list}({\rm ladjlist})$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm radjlist}(X)$ with $\psi'$ is \\
+$\qquad \alpha': {\rm list}({\rm radjlist}) \rightarrow X$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+Some questions arise immediately after defining these data types: are
+they familiar data types, and are they in any way useful?  The answers
+to the both questions are unfortunately negative.  For the left adjoint,
+\begin{proposition}
+In a cartesian closed category, `${\rm ladjlist}(A)$' for any object $A$
+is isomorphic to the initial object. \\
+{\bf Proof:} It is easy to show that the initial object makes the
+characteristic diagram of `ladjlist' commute.  Note that in a cartesian
+closed category `${\rm list}(0)$' is isomorphic to the terminal object so
+that the unit morphism of `ladjlist' is the unique morphism to the
+terminal object.
+\end{proposition}
+
+The right adjoint functor is more harmful than the left one.
+\begin{proposition}
+A cartesian closed category with `radjlist' degenerates (i.e.\ all the
+objects are isomorphic). \\
+{\bf Proof:} We have the following morphism from the initial object.
+\begin{displaymath}
+1 \rubberrightarrow{{\rm nil}} {\rm list}({\rm radjlist}(0))
+\rubberrightarrow{\alpha'} 0
+\end{displaymath}
+Then, it is easy to show that the terminal object is isomorphic to the
+initial one.  This further implies that any object in the category is
+isomorphic to the initial object.
+\begin{displaymath}
+A \iso {\rm prod}(A,1) \iso {\rm prod}(A,0) \iso 0 \rlap{\qquad \qquad \qed}
+\end{displaymath}
+\end{proposition}
+
+Most of the left and right adjoint functors of conventional data types
+follow the same pattern as `list', that is, they are either trivial or
+destructive, so they are useless.
+
+Hence, a natural question to ask ourselves is that what kind of
+categorical data types are useful.  But what is the formal criteria of
+{\it useful} data types?  We have not yet defined this.  We will come
+back to this in chapter~\ref{ch-cpl} and see it from a point of view of
+computability of categorical data types.
+
+\section{Semantics of Categorical Data Types}
+\label{sec-CDT-as-CSL}
+
+In definition~\ref{def-CDT-CSL}, we associated a CDT declaration to a CSL
+signature extension (an injective morphism in {\bf CSig}).  In this
+section, we will see it as a CSL theory extension and give the precise
+semantics of CDT declarations.
+
+First, from our informal intention of CDT declarations we have to figure
+out the CSL statements which characterize them.  A CDT
+declaration
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X_1,\ldots,X_n)$ with $\psi$ is \\
+$\qquad \alpha_1: E_1 \rightarrow E'_1$ \\
+$\qquad\qquad \cdots$ \\
+$\qquad \alpha_m: E_m \rightarrow E'_m$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+is the syntactic form of defining the functor $L = {\bf Left}[\vec
+F,\vec G]$, where $\vec F$ and $\vec G$ are corresponding functors for
+$E_1,\ldots,E_m$ and $E'_1,\ldots,E'_m$, respectively.  $\pair{L(\vec
+A),\vec \alpha}$ is the initial object of ${\bf DAlg}(\vec F,\vec G)$
+and $\psi$ is its mediating morphism, that is, for any morphisms $\vec
+f: \vec F(B,\vec A) \rightarrow \vec G(B,\vec A)$, $\psi(\vec f)$ gives
+a unique morphism from $L(\vec A)$ to $B$ such that the following
+diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(95,40)(0,2.5)
+\put(10,35){\makebox(0,0){$\vec F(L(\vec A),\vec A)$}}
+\put(32.5,37){\makebox(0,0)[b]{$\vec\alpha_{\vec A}$}}
+\put(55,35){\makebox(0,0){$\vec G(L(\vec A),\vec A)$}}
+\put(90,35){\makebox(0,0){$L(\vec A)$}}
+\put(8,20){\makebox(0,0)[r]{$\vec F(\psi(\vec f),\vec A)$}}
+\put(32.5,20){\makebox(0,0){\commute}}
+\put(57,20){\makebox(0,0)[l]{$\vec G(\psi(\vec f),\vec A)$}}
+\put(92,20){\makebox(0,0)[l]{$\psi(\vec f)$}}
+\put(10,5){\makebox(0,0){$\vec F(B,\vec A)$}}
+\put(32.5,3){\makebox(0,0)[t]{$\vec f$}}
+\put(55,5){\makebox(0,0){$\vec G(B,\vec A)$}}
+\put(90,5){\makebox(0,0){$B$}}
+\put(22.5,35){\vector(1,0){20}}
+\put(17.5,5){\vector(1,0){30}}
+\multiput(10,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(10,12.5){\vector(0,-1){5}}
+\multiput(55,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(55,12.5){\vector(0,-1){5}}
+\multiput(90,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(90,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+The commutativity of this diagram can be expressed as the following equation:
+\begin{displaymath}
+\vec G(\psi(\vec f),\vec A) \circ \vec\alpha = \vec f \circ \vec
+F(\psi(\vec f),\vec A),
+\eqno(*)
+\end{displaymath}
+and the uniqueness can be expressed as the following conditional equation:
+\begin{displaymath}
+\vec G(h,\vec A) \circ \vec\alpha = \vec f \circ \vec
+F(h,\vec A) \implies h = \psi(\vec f)
+\eqno(**)
+\end{displaymath}
+The two equations say everything about $L$, $\vec \alpha$ and $\psi$.
+Let us now translate them to CSL statements in $\pair{\Gamma\cup\{L\},
+\Delta\cup\{\alpha_1,\ldots,\alpha_m\},
+\Psi\cup\{\psi\}}$ so as to give complete description of the CDT declaration
+above in CSL.  $(*)$ corresponds to the following $m$ CSL equations:
+\begin{displaymath}
+E'_i[\psi(f_1,\ldots,f_m)/L] \circ \alpha_i = f_i \circ
+E_i[\psi(f_1,\ldots,f_m)/L]\footnote{$E_i[\psi(f_1,\ldots,f_m)/L]$ means
+replacing the variable $L$ by $\psi(f_1,\ldots,f_m)$ and replacing the
+other variables $X_1,\ldots,X_n$ by the identities, that is it is a
+shorthand for
+\begin{displaymath}
+E_i[\psi(f_1,\ldots,f_m)/L,{\bf I}/X_1,\ldots,{\bf I}/X_n].
+\end{displaymath}
+}
+\eqno ({\rm LEQ}_i) 
+\end{displaymath}
+($i=1,\ldots,m$) and $(**)$ corresponds to the following conditional CSL
+equation.
+\begin{displaymath}
+\displaylines{
+\qquad E'_1[g/L] \circ \alpha_1 = f_1 \circ E_1[g/L] \land \ldots {} \hfill \cr
+\hfill {} \land E'_m[g/L] \circ \alpha_m = f_m \circ E_m[g/L] \implies
+g = \psi(f_1,\ldots,f_m) \quad ({\rm LCEQ}) \cr}
+\end{displaymath}
+
+In addition, we should have a CSL equation expressing functors by
+factorizers and natural transformations.  We can extract such an equation
+from proposition~\ref{prop-Right-Left}.
+\begin{displaymath}
+\displaylines{
+\qquad L(h_1,\ldots,h_n) = {} \hfill \cr
+\hfill \psi(E'_1[h_i/X_i]\circ \alpha_1\circ
+E_1[h_i/X_i],\ldots,E'_m[h_i/X_i]\circ \alpha_m\circ
+E_m[h_i/X_i])\footnotemark
+\quad ({\rm LFEQ}) \cr}
+\end{displaymath}
+\footnotetext{$E_1[h_i/X_i]$ is a shorthand for $E_1[{\bf
+I}/L,h_1/X_1,\ldots,h_n/X_n]$.}
+
+Therefore, the semantics of CDT declaration can be given as a CSL theory
+extension as follows.
+\begin{definition}
+\label{def-CDT-sem-eq}
+Given a CSL theory $\pair{\Gamma,\Delta,\Psi,\Theta}$, a CDT declaration
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X_1,\ldots,X_n)$ with $\psi$ is \\
+$\qquad \alpha_1: E_1 \rightarrow E'_1$ \\
+$\qquad\qquad \cdots$ \\
+$\qquad \alpha_m: E_m \rightarrow E'_m$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+where $E_i$ and $E'_i$ ($i=1,\ldots,m$) are CSL functorial expressions
+over $\pair{\Gamma,\Delta,\Psi}$ whose variables are $X_1,\ldots,X_n$
+and $L$, is associated with a CSL theory morphism
+\begin{displaymath}
+\displaylines{
+\qquad \sigma_L: \pair{\Gamma,\Delta,\Psi,\Theta} \rightarrow
+\langle \Gamma\cup\{L\}, \Delta\cup\{\alpha_1,\ldots,\alpha_m\},
+\Psi\cup\{\psi\}, \hfill \cr
+\hfill \Theta\cup\{{\rm LEQ}_1,\ldots,{\rm LEQ}_m,{\rm LCEQ},{\rm
+LFEQ}\} \rangle \qquad \cr}
+\end{displaymath}
+where the types of $L$, $\alpha_1,\ldots,\alpha_m$ and $\psi$ are as
+given in definition~\ref{def-CDT-CSL}.  Dually, we can associate to a
+right object $R$
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X_1,\ldots,X_n)$ with $\psi$ is \\
+$\qquad \alpha_1: E_1 \rightarrow E'_1$ \\
+$\qquad\qquad \cdots$ \\
+$\qquad \alpha_m: E_m \rightarrow E'_m$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+a CSL theory morphism $\sigma_R$.
+\begin{displaymath}
+\displaylines{
+\qquad \sigma_R: \pair{\Gamma,\Delta,\Psi,\Theta} \rightarrow
+\langle \Gamma\cup\{R\}, \Delta\cup\{\alpha_1,\ldots,\alpha_m\},
+\Psi\cup\{\psi\}, \hfill \cr
+\hfill \Theta\cup\{{\rm REQ}_1,\ldots,{\rm REQ}_m,{\rm RCEQ},{\rm
+RFEQ}\} \rangle \qquad \cr}
+\end{displaymath}
+where ${\rm REQ}_i$, ${\rm RCEQ}$ and ${\rm RFEQ}$ are
+\begin{displaymath}
+\alpha_i \circ E_i[\psi(f_1,\ldots,f_m)/R] =
+E'_i[\psi(f_1,\ldots,f_m)/R] \circ f_i \eqno({\rm REQ}_i)
+\end{displaymath}
+\begin{displaymath}
+\displaylines{
+\qquad \alpha_1 \circ E_1[g/R] = E'_1[g/R] \circ f_1 \land \ldots {}
+\hfill \cr
+\hfill {} \land 
+\alpha_m \circ E_m[g/R] = E'_m[g/R] \circ f_m \implies g =
+\psi(f_1,\ldots,f_m) \quad ({\rm RCEQ}) \cr}
+\end{displaymath}
+\begin{displaymath}
+\displaylines{
+\qquad R(h_1,\ldots,h_n) = \hfill \cr
+\hfill \psi(E'_1[h_1/X_i]\circ \alpha_1\circ
+E_1[h_i/X_i],\ldots,E'_m[h_i/X_i]\circ \alpha_m \circ E_m[h_i/X_i])
+\quad ({\rm RFEQ}) \cr}
+\end{displaymath}
+\end{definition}
+
+\begin{example}
+Let $\pair{\Gamma,\Delta,\Psi,\Theta}$ be the CSL theory of cartesian
+closed categories (see examples~\ref{ex-ccc-sig} and~\ref{ex-ccc-th}).
+On top of this, as we have seen in section~\ref{ssec-NNO}, we can define
+a natural number object by
+\begin{displaymath}
+\begin{tabular}{l}
+left object nat with pr is \\
+$\qquad {\rm zero}: 1 \rightarrow {\rm nat}$\\
+$\qquad {\rm succ}: {\rm nat} \rightarrow {\rm nat}$\\
+end object. \\
+\end{tabular}
+\end{displaymath}
+The CSL statements characterizing this object are
+\begin{displaymath}
+\displaylines{
+\qquad {\rm pr}(f,g)\circ {\rm zero} = f \hfill ({\rm LEQ}_{{\rm
+nat},1}) \cr
+\qquad {\rm pr}(f,g)\circ {\rm succ} = g\circ {\rm pr}(f,g) \hfill ({\rm
+LEQ}_{{\rm nat},2}) \cr
+\qquad h \circ {\rm zero} = f \land h \circ {\rm succ} = g \circ h \implies h = {\rm
+pr}(f,g) \hfill ({\rm LCEQ}_{\rm nat}) \cr}
+\end{displaymath}
+The CSL extension $\sigma_{\rm nat}$ associated with the declaration
+above is:
+\begin{displaymath}
+\displaylines{
+\qquad \pair{\Gamma,\Delta,\Psi} \rubberrightarrow{\sigma_{\rm nat}}
+\langle \Gamma\cup\{{\rm nat}\}, \Delta\cup\{{\rm zero},{\rm succ}\},
+\Psi\cup\{{\rm pr}\}, \hfill \cr
+\hfill \Theta\cup\{{\rm LEQ}_{{\rm nat},1},{\rm LEQ}_{{\rm nat},2},{\rm
+LCEQ}_{\rm nat}\} \rangle \qed \qquad \cr}
+\end{displaymath}
+\end{example}
+
+Thus, each CDT declaration can be associated with a CSL theory
+extension.  This can be thought as a semantics of CDT declarations.
+However, it is sometimes convenient to regard their semantics to be real
+categories.
+\begin{definition}
+\label{def-seq-CDT-decl}
+A sequence of CDT declarations $D_1,\ldots,D_l$ defines a sequence of
+CSL theory extensions starting from the empty CSL theory.
+\begin{displaymath}
+\pair{\emptyset,\emptyset,\emptyset,\emptyset}
+\rubberrightarrow{\sigma_{D_1}} \pair{\Gamma_1,\Delta_1,\Psi_1,\Theta_1}
+\rubberrightarrow{\sigma_{D_2}} \cdots \rubberrightarrow{\sigma_{D_l}}
+\pair{\Gamma_l,\Delta_l,\Psi_l,\Theta_l}
+\end{displaymath}
+We define a CSL structure of the CDT declaration sequence
+$D_1,\ldots,D_l$ to be a category which is a CSL theory structure of
+$\pair{\Gamma_l,\Delta_l,\Psi_l,\Theta_l}$, and the free structure of
+$D_1,\ldots,D_l$ to be the free category of this CSL theory (see
+section~\ref{sec-free-cat}).
+\end{definition}
+If we do not rely on any ways of defining functors other than CDT
+declarations and if we do not accept any pre-defined functors, it is
+inevitable to start with the empty CSL theory.  We have defined cartesian
+closed categories as a CSL theory in examples~\ref{ex-ccc-sig}
+and~\ref{ex-ccc-th}, but we can do so in CDT starting from the empty
+theory by just declaring the terminal object (see
+subsection~\ref{ssec-terminal-initial}), products (see
+subsection~\ref{ssec-product-coproduct}) and exponentials (see
+subsection~\ref{ssec-exponential}).  The advantage of the latter is that
+we neither need to think about equations nor need to do tedious typing of
+functors, natural transformations or factorizers.  These things come out
+automatically, so it is easy to define categories and there is less
+chance to make mistakes.
+
+We have introduced CDT declarations from {\bf Left} and {\bf Right}, but
+we could not connect them formally.  Now, after having models of CDT as
+categories, we can do so.
+\begin{proposition}
+Let $\pair{\cC,\xi}$ be a CSL structure of a CDT declaration sequence
+$D_1$, \ldots, $D_l$.  If $D_i$ is
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X_1,\ldots,X_n)$ with $\psi$ is \\
+$\qquad \alpha_1: E_1 \rightarrow E'_1$ \\
+$\qquad\qquad \cdots$ \\
+$\qquad \alpha_m: E_m \rightarrow E'_m$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+then $\xi L = {\bf Left}(\vec F,\vec G)$ where
+\begin{displaymath}
+\begin{array}{l}
+\vec F \defeq \pair{\xi \lambda (L,X_1,\ldots ,X_n).E_1,\ldots
+,\xi \lambda (L,X_1,\ldots,X_n).E_m} \\
+\vec G \defeq \pair{\lambda (L,X_1,\ldots ,X_n).E'_1,\ldots
+,\lambda (L,X_1,\ldots,X_n).E'_m}. \\
+\end{array}
+\end{displaymath}
+The similar thing holds for right CDT declarations. \\
+{\bf Proof:} Trivial, because we set the CSL statements so that this
+proposition holds.
+\end{proposition}
+
+Finally, in this section, let us summarize the objects we have defined
+in this chapter and their characteristic CSL statements in
+figure~\ref{fig-objects-eqns}.
+\begin{figure}
+\scriptsize
+\begin{center}
+\begin{tabular}{|r|l|l|}
+\hline
+\multicolumn{1}{|c|}{Name} &
+\multicolumn{1}{c|}{CDT Declaration} &
+\multicolumn{1}{c|}{CSL Statements} \\
+\hline
+Terminal &
+\begin{tabular}[t]{l}
+right object 1 with ! \\
+end object \\
+\end{tabular} &
+$f = {\rm !}$ \\
+\hline
+Initial &
+\begin{tabular}[t]{l}
+left object 0 with !! \\
+end object \\
+\end{tabular} &
+$f = {\rm !!}$ \\
+\hline
+Products &
+\begin{tabular}[t]{l}
+right object ${\rm prod}(X,Y)$ with pair is \\
+$\qquad {\rm pi1}: {\rm prod} \rightarrow X$ \\
+$\qquad {\rm pi2}: {\rm prod} \rightarrow Y$ \\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm pi1} \circ {\rm pair}(f,g) = f \\
+{\rm pi2} \circ {\rm pair}(f,g) = g \\
+h = {\rm pair}({\rm pi1}\circ h,{\rm pi2}\circ h) \\
+{\rm prod}(f,g) = {\rm pair}(f\circ {\rm pi1},g\circ {\rm pi2}) \\
+\end{array} \\
+\hline
+Coproducts &
+\begin{tabular}[t]{l}
+left object ${\rm coprod}(X,Y)$ with case is \\
+$\qquad {\rm in1}: X \rightarrow {\rm coprod}$ \\
+$\qquad {\rm in2}: Y \rightarrow {\rm coprod}$ \\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm case}(f,g)\circ {\rm in1} = f \\
+{\rm case}(f,g)\circ {\rm in2} = g \\
+h = {\rm case}(h\circ {\rm in1}, h\circ {\rm in2})\\
+{\rm coprod}(f,g) = {\rm case}({\rm in1}\circ f,{\rm in2}\circ g) \\
+\end{array} \\
+\hline
+Exponentials &
+\begin{tabular}[t]{l}
+right object ${\rm exp}(X,Y)$ with curry is \\
+$\qquad {\rm eval}: {\rm prod}({\rm exp},X) \rightarrow Y$ \\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm eval}\circ {\rm prod}({\rm curry}(f),{\bf I}) = f \\
+h = {\rm curry}({\rm eval}\circ {\rm prod}(h,{\bf I})) \\
+{\rm exp}(f,g) = {\rm curry}(g\circ {\rm eval} \circ {\rm prod}({\bf
+I},f)) \\
+\end{array} \\
+\hline
+NNO &
+\begin{tabular}[t]{l}
+left object nat with pr is \\
+$\qquad {\rm zero}: 1 \rightarrow {\rm nat}$\\
+$\qquad {\rm succ}: {\rm nat} \rightarrow {\rm nat}$\\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm pr}(f,g)\circ {\rm zero} = f \\
+{\rm pr}(f,g)\circ {\rm succ} = g\circ {\rm pr}(f,g) \\
+h\circ {\rm succ} = g\circ h \implies h = {\rm pr}(h\circ {\rm zero},g) \\
+\end{array} \\
+\hline
+Lists & 
+\begin{tabular}[t]{l}
+left object ${\rm list}(X)$ with prl is \\
+$\qquad{\rm nil}: 1 \rightarrow {\rm list}$ \\
+$\qquad{\rm cons}: {\rm prod}(X,{\rm list}) \rightarrow {\rm list}$ \\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm prl}(f,g)\circ {\rm nil} = f \\
+{\rm prl}(f,g)\circ {\rm cons} = {\rm prod}({\bf I},{\rm prl}(f,g))\circ
+g \\
+h\circ {\rm cons} = {\rm prod}({\bf I},h)\circ g \implies \\
+\qquad h = {\rm prl}(h\circ {\rm nil},g) \\
+{\rm list}(f) = {\rm prl}({\rm nil},{\rm cons}\circ {\rm prod}(f,{\bf
+I})) \\
+\end{array} \\
+\hline
+Infinite Lists &
+\begin{tabular}[t]{l}
+right object ${\rm inflist}(X)$ with fold is \\
+$\qquad {\rm head}: {\rm inflist} \rightarrow X$ \\
+$\qquad {\rm tail}: {\rm inflist} \rightarrow {\rm inflist}$ \\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm head}\circ {\rm fold}(f,g) = f \\
+{\rm tail}\circ {\rm fold}(f,g) = {\rm fold}(f,g)\circ g \\
+{\rm tail}\circ h = g\circ h \implies h = {\rm fold}({\rm head}\circ h,g)
+\\
+{\rm inflist}(f) = {\rm fold}(f\circ{\rm head},{\rm tail}) \\
+\end{array} \\
+\hline
+Co-NNO &
+\begin{tabular}[t]{l}
+right object conat with copr is \\
+$\qquad {\rm pred}: {\rm conat} \rightarrow {\rm coprod}(1,{\rm conat})$
+\\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm pred}\circ {\rm copr}(f) = {\rm coprod}({\bf I},{\rm
+copr}(f))\circ f \\
+h\circ {\rm pred} = f\circ {\rm coprod}({\bf I},h) \implies \\
+\qquad h = {\rm copr}(f) \\
+\end{array} \\
+\hline
+Automata &
+\begin{tabular}[t]{l}
+right object ${\rm dyn}'(I,O)$ with ${\rm univ}'$ is \\
+$\qquad {\rm next}': {\rm prod}({\rm dyn}',I) \rightarrow {\rm dyn}'$ \\
+$\qquad {\rm output}': {\rm dyn}' \rightarrow O$ \\
+end object \\
+\end{tabular} &
+\begin{array}[t]{l}
+{\rm next}'\circ {\rm prod}({\rm univ}'(f,g),{\bf I}) = {\rm
+univ}'(f,g)\circ f \\
+{\rm output}'\circ {\rm univ}'(f,g) = g \\
+{\rm next}'\circ {\rm prod}(h,{\bf I}) = h\circ f \implies \\
+\qquad h = {\rm univ}'(f,{\rm output}'\circ h) \\
+\end{array} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{CDT Objects}\label{fig-objects-eqns}
+\end{figure}
+
+\section{Existence of {\bf Left} and {\bf Right}}
+\label{sec-exist-left-right}
+
+In section~\ref{sec-what-cdt}, we have introduced functors ${\bf
+Left}[F,G]$ and ${\bf Right}[F,G]$ with the condition which
+characterizes them, but we did not consider whether such functors exist
+or not.  In this section, we study them mathematically and
+present a condition of the existence.
+
+Let us recall the standard construction of initial $T$-algebras (see,
+for example, \cite{scott-76,lehmann-smyth-81}).
+\begin{proposition}
+\label{prop-init-T-alg}
+For a $\omega$-cocomplete category $\cC$ (i.e.\ it has colimit of any
+$\omega$-chain diagram) and an endo-functor $T: \cC \rightarrow \cC$
+which is $\omega$-cocontinuous (i.e.\ it preserves colimit of any
+$\omega$-chain diagram), its initial $T$-algebra is given by the colimit
+of the following $\omega$-chain diagram.\footnote{In general, this
+sequence might not converge at $\omega$.  In such a case, we may extend
+the sequence up to any ordinal such that
+\begin{quote}
+\begin{enumerate}
+\item $T^{\alpha+1}(0) = T(T^\alpha(0))$, and
+\item $T^\beta(0) = \mathop{\rm colimit}\limits_{\alpha < \beta}
+T^\alpha(0)$ for a limit ordinal $\beta$ (treating 0 as a limit ordinal).
+\end{enumerate}
+\end{quote}}
+\begin{displaymath}
+0 \rubberrightarrow{\rm !!} T(0) \rubberrightarrow{T({\rm !!})} T^2(0)
+\rubberrightarrow{T^2({\rm !!})} \cdots \rubberrightarrow{T^{n-1}({\rm !!})}
+T^n(0) \rubberrightarrow{T^n({\rm !!})} \cdots {} \rlap{\qquad \qed}
+\end{displaymath}
+\end{proposition}
+
+As we presented in section~\ref{sec-what-cdt}, ${\bf Left}[F,G]$ is a
+generalization of initial $T$-algebras, where $F$ is a functor of $\cC
+\times \cD \rightarrow \cE$ and $G$ is of $\cC \times \cD^- \rightarrow
+\cE$.  We will reduce the existence problem of ${\bf Left}$ to that of
+corresponding $T$-algebras.  For a $\cD$ object  $A$, from its
+definition $\pair{{\bf Left}[F,G](A),\eta_A}$ is the initial object in
+the category ${\bf DAlg}(F(\;\cdot\;,A),G(\;\cdot\;,A))$, so
+\begin{displaymath}
+\ardiagram{F({\bf Left}[F,G](A),A)}{\eta_A}{G({\bf Left}[F,G](A),A)}
+\end{displaymath}
+Now, if $G(\;\cdot\;,A)$ has a left adjoint functor, say
+$H(\;\cdot\;,A): \cE \rightarrow \cC$, this morphism $\eta_A$ has its
+one-to-one corresponding morphism
+\begin{displaymath}
+\ardiagram{H(F({\bf Left}[F,G](A),A),A)}{}{{\bf Left}[F,G](A).}
+\end{displaymath}
+This means that ${\bf Left}[F,G](A)$ is a $T$-algebra, where $T(B)
+\defeq H(F(B,A),A)$, and we naturally expect this $T$-algebra to be
+special.  It really is the initial $T$-algebra, so we can formulate the
+following theorem.
+\begin{theorem}
+\label{th-ex-left}
+Let $F: \cC \times \cD \rightarrow \cE$ and $G: \cC \times \cD^-
+\rightarrow \cE$ be functors.  If
+\begin{enumerate}
+\item $\cC$ is $\omega$-cocomplete,
+\item for each $\cD$ object $A$, $G_A \defeq G(\;\cdot\;,A): \cC
+\rightarrow \cE$ has a left adjoint $H_A: \cE \rightarrow \cC$, and
+\item for each $\cD$ object $A$, $F_A \defeq F(\;\cdot\;,A): \cC
+\rightarrow \cE$ is $\omega$-cocontinuous,
+\end{enumerate}
+then ${\bf Left}[F,G](A)$ exists in $\cC$ and
+\begin{displaymath}
+{\bf Left}[F,G](A) = \mathop{\rm colimit}\limits_n (H_A \circ
+F_A)^n(0)
+\end{displaymath}
+{\bf Proof:} Since a left adjoint is cocontinuous, $T_A
+\defeq H_A \circ F_A$ is $\omega$-cocontinuous if $F_A$ is so.  All we
+have to show is that the initial $T_A$-algebra gives the initial object
+of ${\bf DAlg}(F_A,G_A)$, and the rest follows from
+proposition~\ref{prop-init-T-alg}.
+
+Let the initial $T_A$-algebra be $I$ paired with a morphism
+\begin{displaymath}
+\ardiagram{H_A(F_A(I))}{\iota}{I.}
+\end{displaymath}
+For an object $\pair{B,f}$ in ${\bf DAlg}(F_A,G_A)$
+\begin{displaymath}
+\ardiagram{F_A(B)}{f}{G_A(B)}
+\end{displaymath}
+we have to construct the unique morphism from $I$ to $B$ which makes a
+certain diagram commute.  To do so, let us name the factorizer of the
+adjunction $H_A \adjoint G_A$ $\psi$, that is, $\psi$ is the natural
+isomorphism $\Hom{\cC}{H_A(C)}{D} \stackrel{\iso}{\longrightarrow}
+\Hom{\cE}{C}{G_A(D)}$.  Then, $\psi^{-1}(f)$ gives a $T_A$-algebra
+\begin{displaymath}
+\ardiagram{H_A(F_A(B))}{\psi^{-1}(f)}{B}
+\end{displaymath}
+and since $\pair{I,\iota}$ is the initial $T_A$-algebra, there exists a
+unique morphism $g: I \rightarrow B$ such that the following diagram
+commutes.
+\begin{displaymath}
+\raisebox{-22.5mm}[25mm][22.5mm]{
+\setlength{\unitlength}{1mm}
+\begin{picture}(50,45)(0,2.5)
+\put(15,40){\makebox(0,0){$H_A(F_A(I))$}}
+\put(32.5,42){\makebox(0,0)[b]{$\iota$}}
+\put(45,40){\makebox(0,0){$I$}}
+\put(13,25){\makebox(0,0)[r]{$H_A(F_A(g))$}}
+\put(30,25){\makebox(0,0){\commute}}
+\put(47,25){\makebox(0,0)[l]{$g$}}
+\put(15,10){\makebox(0,0){$H_A(F_A(B))$}}
+\put(32.5,8){\makebox(0,0)[t]{$\psi^{-1}(f)$}}
+\put(45,10){\makebox(0,0){$B$}}
+\put(25,40){\vector(1,0){17.5}}
+\put(15,37.5){\vector(0,-1){25}}
+\put(45,37.5){\vector(0,-1){25}}
+\put(25,10){\vector(1,0){17.5}}
+\end{picture}}
+\eqno(*)
+\end{displaymath}
+The naturality of $\psi$ converts this diagram to the following
+commutative diagram.
+\begin{displaymath}
+\raisebox{-22.5mm}[22.5mm][22.5mm]{
+\setlength{\unitlength}{1mm}
+\begin{picture}(60,45)(0,2.5)
+\put(10,40){\makebox(0,0){$F_A(I)$}}
+\put(25,42){\makebox(0,0)[b]{$\psi(\iota)$}}
+\put(40,40){\makebox(0,0){$G_A(I)$}}
+\put(17.5,40){\vector(1,0){15}}
+\put(8,25){\makebox(0,0)[r]{$F_A(g)$}}
+\put(25,25){\makebox(0,0){\commute}}
+\put(42,25){\makebox(0,0)[l]{$G_A(g)$}}
+\put(10,37.5){\vector(0,-1){25}}
+\put(40,37.5){\vector(0,-1){25}}
+\put(10,10){\makebox(0,0){$F_A(B)$}}
+\put(25,8){\makebox(0,0)[t]{$f$}}
+\put(17.5,10){\vector(1,0){15}}
+\put(40,10){\makebox(0,0){$G_A(B)$}}
+\end{picture}}
+\eqno(**)
+\end{displaymath}
+(i.e.\ $\psi(g\circ \iota) = G_A(g)\circ \psi(\iota)$ and
+$\psi(\psi^{-1}(f)\circ H_A(F_A(g))) = f \circ F_A(g)$).  That showed
+the existence of $g$.  The uniqueness of $g$ is no more difficult.  If
+$g: I \rightarrow B$ satisfies $(**)$, then by applying $\psi^{-1}$ we
+get $(*)$ back again and so there $g$ should be unique.
+\end{theorem}
+\begin{example}
+Trivially, if $\cE$ is $\cC$ and $G: \cC \times \cD^- \rightarrow \cC$
+is the projection functor, $G_A$ is the identity which has the left
+adjoint $H_A$ which is also the identity functor.  In this case, the
+above theorem is essentially stating the same thing as
+proposition~\ref{prop-init-T-alg}.
+\end{example}
+\begin{example}
+Another simple case is that $\cE$ is $\cC \times \cC$ and $G_A$ is the
+diagonal functor.  Its left adjoint is the binary coproduct functor.
+$F_A: \cC \rightarrow \cC \times \cC$ can be decomposed into
+$F'_A$ and $F''_A$ both of which are functors of $\cC \times \cD
+\rightarrow \cC$ such that $F_A(B) = \pair{F'_A(B),F''_A(B)}$.  The theorem
+states that ${\bf Left}[F,G](A)$ is the initial $T_A$-algebra where $T_A(B)
+\defeq F'_A(B) + F''_A(B)$.  This explains that our natural number object
+in subsection~\ref{ssec-NNO} is the initial $T$-algebra where $T(B)
+\defeq 1+B$.
+\end{example}
+
+Theorem~\ref{th-ex-left} has its dual form for ${\bf Right}[F,G]$.
+\begin{theorem}
+\label{th-ex-right}
+Let $F: \cC \times \cD \rightarrow \cE$ and $G: \cC \times \cD^-
+\rightarrow \cE$ be functors.  If
+\begin{enumerate}
+\item $\cC$ is $\omega$-complete,
+\item for each $\cD$ object $A$, $F_A \defeq F(\;\cdot\;,A): \cC
+\rightarrow \cE$ has a right adjoint $K_A: \cE \rightarrow \cC$, and
+\item for each $\cD$ object $A$, $G_A \defeq G(\;\cdot\;,A): \cC
+\rightarrow \cE$ is $\omega$-continuous,
+\end{enumerate}
+then ${\bf Right}[F,G](A)$ exists in $\cC$ and
+\begin{displaymath}
+{\bf Right}[F,G](A) = \mathop{\rm limit}\limits_n (K_A \circ F_A)^n(1)
+\rlap{\qquad \qquad \qed}
+\end{displaymath}
+\end{theorem}
+\begin{example}
+As an application of this theorem, let us calculate ${\rm dyn}'(I,O)$.
+For this, we should take $\cD$ to be $\cC \times \cC^-$, $\cE$ to be
+$\cC \times \cC$, $F: \cC \times \cC \times \cC^- \rightarrow \cC \times
+\cC$ to be $F(A,I,O) \defeq \pair{A \times I,A}$ and $G: \cC \times \cC^-
+\times \cC \rightarrow \cC \times \cC$ to be $G(A,I,O) \defeq
+\pair{A,O}$.  $F_{I,O}$ has a right adjoint $H_{I,O}(D,E) \defeq {\rm
+exp}(I,D) \times E$.  Therefore, ${\rm dyn}'(I,O)$ is the final
+$T_{I,O}$-coalgebra, where $T_{I,O}(A) \defeq H_{I,O}(G_{I,O}(A)) = {\rm
+exp}(I,A) \times O$.  Now, let us calculate $\mathop{\rm
+limit}\limits_n T_{I,O}^n(1)$.
+\begin{displaymath}
+\begin{array}{rl}
+T_{I,O}^0(1) & {} \iso 1 \\
+T_{I,O}^1(1) & {} \iso {\rm exp}(I,1)\times O \iso O \iso {\rm exp}(1,O) \\
+T_{I,O}^2(1) & {} \iso T_{I,O}(O) \iso {\rm exp}(I,O)\times O \iso {\rm
+exp}(1+I,O) \\
+T_{I,O}^3(1) & {} \iso {\rm exp}(I,{\rm exp}(1+I,O))\times O \\
+& {} \iso {\rm exp}(I \times (1+I),O)\times O \\
+& {} \iso {\rm exp}(1+I+I^2,O) \\
+\multicolumn{2}{c}{\cdots} \\
+T_{I,O}^n(1) & {} \iso {\rm exp}(1+I+I^2+\cdots+I^{n-1},O) \\
+\multicolumn{2}{c}{\cdots} \\
+\end{array}
+\end{displaymath}
+Therefore, ${\rm dyn}'(I,O) \iso \mathop{\rm limit}\limits_n
+T_{I,O}^n(1) \iso {\rm exp}(1+I+I^2+\cdots,O) \iso {\rm exp}({\rm
+list}(I),O)$.
+\end{example}

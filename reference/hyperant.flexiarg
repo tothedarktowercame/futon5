@@ -1,0 +1,46 @@
+@flexiarg futon5/hyperant
+@title Hyper-Ant Facet Walker
+@sigils [代/爬]
+@audience futon5 operator designers, futon3 librarians, futon2 explorers
+@tone formal-analytic
+@style pattern
+@allow-new-claims true
+@references [futon5/reference/facet.flexiarg futon5/reference/uplift.flexiarg futon3/library/ants/white-space-scout.flexiarg]
+
+! conclusion:
+  Hyper-ants are AIF-inspired agents whose terrain is text. They chain the
+  lifted ant metapatterns (white-space scout, hunger↔precision, cargo discipline)
+  to crawl flexiarg narratives and produce facet ABIs.
+
+  + IF:
+    You need to convert a Futon3 pattern description into a reusable facet +
+    binding, using the same explore/exploit instincts the ants honed on the grid.
+
+  + HOWEVER:
+    Without a hyper-ant story, you hand-wave the conversion; there is no agentic
+    process that says “follow novelty in the text, deposit schema slots, clamp
+    when stalls happen,” so the uplift pipeline stays manual.
+
+  + THEN:
+    Equip the hyper-ant with three borrowed instincts:
+      * **川 white-space scout**: follow textual novelty (unused slots) and leave
+        “trail marks” on clauses that map to ABI fields.
+      * **义 hunger↔precision**: treat missing facet slots as hunger, adjust tau to
+        focus or widen the textual search.
+      * **载 cargo discipline**: when a clause has been picked up (cargo) but not
+        deposited into the ABI, clamp return behaviour until a binding is written.
+    The agent emits a trail (string diagram) showing which sentences fed which
+    facet slots.
+
+  + BECAUSE:
+    This makes the abstraction concrete: hyper-ants are an explicit agent that
+    runs the explore/exploit loop over text, linking Futon3 narratives to Futon5
+    operators and onward to Futon2 bindings.
+
+  + STATUS:
+    status[draft]
+    evidence[futon3/library/ants/white-space-scout.flexiarg]
+
+  + NEXT:
+    next[Define the minimal observation schema for hyper-ants (token novelty,
+         facet-slot hunger) and run a pilot on one pattern to verify the loop.]

@@ -1,0 +1,50 @@
+@flexiarg futon5/cyber-ant-uplift
+@title Cyber-Ant Uplift Story
+@sigils []
+@audience futon5 operator-smiths, futon2 maintainers, futon3 librarians
+@tone formal-analytic
+@style pattern
+@allow-new-claims true
+@references [futon5/reference/uplift.flexiarg futon5/src/futon5/cyber_ants.clj futon2/src/ants/cyber.clj]
+
+! conclusion:
+  The cyber-ant uplift specialises the generic Futon5 `UpliftOperator`: Futon3
+  pattern descriptions become Futon5 operator specs, then flash into Futon2
+  simulations as `:aif-config` overrides for the `:cyber` species.
+
+  + IF:
+    You need reproducible cyber-ants whose behaviour is documented in Futon3’s
+    library but executed inside Futon2’s war sim.
+
+  + HOWEVER:
+    Without the uplift bridge, those textual patterns remain lore; Futon2 can’t
+    ingest flexiarg directly, and Futon5 doesn’t know which operator should
+    handle momentary promotions.
+
+  + THEN:
+    Assemble the specialisation pipeline:
+      1. `library/ants/*.flexiarg` describe the behaviours (baseline loop,
+         white-space scout, hunger↔precision).
+      2. `resources/futon5/cyber_ants.edn` binds each narrative to concrete
+         `:aif` overrides and tags them for `UpliftOperator`.
+      3. `src/futon5/cyber_ants.clj` hydrates those entries, exposing hydrated
+         configs + narratives while delegating motif promotion to the generic
+         uplift operator.
+      4. Futon2 depends on this namespace via `ants.cyber`, attaching the
+         generated config to every `:cyber` ant.
+      5. `aif/core` merges the override into the per-ant active inference loop,
+         so the simulator “speaks” the pattern verbatim.
+
+  + BECAUSE:
+    Specialising the general uplift keeps all three futons honest: Futon3
+    authors see their pattern flashed, Futon5 records which uplift route was
+    taken, and Futon2 runs the resulting cyber-ants without bespoke wiring.
+
+  + STATUS:
+    status[ready]
+    evidence[futon5/src/futon5/cyber_ants.clj]
+
+  + NEXT:
+    next[Use the generic uplift metrics (motif counts, operator set) as
+         additional telemetry in Futon2 so analyzers can inspect cyber-ant
+         promotions.]

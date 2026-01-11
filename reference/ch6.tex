@@ -1,0 +1,156 @@
+\chapter*{Conclusions}
+\label{ch-conclusions}
+\addcontentsline{toc}{chapter}{Conclusions}
+
+We have looked at a categorical approach to the theory of data types.
+The goal of this thesis was to develop CPL (Categorical Programming
+Language) which is a programming language in a categorical style and
+which has a categorical way of defining data types.
+
+CSL (Categorical Specification Language) was actually developed later
+than CDT (Categorical Data Types) and {CPL}.  At first, CDT was given
+its semantics without depending on {CSL}.  We could have carried out the
+thesis without CSL, but CSL provides the syntactic materials for CDT and
+CPL so we would have still needed those parts.  CSL is very much like an
+ordinary algebraic specification language, but it is not trivial in two
+senses: the treatment of functors and the treatment of natural
+transformations.  Functors are very similar to functions but variances
+make them special and interesting.  Natural transformations are
+essentially polymorphic functions, so if there had been a specification
+language for polymorphic functions, we might not have needed to struggle
+for developing {CSL}.  It might be interesting to investigate what {\it
+polymorphic algebraic specification languages} can be.
+
+CSL is equational.  Much of category theory can be presented
+equationally so that CSL is good enough in this sense, but presenting
+categorical concepts equationally loses half of the essential meaning.
+For example, although the adjoint situation can be explained
+equationally, its essence is something more.  This is why, the author
+believes, there are so many equivalent forms of defining the adjoint
+situation.  Therefore, it is nice to have a specification language which
+can naturally express categorical concepts.
+Sketches~\cite{barr-wells-85} are more categorical than equations, so it
+might be an idea to use sketches in {CSL}.
+
+CDT is the heart of the thesis.  It was developed after the author first
+studied category theory and tried to express categorical definitions in
+algebraic specification languages.  As we have seen in chapter~\ref{ch-cdt},
+algebraic specification languages can express categorical definitions but
+not naturally.  CDT succeeded to define some basic categorical
+definitions like products, coproducts, exponentials, natural numbers and
+so on more naturally, but it cannot define, for example, pullbacks or more
+complicated categorical concepts.  One of the suggestions to extend CDT
+is to allow equations inside the CDT declarations.  In this way, we may
+define pullbacks as follows:
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm pullback}(f:A \rightarrow C,g:B \rightarrow C)$ with
+pbpair is \\
+$\qquad \pi_1: {\rm pullback} \rightarrow A$ \\
+$\qquad \pi_2: {\rm pullback} \rightarrow B$ \\
+{} \quad where \\
+$\qquad f\circ \pi_1 = g\circ \pi_2$ \\
+end object
+\end{tabular}
+\end{displaymath}
+The declaration should be read as follows:
+\begin{enumerate}
+\item For any morphisms $f: A \rightarrow C$ and $g: B \rightarrow C$,
+${\rm pullback}(f,g)$ is an object and it is associated with two
+morphisms
+\begin{displaymath}
+\pi_1: {\rm pullback}(f,g) \rightarrow A \qquad \mbox{and} \qquad \pi_2:
+{\rm pullback}(f,g) \rightarrow B
+\end{displaymath}
+such that $f\circ \pi_1 = g\circ \pi_2$.
+\item For any morphisms $h: D \rightarrow A$ and $k: D \rightarrow B$
+such that $f \circ h = g \circ k$, there exists a unique morphism ${\rm
+pbpair}(h,k): D \rightarrow {\rm pullback}(f,g)$ such that
+\begin{displaymath}
+\pi_1\circ {\rm pbpair}(h,k) = h \qquad \mbox{and} \qquad
+\pi_2\circ {\rm pbpair}(h,k) = k
+\end{displaymath}
+\end{enumerate}
+Note that `pullback' is no longer a simple functor but takes two
+morphisms.  We can similarly define pushouts, equalizers, co-equalizers
+and so on.  In fact, we can define any finite limit or colimit.  Since
+limits and colimits are something to do with diagrams, it seems natural
+to introduce the declaration mechanism of diagrams.  For example, we may
+have a diagram consisting of three objects and two morphisms as follows:
+\begin{displaymath}
+\begin{tabular}{l}
+diagram el is \\
+{} \qquad objects $A,B,C$ \\
+{} \qquad morphisms $f: A \rightarrow C, g: B \rightarrow C$ \\
+end diagram \\
+\end{tabular}
+\end{displaymath}
+Then, `pullback' can be regarded as taking an `el' diagram as its
+parameter, and it is a functor from the category of `el' diagrams.  This
+extension is becoming very much similar to the parametrization mechanism
+in algebraic specification languages.  Diagrams correspond to so-called
+loose specifications, and object declarations correspond to parametrized
+specifications (or procedures in CLEAR's terminology) which take a
+specification which matches as a parameter and return a new
+specification.  It is very interesting to investigate the possibility of
+CDT with equations along this line as a first class specification
+language.  CDT we presented in this thesis was bounded by the
+restriction of computability.  If we introduce equations, it becomes
+increasingly difficult to connect them to computing.  If we had
+`pullback' in CDT, we would have to prove $f\circ k = g\circ h$ before
+using ${\rm pbpair}(k,h)$.  Therefore, the programming would involve some
+proving.
+
+CDT and CSL are essentially one sorted systems (here sort = category),
+and some would like to extend them to many sorted systems.  We could
+have extended them here, but since our main goal in this thesis was to
+understand data types, we were interested in only one category, the
+category of data types, and so CDT and CSL were single sorted.  Our
+approach is very close to that of domain theory which mainly deals only
+one category, the category of domains.  On the other hand, algebraic
+specification methods deal with many categories.  Each specification is
+associated with a category.  However, they are still related in some
+sense because they all are algebras over the category of sets (or some
+other underlying category).  As we mentioned above, if we extend CDT
+with the diagram declarations, we will have to deal with a lot of
+different categories of diagrams, and it will be interesting to find out
+what $F,G$-dialgebras can give us in this context.
+
+CPL is a functional programming language without variables.  It may look
+like FP proposed by John Backus because FP also has no variables.
+However, CPL is based on category theory and it has an ability to
+declare data types by means of CDT.  CPL does not need any primitives to
+start with.  One of the reasons for not having variables is that
+category theory is abstract in the sense that objects are simply points
+and only their outer behaviour is concerned.  However, we could have
+variables for morphisms.  For example, we might want to have
+\begin{displaymath}
+{\rm twice}(f) \defeq f\circ f
+\end{displaymath}
+which takes a morphism $f:A \rightarrow A$ and returns a morphism of $A
+\rightarrow A$.  The current CPL system cannot handle it and we have to
+write it like
+\begin{displaymath}
+{\rm twice} \defeq {\rm eval}\circ {\rm pair}(\pi_1,{\rm eval})
+\end{displaymath}
+which is a morphism from ${\rm exp}(A,A)$ to ${\rm exp}(A,A)$.  This
+definition is not self-explanatory.  It is evident that we need morphism
+variables in CPL for easier use.  Note that ${\rm twice}(f)$ can simply
+be a macro because definitions can never be recursive.
+
+We proposed in chapter~\ref{ch-application} to make CPL more like an
+ordinary functional programming language.  It has datatype declarations
+as well as co-datatype declarations.  It is left for the future to
+actually implement the language.  It is interesting to see how to handle
+(or represent) lazy data types.
+
+Since CPL is an applicative language and has the possibility of
+executing programs in parallel as well as the possibility of partial
+evaluation, some kind of special hardware can be invented to execute CPL
+programs fast.
+
+The future plan of CDT and CPL would be to extend CDT to cope with
+equations and to develop a total programming environment in which users
+can define things categorically, reason (or prove) their properties
+categorically,  execute some programs categorically.
+

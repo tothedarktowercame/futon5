@@ -1,0 +1,4906 @@
+[{:sigil "一",
+  :bits "00000000",
+  :color "#000000",
+  :lift
+  {:name "lift/一",
+   :role "one",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '一' (one) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '一' as a reusable pattern that modulates blending/mutation according to its meaning 'one'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'one' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乙",
+  :bits "00000001",
+  :color "#010101",
+  :lift
+  {:name "lift/乙",
+   :role "second",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乙' (second) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乙' as a reusable pattern that modulates blending/mutation according to its meaning 'second'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'second' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "二",
+  :bits "00000010",
+  :color "#020202",
+  :lift
+  {:name "lift/二",
+   :role "two",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '二' (two) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '二' as a reusable pattern that modulates blending/mutation according to its meaning 'two'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'two' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丁",
+  :bits "00000011",
+  :color "#030303",
+  :lift
+  {:name "lift/丁",
+   :role "fourth",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丁' (fourth) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丁' as a reusable pattern that modulates blending/mutation according to its meaning 'fourth'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'fourth' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "十",
+  :bits "00000100",
+  :color "#040404",
+  :lift
+  {:name "lift/十",
+   :role "ten",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '十' (ten) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '十' as a reusable pattern that modulates blending/mutation according to its meaning 'ten'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ten' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "厂",
+  :bits "00000101",
+  :color "#050505",
+  :lift
+  {:name "lift/厂",
+   :role "factory",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '厂' (factory) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '厂' as a reusable pattern that modulates blending/mutation according to its meaning 'factory'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'factory' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "七",
+  :bits "00000110",
+  :color "#060606",
+  :lift
+  {:name "lift/七",
+   :role "seven",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '七' (seven) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '七' as a reusable pattern that modulates blending/mutation according to its meaning 'seven'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'seven' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "卜",
+  :bits "00000111",
+  :color "#070707",
+  :lift
+  {:name "lift/卜",
+   :role "see",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '卜' (see) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '卜' as a reusable pattern that modulates blending/mutation according to its meaning 'see'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'see' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "八",
+  :bits "00001000",
+  :color "#080808",
+  :lift
+  {:name "lift/八",
+   :role "eight",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '八' (eight) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '八' as a reusable pattern that modulates blending/mutation according to its meaning 'eight'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'eight' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "人",
+  :bits "00001001",
+  :color "#090909",
+  :lift
+  {:name "lift/人",
+   :role "man",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '人' (man) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '人' as a reusable pattern that modulates blending/mutation according to its meaning 'man'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'man' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "入",
+  :bits "00001010",
+  :color "#0a0a0a",
+  :lift
+  {:name "lift/入",
+   :role "enter",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '入' (enter) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '入' as a reusable pattern that modulates blending/mutation according to its meaning 'enter'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'enter' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "九",
+  :bits "00001011",
+  :color "#0b0b0b",
+  :lift
+  {:name "lift/九",
+   :role "nine",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '九' (nine) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '九' as a reusable pattern that modulates blending/mutation according to its meaning 'nine'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'nine' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "儿",
+  :bits "00001100",
+  :color "#0c0c0c",
+  :lift
+  {:name "lift/儿",
+   :role "son",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '儿' (son) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '儿' as a reusable pattern that modulates blending/mutation according to its meaning 'son'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'son' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "几",
+  :bits "00001101",
+  :color "#0d0d0d",
+  :lift
+  {:name "lift/几",
+   :role "how much",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '几' (how much) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '几' as a reusable pattern that modulates blending/mutation according to its meaning 'how much'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'how much' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "了",
+  :bits "00001110",
+  :color "#0e0e0e",
+  :lift
+  {:name "lift/了",
+   :role "finish",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '了' (finish) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '了' as a reusable pattern that modulates blending/mutation according to its meaning 'finish'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'finish' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乃",
+  :bits "00001111",
+  :color "#0f0f0f",
+  :lift
+  {:name "lift/乃",
+   :role "so",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乃' (so) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乃' as a reusable pattern that modulates blending/mutation according to its meaning 'so'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'so' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "刀",
+  :bits "00010000",
+  :color "#101010",
+  :lift
+  {:name "lift/刀",
+   :role "knife",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '刀' (knife) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '刀' as a reusable pattern that modulates blending/mutation according to its meaning 'knife'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'knife' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "力",
+  :bits "00010001",
+  :color "#111111",
+  :lift
+  {:name "lift/力",
+   :role "power",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '力' (power) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '力' as a reusable pattern that modulates blending/mutation according to its meaning 'power'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'power' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "又",
+  :bits "00010010",
+  :color "#121212",
+  :lift
+  {:name "lift/又",
+   :role "again",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '又' (again) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '又' as a reusable pattern that modulates blending/mutation according to its meaning 'again'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'again' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "干",
+  :bits "00010011",
+  :color "#131313",
+  :lift
+  {:name "lift/干",
+   :role "trunk",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '干' (trunk) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '干' as a reusable pattern that modulates blending/mutation according to its meaning 'trunk'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'trunk' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "三",
+  :bits "00010100",
+  :color "#141414",
+  :lift
+  {:name "lift/三",
+   :role "three",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '三' (three) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '三' as a reusable pattern that modulates blending/mutation according to its meaning 'three'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'three' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "于",
+  :bits "00010101",
+  :color "#151515",
+  :lift
+  {:name "lift/于",
+   :role "in",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '于' (in) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '于' as a reusable pattern that modulates blending/mutation according to its meaning 'in'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'in' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "亏",
+  :bits "00010110",
+  :color "#161616",
+  :lift
+  {:name "lift/亏",
+   :role "deficit",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '亏' (deficit) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '亏' as a reusable pattern that modulates blending/mutation according to its meaning 'deficit'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'deficit' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "士",
+  :bits "00010111",
+  :color "#171717",
+  :lift
+  {:name "lift/士",
+   :role "scholar",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '士' (scholar) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '士' as a reusable pattern that modulates blending/mutation according to its meaning 'scholar'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'scholar' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "土",
+  :bits "00011000",
+  :color "#181818",
+  :lift
+  {:name "lift/土",
+   :role "earth",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '土' (earth) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '土' as a reusable pattern that modulates blending/mutation according to its meaning 'earth'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'earth' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "工",
+  :bits "00011001",
+  :color "#191919",
+  :lift
+  {:name "lift/工",
+   :role "work",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '工' (work) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '工' as a reusable pattern that modulates blending/mutation according to its meaning 'work'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'work' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "才",
+  :bits "00011010",
+  :color "#1a1a1a",
+  :lift
+  {:name "lift/才",
+   :role "ability",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '才' (ability) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '才' as a reusable pattern that modulates blending/mutation according to its meaning 'ability'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ability' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "寸",
+  :bits "00011011",
+  :color "#1b1b1b",
+  :lift
+  {:name "lift/寸",
+   :role "inch",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '寸' (inch) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '寸' as a reusable pattern that modulates blending/mutation according to its meaning 'inch'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'inch' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "下",
+  :bits "00011100",
+  :color "#1c1c1c",
+  :lift
+  {:name "lift/下",
+   :role "down",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '下' (down) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '下' as a reusable pattern that modulates blending/mutation according to its meaning 'down'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'down' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丈",
+  :bits "00011101",
+  :color "#00ff33",
+  :lift
+  {:name "lift/丈",
+   :role "ten feet  #1d1d1d 00011101 11100010 10111000 01000111",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丈' (ten feet  #1d1d1d 00011101 11100010 10111000 01000111) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丈' as a reusable pattern that modulates blending/mutation according to its meaning 'ten feet  #1d1d1d 00011101 11100010 10111000 01000111'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ten feet  #1d1d1d 00011101 11100010 10111000 01000111' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "大",
+  :bits "00011110",
+  :color "#0033ff",
+  :lift
+  {:name "lift/大",
+   :role "big  #1e1e1e 00011110 11100001 01111000 10000111",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '大' (big  #1e1e1e 00011110 11100001 01111000 10000111) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '大' as a reusable pattern that modulates blending/mutation according to its meaning 'big  #1e1e1e 00011110 11100001 01111000 10000111'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'big  #1e1e1e 00011110 11100001 01111000 10000111' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "与",
+  :bits "00011111",
+  :color "#1f1f1f",
+  :lift
+  {:name "lift/与",
+   :role "doubt",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '与' (doubt) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '与' as a reusable pattern that modulates blending/mutation according to its meaning 'doubt'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'doubt' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "万",
+  :bits "00100000",
+  :color "#202020",
+  :lift
+  {:name "lift/万",
+   :role "see",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '万' (see) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '万' as a reusable pattern that modulates blending/mutation according to its meaning 'see'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'see' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "上",
+  :bits "00100001",
+  :color "#212121",
+  :lift
+  {:name "lift/上",
+   :role "above",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '上' (above) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '上' as a reusable pattern that modulates blending/mutation according to its meaning 'above'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'above' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "小",
+  :bits "00100010",
+  :color "#222222",
+  :lift
+  {:name "lift/小",
+   :role "small",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '小' (small) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '小' as a reusable pattern that modulates blending/mutation according to its meaning 'small'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'small' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "山",
+  :bits "00100011",
+  :color "#232323",
+  :lift
+  {:role "UpliftOperator",
+   :however "Motifs are not stored as operators; rule forgets them.",
+   :if {:description "Motif frequency exceeds threshold."},
+   :name "lift/山",
+   :hooks
+   {:init "motif counts + operator set",
+    :observe "update counts/promotions",
+    :decide "forward operator info",
+    :act "bias rule toward motifs"},
+   :status :refined,
+   :then
+   {:action :promote-operator,
+    :steps
+    ["Extract motifs/track counts"
+     "Promote motifs when threshold exceeded"
+     "Bias rule to preserve/complete promoted motifs"]},
+   :context [:meta-ca :motif-detection],
+   :parameters
+   {:window_size "integer or [w h]",
+    :freq_thresh "integer",
+    :learning_rate "float"},
+   :because
+   "Builds library of reusable operators discovered from motifs.",
+   :metrics [:motif_counts :operator_set]}}
+ {:sigil "口",
+  :bits "00100100",
+  :color "#242424",
+  :lift
+  {:name "lift/口",
+   :role "mouth",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '口' (mouth) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '口' as a reusable pattern that modulates blending/mutation according to its meaning 'mouth'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'mouth' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "巾",
+  :bits "00100101",
+  :color "#252525",
+  :lift
+  {:name "lift/巾",
+   :role "cloth",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '巾' (cloth) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '巾' as a reusable pattern that modulates blending/mutation according to its meaning 'cloth'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'cloth' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "千",
+  :bits "00100110",
+  :color "#262626",
+  :lift
+  {:name "lift/千",
+   :role "thousand",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '千' (thousand) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '千' as a reusable pattern that modulates blending/mutation according to its meaning 'thousand'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'thousand' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乞",
+  :bits "00100111",
+  :color "#272727",
+  :lift
+  {:name "lift/乞",
+   :role "beg",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乞' (beg) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乞' as a reusable pattern that modulates blending/mutation according to its meaning 'beg'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'beg' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "川",
+  :bits "00101000",
+  :color "#282828",
+  :lift
+  {:name "lift/川",
+   :role "plain",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '川' (plain) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '川' as a reusable pattern that modulates blending/mutation according to its meaning 'plain'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'plain' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "亿",
+  :bits "00101001",
+  :color "#292929",
+  :lift
+  {:name "lift/亿",
+   :role "100 million",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '亿' (100 million) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '亿' as a reusable pattern that modulates blending/mutation according to its meaning '100 million'."}},
+   :rationale
+   "Draft lift linking the sigil meaning '100 million' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "个",
+  :bits "00101010",
+  :color "#2a2a2a",
+  :lift
+  {:name "lift/个",
+   :role "this",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '个' (this) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '个' as a reusable pattern that modulates blending/mutation according to its meaning 'this'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'this' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "久",
+  :bits "00101011",
+  :color "#2b2b2b",
+  :lift
+  {:name "lift/久",
+   :role "long time",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '久' (long time) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '久' as a reusable pattern that modulates blending/mutation according to its meaning 'long time'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'long time' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "么",
+  :bits "00101100",
+  :color "#2c2c2c",
+  :lift
+  {:name "lift/么",
+   :role "what",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '么' (what) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '么' as a reusable pattern that modulates blending/mutation according to its meaning 'what'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'what' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "勺",
+  :bits "00101101",
+  :color "#2d2d2d",
+  :lift
+  {:name "lift/勺",
+   :role "spoon",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '勺' (spoon) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '勺' as a reusable pattern that modulates blending/mutation according to its meaning 'spoon'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'spoon' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丸",
+  :bits "00101110",
+  :color "#2e2e2e",
+  :lift
+  {:name "lift/丸",
+   :role "pill",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丸' (pill) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丸' as a reusable pattern that modulates blending/mutation according to its meaning 'pill'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'pill' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "夕",
+  :bits "00101111",
+  :color "#2f2f2f",
+  :lift
+  {:name "lift/夕",
+   :role "dusk",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '夕' (dusk) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '夕' as a reusable pattern that modulates blending/mutation according to its meaning 'dusk'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'dusk' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "凡",
+  :bits "00110000",
+  :color "#303030",
+  :lift
+  {:name "lift/凡",
+   :role "ordinary",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '凡' (ordinary) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '凡' as a reusable pattern that modulates blending/mutation according to its meaning 'ordinary'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ordinary' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "及",
+  :bits "00110001",
+  :color "#313131",
+  :lift
+  {:name "lift/及",
+   :role "and",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '及' (and) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '及' as a reusable pattern that modulates blending/mutation according to its meaning 'and'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'and' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "广",
+  :bits "00110010",
+  :color "#323232",
+  :lift
+  {:name "lift/广",
+   :role "wide",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '广' (wide) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '广' as a reusable pattern that modulates blending/mutation according to its meaning 'wide'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'wide' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "门",
+  :bits "00110011",
+  :color "#333333",
+  :lift
+  {:name "lift/门",
+   :role "door",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '门' (door) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '门' as a reusable pattern that modulates blending/mutation according to its meaning 'door'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'door' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "亡",
+  :bits "00110100",
+  :color "#343434",
+  :lift
+  {:name "lift/亡",
+   :role "lose",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '亡' (lose) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '亡' as a reusable pattern that modulates blending/mutation according to its meaning 'lose'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'lose' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "义",
+  :bits "00110101",
+  :color "#353535",
+  :lift
+  {:name "lift/义",
+   :role "justice",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '义' (justice) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '义' as a reusable pattern that modulates blending/mutation according to its meaning 'justice'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'justice' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "之",
+  :bits "00110110",
+  :color "#363636",
+  :lift
+  {:name "lift/之",
+   :role "him/her",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '之' (him/her) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '之' as a reusable pattern that modulates blending/mutation according to its meaning 'him/her'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'him/her' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "尸",
+  :bits "00110111",
+  :color "#373737",
+  :lift
+  {:name "lift/尸",
+   :role "corpse",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '尸' (corpse) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '尸' as a reusable pattern that modulates blending/mutation according to its meaning 'corpse'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'corpse' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "已",
+  :bits "00111000",
+  :color "#383838",
+  :lift
+  {:name "lift/已",
+   :role "then",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '已' (then) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '已' as a reusable pattern that modulates blending/mutation according to its meaning 'then'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'then' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "弓",
+  :bits "00111001",
+  :color "#393939",
+  :lift
+  {:name "lift/弓",
+   :role "bow",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '弓' (bow) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '弓' as a reusable pattern that modulates blending/mutation according to its meaning 'bow'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'bow' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "己",
+  :bits "00111010",
+  :color "#3a3a3a",
+  :lift
+  {:name "lift/己",
+   :role "self",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '己' (self) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '己' as a reusable pattern that modulates blending/mutation according to its meaning 'self'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'self' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "子",
+  :bits "00111011",
+  :color "#3b3b3b",
+  :lift
+  {:name "lift/子",
+   :role "child",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '子' (child) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '子' as a reusable pattern that modulates blending/mutation according to its meaning 'child'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'child' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "卫",
+  :bits "00111100",
+  :color "#3c3c3c",
+  :lift
+  {:name "lift/卫",
+   :role "guard",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '卫' (guard) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '卫' as a reusable pattern that modulates blending/mutation according to its meaning 'guard'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'guard' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "也",
+  :bits "00111101",
+  :color "#3d3d3d",
+  :lift
+  {:name "lift/也",
+   :role "also",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '也' (also) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '也' as a reusable pattern that modulates blending/mutation according to its meaning 'also'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'also' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "女",
+  :bits "00111110",
+  :color "#3e3e3e",
+  :lift
+  {:name "lift/女",
+   :role "female",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '女' (female) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '女' as a reusable pattern that modulates blending/mutation according to its meaning 'female'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'female' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "飞",
+  :bits "00111111",
+  :color "#3f3f3f",
+  :lift
+  {:name "lift/飞",
+   :role "fly",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '飞' (fly) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '飞' as a reusable pattern that modulates blending/mutation according to its meaning 'fly'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'fly' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "刃",
+  :bits "01000000",
+  :color "#404040",
+  :lift
+  {:name "lift/刃",
+   :role "edge of blade",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '刃' (edge of blade) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '刃' as a reusable pattern that modulates blending/mutation according to its meaning 'edge of blade'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'edge of blade' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "习",
+  :bits "01000001",
+  :color "#414141",
+  :lift
+  {:name "lift/习",
+   :role "practice",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '习' (practice) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '习' as a reusable pattern that modulates blending/mutation according to its meaning 'practice'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'practice' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叉",
+  :bits "01000010",
+  :color "#424242",
+  :lift
+  {:name "lift/叉",
+   :role "cross",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叉' (cross) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叉' as a reusable pattern that modulates blending/mutation according to its meaning 'cross'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'cross' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乡",
+  :bits "01000011",
+  :color "#434343",
+  :lift
+  {:name "lift/乡",
+   :role "home",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乡' (home) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乡' as a reusable pattern that modulates blending/mutation according to its meaning 'home'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'home' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "马",
+  :bits "01000100",
+  :color "#444444",
+  :lift
+  {:name "lift/马",
+   :role "horse",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '马' (horse) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '马' as a reusable pattern that modulates blending/mutation according to its meaning 'horse'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'horse' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丰",
+  :bits "01000101",
+  :color "#454545",
+  :lift
+  {:name "lift/丰",
+   :role "luxuriant",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丰' (luxuriant) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丰' as a reusable pattern that modulates blending/mutation according to its meaning 'luxuriant'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'luxuriant' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "王",
+  :bits "01000110",
+  :color "#464646",
+  :lift
+  {:name "lift/王",
+   :role "king",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '王' (king) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '王' as a reusable pattern that modulates blending/mutation according to its meaning 'king'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'king' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "井",
+  :bits "01000111",
+  :color "#00ff33",
+  :lift
+  {:name "lift/井",
+   :role "neat  #474747",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '井' (neat  #474747) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '井' as a reusable pattern that modulates blending/mutation according to its meaning 'neat  #474747'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'neat  #474747' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "开",
+  :bits "01001000",
+  :color "#484848",
+  :lift
+  {:name "lift/开",
+   :role "open",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '开' (open) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '开' as a reusable pattern that modulates blending/mutation according to its meaning 'open'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'open' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "夫",
+  :bits "01001001",
+  :color "#494949",
+  :lift
+  {:name "lift/夫",
+   :role "that",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '夫' (that) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '夫' as a reusable pattern that modulates blending/mutation according to its meaning 'that'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'that' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "天",
+  :bits "01001010",
+  :color "#4a4a4a",
+  :lift
+  {:name "lift/天",
+   :role "heaven",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '天' (heaven) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '天' as a reusable pattern that modulates blending/mutation according to its meaning 'heaven'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'heaven' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "无",
+  :bits "01001011",
+  :color "#4b4b4b",
+  :lift
+  {:name "lift/无",
+   :role "no",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '无' (no) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '无' as a reusable pattern that modulates blending/mutation according to its meaning 'no'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'no' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "元",
+  :bits "01001100",
+  :color "#4c4c4c",
+  :lift
+  {:name "lift/元",
+   :role "money",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '元' (money) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '元' as a reusable pattern that modulates blending/mutation according to its meaning 'money'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'money' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "云",
+  :bits "01001101",
+  :color "#4d4d4d",
+  :lift
+  {:name "lift/云",
+   :role "cloud",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '云' (cloud) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '云' as a reusable pattern that modulates blending/mutation according to its meaning 'cloud'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'cloud' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "专",
+  :bits "01001110",
+  :color "#4e4e4e",
+  :lift
+  {:name "lift/专",
+   :role "special",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '专' (special) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '专' as a reusable pattern that modulates blending/mutation according to its meaning 'special'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'special' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "扎",
+  :bits "01001111",
+  :color "#4f4f4f",
+  :lift
+  {:name "lift/扎",
+   :role "tie",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '扎' (tie) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '扎' as a reusable pattern that modulates blending/mutation according to its meaning 'tie'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'tie' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "艺",
+  :bits "01010000",
+  :color "#505050",
+  :lift
+  {:name "lift/艺",
+   :role "skill",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '艺' (skill) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '艺' as a reusable pattern that modulates blending/mutation according to its meaning 'skill'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'skill' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "木",
+  :bits "01010001",
+  :color "#515151",
+  :lift
+  {:name "lift/木",
+   :role "tree",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '木' (tree) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '木' as a reusable pattern that modulates blending/mutation according to its meaning 'tree'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'tree' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "五",
+  :bits "01010010",
+  :color "#525252",
+  :lift
+  {:name "lift/五",
+   :role "five",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '五' (five) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '五' as a reusable pattern that modulates blending/mutation according to its meaning 'five'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'five' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "厅",
+  :bits "01010011",
+  :color "#535353",
+  :lift
+  {:name "lift/厅",
+   :role "hall",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '厅' (hall) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '厅' as a reusable pattern that modulates blending/mutation according to its meaning 'hall'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hall' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "支",
+  :bits "01010100",
+  :color "#545454",
+  :lift
+  {:name "lift/支",
+   :role "support",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '支' (support) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '支' as a reusable pattern that modulates blending/mutation according to its meaning 'support'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'support' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "不",
+  :bits "01010101",
+  :color "#555555",
+  :lift
+  {:name "lift/不",
+   :role "not",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '不' (not) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '不' as a reusable pattern that modulates blending/mutation according to its meaning 'not'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'not' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "太",
+  :bits "01010110",
+  :color "#565656",
+  :lift
+  {:name "lift/太",
+   :role "highest",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '太' (highest) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '太' as a reusable pattern that modulates blending/mutation according to its meaning 'highest'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'highest' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "犬",
+  :bits "01010111",
+  :color "#575757",
+  :lift
+  {:name "lift/犬",
+   :role "dog",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '犬' (dog) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '犬' as a reusable pattern that modulates blending/mutation according to its meaning 'dog'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'dog' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "区",
+  :bits "01011000",
+  :color "#585858",
+  :lift
+  {:name "lift/区",
+   :role "area",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '区' (area) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '区' as a reusable pattern that modulates blending/mutation according to its meaning 'area'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'area' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "历",
+  :bits "01011001",
+  :color "#595959",
+  :lift
+  {:name "lift/历",
+   :role "undergo",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '历' (undergo) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '历' as a reusable pattern that modulates blending/mutation according to its meaning 'undergo'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'undergo' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "友",
+  :bits "01011010",
+  :color "#ffcc00",
+  :lift
+  {:name "lift/友",
+   :role "friend #5a5a5a 01011010 10100101",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '友' (friend #5a5a5a 01011010 10100101) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '友' as a reusable pattern that modulates blending/mutation according to its meaning 'friend #5a5a5a 01011010 10100101'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'friend #5a5a5a 01011010 10100101' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "匹",
+  :bits "01011011",
+  :color "#5b5b5b",
+  :lift
+  {:name "lift/匹",
+   :role "mate",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '匹' (mate) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '匹' as a reusable pattern that modulates blending/mutation according to its meaning 'mate'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'mate' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "尤",
+  :bits "01011100",
+  :color "#5c5c5c",
+  :lift
+  {:name "lift/尤",
+   :role "particular",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '尤' (particular) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '尤' as a reusable pattern that modulates blending/mutation according to its meaning 'particular'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'particular' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "车",
+  :bits "01011101",
+  :color "#5d5d5d",
+  :lift
+  {:name "lift/车",
+   :role "car",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '车' (car) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '车' as a reusable pattern that modulates blending/mutation according to its meaning 'car'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'car' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "巨",
+  :bits "01011110",
+  :color "#5e5e5e",
+  :lift
+  {:name "lift/巨",
+   :role "huge",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '巨' (huge) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '巨' as a reusable pattern that modulates blending/mutation according to its meaning 'huge'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'huge' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "牙",
+  :bits "01011111",
+  :color "#5f5f5f",
+  :lift
+  {:name "lift/牙",
+   :role "tooth",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '牙' (tooth) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '牙' as a reusable pattern that modulates blending/mutation according to its meaning 'tooth'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'tooth' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "屯",
+  :bits "01100000",
+  :color "#606060",
+  :lift
+  {:name "lift/屯",
+   :role "village",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '屯' (village) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '屯' as a reusable pattern that modulates blending/mutation according to its meaning 'village'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'village' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "比",
+  :bits "01100001",
+  :color "#616161",
+  :lift
+  {:name "lift/比",
+   :role "near",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '比' (near) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '比' as a reusable pattern that modulates blending/mutation according to its meaning 'near'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'near' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "互",
+  :bits "01100010",
+  :color "#626262",
+  :lift
+  {:name "lift/互",
+   :role "mutual",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '互' (mutual) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '互' as a reusable pattern that modulates blending/mutation according to its meaning 'mutual'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'mutual' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "瓦",
+  :bits "01100011",
+  :color "#636363",
+  :lift
+  {:name "lift/瓦",
+   :role "tile",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '瓦' (tile) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '瓦' as a reusable pattern that modulates blending/mutation according to its meaning 'tile'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'tile' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "切",
+  :bits "01100100",
+  :color "#646464",
+  :lift
+  {:name "lift/切",
+   :role "definitely",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '切' (definitely) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '切' as a reusable pattern that modulates blending/mutation according to its meaning 'definitely'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'definitely' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "止",
+  :bits "01100101",
+  :color "#656565",
+  :lift
+  {:name "lift/止",
+   :role "stop",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '止' (stop) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '止' as a reusable pattern that modulates blending/mutation according to its meaning 'stop'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'stop' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "少",
+  :bits "01100110",
+  :color "#666666",
+  :lift
+  {:name "lift/少",
+   :role "young",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '少' (young) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '少' as a reusable pattern that modulates blending/mutation according to its meaning 'young'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'young' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "日",
+  :bits "01100111",
+  :color "#676767",
+  :lift
+  {:name "lift/日",
+   :role "sun",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '日' (sun) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '日' as a reusable pattern that modulates blending/mutation according to its meaning 'sun'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'sun' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "中",
+  :bits "01101000",
+  :color "#686868",
+  :lift
+  {:name "lift/中",
+   :role "hit",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '中' (hit) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '中' as a reusable pattern that modulates blending/mutation according to its meaning 'hit'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hit' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "贝",
+  :bits "01101001",
+  :color "#696969",
+  :lift
+  {:name "lift/贝",
+   :role "shellfish",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '贝' (shellfish) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '贝' as a reusable pattern that modulates blending/mutation according to its meaning 'shellfish'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'shellfish' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "内",
+  :bits "01101010",
+  :color "#6a6a6a",
+  :lift
+  {:name "lift/内",
+   :role "inside",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '内' (inside) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '内' as a reusable pattern that modulates blending/mutation according to its meaning 'inside'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'inside' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "冈",
+  :bits "01101011",
+  :color "#6b6b6b",
+  :lift
+  {:name "lift/冈",
+   :role "ridge",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '冈' (ridge) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '冈' as a reusable pattern that modulates blending/mutation according to its meaning 'ridge'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ridge' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "水",
+  :bits "01101100",
+  :color "#6c6c6c",
+  :lift
+  {:name "lift/水",
+   :role "water",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '水' (water) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '水' as a reusable pattern that modulates blending/mutation according to its meaning 'water'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'water' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "见",
+  :bits "01101101",
+  :color "#6d6d6d",
+  :lift
+  {:name "lift/见",
+   :role "meet",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '见' (meet) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '见' as a reusable pattern that modulates blending/mutation according to its meaning 'meet'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'meet' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "手",
+  :bits "01101110",
+  :color "#ff3300",
+  :lift
+  {:role "BlendHand",
+   :however "No uniform way to compose/interpolate their effects.",
+   :if {:description "Two child meta-patterns provide hooks."},
+   :name "lift/手",
+   :hooks
+   {:init "init child meta-states",
+    :observe "run observe for children and compute alpha",
+    :decide "produce decisions for each child",
+    :act "switch or blend acts"},
+   :status :refined,
+   :then
+   {:action :blend,
+    :steps
+    ["Maintain child meta-states"
+     "Compute blending coefficient alpha"
+     "Hard-switch or interpolate rule deltas"]},
+   :context [:meta-ca :combinator],
+   :parameters
+   {:childA "meta-pattern",
+    :childB "meta-pattern",
+    :blend_mode "::hard-switch or ::soft-blend",
+    :selector "metrics→alpha"},
+   :because "Provides improvisational control across physics modes.",
+   :metrics [:alpha]}}
+ {:sigil "午",
+  :bits "01101111",
+  :color "#6f6f6f",
+  :lift
+  {:name "lift/午",
+   :role "noon",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '午' (noon) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '午' as a reusable pattern that modulates blending/mutation according to its meaning 'noon'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'noon' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "牛",
+  :bits "01110000",
+  :color "#707070",
+  :lift
+  {:name "lift/牛",
+   :role "ox",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '牛' (ox) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '牛' as a reusable pattern that modulates blending/mutation according to its meaning 'ox'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ox' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "毛",
+  :bits "01110001",
+  :color "#717171",
+  :lift
+  {:name "lift/毛",
+   :role "hair",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '毛' (hair) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '毛' as a reusable pattern that modulates blending/mutation according to its meaning 'hair'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hair' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "气",
+  :bits "01110010",
+  :color "#727272",
+  :lift
+  {:name "lift/气",
+   :role "air",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '气' (air) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '气' as a reusable pattern that modulates blending/mutation according to its meaning 'air'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'air' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "长",
+  :bits "01110011",
+  :color "#737373",
+  :lift
+  {:name "lift/长",
+   :role "long",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '长' (long) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '长' as a reusable pattern that modulates blending/mutation according to its meaning 'long'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'long' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "升",
+  :bits "01110100",
+  :color "#747474",
+  :lift
+  {:name "lift/升",
+   :role "ascend",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '升' (ascend) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '升' as a reusable pattern that modulates blending/mutation according to its meaning 'ascend'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ascend' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仁",
+  :bits "01110101",
+  :color "#757575",
+  :lift
+  {:name "lift/仁",
+   :role "humane",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仁' (humane) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仁' as a reusable pattern that modulates blending/mutation according to its meaning 'humane'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'humane' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "什",
+  :bits "01110110",
+  :color "#ff3300",
+  :lift
+  {:name "lift/什",
+   :role "assorted #767676",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '什' (assorted #767676) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '什' as a reusable pattern that modulates blending/mutation according to its meaning 'assorted #767676'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'assorted #767676' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "片",
+  :bits "01110111",
+  :color "#777777",
+  :lift
+  {:name "lift/片",
+   :role "flake",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '片' (flake) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '片' as a reusable pattern that modulates blending/mutation according to its meaning 'flake'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'flake' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仆",
+  :bits "01111000",
+  :color "#0033ff",
+  :lift
+  {:name "lift/仆",
+   :role "servant #787878",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仆' (servant #787878) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仆' as a reusable pattern that modulates blending/mutation according to its meaning 'servant #787878'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'servant #787878' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "化",
+  :bits "01111001",
+  :color "#797979",
+  :lift
+  {:name "lift/化",
+   :role "change",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '化' (change) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '化' as a reusable pattern that modulates blending/mutation according to its meaning 'change'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'change' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仇",
+  :bits "01111010",
+  :color "#7a7a7a",
+  :lift
+  {:name "lift/仇",
+   :role "hatred",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仇' (hatred) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仇' as a reusable pattern that modulates blending/mutation according to its meaning 'hatred'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hatred' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仍",
+  :bits "01111011",
+  :color "#7b7b7b",
+  :lift
+  {:role "EntropyPulse",
+   :however "No mechanism to inject noise or temporary rule variants.",
+   :if
+   {:description
+    "Entropy collapses/stagnates or pulse period reached."},
+   :name "lift/仍",
+   :hooks
+   {:init "set counters/alt rule",
+    :observe "update entropy + counter",
+    :decide "determine pulse",
+    :act "random flips + rule switch"},
+   :status :refined,
+   :then
+   {:action :entropy-pulse,
+    :steps
+    ["Track entropy and step counter"
+     "Trigger pulse periodically or when outside band"
+     "Randomise cells and optionally switch rule"]},
+   :context [:meta-ca :global-metrics],
+   :parameters
+   {:pulse_period "integer",
+    :entropy_low "float",
+    :entropy_high "float",
+    :flip_fraction "float [0,1]",
+    :rule_switch_prob "float [0,1]"},
+   :because "Pulsed perturbations keep the MetaCA near edge-of-chaos.",
+   :metrics [:global_entropy :coarse_entropy :step_counter]}}
+ {:sigil "币",
+  :bits "01111100",
+  :color "#7c7c7c",
+  :lift
+  {:name "lift/币",
+   :role "money",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '币' (money) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '币' as a reusable pattern that modulates blending/mutation according to its meaning 'money'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'money' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仅",
+  :bits "01111101",
+  :color "#7d7d7d",
+  :lift
+  {:name "lift/仅",
+   :role "barely",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仅' (barely) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仅' as a reusable pattern that modulates blending/mutation according to its meaning 'barely'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'barely' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "斤",
+  :bits "01111110",
+  :color "#7e7e7e",
+  :lift
+  {:name "lift/斤",
+   :role "half kilo",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '斤' (half kilo) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '斤' as a reusable pattern that modulates blending/mutation according to its meaning 'half kilo'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'half kilo' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "爪",
+  :bits "01111111",
+  :color "#7f7f7f",
+  :lift
+  {:name "lift/爪",
+   :role "claw",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '爪' (claw) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '爪' as a reusable pattern that modulates blending/mutation according to its meaning 'claw'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'claw' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "反",
+  :bits "10000000",
+  :color "#808080",
+  :lift
+  {:name "lift/反",
+   :role "contrary",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '反' (contrary) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '反' as a reusable pattern that modulates blending/mutation according to its meaning 'contrary'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'contrary' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "介",
+  :bits "10000001",
+  :color "#818181",
+  :lift
+  {:name "lift/介",
+   :role "introduce",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '介' (introduce) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '介' as a reusable pattern that modulates blending/mutation according to its meaning 'introduce'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'introduce' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "父",
+  :bits "10000010",
+  :color "#828282",
+  :lift
+  {:role "BaldwinLift",
+   :however "Current rule is fixed; persistence gives no feedback.",
+   :if
+   {:description
+    "Track history window and estimate motif persistence."},
+   :name "lift/父",
+   :hooks
+   {:init "initialise recent grids and stats",
+    :observe "update persistence and collect successes",
+    :decide "aggregate context counts",
+    :act "bias rule table"},
+   :status :refined,
+   :then
+   {:action :bias-rule,
+    :steps
+    ["Identify persistent/low-entropy contexts"
+     "Aggregate (context,next_state) successes"
+     "Update rule table toward those targets"]},
+   :context [:meta-ca :motif-history],
+   :parameters
+   {:history_window "integer",
+    :persistence_thresh "integer",
+    :learning_rate "float",
+    :similarity_radius "optional"},
+   :because
+   "Embedding Baldwin learning lets phenotype success bias genotype.",
+   :metrics [:local_persistence_map :local_entropy :success_counts]}}
+ {:sigil "今",
+  :bits "10000011",
+  :color "#838383",
+  :lift
+  {:name "lift/今",
+   :role "today",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '今' (today) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '今' as a reusable pattern that modulates blending/mutation according to its meaning 'today'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'today' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "从",
+  :bits "10000100",
+  :color "#848484",
+  :lift
+  {:name "lift/从",
+   :role "from",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '从' (from) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '从' as a reusable pattern that modulates blending/mutation according to its meaning 'from'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'from' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "凶",
+  :bits "10000101",
+  :color "#858585",
+  :lift
+  {:name "lift/凶",
+   :role "terrible",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '凶' (terrible) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '凶' as a reusable pattern that modulates blending/mutation according to its meaning 'terrible'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'terrible' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "分",
+  :bits "10000110",
+  :color "#868686",
+  :lift
+  {:name "lift/分",
+   :role "part",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '分' (part) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '分' as a reusable pattern that modulates blending/mutation according to its meaning 'part'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'part' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乏",
+  :bits "10000111",
+  :color "#0033ff",
+  :lift
+  {:name "lift/乏",
+   :role "depleted #878787",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乏' (depleted #878787) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乏' as a reusable pattern that modulates blending/mutation according to its meaning 'depleted #878787'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'depleted #878787' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "公",
+  :bits "10001000",
+  :color "#888888",
+  :lift
+  {:name "lift/公",
+   :role "public",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '公' (public) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '公' as a reusable pattern that modulates blending/mutation according to its meaning 'public'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'public' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仓",
+  :bits "10001001",
+  :color "#ff3300",
+  :lift
+  {:name "lift/仓",
+   :role "barn #898989",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仓' (barn #898989) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仓' as a reusable pattern that modulates blending/mutation according to its meaning 'barn #898989'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'barn #898989' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "月",
+  :bits "10001010",
+  :color "#8a8a8a",
+  :lift
+  {:name "lift/月",
+   :role "moon",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '月' (moon) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '月' as a reusable pattern that modulates blending/mutation according to its meaning 'moon'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'moon' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "勿",
+  :bits "10001011",
+  :color "#8b8b8b",
+  :lift
+  {:name "lift/勿",
+   :role "do not",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '勿' (do not) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '勿' as a reusable pattern that modulates blending/mutation according to its meaning 'do not'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'do not' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "氏",
+  :bits "10001100",
+  :color "#8c8c8c",
+  :lift
+  {:name "lift/氏",
+   :role "name",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '氏' (name) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '氏' as a reusable pattern that modulates blending/mutation according to its meaning 'name'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'name' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "风",
+  :bits "10001101",
+  :color "#8d8d8d",
+  :lift
+  {:name "lift/风",
+   :role "wind",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '风' (wind) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '风' as a reusable pattern that modulates blending/mutation according to its meaning 'wind'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'wind' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "欠",
+  :bits "10001110",
+  :color "#8e8e8e",
+  :lift
+  {:name "lift/欠",
+   :role "owe",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '欠' (owe) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '欠' as a reusable pattern that modulates blending/mutation according to its meaning 'owe'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'owe' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丹",
+  :bits "10001111",
+  :color "#8f8f8f",
+  :lift
+  {:name "lift/丹",
+   :role "red",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丹' (red) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丹' as a reusable pattern that modulates blending/mutation according to its meaning 'red'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'red' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "匀",
+  :bits "10010000",
+  :color "#909090",
+  :lift
+  {:name "lift/匀",
+   :role "even",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '匀' (even) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '匀' as a reusable pattern that modulates blending/mutation according to its meaning 'even'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'even' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乌",
+  :bits "10010001",
+  :color "#ff3300",
+  :lift
+  {:name "lift/乌",
+   :role "crow #919191",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乌' (crow #919191) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乌' as a reusable pattern that modulates blending/mutation according to its meaning 'crow #919191'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'crow #919191' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "勾",
+  :bits "10010010",
+  :color "#929292",
+  :lift
+  {:name "lift/勾",
+   :role "affair",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '勾' (affair) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '勾' as a reusable pattern that modulates blending/mutation according to its meaning 'affair'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'affair' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "六",
+  :bits "10010011",
+  :color "#939393",
+  :lift
+  {:name "lift/六",
+   :role "six",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '六' (six) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '六' as a reusable pattern that modulates blending/mutation according to its meaning 'six'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'six' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "凤",
+  :bits "10010100",
+  :color "#949494",
+  :lift
+  {:name "lift/凤",
+   :role "phoenix",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '凤' (phoenix) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '凤' as a reusable pattern that modulates blending/mutation according to its meaning 'phoenix'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'phoenix' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "文",
+  :bits "10010101",
+  :color "#959595",
+  :lift
+  {:name "lift/文",
+   :role "language",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '文' (language) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '文' as a reusable pattern that modulates blending/mutation according to its meaning 'language'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'language' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "方",
+  :bits "10010110",
+  :color "#969696",
+  :lift
+  {:name "lift/方",
+   :role "square",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '方' (square) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '方' as a reusable pattern that modulates blending/mutation according to its meaning 'square'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'square' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "火",
+  :bits "10010111",
+  :color "#979797",
+  :lift
+  {:name "lift/火",
+   :role "fire",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '火' (fire) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '火' as a reusable pattern that modulates blending/mutation according to its meaning 'fire'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'fire' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "为",
+  :bits "10011000",
+  :color "#989898",
+  :lift
+  {:name "lift/为",
+   :role "take",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '为' (take) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '为' as a reusable pattern that modulates blending/mutation according to its meaning 'take'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'take' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "斗",
+  :bits "10011001",
+  :color "#999999",
+  :lift
+  {:name "lift/斗",
+   :role "fight",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '斗' (fight) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '斗' as a reusable pattern that modulates blending/mutation according to its meaning 'fight'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'fight' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "忆",
+  :bits "10011010",
+  :color "#9a9a9a",
+  :lift
+  {:name "lift/忆",
+   :role "remember",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '忆' (remember) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '忆' as a reusable pattern that modulates blending/mutation according to its meaning 'remember'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'remember' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "订",
+  :bits "10011011",
+  :color "#9b9b9b",
+  :lift
+  {:name "lift/订",
+   :role "agree",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '订' (agree) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '订' as a reusable pattern that modulates blending/mutation according to its meaning 'agree'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'agree' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "计",
+  :bits "10011100",
+  :color "#9c9c9c",
+  :lift
+  {:name "lift/计",
+   :role "calculate",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '计' (calculate) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '计' as a reusable pattern that modulates blending/mutation according to its meaning 'calculate'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'calculate' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "户",
+  :bits "10011101",
+  :color "#9d9d9d",
+  :lift
+  {:name "lift/户",
+   :role "household",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '户' (household) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '户' as a reusable pattern that modulates blending/mutation according to its meaning 'household'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'household' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "认",
+  :bits "10011110",
+  :color "#9e9e9e",
+  :lift
+  {:name "lift/认",
+   :role "recognize",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '认' (recognize) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '认' as a reusable pattern that modulates blending/mutation according to its meaning 'recognize'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'recognize' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "心",
+  :bits "10011111",
+  :color "#9f9f9f",
+  :lift
+  {:name "lift/心",
+   :role "heart",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '心' (heart) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '心' as a reusable pattern that modulates blending/mutation according to its meaning 'heart'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'heart' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "尺",
+  :bits "10100000",
+  :color "#a0a0a0",
+  :lift
+  {:name "lift/尺",
+   :role "foot",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '尺' (foot) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '尺' as a reusable pattern that modulates blending/mutation according to its meaning 'foot'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'foot' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "引",
+  :bits "10100001",
+  :color "#a1a1a1",
+  :lift
+  {:name "lift/引",
+   :role "pull",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '引' (pull) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '引' as a reusable pattern that modulates blending/mutation according to its meaning 'pull'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'pull' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丑",
+  :bits "10100010",
+  :color "#a2a2a2",
+  :lift
+  {:name "lift/丑",
+   :role "clown",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丑' (clown) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丑' as a reusable pattern that modulates blending/mutation according to its meaning 'clown'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'clown' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "孔",
+  :bits "10100011",
+  :color "#a3a3a3",
+  :lift
+  {:name "lift/孔",
+   :role "hole",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '孔' (hole) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '孔' as a reusable pattern that modulates blending/mutation according to its meaning 'hole'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hole' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "巴",
+  :bits "10100100",
+  :color "#a4a4a4",
+  :lift
+  {:name "lift/巴",
+   :role "wish",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '巴' (wish) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '巴' as a reusable pattern that modulates blending/mutation according to its meaning 'wish'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'wish' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "队",
+  :bits "10100101",
+  :color "#ffcc00",
+  :lift
+  {:name "lift/队",
+   :role "team #a5a5a5",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '队' (team #a5a5a5) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '队' as a reusable pattern that modulates blending/mutation according to its meaning 'team #a5a5a5'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'team #a5a5a5' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "办",
+  :bits "10100110",
+  :color "#a6a6a6",
+  :lift
+  {:name "lift/办",
+   :role "manage",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '办' (manage) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '办' as a reusable pattern that modulates blending/mutation according to its meaning 'manage'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'manage' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "以",
+  :bits "10100111",
+  :color "#a7a7a7",
+  :lift
+  {:name "lift/以",
+   :role "because",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '以' (because) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '以' as a reusable pattern that modulates blending/mutation according to its meaning 'because'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'because' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "允",
+  :bits "10101000",
+  :color "#a8a8a8",
+  :lift
+  {:name "lift/允",
+   :role "fair",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '允' (fair) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '允' as a reusable pattern that modulates blending/mutation according to its meaning 'fair'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'fair' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "予",
+  :bits "10101001",
+  :color "#a9a9a9",
+  :lift
+  {:name "lift/予",
+   :role "give",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '予' (give) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '予' as a reusable pattern that modulates blending/mutation according to its meaning 'give'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'give' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "劝",
+  :bits "10101010",
+  :color "#aaaaaa",
+  :lift
+  {:name "lift/劝",
+   :role "advise",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '劝' (advise) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '劝' as a reusable pattern that modulates blending/mutation according to its meaning 'advise'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'advise' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "书",
+  :bits "10101011",
+  :color "#ababab",
+  :lift
+  {:name "lift/书",
+   :role "document",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '书' (document) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '书' as a reusable pattern that modulates blending/mutation according to its meaning 'document'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'document' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "双",
+  :bits "10101100",
+  :color "#acacac",
+  :lift
+  {:name "lift/双",
+   :role "pair",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '双' (pair) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '双' as a reusable pattern that modulates blending/mutation according to its meaning 'pair'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'pair' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "幻",
+  :bits "10101101",
+  :color "#adadad",
+  :lift
+  {:name "lift/幻",
+   :role "fantasy",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '幻' (fantasy) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '幻' as a reusable pattern that modulates blending/mutation according to its meaning 'fantasy'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'fantasy' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "玉",
+  :bits "10101110",
+  :color "#aeaeae",
+  :lift
+  {:name "lift/玉",
+   :role "jade",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '玉' (jade) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '玉' as a reusable pattern that modulates blending/mutation according to its meaning 'jade'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'jade' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "刊",
+  :bits "10101111",
+  :color "#afafaf",
+  :lift
+  {:name "lift/刊",
+   :role "publish",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '刊' (publish) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '刊' as a reusable pattern that modulates blending/mutation according to its meaning 'publish'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'publish' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "末",
+  :bits "10110000",
+  :color "#b0b0b0",
+  :lift
+  {:name "lift/末",
+   :role "end",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '末' (end) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '末' as a reusable pattern that modulates blending/mutation according to its meaning 'end'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'end' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "未",
+  :bits "10110001",
+  :color "#b1b1b1",
+  :lift
+  {:name "lift/未",
+   :role "not yet",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '未' (not yet) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '未' as a reusable pattern that modulates blending/mutation according to its meaning 'not yet'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'not yet' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "示",
+  :bits "10110010",
+  :color "#b2b2b2",
+  :lift
+  {:name "lift/示",
+   :role "show",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '示' (show) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '示' as a reusable pattern that modulates blending/mutation according to its meaning 'show'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'show' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "打",
+  :bits "10110011",
+  :color "#b3b3b3",
+  :lift
+  {:name "lift/打",
+   :role "dozen",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '打' (dozen) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '打' as a reusable pattern that modulates blending/mutation according to its meaning 'dozen'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'dozen' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "击",
+  :bits "10110100",
+  :color "#b4b4b4",
+  :lift
+  {:name "lift/击",
+   :role "hit",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '击' (hit) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '击' as a reusable pattern that modulates blending/mutation according to its meaning 'hit'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hit' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "巧",
+  :bits "10110101",
+  :color "#b5b5b5",
+  :lift
+  {:name "lift/巧",
+   :role "opportunely",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '巧' (opportunely) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '巧' as a reusable pattern that modulates blending/mutation according to its meaning 'opportunely'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'opportunely' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "正",
+  :bits "10110110",
+  :color "#b6b6b6",
+  :lift
+  {:name "lift/正",
+   :role "straight",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '正' (straight) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '正' as a reusable pattern that modulates blending/mutation according to its meaning 'straight'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'straight' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "扑",
+  :bits "10110111",
+  :color "#b7b7b7",
+  :lift
+  {:name "lift/扑",
+   :role "devote",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '扑' (devote) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '扑' as a reusable pattern that modulates blending/mutation according to its meaning 'devote'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'devote' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "扒",
+  :bits "10111000",
+  :color "#00ff33",
+  :lift
+  {:name "lift/扒",
+   :role "cling #b8b8b8",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '扒' (cling #b8b8b8) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '扒' as a reusable pattern that modulates blending/mutation according to its meaning 'cling #b8b8b8'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'cling #b8b8b8' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "功",
+  :bits "10111001",
+  :color "#b9b9b9",
+  :lift
+  {:name "lift/功",
+   :role "achievement",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '功' (achievement) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '功' as a reusable pattern that modulates blending/mutation according to its meaning 'achievement'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'achievement' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "扔",
+  :bits "10111010",
+  :color "#bababa",
+  :lift
+  {:name "lift/扔",
+   :role "throw",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '扔' (throw) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '扔' as a reusable pattern that modulates blending/mutation according to its meaning 'throw'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'throw' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "甘",
+  :bits "10111011",
+  :color "#bbbbbb",
+  :lift
+  {:name "lift/甘",
+   :role "sweet",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '甘' (sweet) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '甘' as a reusable pattern that modulates blending/mutation according to its meaning 'sweet'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'sweet' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "去",
+  :bits "10111100",
+  :color "#bcbcbc",
+  :lift
+  {:name "lift/去",
+   :role "go",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '去' (go) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '去' as a reusable pattern that modulates blending/mutation according to its meaning 'go'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'go' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "世",
+  :bits "10111101",
+  :color "#bdbdbd",
+  :lift
+  {:name "lift/世",
+   :role "life",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '世' (life) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '世' as a reusable pattern that modulates blending/mutation according to its meaning 'life'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'life' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "古",
+  :bits "10111110",
+  :color "#bebebe",
+  :lift
+  {:name "lift/古",
+   :role "ancient",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '古' (ancient) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '古' as a reusable pattern that modulates blending/mutation according to its meaning 'ancient'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'ancient' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "节",
+  :bits "10111111",
+  :color "#bfbfbf",
+  :lift
+  {:name "lift/节",
+   :role "festival",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '节' (festival) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '节' as a reusable pattern that modulates blending/mutation according to its meaning 'festival'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'festival' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "本",
+  :bits "11000000",
+  :color "#c0c0c0",
+  :lift
+  {:name "lift/本",
+   :role "source",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '本' (source) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '本' as a reusable pattern that modulates blending/mutation according to its meaning 'source'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'source' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "术",
+  :bits "11000001",
+  :color "#c1c1c1",
+  :lift
+  {:name "lift/术",
+   :role "method",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '术' (method) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '术' as a reusable pattern that modulates blending/mutation according to its meaning 'method'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'method' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "可",
+  :bits "11000010",
+  :color "#c2c2c2",
+  :lift
+  {:name "lift/可",
+   :role "see",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '可' (see) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '可' as a reusable pattern that modulates blending/mutation according to its meaning 'see'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'see' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "左",
+  :bits "11000011",
+  :color "#c3c3c3",
+  :lift
+  {:name "lift/左",
+   :role "unorthodox",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '左' (unorthodox) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '左' as a reusable pattern that modulates blending/mutation according to its meaning 'unorthodox'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'unorthodox' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丙",
+  :bits "11000100",
+  :color "#c4c4c4",
+  :lift
+  {:name "lift/丙",
+   :role "third",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丙' (third) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丙' as a reusable pattern that modulates blending/mutation according to its meaning 'third'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'third' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "厉",
+  :bits "11000101",
+  :color "#c5c5c5",
+  :lift
+  {:name "lift/厉",
+   :role "strict",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '厉' (strict) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '厉' as a reusable pattern that modulates blending/mutation according to its meaning 'strict'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'strict' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "石",
+  :bits "11000110",
+  :color "#c6c6c6",
+  :lift
+  {:name "lift/石",
+   :role "stone",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '石' (stone) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '石' as a reusable pattern that modulates blending/mutation according to its meaning 'stone'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'stone' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "右",
+  :bits "11000111",
+  :color "#c7c7c7",
+  :lift
+  {:name "lift/右",
+   :role "right",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '右' (right) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '右' as a reusable pattern that modulates blending/mutation according to its meaning 'right'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'right' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "布",
+  :bits "11001000",
+  :color "#c8c8c8",
+  :lift
+  {:name "lift/布",
+   :role "spread",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '布' (spread) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '布' as a reusable pattern that modulates blending/mutation according to its meaning 'spread'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'spread' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "龙",
+  :bits "11001001",
+  :color "#c9c9c9",
+  :lift
+  {:name "lift/龙",
+   :role "dragon",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '龙' (dragon) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '龙' as a reusable pattern that modulates blending/mutation according to its meaning 'dragon'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'dragon' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "平",
+  :bits "11001010",
+  :color "#cacaca",
+  :lift
+  {:name "lift/平",
+   :role "flat",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '平' (flat) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '平' as a reusable pattern that modulates blending/mutation according to its meaning 'flat'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'flat' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "轧",
+  :bits "11001011",
+  :color "#cbcbcb",
+  :lift
+  {:name "lift/轧",
+   :role "crush",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '轧' (crush) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '轧' as a reusable pattern that modulates blending/mutation according to its meaning 'crush'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'crush' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "灭",
+  :bits "11001100",
+  :color "#cccccc",
+  :lift
+  {:name "lift/灭",
+   :role "extinguish",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '灭' (extinguish) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '灭' as a reusable pattern that modulates blending/mutation according to its meaning 'extinguish'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'extinguish' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "东",
+  :bits "11001101",
+  :color "#cdcdcd",
+  :lift
+  {:name "lift/东",
+   :role "east",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '东' (east) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '东' as a reusable pattern that modulates blending/mutation according to its meaning 'east'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'east' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "卡",
+  :bits "11001110",
+  :color "#cecece",
+  :lift
+  {:name "lift/卡",
+   :role "block",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '卡' (block) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '卡' as a reusable pattern that modulates blending/mutation according to its meaning 'block'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'block' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "北",
+  :bits "11001111",
+  :color "#cfcfcf",
+  :lift
+  {:name "lift/北",
+   :role "north",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '北' (north) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '北' as a reusable pattern that modulates blending/mutation according to its meaning 'north'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'north' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "占",
+  :bits "11010000",
+  :color "#d0d0d0",
+  :lift
+  {:name "lift/占",
+   :role "occupy",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '占' (occupy) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '占' as a reusable pattern that modulates blending/mutation according to its meaning 'occupy'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'occupy' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "业",
+  :bits "11010001",
+  :color "#d1d1d1",
+  :lift
+  {:name "lift/业",
+   :role "job",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '业' (job) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '业' as a reusable pattern that modulates blending/mutation according to its meaning 'job'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'job' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "旧",
+  :bits "11010010",
+  :color "#d2d2d2",
+  :lift
+  {:name "lift/旧",
+   :role "worn",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '旧' (worn) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '旧' as a reusable pattern that modulates blending/mutation according to its meaning 'worn'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'worn' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "归",
+  :bits "11010011",
+  :color "#d3d3d3",
+  :lift
+  {:name "lift/归",
+   :role "return",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '归' (return) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '归' as a reusable pattern that modulates blending/mutation according to its meaning 'return'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'return' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "帅",
+  :bits "11010100",
+  :color "#d4d4d4",
+  :lift
+  {:name "lift/帅",
+   :role "smart",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '帅' (smart) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '帅' as a reusable pattern that modulates blending/mutation according to its meaning 'smart'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'smart' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "目",
+  :bits "11010101",
+  :color "#d5d5d5",
+  :lift
+  {:name "lift/目",
+   :role "eye",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '目' (eye) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '目' as a reusable pattern that modulates blending/mutation according to its meaning 'eye'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'eye' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "旦",
+  :bits "11010110",
+  :color "#d6d6d6",
+  :lift
+  {:name "lift/旦",
+   :role "dawn",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '旦' (dawn) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '旦' as a reusable pattern that modulates blending/mutation according to its meaning 'dawn'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'dawn' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "且",
+  :bits "11010111",
+  :color "#d7d7d7",
+  :lift
+  {:name "lift/且",
+   :role "moreover",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '且' (moreover) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '且' as a reusable pattern that modulates blending/mutation according to its meaning 'moreover'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'moreover' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叮",
+  :bits "11011000",
+  :color "#d8d8d8",
+  :lift
+  {:name "lift/叮",
+   :role "sting",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叮' (sting) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叮' as a reusable pattern that modulates blending/mutation according to its meaning 'sting'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'sting' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叶",
+  :bits "11011001",
+  :color "#d9d9d9",
+  :lift
+  {:name "lift/叶",
+   :role "harmony",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叶' (harmony) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叶' as a reusable pattern that modulates blending/mutation according to its meaning 'harmony'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'harmony' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "甲",
+  :bits "11011010",
+  :color "#dadada",
+  :lift
+  {:name "lift/甲",
+   :role "first",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '甲' (first) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '甲' as a reusable pattern that modulates blending/mutation according to its meaning 'first'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'first' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "号",
+  :bits "11011011",
+  :color "#dbdbdb",
+  :lift
+  {:name "lift/号",
+   :role "roar",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '号' (roar) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '号' as a reusable pattern that modulates blending/mutation according to its meaning 'roar'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'roar' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "申",
+  :bits "11011100",
+  :color "#dcdcdc",
+  :lift
+  {:name "lift/申",
+   :role "extend",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '申' (extend) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '申' as a reusable pattern that modulates blending/mutation according to its meaning 'extend'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'extend' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "电",
+  :bits "11011101",
+  :color "#dddddd",
+  :lift
+  {:name "lift/电",
+   :role "electric",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '电' (electric) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '电' as a reusable pattern that modulates blending/mutation according to its meaning 'electric'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'electric' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "田",
+  :bits "11011110",
+  :color "#dedede",
+  :lift
+  {:name "lift/田",
+   :role "field",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '田' (field) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '田' as a reusable pattern that modulates blending/mutation according to its meaning 'field'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'field' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "由",
+  :bits "11011111",
+  :color "#dfdfdf",
+  :lift
+  {:name "lift/由",
+   :role "follow",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '由' (follow) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '由' as a reusable pattern that modulates blending/mutation according to its meaning 'follow'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'follow' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "只",
+  :bits "11100000",
+  :color "#e0e0e0",
+  :lift
+  {:name "lift/只",
+   :role "only",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '只' (only) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '只' as a reusable pattern that modulates blending/mutation according to its meaning 'only'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'only' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "央",
+  :bits "11100001",
+  :color "#0033ff",
+  :lift
+  {:name "lift/央",
+   :role "center #e1e1e1",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '央' (center #e1e1e1) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '央' as a reusable pattern that modulates blending/mutation according to its meaning 'center #e1e1e1'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'center #e1e1e1' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "史",
+  :bits "11100010",
+  :color "#00ff33",
+  :lift
+  {:name "lift/史",
+   :role "history #e2e2e2",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '史' (history #e2e2e2) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '史' as a reusable pattern that modulates blending/mutation according to its meaning 'history #e2e2e2'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'history #e2e2e2' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叼",
+  :bits "11100011",
+  :color "#e3e3e3",
+  :lift
+  {:name "lift/叼",
+   :role "hold in the mouth",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叼' (hold in the mouth) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叼' as a reusable pattern that modulates blending/mutation according to its meaning 'hold in the mouth'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'hold in the mouth' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "兄",
+  :bits "11100100",
+  :color "#e4e4e4",
+  :lift
+  {:name "lift/兄",
+   :role "elder brother",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '兄' (elder brother) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '兄' as a reusable pattern that modulates blending/mutation according to its meaning 'elder brother'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'elder brother' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叫",
+  :bits "11100101",
+  :color "#e5e5e5",
+  :lift
+  {:name "lift/叫",
+   :role "shout",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叫' (shout) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叫' as a reusable pattern that modulates blending/mutation according to its meaning 'shout'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'shout' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叨",
+  :bits "11100110",
+  :color "#e6e6e6",
+  :lift
+  {:name "lift/叨",
+   :role "garrulous",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叨' (garrulous) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叨' as a reusable pattern that modulates blending/mutation according to its meaning 'garrulous'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'garrulous' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "另",
+  :bits "11100111",
+  :color "#e7e7e7",
+  :lift
+  {:name "lift/另",
+   :role "another",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '另' (another) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '另' as a reusable pattern that modulates blending/mutation according to its meaning 'another'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'another' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "叹",
+  :bits "11101000",
+  :color "#e8e8e8",
+  :lift
+  {:name "lift/叹",
+   :role "sigh",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '叹' (sigh) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '叹' as a reusable pattern that modulates blending/mutation according to its meaning 'sigh'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'sigh' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "四",
+  :bits "11101001",
+  :color "#e9e9e9",
+  :lift
+  {:name "lift/四",
+   :role "four",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '四' (four) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '四' as a reusable pattern that modulates blending/mutation according to its meaning 'four'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'four' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "生",
+  :bits "11101010",
+  :color "#eaeaea",
+  :lift
+  {:name "lift/生",
+   :role "life",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '生' (life) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '生' as a reusable pattern that modulates blending/mutation according to its meaning 'life'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'life' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "禾",
+  :bits "11101011",
+  :color "#ebebeb",
+  :lift
+  {:name "lift/禾",
+   :role "grain",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '禾' (grain) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '禾' as a reusable pattern that modulates blending/mutation according to its meaning 'grain'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'grain' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "失",
+  :bits "11101100",
+  :color "#ececec",
+  :lift
+  {:name "lift/失",
+   :role "lose",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '失' (lose) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '失' as a reusable pattern that modulates blending/mutation according to its meaning 'lose'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'lose' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丘",
+  :bits "11101101",
+  :color "#ededed",
+  :lift
+  {:name "lift/丘",
+   :role "mound",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丘' (mound) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丘' as a reusable pattern that modulates blending/mutation according to its meaning 'mound'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'mound' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "付",
+  :bits "11101110",
+  :color "#eeeeee",
+  :lift
+  {:name "lift/付",
+   :role "pay",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '付' (pay) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '付' as a reusable pattern that modulates blending/mutation according to its meaning 'pay'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'pay' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仗",
+  :bits "11101111",
+  :color "#efefef",
+  :lift
+  {:name "lift/仗",
+   :role "weild",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仗' (weild) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仗' as a reusable pattern that modulates blending/mutation according to its meaning 'weild'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'weild' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "代",
+  :bits "11110000",
+  :color "#f0f0f0",
+  :lift
+  {:name "lift/代",
+   :role "substitute",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '代' (substitute) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '代' as a reusable pattern that modulates blending/mutation according to its meaning 'substitute'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'substitute' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仙",
+  :bits "11110001",
+  :color "#f1f1f1",
+  :lift
+  {:name "lift/仙",
+   :role "immortl",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仙' (immortl) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仙' as a reusable pattern that modulates blending/mutation according to its meaning 'immortl'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'immortl' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "们",
+  :bits "11110010",
+  :color "#f2f2f2",
+  :lift
+  {:name "lift/们",
+   :role "plural",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '们' (plural) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '们' as a reusable pattern that modulates blending/mutation according to its meaning 'plural'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'plural' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "白",
+  :bits "11110011",
+  :color "#f3f3f3",
+  :lift
+  {:name "lift/白",
+   :role "free",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '白' (free) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '白' as a reusable pattern that modulates blending/mutation according to its meaning 'free'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'free' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仪",
+  :bits "11110100",
+  :color "#f4f4f4",
+  :lift
+  {:name "lift/仪",
+   :role "apparatus",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仪' (apparatus) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仪' as a reusable pattern that modulates blending/mutation according to its meaning 'apparatus'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'apparatus' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "仔",
+  :bits "11110101",
+  :color "#f5f5f5",
+  :lift
+  {:name "lift/仔",
+   :role "meticulous",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '仔' (meticulous) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '仔' as a reusable pattern that modulates blending/mutation according to its meaning 'meticulous'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'meticulous' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "他",
+  :bits "11110110",
+  :color "#f6f6f6",
+  :lift
+  {:name "lift/他",
+   :role "him",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '他' (him) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '他' as a reusable pattern that modulates blending/mutation according to its meaning 'him'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'him' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "斥",
+  :bits "11110111",
+  :color "#f7f7f7",
+  :lift
+  {:name "lift/斥",
+   :role "blame",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '斥' (blame) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '斥' as a reusable pattern that modulates blending/mutation according to its meaning 'blame'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'blame' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "瓜",
+  :bits "11111000",
+  :color "#f8f8f8",
+  :lift
+  {:name "lift/瓜",
+   :role "melon",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '瓜' (melon) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '瓜' as a reusable pattern that modulates blending/mutation according to its meaning 'melon'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'melon' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乎",
+  :bits "11111001",
+  :color "#f9f9f9",
+  :lift
+  {:name "lift/乎",
+   :role "in",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乎' (in) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乎' as a reusable pattern that modulates blending/mutation according to its meaning 'in'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'in' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "丛",
+  :bits "11111010",
+  :color "#fafafa",
+  :lift
+  {:name "lift/丛",
+   :role "cluster",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '丛' (cluster) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '丛' as a reusable pattern that modulates blending/mutation according to its meaning 'cluster'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'cluster' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "用",
+  :bits "11111011",
+  :color "#fbfbfb",
+  :lift
+  {:name "lift/用",
+   :role "use",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '用' (use) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '用' as a reusable pattern that modulates blending/mutation according to its meaning 'use'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'use' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "令",
+  :bits "11111100",
+  :color "#fcfcfc",
+  :lift
+  {:name "lift/令",
+   :role "see",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '令' (see) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '令' as a reusable pattern that modulates blending/mutation according to its meaning 'see'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'see' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "甩",
+  :bits "11111101",
+  :color "#fdfdfd",
+  :lift
+  {:name "lift/甩",
+   :role "throw",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '甩' (throw) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '甩' as a reusable pattern that modulates blending/mutation according to its meaning 'throw'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'throw' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "印",
+  :bits "11111110",
+  :color "#fefefe",
+  :lift
+  {:name "lift/印",
+   :role "mark",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '印' (mark) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '印' as a reusable pattern that modulates blending/mutation according to its meaning 'mark'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'mark' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}
+ {:sigil "乐",
+  :bits "11111111",
+  :color "#ffffff",
+  :lift
+  {:name "lift/乐",
+   :role "unnamed",
+   :if
+   {:context [:meta-ca :local-neighborhood],
+    :condition
+    "When the local genotype expresses the sigil '乐' (unnamed) in its immediate neighborhood."},
+   :then
+   {:action :promote-to-pattern,
+    :operator
+    {:type :improvisation-pattern,
+     :intent
+     "Treat '乐' as a reusable pattern that modulates blending/mutation according to its meaning 'unnamed'."}},
+   :rationale
+   "Draft lift linking the sigil meaning 'unnamed' to a composable MMCA operator. Replace with a concrete IF→THEN rule as experiments refine the behavior.",
+   :status :draft}}]

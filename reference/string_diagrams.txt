@@ -1,0 +1,236 @@
+{{Short description|Graphical representation of a morphism}}
+In mathematics, '''string diagrams''' are a formal graphical language for representing [[morphisms]] in [[monoidal categories]], or more generally 2-cells in [[2-categories]]. They are a prominent tool in [[applied category theory]]. When interpreted in [[FinVect]], the monoidal category of finite-dimensional [[vector spaces]] and [[linear map]]s with the [[tensor product]], string diagrams are called [[tensor network]]s or [[Penrose graphical notation]]. This has led to the development of [[categorical quantum mechanics]] where the axioms of quantum theory are expressed in the language of monoidal categories.
+
+== History ==
+[[Günter Hotz]] gave the first mathematical definition of string diagrams in order to formalise [[electronic circuit]]s.<ref>{{Cite journal |last=Hotz |first=Günter |date=1965 |title=Eine Algebraisierung des Syntheseproblems von Schaltkreisen I. |journal=Elektronische Informationsverarbeitung und Kybernetik |volume=1 |issue=3 |pages=185–205}}</ref> However, the invention of string diagrams is usually credited to [[Roger Penrose]],<ref>{{Cite journal |last=Penrose |first=Roger |date=1971 |title=Applications of negative dimensional tensors |url=https://scholar.googleusercontent.com/scholar.bib?q=info:DYClJiWzIJQJ:scholar.google.com/&output=citation&scisdr=CgXswJALEJT6ufwbECU:AAGBfm0AAAAAY2odCCW7hYhwtWjn35RhUaHM9aZA6tiD&scisig=AAGBfm0AAAAAY2odCANHUoew7LZP05UGFPOFP2IA4Syr&scisf=4&ct=citation&cd=-1&hl=en |journal=Combinatorial Mathematics and Its Applications |volume=1 |pages=221–244}}</ref> with [[Feynman diagram]]s also described as a precursor.<ref>{{Citation |last1=Baez |first1=J. |title=Physics, Topology, Logic and Computation: A Rosetta Stone |date=2011 |url=https://doi.org/10.1007/978-3-642-12821-9_2 |work=New Structures for Physics |pages=95–172 |editor-last=Coecke |editor-first=Bob |place=Berlin, Heidelberg |publisher=Springer |language=en |doi=10.1007/978-3-642-12821-9_2 |isbn=978-3-642-12821-9 |access-date=2022-11-08 |last2=Stay |first2=M.|series=Lecture Notes in Physics |volume=813 |arxiv=0903.0340 |bibcode=2011LNP...813...95B |s2cid=115169297 }}</ref> They were later characterised as the arrows of [[Free strict monoidal category|free monoidal categories]] in a seminal article by [[André Joyal]] and [[Ross Street]].<ref>{{Cite journal |last1=Joyal |first1=André |last2=Street |first2=Ross |date=1991 |title=The geometry of tensor calculus, I |journal=[[Advances in Mathematics]] |volume=88 |issue=1 |pages=55–112|doi=10.1016/0001-8708(91)90003-P | doi-access= }}</ref> While the diagrams in these first articles were hand-drawn, the advent of typesetting software such as [[LaTeX]] and [[PGF/TikZ]] made the publication of string diagrams more wide-spread.<ref>{{Cite web |title=Categories: History of string diagrams (thread, 2017may02-...) |url=http://angg.twu.net/categories-2017may02.html#.1 |access-date=2022-11-11 |website=angg.twu.net}}</ref>
+
+The [[existential graph]]s and [[diagrammatic reasoning]] of [[Charles Sanders Peirce]] are arguably the oldest form of string diagrams, they are interpreted in the monoidal category of [[finite sets]] and [[Binary relation|relations]] with the [[Cartesian product]].<ref>{{Cite journal |last1=Brady |first1=Geraldine |last2=Trimble |first2=Todd H |date=2000 |title=A categorical interpretation of CS Peirce's propositional logic Alpha |url=https://scholar.googleusercontent.com/scholar.bib?q=info:z17ig3wfQZ0J:scholar.google.com/&output=citation&scisdr=CgXswJALEJT6ufwi7EM:AAGBfm0AAAAAY2ok9ENrthZYwCuLljH9jsSEukPjkBaE&scisig=AAGBfm0AAAAAY2ok9MQgwqWjQgHWkelw5gGb82nKMBSR&scisf=4&ct=citation&cd=-1&hl=en |journal=Journal of Pure and Applied Algebra |volume=149 |issue=3 |pages=213–239|doi=10.1016/S0022-4049(98)00179-0 |doi-access= |url-access=subscription }}</ref> The '''lines of identity''' of Peirce's existential graphs can be axiomatised as a [[Frobenius algebra]], the '''cuts''' are unary operators on homsets that axiomatise [[Negation|logical negation]]. This makes string diagrams a [[Soundness|sound]] and [[Completeness (logic)|complete]] two-dimensional [[deduction system]] for [[first-order logic]],<ref>{{Cite journal |last1=Haydon |first1=Nathan |last2=Sobociński |first2=Pawe\l |date=2020 |title=Compositional diagrammatic first-order logic |url=https://scholar.googleusercontent.com/scholar.bib?q=info:pd5MrLoLfLQJ:scholar.google.com/&output=citation&scisdr=CgXswJALEJT6ufwgXcs:AAGBfm0AAAAAY2omRcs9kaERdk6UxEg_v331hutAjGXP&scisig=AAGBfm0AAAAAY2omRSLM2O_mGNH9sYDVO1ThNJZEohlv&scisf=4&ct=citation&cd=-1&hl=en |journal=International Conference on Theory and Application of Diagrams |publisher=Springer |pages=402–418}}</ref><ref>{{cite arXiv | eprint=2401.07055 | last1=Bonchi | first1=Filippo | author2=Alessandro Di Giorgio | last3=Haydon | first3=Nathan | last4=Sobocinski | first4=Pawel | title=Diagrammatic Algebra of First Order Logic | date=2024 | class=cs.LO }}</ref> invented independently from the one-dimensional syntax of [[Gottlob Frege]]'s [[Begriffsschrift]].
+
+== Intuition ==
+String diagrams are made of '''boxes''' <math>f : x \to y</math>, which represent [[Process|processes]], with a list of '''wires''' <math>x</math> coming in at the top and <math>y</math> at the bottom, which represent the input and output [[System|systems]] being processed by the box <math>f</math>. Starting from a collection of wires and boxes, called a '''signature''', one may generate the set of all string diagrams by induction:
+
+* each box <math>f : x \to y</math> is a string diagram,
+* for each list of wires <math>x</math>, the [[Identity morphism|identity]] <math>\text{id}(x) : x \to x</math> is a string diagram representing the process which does nothing to its input system, it is drawn as a bunch of parallel wires,
+* for each pair of string diagrams <math>f : x \to y</math> and <math>f' : x' \to y'</math>, their [[Monoidal category|tensor]] <math>f \otimes f' : x x' \to y y'</math> is a string diagram representing the parallel composition of processes, it is drawn as the horizontal concatenation of the two diagrams,
+* for each pair of string diagrams <math>f : x \to y</math> and <math>g : y \to z</math>, their [[Function composition|composition]] <math>g \circ f : x \to z</math> is a string diagram representing the sequential composition of processes, it is drawn as the vertical concatenation of the two diagrams.
+
+== Definition ==
+
+=== Algebraic ===
+Let the [[Kleene star]] <math>X^\star
+</math> denote the [[free monoid]], i.e. the set of lists with elements in a set <math>X
+</math>.
+
+A '''monoidal signature''' <math>\Sigma</math> is given by:
+
+* a set <math>\Sigma_0
+</math> of '''generating objects''', the lists of generating objects in <math display="inline">\Sigma_0^\star</math> are also called '''types''',
+* a set <math>\Sigma_1</math> of '''generating arrows''', also called '''boxes''',
+* a pair of functions <math>\text{dom}, \text{cod} : \Sigma_1 \to \Sigma_0^\star</math> which assign a '''domain''' and '''codomain''' to each box, i.e. the input and output types.
+
+A morphism of monoidal signature <math>F : \Sigma \to \Sigma'
+</math> is a pair of functions <math>F_0 : \Sigma_0 \to \Sigma'_0
+</math> and <math>F_1 : \Sigma_1 \to \Sigma'_1
+</math> which is compatible with the domain and codomain, i.e. such that <math>\text{dom} \circ F_1 \ = \ F_0 \circ \text{dom}
+</math> and <math>\text{cod} \circ F_1 \ = \ F_0 \circ \text{cod}
+</math>. Thus we get the category <math>\mathbf{MonSig}
+</math> of monoidal signatures and their morphisms.
+
+There is a [[forgetful functor]] <math>U : \mathbf{MonCat} \to \mathbf{MonSig}
+</math> which sends a monoidal category to its underlying signature and a [[monoidal functor]] to its underlying morphism of signatures, i.e. it forgets the identity, composition and tensor. The [[free functor]] <math>C_- : \mathbf{MonSig} \to \mathbf{MonCat}
+</math>, i.e. the [[Adjoint functors|left adjoint]] to the forgetful functor, sends a monoidal signature <math>\Sigma</math> to the [[Free strict monoidal category|free monoidal category]] <math>C_\Sigma</math> it generates.
+
+String diagrams (with generators from <math>\Sigma</math>) are arrows in the free monoidal category <math>C_\Sigma</math>.<ref>{{Cite journal |last1=Joyal |first1=André |last2=Street |first2=Ross |date=1988 |title=Planar diagrams and tensor algebra |url=https://scholar.googleusercontent.com/scholar.bib?q=info:TfFDpTlfWZUJ:scholar.google.com/&output=citation&scisdr=CgXswJALEJT6ufw-rGM:AAGBfm0AAAAAY2o4tGPckoYZUFk0JBWaKD3cW6bJqMhy&scisig=AAGBfm0AAAAAY2o4tLofCCFsCbKd5Kt7puVkFPptvnYP&scisf=4&ct=citation&cd=-1&hl=en |journal=Unpublished Manuscript, Available from Ross Street's Website}}</ref> The interpretation in a monoidal category <math>D</math> is a defined by a monoidal functor <math>F : C_\Sigma \to D</math>, which by freeness is uniquely determined by a morphism of monoidal signatures <math>F : \Sigma \to U(D)</math>. Intuitively, once the image of generating objects and arrows are given, the image of every diagram they generate is fixed.
+
+=== Geometric ===
+A [[topological graph]], also called a one-dimensional [[cell complex]], is a tuple <math>(\Gamma, \Gamma_0, \Gamma_1)
+</math> of a [[Hausdorff space]] <math>\Gamma
+
+</math>, a [[Closed subset|closed]] [[discrete subset]] <math>\Gamma_0 \subseteq \Gamma
+</math> of '''nodes''' and a set of [[Connected component (topology)|connected components]] <math>\Gamma_1
+</math> called '''edges''', each homeomorphic to an open interval with boundary in <math>\Gamma_0
+</math> and such that <math display="inline">\Gamma - \Gamma_0 = \coprod \Gamma_1
+
+</math>.
+
+A [[planar graph|plane graph]] between two real numbers <math>a, b \in \mathbb{R}
+</math> with <math>a < b
+</math> is a finite topological graph embedded in <math>\mathbb{R} \times [a, b]
+</math> such that every point <math>x \in \Gamma \ \cap \ \mathbb{R} \times  \{ a, b \} 
+</math> is also a node <math>x \in \Gamma_0
+
+</math> and belongs to the closure of exactly one edge in <math>\Gamma_1
+</math>. Such points are called '''outer nodes''', they define the '''domain''' and '''codomain <math>\text{dom}(\Gamma), \text{cod}(\Gamma) \in \Gamma_1^\star
+</math>''' of the string diagram, i.e. the list of edges that are connected to the top and bottom boundary. The other nodes <math>f \in \Gamma_0 \ - \ \{ a, b 
+\} \times \mathbb{R}
+</math> are called '''inner nodes'''.
+
+A plane graph is '''progressive''', also called '''recumbent''', when the vertical projection <math>e \to [a, b]
+</math> is injective for every edge <math>e \in \Gamma_1
+</math>. Intuitively, the edges in a progressive plane graph go from top to bottom without bending backward. In that case, each edge can be given a top-to-bottom orientation with designated nodes as source and target. One can then define the domain and codomain '''<math>\text{dom}(f), \text{cod}(f) \in \Gamma_1^\star
+</math>''' of each inner node '''<math>f
+</math>''', given by the list of edges that have source and target.
+
+A plane graph is '''generic''' when the vertical projection <math>\Gamma_0 - \{ a, b 
+\} \times \mathbb{R} \to [a, b]
+</math> is injective, i.e. no two inner nodes are at the same height. In that case, one can define a list <math>\text{boxes}(\Gamma) \in \Gamma_0^\star</math> of the inner nodes ordered from top to bottom.
+
+A progressive plane graph is '''labeled''' by a monoidal signature <math>\Sigma</math> if it comes equipped with a pair of functions <math>v_0 : \Gamma_1 \to \Sigma_0
+</math> from edges to generating objects and <math>v_1 : \Gamma_0 - \{ a, b \} \times \mathbb{R} \to \Sigma_1
+</math> from inner nodes to generating arrows, in a way compatible with domain and codomain.
+
+A '''deformation''' of plane graphs is a [[continuous map]] <math>h : \Gamma \times [0, 1] \to [a, b] \times \mathbb{R}
+</math> such that
+
+* the image of <math>h(-, t)
+</math> defines a plane graph for all <math>t \in [0, 1]
+</math>,
+* for all <math>x \in \Gamma_0
+</math>, if <math>h(x, t)
+</math> is an inner node for some <math>t
+</math> it is inner for all <math>t \in [0, 1]
+</math>.
+
+A deformation is progressive (generic, labeled) if <math>h(-, t)
+</math> is progressive (generic, labeled) for all <math>t \in [0, 1]
+</math>. Deformations induce an equivalence relation with <math>\Gamma \sim \Gamma'
+</math> if and only if there is some <math>h
+</math> with <math>h(-, 0) = \Gamma
+</math> and <math>h(-, 1) = \Gamma'
+</math>. String diagrams are '''equivalence classes of labeled progressive plane graphs'''. Indeed, one can define:
+
+* the identity diagram <math>\text{id}(x)</math> as a set of parallel edges labeled by some type <math>x \in \Sigma_0^\star</math>,
+* the composition of two diagrams as their vertical concatenation with the codomain of the first identified with the domain of the second,
+* the tensor of two diagrams as their horizontal concatenation.
+
+=== Combinatorial ===
+While the geometric definition makes explicit the link between [[category theory]] and [[low-dimensional topology]], a '''combinatorial definition''' is necessary to formalise string diagrams in [[computer algebra systems]] and use them to define [[computational problems]]. One such definition is to define string diagrams as equivalence classes of well-typed formulae generated by the signature, identity, composition and tensor. In practice, it is more convenient to encode string diagrams as formulae in '''generic form''', which are in bijection with the labeled generic progressive plane graphs defined above.
+
+Fix a monoidal signature <math>\Sigma</math>. A '''layer''' is defined as a triple <math>(x, f, y) \in \Sigma_0^\star \times \Sigma_1 \times \Sigma_0^\star =: L(\Sigma)</math> of a type <math>x</math> on the left, a box <math>f
+</math> in the middle and a type <math>y</math> on the right. Layers have a domain and codomain <math>\text{dom}, \text{cod} : L(\Sigma) \to \Sigma_0^\star</math> defined in the obvious way. This forms a [[directed multigraph]], also known as a [[Quiver (mathematics)|quiver]], with the types as vertices and the layers as edges. '''A string diagram <math>d</math> is encoded as a path in this multigraph''', i.e. it is given by:
+
+* a domain <math>\text{dom}(d) \in \Sigma_0^\star</math> as starting point
+* a length <math>\text{len}(d) = n \geq 0</math>,
+* a list of <math>\text{layers}(d) = d_1 \dots d_n \in L(\Sigma)</math>
+
+such that <math>\text{dom}(d_1) = \text{dom}(d)</math> and <math>\text{cod}(d_i) = \text{dom}(d_{i+1})</math> for all <math>i < n</math>. In fact, the explicit list of layers is redundant, it is enough to specify the length of the type to the left of each layer, known as the '''offset'''. The '''whiskering''' <math>d \otimes z</math> of a diagram <math>d = (x_1, f_1, y_1) \dots (x_n, f_n, y_n)</math> by a type <math>z</math> is defined as the concatenation to the right of each layer <math>d \otimes z = (x_1, f_1, y_1 z) \dots (x_n, f_n, y_n z)</math> and symmetrically for the whiskering <math>z \otimes d</math> on the left. One can then define:
+
+* the identity diagram <math>\text{id}(x)</math> with <math>\text{len}(\text{id}(x)) = 0</math> and <math>\text{dom}(\text{id}(x)) = x</math>,
+* the composition of two diagrams as the concatenation of their list of layers,
+* the tensor of two diagrams as the composition of whiskerings <math>d \otimes d' = d \otimes \text{dom}(d') \ \circ \ \text{cod}(d) \otimes d'</math>.
+
+Note that because the diagram is in generic form (i.e. each layer contains exactly one box) the definition of tensor is necessarily biased: the diagram on the left hand-side comes above the one on the right-hand side. One could have chosen the opposite definition <math display="inline">d \otimes d' = \text{dom}(d) \otimes d' \ \circ \ d \otimes \text{cod}(d')</math>.
+
+Two diagrams are equal (up to the axioms of monoidal categories) whenever they are in the same equivalence class of the [[congruence relation]] generated by the '''interchanger''':<math display="block">d \otimes \text{dom}(d') \ \circ \ \text{cod}(d) \otimes d' \quad = \quad \text{dom}(d) \otimes d' \ \circ \ d \otimes \text{cod}(d')</math>That is, if the boxes in two consecutive layers are not connected then their order can be swapped. Intuitively, if there is no communication between two parallel processes then the order in which they happen is irrelevant.
+
+The [[Word problem (mathematics)|word problem]] for free monoidal categories, i.e. deciding whether two given diagrams are equal, can be solved in [[polynomial time]]. The interchanger is a [[Confluence (abstract rewriting)|confluent]] [[rewriting system]] on the subset of '''boundary connected''' diagrams, i.e. whenever the plane graphs have no more than one connected component which is not connected to the domain or codomain and the [[Eckmann–Hilton argument]] does not apply.<ref>{{Cite journal |last1=Vicary |first1=Jamie |last2=Delpeuch |first2=Antonin |date=2022 |title=Normalization for planar string diagrams and a quadratic equivalence algorithm |url=https://scholar.googleusercontent.com/scholar.bib?q=info:0hLKQDlelEoJ:scholar.google.com/&output=citation&scisdr=CgUx7uJgEJT6uf2E8kc:AAGBfm0AAAAAY2uC6kfyvrxaZKIUNsmStrSSEtivNgu3&scisig=AAGBfm0AAAAAY2uC6qabf-0CYsEHJcuQFVW5JfUgn5rm&scisf=4&ct=citation&cd=-1&hl=en |journal=Logical Methods in Computer Science |volume=18}}</ref>
+
+== Extension to 2-categories ==
+The idea is to represent structures of dimension ''d'' by structures of dimension ''2-d'', using [[Poincaré duality]]. Thus,
+* an object is represented by a portion of plane,
+* a 1-cell <math>f:A\to B</math> is represented by a vertical segment—called a ''string''—separating the plane in two (the right part corresponding to ''A'' and the left one to ''B''),
+* a 2-cell <math>\alpha:f\Rightarrow g:A\to B</math> is represented by an intersection of strings (the strings corresponding to ''f'' above the link, the strings corresponding to ''g'' below the link).
+
+The parallel composition of 2-cells corresponds to the horizontal juxtaposition of diagrams and the sequential composition to the vertical juxtaposition of diagrams.
+
+{{multiple image
+| align=center
+| direction = horizontal
+| image1 = Commutative diagram to string diagram.svg
+| width1=400
+| alt1=Duality between commutative diagrams and string diagrams.
+| caption1 = Duality between commutative diagrams (on the left hand side) and string diagrams (on the right hand side)
+}}A monoidal category is equivalent to a 2-category with a single 0-cell. Intuitively, going from monoidal categories to 2-categories amounts to adding colours to the background of string diagrams.
+
+== Examples ==
+
+=== The snake equation ===
+Consider an [[Adjoint functors|adjunction]] <math>(F,G,\eta,\varepsilon)</math> between two categories <math>\mathcal{C}</math> and <math>\mathcal{D}</math> where <math>F: \mathcal{C} \leftarrow \mathcal{D}</math> is left adjoint of <math>G : \mathcal{C} \rightarrow \mathcal{D}</math> and the [[natural transformation]]s <math>\eta: I \rightarrow GF</math> and <math>\varepsilon:FG\rightarrow I</math> are respectively the unit and the counit. The string diagrams corresponding to these natural transformations are:
+
+{{multiple image
+| align= center
+| direction = horizontal
+| image1 = String diagram unit.svg
+| width1 = 165
+| alt1 = String diagram of the unit
+| caption1 = String diagram of the unit
+| image2 = String diagram counit.svg
+| width2 = 130
+| alt2 = String diagram of the counit
+| caption2 = String diagram of the counit
+| image3 = String diagram identity.svg
+| width3 = 90
+| alt3 = String diagram of the identity 2-cell
+| caption3 = String diagram of the identity
+}}
+The string corresponding to the identity functor is drawn as a dotted line and can be omitted.
+The definition of an adjunction requires the following equalities:
+:<math>\begin{align}
+(\varepsilon F) \circ F(\eta) &= 1_F\\
+G(\varepsilon)\circ (\eta G) &= 1_G
+\end{align}</math>
+The first one is depicted as
+{{multiple image
+| align=center
+| direction = horizontal
+| image1 = String diagram adjunction.svg
+| width1 = 450
+| alt1 = Diagrammatic representation of the equality
+| caption1 = Diagrammatic representation of the equality <math>(\varepsilon F) \circ F(\eta) = 1_F</math>
+}}A monoidal category where every object has a left and right adjoint is called a [[rigid category]]. String diagrams for rigid categories can be defined as '''non-progressive''' plane graphs, i.e. the edges can bend backward.
+
+In the context of [[categorical quantum mechanics]], this is known as the '''snake equation'''.
+
+The category of [[Hilbert space]]s is rigid, this fact underlies the proof of correctness for the [[quantum teleportation]] protocol. The unit and counit of the adjunction are an abstraction of the [[Bell state]] and the [[Bell measurement]] respectively. If Alice and Bob share two [[qubits]] Y and Z in an [[entangled state]] and Alice performs a ([[Postselection|post-selected]]) entangled measurement between Y and another qubit X, then this qubit X will be teleported from Alice to Bob: quantum teleportation is an identity morphism.{{wide image|Teleport.png|780px|An illustration of the diagrammatic calculus: the [[quantum teleportation]] protocol as modeled in categorical quantum mechanics.}}The same equation appears in the definition of [[pregroup grammar]]s where it captures the notion of [[information flow]] in [[natural language semantics]]. This observation has led to the development of the [[DisCoCat]] framework and [[quantum natural language processing]].
+
+== Hierarchy of graphical languages ==
+
+Many extensions of string diagrams have been introduced to represent arrows in monoidal categories with extra structure, forming a hierarchy of graphical languages which is classified in Selinger's ''Survey of graphical languages for monoidal categories.<ref name=":0">{{Citation |last=Selinger |first=Peter |title=A survey of graphical languages for monoidal categories |date=2010 |url=https://scholar.googleusercontent.com/scholar.bib?q=info:QQAiC8FDpEkJ:scholar.google.com/&output=citation&scisdr=CgXswJALEJT6ufwkDl8:AAGBfm0AAAAAY2oiFl-xbrK6Yvmdu1pm4UTxzjcsBmsI&scisig=AAGBfm0AAAAAY2oiFirf9Jw73lkbjf_-NmQG8dYgwrYj&scisf=4&ct=citation&cd=-1&hl=en |work=New structures for physics |pages=289–355 |publisher=Springer |access-date=2022-11-08}}</ref>''
+
+* [[Braided monoidal categories]] with 3-dimensional diagrams, a generalisation of [[braid group]]s.
+* [[Symmetric monoidal category|Symmetric monoidal categories]] with 4-dimensional diagrams where edges can cross, a generalisation of the [[symmetric group]].
+* [[Braided monoidal categories#Ribbon categories|Ribbon categories]] with 3-dimensional diagrams where the edges are undirected, a generalisation of [[Knot theory|knot diagrams]].
+* [[Compact closed category|Compact closed categories]] with 4-dimensional diagrams where the edges are undirected, a generalisation of [[Penrose graphical notation]].
+* [[Dagger categories]] where every diagram has a horizontal reflection.
+
+== List of applications ==
+String diagrams have been used to formalise the following objects of study.
+
+* [[Concurrency theory]]<ref>{{Cite journal |last=Abramsky |first=Samson |date=1996 |title=Retracing some paths in process algebra |url=https://scholar.googleusercontent.com/scholar.bib?q=info:2ZQv_XcOfWIJ:scholar.google.com/&output=citation&scisdr=CgUx7uJgEJT6uf2JddA:AAGBfm0AAAAAY2uPbdDaGQFHHjZkHLuzjXJ1-TWNxoAi&scisig=AAGBfm0AAAAAY2uPbXS9abvbrYityk1sYnsz4q1NFzDl&scisf=4&ct=citation&cd=-1&hl=en |journal=International Conference on Concurrency Theory |publisher=Springer |pages=1–17}}</ref>
+* [[Artificial neural networks]]<ref>{{cite arXiv |last1=Fong |first1=Brendan |last2=Spivak |first2=David I. |last3=Tuyéras |first3=Rémy |date=2019-05-01 |title=Backprop as Functor: A compositional perspective on supervised learning |class=math.CT |eprint=1711.10455 }}</ref>
+* [[Game theory]]<ref>{{Cite book |last1=Ghani |first1=Neil |last2=Hedges |first2=Jules |last3=Winschel |first3=Viktor |last4=Zahn |first4=Philipp |title=Proceedings of the 33rd Annual ACM/IEEE Symposium on Logic in Computer Science |chapter=Compositional Game Theory |date=2018 |url=https://scholar.googleusercontent.com/scholar.bib?q=info:LGUG3U6Bp-kJ:scholar.google.com/&output=citation&scisdr=CgUx7uJgEJT6uf13NIw:AAGBfm0AAAAAY2txLIzGMVUpg6_ihwN2dU8PIuIpMG-4&scisig=AAGBfm0AAAAAY2txLO2TG0gZXx2xxpt2AfWUrr5KIziD&scisf=4&ct=citation&cd=-1&hl=en |pages=472–481|doi=10.1145/3209108.3209165 |arxiv=1603.04641 |isbn=9781450355834 |s2cid=17887510 }}</ref>
+* [[Bayesian probability]]<ref>{{Cite journal |last1=Coecke |first1=Bob |last2=Spekkens |first2=Robert W |date=2012 |title=Picturing classical and quantum Bayesian inference |url=https://scholar.googleusercontent.com/scholar.bib?q=info:eNWS7IuaOWYJ:scholar.google.com/&output=citation&scisdr=CgUx7uJgEJT6uf2Iuqs:AAGBfm0AAAAAY2uOoqt0qaPzhZqEbOoYRpydAyZvbF0g&scisig=AAGBfm0AAAAAY2uOomzjHno-ePkhrJB3WfamgsIs3Jwg&scisf=4&ct=citation&cd=-1&hl=en |journal=Synthese |volume=186 |issue=3 |pages=651–696|doi=10.1007/s11229-011-9917-5 |arxiv=1102.2368 |s2cid=3736082 }}</ref>
+* [[Consciousness]]<ref>{{Cite journal |last1=Signorelli |first1=Camilo Miguel |last2=Wang |first2=Quanlong |last3=Coecke |first3=Bob |date=2021-10-01 |title=Reasoning about conscious experience with axiomatic and graphical mathematics |journal=Consciousness and Cognition |language=en |volume=95 |article-number=103168 |doi=10.1016/j.concog.2021.103168 |pmid=34627099 |s2cid=235683270 |issn=1053-8100|doi-access=free |hdl=10230/53097 |hdl-access=free |arxiv=2106.16061 }}</ref>
+* [[Markov kernel]]s<ref>{{Cite journal |last=Fritz |first=Tobias |date=August 2020 |title=A synthetic approach to Markov kernels, conditional independence and theorems on sufficient statistics |arxiv=1908.07021 |journal=[[Advances in Mathematics]] |volume=370 |article-number=107239 |doi=10.1016/j.aim.2020.107239|s2cid=201103837 }}</ref>
+* [[Signal-flow graph]]s<ref>{{Cite book |last1=Bonchi |first1=Filippo |last2=Sobociński |first2=Pawel |last3=Zanasi |first3=Fabio |title=CONCUR 2014 – Concurrency Theory |chapter=A Categorical Semantics of Signal Flow Graphs |date=September 2014 |chapter-url=https://hal.archives-ouvertes.fr/hal-02134182 |series=Lecture Notes in Computer Science |location=Rome, Italy |volume=CONCUR 2014 - Concurrency Theory - 25th International Conference|pages=435–450 |doi=10.1007/978-3-662-44584-6_30 |isbn=978-3-662-44583-9 |s2cid=18492893 }}</ref>
+* [[Conjunctive query|Conjunctive queries]]<ref>{{cite arXiv |last1=Bonchi |first1=Filippo |last2=Seeber |first2=Jens |last3=Sobocinski |first3=Pawel |date=2018-04-20 |title=Graphical Conjunctive Queries |class=cs.LO |eprint=1804.07626 }}</ref>
+* [[Bidirectional transformation]]s<ref>{{cite arXiv |eprint=1809.00738 |first=Mitchell |last=Riley |title=Categories of optics |date=2018|class=math.CT }}</ref>
+* [[Categorical quantum mechanics]]
+* [[Quantum circuit]]s, [[measurement-based quantum computing]] and [[quantum error correction]], see [[ZX-calculus]]
+* [[Natural language processing]], see [[DisCoCat]]
+* [[Quantum natural language processing]]
+
+== See also ==
+
+* [[Proof net]]s, a generalisation of string diagrams used to denote proofs in [[linear logic]]
+* [[Existential graphs]], a precursor of string diagrams used to denote formulae in [[first-order logic]]
+* [[Penrose graphical notation]] and [[Feynman diagram]]s, two precursors of string diagrams in physics
+* [[Tensor network]]s, the interpretation of string diagrams in [[vector space]]s, [[linear map]]s and [[tensor product]]
+
+==References==
+{{Reflist}}
+
+== External links ==
+
+* {{cite video |people=TheCatsters |title=String diagrams 1 |date=2007 |format=streamed video |publisher=Youtube |url=https://www.youtube.com/watch?v=USYRDDZ9yEc |archive-url=https://ghostarchive.org/varchive/youtube/20211219/USYRDDZ9yEc |archive-date=2021-12-19 |url-status=live}}{{cbignore}}
+* {{nlab|id=string+diagram|title=String diagrams}}
+* [https://discopy.readthedocs.org/ DisCoPy], a Python toolkit for computing with string diagrams
+
+==External links==
+*{{Commons category-inline}}
+
+{{Category theory}}
+
+{{DEFAULTSORT:String Diagram}}
+[[Category:Higher category theory]]
+[[Category:Monoidal categories]]

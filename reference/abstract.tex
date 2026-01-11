@@ -1,0 +1,47 @@
+\begingroup
+\def\baselinestretch{1}
+\small
+\normalsize
+A theory of data types based on category theory is presented.
+
+Data types play a crucial role in programming.  They enable us to write
+programs easily and elegantly.  Various programming languages have been
+developed, each of which may use different kinds of data types from the
+others.  Therefore, it becomes important to organize data types
+systematically so that we can understand the relationship between one
+data type and another and the reason why we can use those data types but
+not any others.  Once we get a clear systematic view of data types, it
+may become possible to predict the future direction to find more
+exciting data types.
+
+There have been several approaches to systematically organize data
+types: algebraic specification methods using algebras, domain theory
+using complete partially ordered sets and type theory using the connection
+between logics and data types.  Here, we use category theory.  Category
+theory has proved to be remarkably good at revealing the nature of
+mathematical objects, and we use it to understand the true nature
+of data types in programming.
+
+We organize data types under a new categorical notion of {\it
+$F,G$-dialgebras} which is an extension of the notion of adjunctions as
+well as that of $T$-algebras.  $T$-algebras are also used in domain
+theory, but while domain theory needs some primitive data types, like
+products, to start with, we do not need any.  Products, coproducts and
+exponentiations (i.e.\ function spaces) are defined exactly like in
+category theory using adjunctions.  $F,G$-dialgebras also enable us to
+define the natural number object, the object for finite lists and other
+familiar data types in programming.  Furthermore, their symmetry allows
+us to have the dual of the natural number object and the object for
+infinite lists (or lazy lists).
+
+We also introduce a programming language in a categorical style using
+$F,G$-dialgebras as its data type declaration mechanism.  We define the
+meaning of the language operationally and prove that any program
+terminates using Tait's computability method.
+
+A specification language to describe categories is also included.  It is
+used to give a formal semantics to $F,G$-dialgebras as well as to give a
+basis to the categorical programming language we introduce.
+\par
+\endgroup
+\normalsize

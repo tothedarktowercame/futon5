@@ -1,0 +1,31 @@
+Return a normal response plus an EDN block.
+Append the EDN block at the end using the markers:
+---FROM-CHATGPT-EDN---
+<EDN payload here>
+---END-FROM-CHATGPT-EDN---
+
+Do not put markdown or prose inside the EDN block.
+
+Input format (EDN block labeled FROM-TATAMI-EDN):
+{:pattern {:block "..." :header "..."}}
+
+Output format (EDN map):
+{:defects [{:line_ref "..." :issue "..."}]
+ :minimal-edits [{:find "exact substring" :replace "replacement"}]
+ :questions ["..."]}
+
+Rules:
+- Only inspect the provided pattern block.
+- Defects must reference specific lines or clauses (e.g., "however", "then", "because").
+- minimal-edits must be exact substring replacements inside the block.
+- Provide minimal-edits only when they reduce ambiguity and are safe to apply mechanically.
+- Do not introduce new claims or evidence.
+- Questions should be phrased for the human to clarify ambiguity; keep them short.
+
+Pattern guidance (apply these):
+- Patterns are analytical tools that name and hold a tension, not presentation templates.
+- Required fields (exactly one each, in order): context, if, however, then, because, next-steps.
+- The if—however pair should outline the tension.
+- because must give a single primary rationale.
+- next-steps must not resolve the tension; it should propose further evidence that the pattern is valid.
+- Editorial: if any clause is unclear or ambiguous, ask a clarifying @question.

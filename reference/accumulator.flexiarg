@@ -1,0 +1,41 @@
+@flexiarg futon5/accumulator
+@title Accumulator (Generalised Queen) Pattern
+@sigils [付/储]
+@audience futon5 operator designers, futon2/graph agents
+@tone formal-analytic
+@style pattern
+@allow-new-claims true
+@references [futon2/src/ants/war.clj futon5/reference/uplift.flexiarg]
+
+! conclusion:
+  Replace the literal “queen reserve” with a general accumulator: a shared
+  budget that agents deposit into or withdraw from (insight, attention, activation).
+  Hunger/precision dynamics reference this accumulator rather than food alone.
+
+  + IF:
+    You have multi-agent systems (ants, cyberants, graph walkers) that need a
+    shared signal for when to exploit, conserve, or explore.
+
+  + HOWEVER:
+    The current queen logic is tied to food consumption; it doesn’t generalise
+    to graph activation, sound improvisation energy, or attention budgets.
+
+  + THEN:
+    Introduce an accumulator facet with slots: `:initial`, `:spend-rate`,
+    `:deposit-events`, `:grace-ticks`, `:panic-boost`. Agents update this pool
+    after every action (deposit when they “return” useful insight, spend on
+    upkeep), and the hunger/precision coupling uses its level instead of literal
+    food reserves.
+
+  + BECAUSE:
+    This keeps the colony dynamics universal: any multi-agent practice can share
+    an accumulator pattern (attachment energy, activation, budget) and reuse the
+    same AIF loop for regulation.
+
+  + STATUS:
+    status[draft]
+    evidence[futon2/src/ants/war.clj]
+
+  + NEXT:
+    next[Map the accumulator to Futon1’s salience/attention metrics so graph
+         super-ants inherit the same queen logic.] 

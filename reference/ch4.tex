@@ -1,0 +1,2672 @@
+\chapter{Computation and Categorical Data Types}
+\label{ch-cpl}
+
+In chapter~\ref{ch-csl} section~\ref{sec-fun-calc-2}, we introduced CSL
+expressions ${\bf Exp}(\Gamma,\Delta,\Psi)$ which denote polymorphic
+functions in CSL structures.  In this chapter, we will see them as
+programs and see how they can be executed.  One of the ways to treat
+specifications as programs is to regard equations as rewrite rules, but
+in our case, CSL statements are in general conditional equations and,
+therefore, it is quite difficult to treat them as rewrite rules.
+Furthermore general rewriting cannot be regarded as real computation
+unless rules are Church-Rosser, otherwise, rewriting is more close to
+theorem proving.
+
+There is no other way so long as we are dealing with CSL specifications.
+Remember that CSL was introduced in order to give semantics to
+categorical data types we have investigated in chapter~\ref{ch-cdt}.  In
+CDT theory, we are not dealing with arbitrary CSL specifications, but
+some special ones, ones which are associated with CDT declarations.
+Therefore, we have much more hope for executing these special CSL
+specifications than arbitrary ones.  For example, cartesian closed
+categories are, as is well-known, connected to lambda calculus which is
+a model of computation, so we can put some evaluation mechanism into
+them.  \cite{curien-86}, for example, has developed such a system.  A
+difference of our approach from his is that we do not restrict ourselves
+only to cartesian closed categories.  One of the main aims of CDT is to
+study categories formed by programming languages, and we should not
+presume any structure in the categories without proper reasons.  We can
+only accept the cartesian closed structure in CDT if this is necessary
+for putting the concept of computation to it.  As we will see later in
+this chapter, our categories are cartesian closed (with some extra
+structure), and by then we should know why the cartesian closed
+structure is necessary.
+
+CSL expressions in section~\ref{sec-fun-calc-2} and the CDT
+declaration mechanism in chapter~\ref{ch-cdt} give us the basis of
+Categorical Programming Language (CPL) to which we will devote this
+chapter.  CPL tries to extract the computable part of CDT.  As we have
+seen in subsection~\ref{ssec-obscure}, CDT in general allows us to
+define very strange objects which have no concept of being computable.
+We are going to put restrictions to the form of CDT declarations in CPL.
+
+Therefore, in CPL, we can declare data types by CDT (with restrictions).
+As we have seen in section~\ref{sec-CDT-as-CSL}, this will determine a
+CSL in which we can have CSL expressions introduced in
+section~\ref{sec-fun-calc-2}.  CSL expressions are the programs in CPL.
+There is no difference between programs and data.  From the categorical
+point of view, there is nothing inside objects, that is, there are no
+data inside data types.  CSL expressions whose domain is the terminal
+object are called {\it CPL elements}.  The execution in CPL is
+essentially a reduction of a CPL element to a canonical irreducible CPL
+element.
+
+Following the result of this chapter, CPL will not only exist on paper,
+but also can be implemented.  This will be presented in
+chapter~\ref{ch-application}.
+
+In section~\ref{sec-reduct-rule} we introduce a restriction to objects
+we can declare in CPL and a set of reduction rules for CPL computation.
+In section~\ref{sec-reduct-example} we see an example of computation in
+CPL.  In section~\ref{sec-reduct-complete} we prove that any computation
+in CPL terminates (i.e.\ the reductions are normalizing) by Tait's
+computability method.  In section~\ref{sec-prop-comp-object} we show
+some properties about objects in CPL and, finally,
+section~\ref{sec-reduct-rule-full} gives another set of reduction rules
+for CPL computation which reduces CPL elements into intuitively more
+canonical elements.
+
+\section{Reduction Rules for Categorical Programming Language}
+\label{sec-reduct-rule}
+
+In this section, we will present some basic definitions together with
+the reduction rules for CPL.  Let us assume in the following discussion
+that we have defined categorical data types by a sequence of CDT
+declarations, $D_1,\ldots,D_l$, and that we have obtained the
+corresponding CSL, $\pair{\Gamma,\Delta,\Psi,\Theta}$ as in
+definition~\ref{def-seq-CDT-decl}.
+
+In ordinary programming languages, we distinguish programs and data.  We
+feed data into a program; it processes the data and then outputs the result
+data.  We cannot feed a program into another program and data cannot
+process other data or programs.  However, it is true that data are a
+special kind of programs, very simple ones.  We can write data directly
+into programs as initialization statements or as assignments.  For
+example, natural numbers like 1, 132, 59, etc.\ are data as well as
+constants in programs.  In some languages like LISP, there is no
+difference between data and programs at all.  CPL is not as liberated as
+LISP, but both data and programs are morphisms and data are just special
+morphisms having a special domain object.
+
+As we know, category theory deals with the external structure of objects
+rather than their inner structure so it is not proper to think about
+data inside objects.  However, we do sometimes need something
+similar to elements in set theory.  We say {\it elements} in category
+theory are morphisms whose domain is the terminal object.
+\begin{displaymath}
+1 \rubberrightarrow{e} A
+\end{displaymath}
+We say $e$ is an element of $A$.  If we think in the category of sets ({\bf
+Set}), `1' is the one-point set and a morphism from the one-point set to
+a set corresponds to an element in the set.
+\begin{displaymath}
+\Hom{\bf Set}{1}{A} \iso A
+\end{displaymath}
+Hence, the definition of elements in CPL is:
+\begin{definition}
+Given a CSL signature $\pair{\Gamma,\Delta,\Psi}$, a {\it CPL element}
+$e$ is a CSL expression with no morphism variables whose domain type is
+the terminal object.
+\begin{displaymath}
+\rho \vdash e: \lambda(X_1,\ldots,X_n).1 \rightarrow K
+\end{displaymath}
+(see section~\ref{sec-fun-calc-2} for typing).  In case $n=0$ which
+is very often the case, we may write $\vdash e: 1 \rightarrow E$ where
+$E$ is a functorial expression without variables.  We also say that $e$
+is an element of $E$.
+\end{definition}
+In order for this definition to be sensible, we need to have the
+terminal object in our category.  For simplicity, we assume that
+$D_1$ is the CDT declaration of the terminal object as is presented in
+subsection~\ref{ssec-terminal-initial}.
+
+Though this definition is a natural way of defining elements in category
+theory, it introduces non-symmetry in CPL.  Remember that CDT is meant
+to be symmetric: e.g.\ if we have an object of natural numbers, we
+should have its dual, an object of co-natural numbers, and so on.  Since
+we treat `1' as a special object and the elements in CPL are defined in
+this way, we destroy the beauty of symmetry.  We will see the
+consequence of this shortly.
+
+\begin{example}
+Assume that we have defined all the objects in section~\ref{sec-ex-CDT}.
+Then
+\begin{sdisplaymath}
+\displaylines{
+{\rm succ}\circ{\rm zero}, \cr
+{\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm nil}), \cr
+{\rm eval}\circ{\rm prod}({\rm pr}({\rm curry}({\rm pi2}),{\rm
+curry}({\rm succ}\circ{\rm eval})),{\bf I})\circ{\rm pair}({\rm
+succ} \circ {\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}) \cr}
+\end{sdisplaymath}
+are all CPL elements.
+\end{example}
+
+As we can see from this example, we cannot regard all the elements as
+data.  `${\rm succ}\circ{\rm zero}$' and `${\rm pair}({\rm
+succ}\circ{\rm zero},{\rm nil})$' can be data, but `${\rm pi1}\circ{\rm
+pair}({\rm succ}\circ{\rm zero},{\rm nil})$' cannot be.  We call special
+data-like CPL elements {\it canonical CPL elements}.  The definition is:
+\begin{definition}
+\label{def-cpl-canonical}
+A {\it canonical CPL element} is a CPL element which wholly consists of
+natural transformations introduced by left objects and factorizers by
+right objects.  Formally, a canonical CPL element, $c \in {\bf CE}$, is
+defined by
+\begin{displaymath}
+c \coloneq {\bf I} \mid \alpha_L\circ c \mid \psi_R(e_1,\ldots,e_n)\circ
+c
+\end{displaymath}
+where $\alpha_L$ is a natural transformation of a left object and
+$\psi_R$ is a factorizer of a right object.  Note we often do not write
+{\bf I} at the tail of canonical elements.
+\end{definition}
+From this definition, `${\rm pair}$' and `${\rm curry}$' can form canonical
+elements, but `${\rm pi1}$', `${\rm pi2}$' or `${\rm eval}$' cannot.  So
+for the right objects, factorizers are the means of creating canonical
+elements.  On the other hand, `${\rm zero}$', `${\rm succ}$' and `${\rm
+cons}$' can form canonical elements, but not `${\rm pr}$' or `${\rm
+case}$'.  So for the left objects, natural transformations are the means
+of creating canonical elements.
+\begin{displaymath}
+\begin{tabular}{|r|c|c|}
+\cline{2-3}
+\multicolumn{1}{c}{} & \multicolumn{1}{|c|}{\bf Canonical} &
+\multicolumn{1}{c|}{\bf Non-Canonical} \\
+\hline
+left object &
+\begin{tabular}{c}
+natural transformations \\
+e.g.\ zero, succ, nil, cons \\
+\end{tabular}
+&
+\begin{tabular}{c}
+factorizers \\
+e.g.\ case, pr, prl \\
+\end{tabular}
+\\
+\hline
+right object &
+\begin{tabular}{c}
+factorzers \\
+e.g.\ pair, curry \\
+\end{tabular}
+&
+\begin{tabular}{c}
+natural transformations \\
+e.g.\ pi1, pi2, eval \\
+\end{tabular}
+\\
+\hline
+\end{tabular}
+\end{displaymath}
+Definition~\ref{def-cpl-canonical} is beautifully symmetrical as we hoped
+from the symmetry of CDT.  In addition, if we look at the canonical
+elements in other programming languages, we note that `${\rm pair}$'
+corresponds to making pairs of data, `${\rm curry}$' corresponds to lambda
+abstraction and both create canonical things (i.e.\ we cannot process
+them any more as themselves), and also we note that `${\rm pr}$' and
+`${\rm case}$' are programming constructs corresponding to primitive
+recursive definitions and case statements and they can never be data.
+Therefore, definition~\ref{def-cpl-canonical} fits well with the usual
+notion of data.
+
+Of course, this is not the only definition of canonical elements. It
+defines quite lazy canonical elements.  It does not care what are inside
+factorizers.  For example,
+\begin{displaymath}
+{\rm pair}({\rm pi1}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+nil}),{\rm zero})
+\end{displaymath}
+is a canonical element of `${\rm prod}({\rm nat},{\rm nat})$' from this
+definition.  Some might not want to call it canonical because it is
+equal to another canonical element
+\begin{displaymath}
+{\rm pair}({\rm succ}\circ{\rm zero},{\rm zero})
+\end{displaymath}
+which looks more {\it canonical}.  However, this is because `prod' is a
+rather special object.  In general, expressions inside factorizers may
+not be elements, so we cannot demand them to be canonical (or we have to
+treat product-like objects special).  One might still accept this
+easily since canonical elements in Martin-L\"of's type theory are
+similar to ours, but another queer aspect of our definition is that we
+accept
+\begin{displaymath}
+{\rm pair}({\rm pi2},{\rm pi1})\circ{\rm pair}({\rm succ},{\bf
+I})\circ{\rm zero}
+\end{displaymath}
+as a canonical element.  It is equal to the following element
+\begin{displaymath}
+{\rm pair}({\rm pi2}\circ{\rm pair}({\rm succ},{\bf
+I})\circ{\rm zero},{\rm pi1}\circ{\rm pair}({\rm succ},{\bf
+I})\circ{\rm zero}),
+\end{displaymath}
+but this is again because of the special property of `prod'.  In
+general
+\begin{displaymath}
+\psi_R(e_1,\ldots,e_n) \circ c
+\end{displaymath}
+is not equal to something in the form of $\psi_R(e'_1,\ldots,e'_n)$.
+For example, we cannot always find other simpler canonical elements
+which is equal to `${\rm fold}(f,g)\circ c$' (where `fold' is the
+factorizer of `inflist').
+
+There are many views of computation, but in CPL computation is the
+reduction of an element to a canonical element equal to the given
+element.
+\begin{displaymath}
+e \implies c
+\end{displaymath}
+Since the reduction is not straightforward, we want to do step-by-step
+reduction.  Therefore, we modify the above form of reduction to the
+following one.
+\begin{displaymath}
+\pair{e,c} \implies c'   %\eqno(*)
+\end{displaymath}
+This means that a CSL expression $e$ applied to a CPL canonical element
+$c$ is reduced to a CPL canonical element $c'$.  It is like calculating
+the result of applying an element $c$ to a function $e$. Obviously,
+$e\circ c$ should be semantically equal to $c'$.  Since a CPL element is
+a morphism from the terminal object and `{\bf I}' is its canonical element, if
+we want to reduce an arbitrary CPL element $e$ we can ask for the following
+reduction.
+\begin{displaymath}
+\pair{e,{\bf I}} \implies c
+\end{displaymath}
+
+In the following, we assume that the associativity of `$\circ$' (the
+composition of morphisms) has been taken care by some means so that
+in our rules we do not consider it.  We also assume that there are no
+functors in CPL elements because we can always replace them with
+factorizers and natural transformations.  For example,
+\begin{displaymath}
+{\rm eval} \circ {\rm prod}({\rm curry}({\rm succ}),{\rm nil})
+\end{displaymath}
+is equivalent to
+\begin{displaymath}
+{\rm eval} \circ {\rm pair}({\rm curry}({\rm succ})\circ{\rm pi1},{\rm
+nil}\circ{\rm pi2}).
+\end{displaymath}
+
+Let us now define rules for the reductions.  The simplest one is for
+identities.  Since ${\bf I}\circ c$ is equal to $c$, we should have the
+following rule.
+\begin{displaymath}
+\pair{{\bf I},c} \implies c \eqno(\mbox{IDENT})
+\end{displaymath}
+
+Next, for the composition, we naturally have
+\begin{displaymath}
+\logicrule{\pair{e_2,c} \implies c'' \qquad \pair{e_1,c''} \implies
+c'}{\pair{e_1\circ e_2,c} \implies c'} \eqno(\mbox{COMP})
+\end{displaymath}
+
+In case that $e$ is a natural transformation introduced by a left object
+or a factorizer introduced by a right object, the rule is easy because
+the composition of $e$ with a canonical element is canonical by
+definition~\ref{def-cpl-canonical}.
+\begin{displaymath}
+\pair{\alpha_L,c} \implies \alpha_L\circ c \eqno(\mbox{L-NAT})
+\end{displaymath}
+\begin{displaymath}
+\pair{\psi_R(e_1,\ldots,e_n),c} \implies \psi_R(e_1,\ldots,e_n)\circ c
+\eqno(\mbox{R-FACT})
+\end{displaymath}
+For example, $\pair{{\rm succ},{\rm zero}} \implies {\rm succ}\circ {\rm
+zero}$ and
+\begin{displaymath}
+\pair{{\rm curry}({\rm pi2}),{\rm pair}({\rm zero},{\rm
+succ}\circ {\rm zero})} \implies {\rm curry}({\rm pi2})\circ {\rm
+pair}({\rm zero},{\rm succ}\circ {\rm zero}).
+\end{displaymath}
+
+Difficulty comes in for the other cases, i.e.\ when $e$ is a natural
+transformation of a right object or a factorizer of a left object.
+Let us first consider the case for a factorizer $\psi_L$ introduced by
+the following left object.
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X)$ with $\psi_L$ is \\
+$\qquad \alpha_L: E(L,X) \rightarrow E'(L,X)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+From the property of this object, we have a CSL equation
+\begin{displaymath}
+E'(\psi_L(e),{\bf I}) \circ \alpha_L = e \circ E(\psi_L(e),{\bf I}).
+\end{displaymath}
+An instance of this equation is `${\rm pr}(f,g)\circ {\rm succ} = g\circ
+{\rm pr}(f,g)$', and in this case we should have a rewrite rule from
+`${\rm pr}(f,g)\circ {\rm succ}$' to `$g\circ {\rm pr}(f,g)$'.
+Therefore, in general we might have the following rule.
+\begin{displaymath}
+\logicrule{\pair{e\circ E(\psi_L(e),{\bf I}),c} \implies
+c'}{\pair{E'(\psi_L(e),{\bf I}),\alpha_L\circ c} \implies c'}
+\end{displaymath}
+However, this rule is not what we wanted.  We wanted a rule for
+$\pair{\psi_L(e),c''} \implies c'''$.  In order that the above rule to be
+a one we want, $E'(L,X)$ should be simply $L$, and we get
+\begin{displaymath}
+\logicrule{\pair{e\circ E(\psi_L(e),{\bf I}),c} \implies
+c'}{\pair{\psi_L(e),\alpha_L\circ c} \implies c'}. \eqno(\mbox{L-FACT})
+\end{displaymath}
+The restriction that demands $E'(L,X)$ should be $L$ is the first
+restriction we put onto objects in order to obtain the CPL computation
+rules.  The left objects introduced in chapter~\ref{ch-cdt}, initial
+object, coproducts, natural number object and lists, all satisfy this
+restriction except the left adjoint functor of `list' which we do not
+expect to be in the world of computation.  If $E'(L,X)$ is something
+other than $L$, we are allowing to have the left adjoint $L'$ of
+$E'(\;\cdot\;,X)$ by
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L'(X,Y)$ with $\psi_{L'}$ is \\
+$\qquad \alpha_{L'}: Y \rightarrow E'(LL',X)$ \\
+end object. \\
+\end{tabular}
+\end{displaymath}
+In familiar categories (e.g.\ the category of sets), a functor $F: \cC
+\rightarrow \cC$ hardly has a left adjoint: e.g.\ the product functor
+$\bullet \times A$ does not have one, nor does the coproduct functor
+$\bullet + A$.
+
+As an example of L-FACT, let us write the rules for the factorizer
+associated with the natural number object.  There are two rules for two
+natural transformations, `zero' and `succ'.
+\begin{displaymath}
+\logicrule{\pair{e,c} \implies c'}{\pair{{\rm pr}(e,e'),{\rm zero}\circ
+c} \implies c'}
+\qquad
+\logicrule{\pair{e'\circ {\rm pr}(e,e'),c} \implies c'}{\pair{{\rm
+pr}(e,e'),{\rm succ}\circ c} \implies c'}
+\end{displaymath}
+
+Let us now consider the last case, the case for the reduction rule of a
+natural transformation $\alpha_R$ introduced by the following right
+object declaration.
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X)$ with $\psi_R$ is \\
+$\qquad \alpha_R: E(R,X) \rightarrow E'(R,X)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+From the property of this object, we have a CSL equation
+\begin{displaymath}
+\alpha_R \circ E(\psi_R(e),{\bf I}) = E'(\psi_R(e),{\bf I}) \circ e.
+\end{displaymath}
+An instance of this equation is `${\rm pi1}\circ{\rm pair}(f,g) = f$', and
+in this case we should have a rule to rewrite `${\rm pi1}\circ{\rm
+pair}(f,g)$' to `$f$'.  Therefore, in general we have a rule rewriting
+from the left-hand side to the right-hand side as the following rule.
+\begin{displaymath}
+\logicrule{\pair{E'(\psi_R(e),{\bf I})\circ e,c} \implies
+c'}{\pair{\alpha_R,E(\psi_R(e),{\bf I})\circ c} \implies c'}
+\end{displaymath}
+However, this rule is not quite right because $E(\psi_R(e),{\bf I})\circ
+c$ is not a canonical element.  We cannot have functors in canonical
+elements.  Therefore, what the rule should really look like
+is
+\begin{displaymath}
+\logicrule{c = E(\psi_R(e),{\bf I})\circ c'' \qquad
+\pair{E'(\psi_R(e),{\bf I})\circ e,c''} \implies c'}{\pair{\alpha_R,c}
+\implies c'}. \eqno(+)
+\end{displaymath}
+We now have a different problem of finding out an expression $e$ and a
+canonical element $c''$ from a given canonical element $c$ such that
+\begin{displaymath}
+c = E(\psi_R(e),{\bf I})\circ c''.
+\end{displaymath}
+Since we are dealing with computation, we need a mechanical way of
+solving this problem.  Let us introduce another form of reduction rules.
+\begin{displaymath}
+\pair{c,E,R} \leadsto \pair{\psi_R(e),c''} \eqno(*)
+\end{displaymath}
+such that $c = E(\psi_R(e),{\bf I})\circ c''$ where $E$ is a functorial
+expression in which $R$ is a variable.  By these rules, we can rewrite
+the rule $(+)$ to
+\begin{displaymath}
+\logicrule{\pair{c,E(R,X),R} \leadsto \pair{\psi_R(e),c''} \qquad
+\pair{E'(\psi_R(e),{\bf I})\circ e,c''} \implies c'}{\pair{\alpha_R,c}
+\implies c'}. \eqno(\mbox{R-NAT})
+\end{displaymath}
+
+We now have to list the rules for $(*)$.  If $E$ is simply $R$ itself,
+$c$ should be $E(\psi_R(e),{\bf I})\circ c'' = \psi_R(e)\circ c''$.
+Therefore, the rule should be
+\begin{displaymath}
+\pair{\psi_R(e)\circ c'',R,R} \leadsto \pair{\psi_R(e),c''}.
+\eqno(\mbox{R-NAT-V})
+\end{displaymath}
+
+Next, if $E(R,X)$ does not depend on $R$, $c$ is $E(\psi_R(e),{\bf
+I})\circ c'' = c''$, so the rule may be
+\begin{displaymath}
+\pair{c,E,R} \leadsto \pair{\psi_R(e),c},
+\end{displaymath}
+but where does $\psi_R(e)$ come from?  We cannot determine $e$.
+Therefore, $E(R,X)$ must not be independent from $R$ (i.e.\ $E(R,X)$
+should not be free of $R$).
+
+The case left is when $E(R,X)$ is not a variable but a real functorial
+expression.  Let it be
+\begin{displaymath}
+F(\hat E_1(R,X),\ldots,\hat E_n(R,X)), \eqno(1)
+\end{displaymath}
+where $F$ is a functor name.  In this case, the equation we are solving
+is
+\begin{displaymath}
+c = F(\hat E_1(\psi_R(e),{\bf I}),\ldots,\hat E_n(\psi_R(e),{\bf
+I}))\circ c''. \eqno(2)
+\end{displaymath}
+Since functors are always represented by their associated factorizers,
+the equation looks like
+\begin{displaymath}
+c = \psi_F(\cdots\circ\hat E_1(\psi_R(e),{\bf I})\circ\cdots\circ\hat
+E_n(\psi_R(e),{\bf I})\circ\cdots)\circ c''. \eqno(3)
+\end{displaymath}
+As we can see, we might have to pick up the same $\psi_R(e)$ from more
+than one place and this would be a trouble.  Because $\psi_R(e)$ is a
+general CSL expression and we cannot do theorem proving to show two CSL
+expressions are equal when doing the CPL computation.  Therefore, we
+need to restrict that $\psi_R(e)$ should appear only once in $(3)$.  In
+order for this, we have to first restrict that only one $\hat E_i$ in
+$(2)$ contains $R$.  Without loss of generality, we can assume it is
+$\hat E_1(R,X)$, and since we are only interested in the first argument
+of $F$, we assume that $F$ is a unary functor and $E(R,X)$ is $F(\hat
+E(R,X))$.  Now (2) looks like
+\begin{displaymath}
+c = F(\hat E(\psi_R(e),{\bf I}))\circ c'', \eqno(2')
+\end{displaymath}
+but still $(3)$ might have more than one $\psi_R(e)$ because when we
+expand functors by factorizers using $(\mbox{LFEQ})$ or $(\mbox{RFEQ})$
+in definition~\ref{def-CDT-sem-eq}, we might duplicate $\psi_R(e)$.
+Before stating the restriction to guarantee the no-duplication of
+$\psi_R(e)$, let us note that $F$ should be a functor introduced by a
+right object declaration.  This is because, if we look at the equation
+$(3)$, $c$ is a canonical element consisting of left natural
+transformations and right factorizers, so $\psi_F$ should be a right
+factorizer.  Let the following be the declaration of $F$.
+\begin{displaymath}
+\begin{tabular}{l}
+right object $F(Y)$ with $\psi_F$ is \\
+$\qquad \beta_1: \tilde E_1(F,Y) \rightarrow \tilde E'_1(F,Y)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \beta_m: \tilde E_m(F,Y) \rightarrow \tilde E'_m(F,Y)$ \\
+end object \\
+\end{tabular}
+\eqno(4)
+\end{displaymath}
+From the equation $(\mbox{RFEQ})$ in definition~\ref{def-CDT-sem-eq},
+$(3)$ really is
+\begin{displaymath}
+\begin{array}{rcl}
+c = \psi_F( & \tilde E'_1({\bf I},\hat E(\psi_R(e),{\bf I}))\circ \beta_1
+\circ \tilde E_1({\bf I},\hat E(\psi_R(e),{\bf I})), & \\
+& \cdots & \\
+& \tilde E'_m({\bf I},\hat E(\psi_R(e),{\bf I}))\circ \beta_m
+\circ \tilde E_m({\bf I},\hat E(\psi_R(e),{\bf I})) & )\circ c'' \\
+\end{array}
+\eqno(3')
+\end{displaymath}
+In order that $\psi_R(e)$ should appear only once in this equation, $Y$
+should appear only once in one of $\tilde E_i$ and $\tilde E'_i$.  In
+order to show that $Y$ should not be in one of $\tilde E'_i$, let $F$ be
+simply
+\begin{displaymath}
+\begin{tabular}{l}
+right object $F(Y)$ with $\psi_F$ is \\
+$\qquad \beta: Y \rightarrow F$ \\
+end object. \\
+\end{tabular}
+\eqno(4')
+\end{displaymath}
+$(3)$ becomes
+\begin{displaymath}
+c = \psi_F(\beta\circ \hat E(\psi_R(e),{\bf I}))\circ c''.
+\end{displaymath}
+We may demand that $c$ should be $\psi_F(\hat e)\circ \hat c$ and find
+$\psi_R(e)$ such that
+\begin{displaymath}
+\hat e = \beta\circ \hat E(\psi_R(e),{\bf I}),
+\end{displaymath}
+but how can we solve this equation?  In general, we need theorem proving
+for this.  We should have reduced the problem recursively into
+\begin{displaymath}
+\pair{\check c,\check E,R} \leadsto \pair{\psi_R(e),\check c},
+\end{displaymath}
+but there is no way to do this if $Y$ appears in one of $\tilde E_i$,
+because $\hat e$ should never be an element.  The typing rule in
+definition~\ref{def-CDT-CSL} gives us
+\begin{displaymath}
+\logicrule{\hat e: Y \rightarrow Z}{\psi_F(\hat e): Z \rightarrow F(Y)}
+\end{displaymath}
+and we cannot choose $Y$ to be the terminal object.  If $Y$ and $F$ were
+the other way round in $(4')$, we could choose $Z$ to be the terminal
+object to make $\hat e$ an element.  Therefore, if $Y$ is in one of
+$\tilde E'_i$ in $(4)$, we have a possibility of reducing the problem of
+solving $(3')$ into a smaller problem of the same kind.  Without losing
+generality, we can assume that $Y$ only appears in $\tilde E'_1$ in
+$(4)$.  Now, $(3')$ is
+\begin{displaymath}
+c = \psi_F(\tilde E'_1({\bf I},\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1,\beta_2,\ldots,\beta_m)\circ c''. \eqno(3'')
+\end{displaymath}
+We demand $c$ to be $\psi_F(\hat e_1,\hat e_2,\ldots,\hat e_m)\circ \hat
+c$, so $(3'')$ is further rewritten to
+\begin{displaymath}
+\psi_F(\hat e_1,\hat e_2,\ldots,\hat e_m)\circ \hat c =  \psi_F(\tilde
+E'_1({\bf I},\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1,\beta_2,\ldots,\beta_m)\circ c''. \eqno(3''')
+\end{displaymath}
+Here, we cannot jump to the conclusion that $\hat e_1$ is $\tilde
+E'_1({\bf I},\hat E(\psi_R(e),{\bf I}))\circ \beta_1$, $\hat e_2$ is
+$\beta_2$, \ldots, and $\hat c$ is $c''$, because a part of $\hat c$ may
+well contribute to form $\tilde E'_1({\bf I},\hat E(\psi_R(e),{\bf
+I}))$.  What is desirable is that we could rewrite $\psi_F(\hat e_1,\hat
+e_2,\ldots,\hat e_m)\circ \hat c$ to $\psi_F(\hat e'_1,\hat
+e'_2,\ldots,\hat e'_m)$ like ${\rm pair}(f,g)\circ h = {\rm pair}(f\circ
+h,g\circ h)$.  This is possible when each $\tilde E'_i$ in $(4)$ does
+not depend on $F$.
+\begin{proposition}
+\label{prop-unconditioned}
+Let $R$ be a right object defined by
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X_1,\ldots,X_n)$ with $\psi_R$ is \\
+$\qquad \alpha_1: E_1(R,X_1,\ldots,X_n) \rightarrow
+E'_1(X_1,\ldots,X_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_m: E_m(R,X_1,\ldots,X_n) \rightarrow
+E'_m(X_1,\ldots,X_n)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+(note that $E'_i$ does not depend on $R$), then
+\begin{displaymath}
+\psi_R(e_1,\ldots,e_m)\circ e' = \psi_R(e_1\circ E_1(e',{\bf
+I},\ldots,{\bf I}),\ldots,e_m\circ E_m(e',{\bf I},\ldots,{\bf I}))
+\eqno(\mbox{REQC})
+\end{displaymath}
+{\bf Proof:} From $(\mbox{RCEQ})$ in definition~\ref{def-CDT-sem-eq},
+\begin{displaymath}
+\begin{array}{c}
+\alpha_1\circ E_1(\psi_R(e_1,\ldots,e_m)\circ e',{\bf I},\ldots,{\bf I})
+= f_1 \land {} \\
+\cdots \\
+\alpha_m\circ E_m(\psi_R(e_1,\ldots,e_m)\circ e',{\bf I},\ldots,{\bf I})
+= f_m \land {} \\
+{} \implies \psi_R(e_1,\ldots,e_m)\circ e' = \psi_R(f_1,\ldots,f_m). \\
+\end{array}
+\end{displaymath}
+Using $(\mbox{REQ}_i)$ and the fact that $E_i$ is covariant in $R$,
+we get
+\begin{displaymath}
+\displaylines{\qquad e_1\circ E_1(e',{\bf I},\ldots,{\bf I}) = f_1 \land
+\ldots \land e_m\circ E_m(e',{\bf I},\ldots,{\bf I}) = f_m \hfill \cr
+\hfill {} \implies \psi_R(e_1,\ldots,e_m)\circ e' =
+\psi_R(f_1,\ldots,f_m). \qquad \cr}
+\end{displaymath}
+Therefore,
+\begin{displaymath}
+\psi_R(e_1,\ldots,e_m)\circ c' = \psi_R(e_1\circ E_1(e',{\bf
+I},\ldots,{\bf I}),\ldots,e_m\circ E_m(e',{\bf I},\ldots,{\bf I})).
+\rlap{\qquad \qed}
+\end{displaymath}
+\end{proposition}
+We call this kind of right objects {\it unconditioned}.  The name
+indicates that the objects are characterized without using conditional
+CSL equations.  In fact, $(\mbox{REQ}_i)$, $(\mbox{REQC})$,
+$(\mbox{RFEQ})$ and the following $(\mbox{REQI})$ characterize the
+unconditioned right objects.\footnote{We can define unconditioned left
+objects as dual.}
+\begin{displaymath}
+\psi_R(\alpha_1,\ldots,\alpha_m) = {\bf I}
+\eqno(\mbox{REQI})
+\end{displaymath}
+
+Therefore, we assume that in $(4)$ $F$ does not appear in any of $\tilde
+E'_i$.  As we have already assumed that $Y$ appears only in $\tilde
+E'_1$, $(4)$ now looks like
+\begin{displaymath}
+\begin{tabular}{l}
+right object $F(Y)$ with $\psi_F$ is \\
+$\qquad \beta_1: \tilde E_1(F) \rightarrow \tilde E'_1(Y)$ \\
+$\qquad \beta_2: \tilde E_2(F) \rightarrow \tilde E'_2$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \beta_m: \tilde E_m(F) \rightarrow \tilde E'_m$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+($\tilde E'_2,\ldots,\tilde E'_m$ do not depend on $F$ or $Y$ in this
+case, but in general $F$ might have parameters other than $Y$ and they
+can appear in $\tilde E'_2,\ldots,\tilde E'_m$), and $(3)$ is
+\begin{displaymath}
+\displaylines{\qquad \psi_F(\hat e_1\circ \tilde E_1(\hat c),\hat
+e_2\circ \tilde E_e(\hat c),\ldots,\hat e_m\circ \tilde E_m(\hat c))
+\hfill \cr
+\hfill {} = \psi_F(\tilde E'_1(\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1\circ \tilde E_1(c''),\beta_2\circ \tilde
+E_2(c''),\ldots,\beta_m\circ \tilde E_m(c'')). \quad (\hat 3) \cr}
+\end{displaymath}
+If, furthermore, the first argument of $\psi_F$ is an element, we can
+reduce the problem of solving $(3)$ into
+\begin{displaymath}
+\hat e_1\circ \tilde E_1(\hat c) = \tilde E'_1(\hat E(\psi_R(e),{\bf
+I}))\circ \beta_1\circ \tilde E_1(c''). \eqno(5)
+\end{displaymath}
+Since $\hat e_1\circ \tilde E_1(\hat c)$ is an element, we can ask its
+canonical element and it becomes almost like the original object $(3)$
+except $E$ is replaced.  Let us see the typing rule for $\psi_F$ defined
+in definition~\ref{def-CDT-CSL}.
+\begin{displaymath}
+\logicrule{f_1: \tilde E_1(Z) \rightarrow \tilde E'_1(Y) \qquad \ldots
+\qquad}{\psi_F(f_1,\ldots): Z \rightarrow F(Y)}
+\end{displaymath}
+Since $\psi_F$ in $(\hat 3)$ is making an element, $Z$ above should be
+the terminal object $1$.  In order that $f_1$ above is also an element,
+$\tilde E_1(Z)$ (or $\tilde E_1(1)$ because $Z$ is $1$) should also the
+terminal object.  Because $\tilde E_1(Z)$ cannot be independent from
+$Z$, $\tilde E_1(Z)$ should be simply $Z$.  Therefore, $(5)$ is
+\begin{displaymath}
+\hat e_1\circ \hat c = \tilde E'_1(\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1\circ c''. \eqno(5')
+\end{displaymath}
+As $\hat e_1\circ \hat c$ is an element, we can ask its canonical
+element by
+\begin{displaymath}
+\pair{\hat e_1,\hat c} \implies \hat c', \eqno(6)
+\end{displaymath}
+and we can also ask to solve
+\begin{displaymath}
+\hat c' = \tilde E'_1(\hat E(\psi_R(e),{\bf I}))\circ \hat c'' \eqno(7)
+\end{displaymath}
+by
+\begin{displaymath}
+\pair{\hat c',\tilde E'_1(\hat E(R,X)),R} \leadsto \pair{\psi_R(e),\hat c''}.
+\end{displaymath}
+If we set $c''$ to be
+\begin{displaymath}
+\psi_F(\hat c'',\hat e_2\circ \hat E_2(\hat c),\ldots,\hat e_m\circ \hat
+E_m(\hat c)),
+\end{displaymath}
+$(\hat 3)$ is satisfied from $(\mbox{REQ}_i)$ in
+definition~\ref{def-CDT-sem-eq}.
+\begin{displaymath}
+\displaylines{\qquad \tilde E'_1(\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1\circ \tilde E_1(c'') \hfill \cr
+\qquad\llap{$=\;$} \tilde E'_1(\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1\circ \tilde E_1(\psi_F(\hat c'',\hat e_2\circ \hat E_2(\hat
+c),\ldots,\hat e_m\circ \hat E_m(\hat c))) \hfill \cr
+\qquad\llap{$=\;$} \tilde E'_1(\hat E(\psi_R(e),{\bf I}))\circ
+\beta_1\circ \hat c'' \quad \dotfill \mbox{(from $(\mbox{REQ}_i)$)} \cr
+\qquad\llap{$=\;$} \hat c' \quad \dotfill \mbox{(from $(7)$)} \cr
+\qquad\llap{$=\;$} \hat e_1\circ \hat c \quad \dotfill \mbox{(from $(6)$)} \cr}
+\end{displaymath}
+\begin{displaymath}
+\displaylines{\qquad \beta_i\circ \tilde E_i(c'') \quad \dotfill \mbox{($i =
+2,\ldots, m$)} \cr
+\qquad\llap{$=\;$} \beta_i\circ \tilde E_i(\psi_F(\hat c'',\hat e_2\circ \hat E_2(\hat c),\ldots,\hat e_m\circ \hat
+E_m(\hat c))) \hfill \cr
+\qquad\llap{$=\;$} \hat e_i\circ \tilde E_i(\hat c) \quad \dotfill \mbox{(from
+$(\mbox{REQ}_i)$)} \cr}
+\end{displaymath}
+Therefore, we got the following rule.
+\begin{displaymath}
+\begin{array}{c}
+\qquad \pair{\hat e_1,\hat c} \implies \hat c' \qquad \pair{\hat
+c',\tilde E'_1(\hat E(R,X)),R} \leadsto \pair{\psi_R(e),\hat
+c''} \qquad \\
+\hline
+\multicolumn{1}{l}{\qquad \pair{\psi_F(\hat e_1,\hat e_2,\ldots,\hat
+e_m)\circ \hat c,F(\hat E(R,X)),R}} \\
+\multicolumn{1}{r}{\qquad \qquad \qquad \leadsto
+\pair{\psi_R(e),\psi_F(\hat c'',\hat e_2\circ \tilde E_2(\hat
+c),\ldots,\hat e_m\circ \hat E_m(\hat c))} \qquad} \\
+\end{array}
+\eqno(\mbox{R-NAT-F})
+\end{displaymath}
+
+As an example of the rules $(\mbox{R-FACT})$, $(\mbox{R-NAT})$,
+$(\mbox{R-NAT-V})$ and $(\mbox{R-NAT-F})$, let us write the rules for
+the exponentials.  The CDT declaration of the exponentials is
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm exp}(X,Y)$ with curry is \\
+$\qquad {\rm eval}: {\rm prod}({\rm exp},X) \rightarrow Y$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+as we have seen in subsection~\ref{ssec-exponential}.  The rule
+$(\mbox{R-FACT})$ is simply
+\begin{displaymath}
+\pair{{\rm curry}(e),c} \implies {\rm curry}(e)\circ c,
+\end{displaymath}
+and the rule $(\mbox{R-NAT})$ is
+\begin{displaymath}
+\logicrule{\pair{c,{\rm prod}({\rm exp},X),{\rm exp}} \leadsto
+\pair{{\rm curry}(e),c''} \qquad \pair{e,c''} \implies c'}{\pair{{\rm
+eval},c} \implies c'}.
+\end{displaymath}
+The rule $(\mbox{R-NAT-V})$ is simply
+\begin{displaymath}
+\pair{{\rm curry}(e)\circ c'',{\rm exp},{\rm exp}} \leadsto \pair{{\rm
+curry}(e),c''},
+\end{displaymath}
+and, finally, the rule $(\mbox{R-NAT-F})$ is
+\begin{displaymath}
+\logicrule{\pair{\hat e_1,\hat c} \implies \hat
+c' \qquad \pair{\hat c',{\rm exp},{\rm exp}} \leadsto \pair{{\rm
+curry}(e),\hat c''}}{\pair{{\rm pair}(\hat e_1,\hat e_2)\circ \hat
+c,{\rm prod}({\rm exp},X),{\rm exp}} \leadsto \pair{{\rm
+curry}(e),{\rm pair}(\hat c'',\hat e_2\circ \hat c)}}.
+\end{displaymath}
+We may simplify the last three rules and have the next one instead.
+\begin{displaymath}
+\logicrule{\pair{e_1,c} \implies {\rm curry}(e)\circ c'' \qquad
+\pair{e,{\rm pair}(c'',e_2\circ c)} \implies c'}{\pair{{\rm eval},{\rm
+pair}(e_1,e_2)\circ c} \implies c'}
+\end{displaymath}
+We will see an example using these rules in the next section.
+
+In order to obtain $(\mbox{R-NAT-F})$, we have put several restrictions
+to the right object declaration.  To state the restrictions formally,
+let us introduce the notion `{\it productive\/}'.
+\begin{definition}
+\label{def-prod-object}
+Functorial expressions which are {\it productive} in $X$ are generated
+by the following two rules.
+\begin{enumerate}
+\item $X$ itself is a functorial expression productive in $X$.
+\item If $P(Y_1,\ldots,Y_n)$ is a functor which is productive in $Y_i$
+and $E$ is a functorial expression productive in $X$,
+$P(E_1,\ldots,E_{i-1},E_i,E_{i+1},\ldots,E_n)$ is productive in $X$,
+where $E_1,\ldots,E_{i-1},E_{i+1},\ldots,E_n$ are functorial expressions
+which do not contain $X$.
+\end{enumerate}
+A functor $P(Y_1,\ldots,Y_n)$ is called productive in its $i$-th
+argument $Y_i$ when $P$ is declared as a right object and its
+declaration
+\begin{displaymath}
+\begin{tabular}{l}
+right object $P(Y_1,\ldots,Y_n)$ with $\psi_P$ is \\
+$\qquad \alpha_{P,1}: E_{P,1}(P,Y_1,\ldots,Y_n) \rightarrow
+E'_{P,1}(P,Y_1,\ldots,Y_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,m}: E_{P,m}(P,Y_1,\ldots,Y_n) \rightarrow
+E'_{P,m}(P,Y_1,\ldots,Y_n)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+satisfies
+\begin{enumerate}
+\item $P$ is unconditioned (i.e.\ $P$ does not appear in
+$E'_{P,1},\ldots,E'_{P,m}$),
+\item $Y_i$ does not appear in $E_{P,1},\ldots,E_{P,m}$,
+\item $Y_i$ appears only one of $E'_{P,1},\ldots,E'_{P,m}$, so let us
+assume that it appears in $E'_{P,j}$ only,
+\item $E_{P,j}$ is simply $P$, and
+\item $E'_{P,j}$ is a functorial expression productive in $Y_i$.
+\end{enumerate}
+Therefore, the declaration above may look more like
+\begin{displaymath}
+\begin{tabular}{l}
+right object $P(Y_1,\ldots,Y_i,\ldots,Y_n)$ with $\psi_P$ is \\
+$\qquad \alpha_{P,1}: E_{P,1}(P,Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)
+\rightarrow {} \qquad$ \\
+\multicolumn{1}{r}{$E'_{P,1}(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$} \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,j}: P \rightarrow
+E'_{P,j}(Y_1,\ldots,Y_{i-1},Y_i,Y_{i+1},\ldots,Y_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,m}: E_{P,m}(P,Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)
+\rightarrow {} \qquad$ \\
+\multicolumn{1}{r}{$E'_{P,m}(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$} \\
+end object \\
+\end{tabular}
+\eqno\mbox{(P)}
+\end{displaymath}
+$\alpha_{P,j}$ may be called {\it projection} to $Y_i$.
+\end{definition}
+The functor `prod' is a typical productive functor.  It is productive in
+its both arguments.  The functor `exp' is not productive in any of its
+arguments.  A functorial expression `${\rm prod}({\rm prod}(X,{\rm
+exp}(Y,Z)),{\rm prod}(X,U))$' is productive in $U$ but not in $X$ or $Y$
+or $Z$.
+
+\begin{definition}
+\label{def-comp-object}
+A right object $R$ is called {\it computable} if its declaration
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X_1,\ldots,X_n)$ with $\psi_R$ is \\
+$\qquad \alpha_{R,1}: E_{R,1}(R,X_1,\ldots,X_n) \rightarrow
+E'_{R,1}(R,X_1,\ldots,X_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{R,m}: E_{R,m}(R,X_1,\ldots,X_n) \rightarrow
+E'_{R,m}(R,X_1,\ldots,X_n)$ \\
+end object \\
+\end{tabular}
+\eqno\mbox{(RC)}
+\end{displaymath}
+satisfies that $E_{R,1},\ldots,E_{R,m}$ are functorial expressions
+productive in $R$.  We also call a left object $L$ {\it computable} when
+its declaration is
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X_1,\ldots,X_n)$ with $\psi_L$ is \\
+$\qquad \alpha_{L,1}: E_{L,1}(L,X_1,\ldots,X_n) \rightarrow L$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{L,m}: E_{L,m}(L,X_1,\ldots,X_n) \rightarrow L$ \\
+end object \\
+\end{tabular}
+\eqno\mbox{(LC)}
+\end{displaymath}
+\end{definition}
+The reduction rules we have defined in this section work when all the
+objects we define are computable, and all the objects declared in
+section~\ref{sec-ex-CDT} are computable except the obscure ones in
+subsection~\ref{ssec-obscure}.  Obviously, we did not want to have those
+obscure objects in our datatype system and the computability constraint
+gets rid of them.  In other words, {\it the categories which are defined
+by declaring computable objects cannot be richer than cartesian closed
+category with recursive objects}.  Note that we did not make the
+restriction in the beginning.  We had the ability to declare a lot of
+other objects, but it turned out that in order to be able to discuss the
+computability in CDT, the categories should be cartesian closed with
+recursive objects.  This signifies the importance of cartesian closed
+categories in computer science yet again (e.g.\ the models of typed
+lambda calculus correspond to cartesian closed categories).
+
+Note that not all the productive objects are computable by the
+definition~\ref{def-prod-object}, but from now on we only treat
+computable objects, so productive objects mean computable productive
+objects.
+
+\begin{definition}
+\label{def-reduct-rules}
+Let $D_1,\ldots,D_l$ be a sequence of CDT declarations defining only
+computable objects and let $\pair{\Gamma,\Delta,\Psi,\Theta}$ be the
+corresponding CSL theory defined by definition~\ref{def-seq-CDT-decl}.
+Then, we can have computation rules for CPL elements over the CSL
+signature $\pair{\Gamma,\Delta,\Psi}$.  The computation rules are
+divided into two: those in the form of
+\begin{displaymath}
+\pair{e,c} \implies c'
+\end{displaymath}
+where $c$ and $c'$ are canonical elements and $e$ and $c$ can be
+composed (i.e.\ $e\circ c$ is an element), and those in the form of
+\begin{displaymath}
+\pair{c,E,R} \leadsto \pair{\psi_R(e_1,\ldots,e_m),c'}
+\end{displaymath}
+where $c$ and $c'$ are canonical elements, $R$ is a right functor name,
+$E$ is a functorial expression productive in $R$ and, if $c$ is an
+element of $E'$, $E$ should be more general than $E'$.
+\begin{enumerate}
+\item IDENT
+\begin{displaymath}
+\pair{{\bf I},c} \implies c
+\end{displaymath}
+\item COMP
+\begin{displaymath}
+\logicrule{\pair{e_2,c} \implies c'' \qquad \pair{e_1,c''} \implies
+c'}{\pair{e_1\circ e_2,c} \implies c'}
+\end{displaymath}
+\item L-NAT
+\begin{displaymath}
+\pair{\alpha_{L,j},c} \implies \alpha_{L,j}\circ c
+\end{displaymath}
+\item R-FACT
+\begin{displaymath}
+\pair{\psi_R(e_1,\ldots,e_m),c} \implies \psi_R(e_1,\ldots,e_m)\circ c
+\end{displaymath}
+\item L-FACT
+\begin{displaymath}
+\logicrule{\pair{e_j\circ E_{L,j}[\psi_L(e_1,\ldots,e_m)/L],c}
+\implies c'}{\pair{\psi_L(e_1,\ldots,e_m),\alpha_{L,j}\circ c} \implies
+c'}
+\end{displaymath}
+\item R-NAT
+\begin{displaymath}
+\logicrule{
+\begin{array}{c}
+\pair{c,E_{R,j},R} \leadsto \pair{\psi_R(e_1,\ldots,e_m),c''} \\
+\pair{E'_{R,j}[\psi_R(e_1,\ldots,e_m)/R]\circ e_j,c''} \implies c' \\
+\end{array}
+}{\pair{\alpha_{R,j},c} \implies c'}
+\end{displaymath}
+\item R-NAT-V
+\begin{displaymath}
+\pair{\psi_R(e_1,\ldots,e_m)\circ c'',R,R} \leadsto
+\pair{\psi_R(e_1,\ldots,e_m),c''}
+\end{displaymath}
+\item R-NAT-F
+\begin{displaymath}
+\begin{array}{c}
+\quad R \in E_i \qquad Y_i \in E'_{P,j} \qquad \pair{\hat e_j,c}
+\implies c' \quad \\
+\quad \pair{c',E'_{P,j}[E_i/Y_i],R} \leadsto
+\pair{\psi_R(e_1,\ldots,e_{m'}),c''} \quad \\
+\hline
+\multicolumn{1}{l}{\quad \pair{\psi_P(\hat e_1,\ldots,\hat e_m)\circ
+c,P(E_1,\ldots,E_n),R} \leadsto {} \quad}\\
+\multicolumn{1}{l}{\quad \qquad \langle
+\psi_R(e_1,\ldots,e_{m'}),\psi_P(\hat e_1\circ E_{P,1}[c/P],\ldots,
+\qquad \quad} \\
+\multicolumn{1}{r}{\quad \qquad \quad  \hat e_{j-1}\circ
+E_{P,j-1}[c/P],c'',\hat e_{j+1}\circ E_{P,j+1}[c/P],\ldots,\hat e_m\circ
+E_{P,m}[c/P]) \rangle \quad} \\
+\end{array}
+\end{displaymath}
+\end{enumerate}
+where the objects $L$, $R$ and $P$ are defined as \mbox{(LC)},
+\mbox{(RC)} and \mbox{(P)}, respectively, and $R \in E_i$ means that $R$
+appears in a functorial expression $E_i$.
+\end{definition}
+We have to show that the rules are well-formed, but we have to show
+their soundness at the same time.  We will do this in
+section~\ref{sec-reduct-complete} as well as showing that every
+reduction terminates (in other words, every element is normalizable by
+these rules).
+
+\section{An Example of using Reduction Rules}
+\label{sec-reduct-example}
+
+In this section, we will see an example computation in CPL using the
+reduction rules defined in the previous section.  Since computation by hand
+is very tiresome, we do only one example, but we will see some more
+examples of CPL computation done by a computer in
+chapter~\ref{ch-application}.
+
+Let us assume that we have declared the terminal object as in
+subsection~\ref{ssec-terminal-initial}, products as in
+subsection~\ref{ssec-product-coproduct}, exponentials as in
+subsection~\ref{ssec-exponential} and natural number object as in
+subsection~\ref{ssec-NNO}.  We can write down instances of the reduction
+rules in definition~\ref{def-reduct-rules} as follows.
+\begin{displaymath}
+\pair{{\bf I},c} \implies c \eqno(\mbox{IDENT})
+\end{displaymath}
+\begin{displaymath}
+\logicrule{\pair{e_2,c} \implies c'' \qquad \pair{e_1,c''} \implies
+c'}{\pair{e_1\circ e_2,c} \implies c'} \eqno(\mbox{COMP})
+\end{displaymath}
+For the terminal object, we have
+\begin{displaymath}
+\pair{{\rm !},c} \implies {\rm !}\circ c. \eqno(\mbox{R-FACT}_{\rm !})
+\end{displaymath}
+For products, we have
+\begin{displaymath}
+\pair{{\rm pair}(e_1,e_2),c} \implies {\rm pair}(e_1,e_2)\circ c,
+\eqno(\mbox{R-FACT}_{\rm pair})
+\end{displaymath}
+\begin{displaymath}
+\logicrule{\pair{c,R,R} \leadsto \pair{{\rm pair}(e_1,e_2),c''} \qquad
+\pair{e_1,c''} \implies c'}{\pair{{\rm pi1},c} \implies c'},
+\eqno(\mbox{R-NAT}_{\rm pi1})
+\end{displaymath}
+and
+\begin{displaymath}
+\pair{{\rm pair}(e_1,e_2)\circ c,{\rm prod},{\rm prod}} \leadsto
+\pair{{\rm pair}(e_1,e_2),c}. \eqno(\mbox{R-NAT-V}_{\rm prod})
+\end{displaymath}
+If we combine $(\mbox{R-NAT}_{\rm pi1})$ and $(\mbox{R-NAT-V}_{\rm
+prod})$ together, we get a familiar rule
+\begin{displaymath}
+\logicrule{\pair{e_1,c} \implies c'}{\pair{{\rm pi1},{\rm
+pair}(e_1,e_2)\circ c} \implies c'}. \eqno(\mbox{R-NAT}'_{\rm pi1})
+\end{displaymath}
+Similarly, for `pi2', we have
+\begin{displaymath}
+\logicrule{\pair{e_2,c} \implies c'}{\pair{{\rm pi2},{\rm
+pair}(e_1,e_2)\circ c} \implies c'}. \eqno(\mbox{R-NAT}'_{\rm pi2})
+\end{displaymath}
+For exponentials, as we have seen in the previous section, we have the
+following two rules.
+\begin{displaymath}
+\pair{{\rm curry}(e),c} \implies {\rm curry}(e)\circ c
+\eqno(\mbox{R-FACT}_{\rm curry})
+\end{displaymath}
+\begin{displaymath}
+\logicrule{\pair{e_1,c} \implies {\rm curry}(e)\circ c'' \qquad
+\pair{e,{\rm pair}(c'',e_2\circ c)} \implies c'}{\pair{{\rm eval},{\rm
+pair}(e_1,e_2)\circ c} \implies c'} \eqno(\mbox{R-NAT}'_{\rm eval})
+\end{displaymath}
+For natural number object, we have
+\begin{displaymath}
+\pair{{\rm zero},c} \implies {\rm zero}\circ c, \eqno(\mbox{L-NAT}_{\rm zero})
+\end{displaymath}
+\begin{displaymath}
+\pair{{\rm succ},c} \implies {\rm succ}\circ c, \eqno(\mbox{L-NAT}_{\rm succ})
+\end{displaymath}
+\begin{displaymath}
+\logicrule{\pair{e_1,c} \implies c'}{\pair{{\rm pr}(e_1,e_2),{\rm
+zero}\circ c} \implies c'}, \eqno(\mbox{L-FACT}_{\rm zero})
+\end{displaymath}
+and
+\begin{displaymath}
+\logicrule{\pair{e_2\circ {\rm pr}(e_1,e_2),c} \implies c'}{\pair{{\rm
+pr}(e_1,e_2),{\rm succ}\circ c} \implies c'}. \eqno(\mbox{L-FACT}_{\rm succ})
+\end{displaymath}
+
+Now let us try to calculate `$1+1$' in CPL.  The addition function is
+defined in subsection~\ref{ssec-NNO} as
+\begin{displaymath}
+{\rm add} = {\rm eval}\circ {\rm prod}({\rm pr}({\rm curry}({\rm
+pi2}),{\rm curry}({\rm succ}\circ {\rm eval})),{\bf I}).
+\end{displaymath}
+If we expand `prod' by `pair', we get
+\begin{displaymath}
+{\rm add} = {\rm eval}\circ {\rm pair}({\rm pr}({\rm curry}({\rm
+pi2}),{\rm curry}({\rm succ}\circ {\rm eval}))\circ {\rm pi1},{\rm
+pi2}).
+\end{displaymath}
+Therefore, the calculation `$1+1$' corresponds to the following
+reduction.
+\begin{displaymath}
+\begin{array}{r}
+\langle {\rm eval}\circ {\rm pair}({\rm
+pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm succ}\circ {\rm eval}))\circ
+{\rm pi1},{\rm pi2}), \qquad \qquad \\
+{\rm pair}({\rm succ}\circ {\rm zero},{\rm succ}\circ {\rm zero})
+\rangle \implies c \\
+\end{array}
+\eqno(1)
+\end{displaymath}
+From $(\mbox{COMP})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad
+\begin{array}{r}
+\langle {\rm pair}({\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm
+succ}\circ {\rm eval}))\circ {\rm pi1},{\rm pi2}), \qquad \qquad \\
+{\rm pair}({\rm succ}\circ {\rm zero},{\rm succ}\circ{\rm zero}) \rangle
+\implies c_1 \\
+\end{array}
+\qquad \\
+\qquad \pair{{\rm eval},c_1} \implies c \qquad \\
+\hline
+\qquad
+\begin{array}{r}
+\langle {\rm eval}\circ {\rm pair}({\rm pr}({\rm curry}({\rm
+pi2}),{\rm curry}({\rm succ}\circ {\rm eval}))\circ {\rm pi1},{\rm
+pi2}), \qquad \qquad \\
+{\rm pair}({\rm succ}\circ {\rm zero},{\rm succ}\circ{\rm zero})
+\rangle \implies c \\
+\end{array}
+\qquad \\
+\end{array}
+\end{displaymath}
+From $(\mbox{R-FACT}_{\rm pair})$, $c_1$ is
+\begin{displaymath}
+{\rm pair}({\rm pr}({\rm curry}({\rm pi2},{\rm curry}({\rm
+succ}\circ{\rm eval})\circ{\rm pi1},{\rm pi2})\circ{\rm pair}({\rm
+succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}),
+\end{displaymath}
+so we need to calculate
+\begin{displaymath}
+\begin{array}{r}
+\langle {\rm eval},{\rm pair}({\rm pr}({\rm curry}({\rm pi2},{\rm curry}({\rm
+succ}\circ{\rm eval})\circ{\rm pi1},{\rm pi2})\circ \qquad \qquad \\
+{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}) \rangle
+\implies c. \\
+\end{array}
+\end{displaymath}
+From $(\mbox{R-NAT}'_{\rm eval})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad
+\begin{array}{r}
+\langle {\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm succ}\circ{\rm
+eval}))\circ{\rm pi1}, \qquad \qquad \qquad \qquad \\
+{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}) \rangle
+\implies {\rm curry}(e_1)\circ c_2 \\
+\end{array}
+\qquad \\
+\qquad \pair{e_1,{\rm pair}(c_2,{\rm pi2}\circ{\rm pair}({\rm
+succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}))} \implies c \qquad \\
+\hline
+\qquad
+\begin{array}{r}
+\langle {\rm eval},{\rm pair}({\rm pr}({\rm curry}({\rm pi2},{\rm curry}({\rm
+succ}\circ{\rm eval})\circ{\rm pi1},{\rm pi2})\circ \qquad \qquad \\
+{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}) \rangle
+\implies c. \\
+\end{array}
+\qquad \\
+\end{array}
+\eqno(2)
+\end{displaymath}
+From $(\mbox{COMP})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad \pair{{\rm pi1},{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero})} \implies c_3 \qquad \\
+\qquad \pair{{\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm
+succ}\circ{\rm eval})),c_3} \implies {\rm curry}(e_1)\circ c_2 \qquad \\
+\hline
+\qquad
+\begin{array}{r}
+\langle {\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm succ}\circ{\rm
+eval}))\circ{\rm pi1}, \qquad \qquad \qquad \qquad \\
+{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}) \rangle
+\implies {\rm curry}(e_1)\circ c_2 \\
+\end{array}
+\qquad \\
+\end{array}
+\eqno(3)
+\end{displaymath}
+From $(\mbox{R-NAT}'_{\rm pi1})$,
+\begin{displaymath}
+\logicrule{\pair{{\rm succ}\circ{\rm zero},{\rm !}} \implies
+c_3}{\pair{{\rm pi1},{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero})} \implies c_3},
+\end{displaymath}
+and from $(\mbox{L-NAT}_{\rm zero})$ and $(\mbox{L-NAT}_{\rm succ})$,
+$c_3$ is
+\begin{displaymath}
+{\rm succ}\circ{\rm zero}\circ{\rm !}.
+\end{displaymath}
+Going back to $(3)$, we need to calculate
+\begin{displaymath}
+\pair{{\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm succ}\circ{\rm
+eval})),{\rm succ}\circ{\rm zero}\circ{\rm !}} \implies {\rm
+curry}(e_1)\circ c_2.
+\end{displaymath}
+From $(\mbox{L-FACT}_{\rm succ})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad \langle {\rm curry}({\rm succ}\circ{\rm eval})\circ{\rm
+pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm succ}\circ{\rm eval})),
+\qquad \qquad \\
+\multicolumn{1}{r}{{\rm zero}\circ{\rm !}\rangle \implies {\rm
+curry}(e_1)\circ c_2 \qquad} \\
+\hline
+\pair{{\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm
+succ}\circ{\rm eval})),{\rm succ}\circ{\rm zero}\circ{\rm !}} \implies
+{\rm curry}(e_1)\circ c_2 \\
+\end{array}
+\end{displaymath}
+and from $(\mbox{COMP})$
+\begin{displaymath}
+\begin{array}{c}
+\qquad \pair{{\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm
+succ}\circ{\rm eval})),{\rm zero}\circ{\rm !}} \implies c_4 \qquad \\
+\qquad \pair{{\rm curry}({\rm succ}\circ{\rm eval}),c_4} \implies {\rm
+curry}(e_2)\circ c_2 \qquad \\
+\hline
+\qquad
+\begin{array}{r}
+\langle {\rm curry}({\rm succ}\circ{\rm eval})\circ{\rm
+pr}({\rm curry}({\rm pi2}), \qquad \qquad \qquad \qquad \\
+{\rm curry}({\rm succ}\circ{\rm eval})),
+{\rm zero}\circ{\rm !} \rangle \implies {\rm curry}(e_1)\circ
+c_2 \\
+\end{array}
+\qquad \\
+\end{array}
+\eqno(4)
+\end{displaymath}
+From $(\mbox{L-FACT}_{\rm zero})$,
+\begin{displaymath}
+\logicrule{\pair{{\rm curry}({\rm pi2}),{\rm !}} \implies
+c_4}{\pair{{\rm pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm
+succ}\circ{\rm eval})),{\rm zero}\circ{\rm !}} \implies c_4}
+\end{displaymath}
+and from $(\mbox{R-FACT}_{\rm curry})$, $c_4$ is `${\rm curry}({\rm
+pi2})\circ{\rm !}$'.  Going back to $(4)$, $e_1$ is `${\rm
+succ}\circ{\rm eval}$' and $c_2$ is ${\rm curry}({\rm pi2})\circ{\rm
+!}$.  Therefore, going back to $(2)$, we now have to calculate
+\begin{displaymath}
+\pair{{\rm succ}\circ{\rm eval},{\rm pair}({\rm curry}({\rm
+pi2})\circ{\rm !},{\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm
+zero},{\rm succ}\circ{\rm zero}))} \implies c.
+\end{displaymath}
+From $(\mbox{COMP})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad
+\begin{array}{l}
+\langle {\rm eval},{\rm pair}({\rm curry}({\rm pi2})\circ{\rm !}, \\
+\qquad \qquad {\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero})) \rangle \implies c_5 \\
+\end{array}
+\qquad \\
+\qquad \pair{{\rm succ},c_5} \implies c \qquad \\
+\hline
+\qquad
+\begin{array}{l}
+\langle {\rm succ}\circ{\rm eval},{\rm pair}({\rm curry}({\rm
+pi2})\circ{\rm !}, \\
+\qquad \qquad {\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm
+zero},{\rm succ}\circ{\rm zero})) \rangle \implies c \\
+\end{array}
+\qquad \\
+\end{array}
+\eqno(5)
+\end{displaymath}
+From $(\mbox{R-NAT}'_{\rm eval})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad \pair{{\rm curry}({\rm pi2})\circ{\rm !},{\rm !}} \implies {\rm
+curry}(e_2)\circ c_6 \qquad \\
+\qquad \pair{e_2,{\rm pair}(c_6,{\rm pi2}\circ{\rm pair}({\rm
+succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}))} \implies c_5 \qquad \\
+\hline
+\qquad \pair{{\rm eval},{\rm pair}({\rm curry}({\rm pi2})\circ{\rm
+!},{\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero}))} \implies c_5 \qquad \\
+\end{array}
+\end{displaymath}
+From $(\mbox{R-FACT}_{\rm !})$ and $(\mbox{R-FACT}_{\rm curry})$, $e_2$
+is `pi2' and $c_6$ is `${\rm !}\circ{\rm !}$', so we have
+\begin{displaymath}
+\pair{{\rm pi2},{\rm pair}({\rm !}\circ{\rm !},{\rm pi2}\circ{\rm
+pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero}))} \implies
+c_5
+\end{displaymath}
+From $(\mbox{R-NAT}'_{\rm pi2})$,
+\begin{displaymath}
+\logicrule{\pair{{\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero}),{\rm !}} \implies c_5}{\pair{{\rm pi2},{\rm
+pair}({\rm !}\circ{\rm !},{\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm
+zero},{\rm succ}\circ{\rm zero}))} \implies c_5}
+\end{displaymath}
+From $(\mbox{COMP})$,
+\begin{displaymath}
+\begin{array}{c}
+\qquad \pair{{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm
+zero}),{\rm !}} \implies c_6 \qquad \\
+\qquad \pair{{\rm pi2},c_6} \implies c_5 \qquad \\
+\hline
+\qquad \pair{{\rm pi2}\circ{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero}),{\rm !}} \implies c_5 \qquad \\
+\end{array}
+\end{displaymath}
+From $(\mbox{R-FACT}_{\rm pair})$, $c_6$ is
+\begin{displaymath}
+{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm zero})\circ{\rm
+!},
+\end{displaymath}
+so we have
+\begin{displaymath}
+\pair{{\rm pi2},{\rm pair}({\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm
+zero})\circ{\rm !}} \implies c_5
+\end{displaymath}
+and $(\mbox{R-NAT}'_{\rm pi2})$
+\begin{displaymath}
+\logicrule{\pair{{\rm succ}\circ{\rm zero},{\rm !}} \implies
+c_5}{\pair{{\rm pi2},{\rm pair}({\rm succ}\circ{\rm zero},{\rm
+succ}\circ{\rm zero})\circ{\rm !}} \implies c_5}
+\end{displaymath}
+By using $(\mbox{L-NAT}_{\rm zero})$ and $(\mbox{L-NAT}_{\rm succ})$,
+$c_5$ is
+\begin{displaymath}
+{\rm succ}\circ{\rm zero}\circ{\rm !}.
+\end{displaymath}
+Now, we go back to $(5)$ and we need to calculate
+\begin{displaymath}
+\pair{{\rm succ},{\rm succ}\circ{\rm zero}\circ{\rm !}} \implies c,
+\end{displaymath}
+but this is straightforward from $(\mbox{L-NAT}_{\rm succ})$ and $c$ is
+\begin{displaymath}
+{\rm succ}\circ{\rm succ}\circ{\rm zero}\circ{\rm !}.
+\end{displaymath}
+Therefore, the reduction $(1)$ is
+\begin{displaymath}
+\begin{array}{r}
+\langle {\rm eval}\circ {\rm pair}({\rm
+pr}({\rm curry}({\rm pi2}),{\rm curry}({\rm succ}\circ {\rm eval}))\circ
+{\rm pi1},{\rm pi2}), \qquad \qquad \qquad \\
+{\rm pair}({\rm succ}\circ {\rm zero},{\rm succ}\circ {\rm zero})
+\rangle \implies {\rm succ}\circ{\rm succ}\circ{\rm zero}\circ{\rm !} \\
+\end{array}
+\end{displaymath}
+that is, we have shown `$1+1$' is `2' in CPL.
+
+\section{Well-Definedness and Normalization Theorem for Reduction Rules}
+\label{sec-reduct-complete}
+
+In section~\ref{sec-reduct-rule}, we discussed what is computation in
+CPL and obtained a set of reduction rules
+(definition~\ref{def-reduct-rules}).  Usual questions to be asked when
+we get reduction rules are, firstly, whether they are well-defined or
+not and, secondly, whether they are normalizing or not.  In this
+section, we will answer both questions affirmatively.
+
+Let us assume in this section that we are working in a CSL theory
+$\pair{\Gamma,\Delta,\Psi,\Theta}$ which is obtained by a sequence of
+CDT declarations, $D_1,\ldots,D_l$, each of which is a computable object
+declaration.
+
+First, we prove the well-definedness of the reduction rules.
+\begin{theorem}
+\label{th-reduct-sound}
+{\bf Well-Definedness Theorem:} Let $e\circ c$ be an element in
+$\pair{\Gamma,\Delta,\Psi}$ and $c$ be a canonical element.  If from the
+rules listed in definition~\ref{def-reduct-rules} we deduce
+\begin{displaymath}
+\pair{e,c} \implies c',
+\end{displaymath}
+then $c'$ is a canonical element and $e\circ c = c'$ holds in
+$\pair{\Gamma,\Delta,\Psi,\Theta}$ (or in any CSL theory structure of this).
+\\
+{\bf Proof:} We prove at the same time that for a canonical element $c$,
+a right functor $R$, a functorial expression $E$ productive in $R$ which
+is more general than the type of $c$, if the rules in
+definition~\ref{def-reduct-rules} deduce
+\begin{displaymath}
+\pair{c,E,R} \leadsto \pair{e,c'},
+\end{displaymath}
+then $e$ is $\psi_R(e_1,\ldots,e_m)$ for some $e_1,\ldots,e_n$, $c'$ is
+a canonical element and $c = E[\psi(e_1,\ldots,e_m)/R]\circ c'$ holds in
+$\pair{\Gamma,\Delta,\Psi,\Theta}$.
+
+The proof is done by mathematical induction on the length of reduction,
+so all we have to do is to check each reduction rule.
+\begin{enumerate}
+\item IDENT
+\begin{displaymath}
+\pair{{\bf I},c} \implies c
+\end{displaymath}
+It is trivial from ${\bf I}\circ c = c$.
+\item COMP
+\begin{displaymath}
+\logicrule{\pair{e_2,c} \implies c'' \qquad \pair{e_1,c''} \implies
+c'}{\pair{e_1\circ e_2,c} \implies c'}
+\end{displaymath}
+From the induction hypothesis $c'$ is canonical and $c' = e_1\circ c'' =
+e_1 \circ e_2 \circ c$.
+\item L-NAT
+\begin{displaymath}
+\pair{\alpha_{L,j},c} \implies \alpha_{L,j}\circ c
+\end{displaymath}
+It is trivial since $\alpha_{L,j}\circ c$ is a canonical element.
+\item R-FACT
+\begin{displaymath}
+\pair{\psi_R(e_1,\ldots,e_m),c} \implies \psi_R(e_1,\ldots,e_m)\circ c
+\end{displaymath}
+It is again trivial since $\psi_R(e_1,\ldots,e_m)\circ c$ is a canonical
+element.
+\item L-FACT
+\begin{displaymath}
+\logicrule{\pair{e_j\circ E_{L,j}[\psi_L(e_1,\ldots,e_m)/L],c}
+\implies c'}{\pair{\psi_L(e_1,\ldots,e_m),\alpha_{L,j}\circ c} \implies
+c'}
+\end{displaymath}
+If $\alpha_{L,j}\circ c$ is canonical, $c$ is canonical, and from
+$(\mbox{LEQ}_j)$
+\begin{displaymath}
+e_j\circ E_{L,j}[\psi_L(e_1,\ldots,e_m)/L]\circ c =
+\psi_L(e_1,\ldots,e_m)\circ \alpha_{L,j}\circ c.
+\end{displaymath}
+Therefore, the premise of the rule is well-formed, so from the
+induction hypothesis $c'$ is canonical, and 
+\begin{displaymath}
+c' = e_j\circ E_{L,j}[\psi_L(e_1,\ldots,e_m)/L]\circ c =
+\psi_L(e_1,\ldots,e_m)\circ \alpha_{L,j}\circ c.
+\end{displaymath}
+\item R-NAT
+\begin{displaymath}
+\begin{array}{c}
+\qquad \pair{c,E_{R,j},R} \leadsto \pair{\psi_R(e_1,\ldots,e_m),c''}
+\qquad \\
+\qquad \pair{E'_{R,j}[\psi_R(e_1,\ldots,e_m)/R]\circ e_j,c''} \implies
+c' \qquad \\
+\hline
+\qquad \pair{\alpha_{R,j},c} \implies c' \qquad \\
+\end{array}
+\end{displaymath}
+Since $\alpha_{R,j}$ can be composed with $c$ and $\alpha_{R,j}$ has the
+type $E_{R,j} \rightarrow E'_{R,j}$, $c$ is an element of a functorial
+expression not more general than $E_{R,j}$.  From the induction
+hypothesis, $c''$ is a canonical element and
+\begin{displaymath}
+E_{R,j}[\psi_R(e_1,\ldots,e_m)/R] \circ c'' = c.
+\end{displaymath}
+Therefore,
+\begin{displaymath}
+\displaylines{ \qquad \alpha_{R,j}\circ c \hfill \cr
+\qquad \llap{$=\;$} \alpha_{R,j}\circ
+E_{R,j}[\psi_R(e_1,\ldots,e_m)/R]\circ c'' \quad \dotfill \mbox{(from
+$(\mbox{REQ}_j)$)} \cr
+\qquad \llap{$=\;$} E'_{R,j}[\psi_R(e_1,\ldots,e_m)/R]\circ e_j\circ
+c'' \quad \dotfill \mbox{(from hypothesis)} \cr
+\qquad \llap{$=\;$} c. \quad \dotfill \mbox{(from hypothesis)} \cr}
+\end{displaymath}
+\item R-NAT-V
+\begin{displaymath}
+\pair{\psi_R(e_1,\ldots,e_m)\circ c'',R,R} \leadsto
+\pair{\psi_R(e_1,\ldots,e_m),c''}
+\end{displaymath}
+$R$ is a variable, so it is more general than anything, so the rule is
+well-formed.  Since $\psi_R(e_1,\ldots,e_m)\circ c''$ is a canonical
+element, so is $c''$.
+\item R-NAT-F
+\begin{displaymath}
+\begin{array}{c}
+\quad R \in E_i \qquad Y_i \in E'_{P,j} \qquad \pair{\hat e_j,c}
+\implies c' \quad \\
+\quad \pair{c',E'_{P,j}[E_i/Y_i],R} \leadsto
+\pair{\psi_R(e_1,\ldots,e_{m'}),c''} \quad \\
+\hline
+\multicolumn{1}{l}{\quad \pair{\psi_P(\hat e_1,\ldots,\hat e_m)\circ
+c,P(E_1,\ldots,E_n),R} \leadsto {} \quad}\\
+\multicolumn{1}{l}{\quad \qquad \langle
+\psi_R(e_1,\ldots,e_{m'}),\psi_P(\hat e_1\circ E_{P,1}[c/P],\ldots,
+\qquad \quad} \\
+\multicolumn{1}{r}{\quad \qquad \quad  \hat e_{j-1}\circ
+E_{P,j-1}[c/P],c'',\hat e_{j+1}\circ E_{P,j+1}[c/P],\ldots,\hat e_m\circ
+E_{P,m}[c/P]) \rangle \quad} \\
+\end{array}
+\end{displaymath}
+$\psi_P(\hat e_1,\ldots)\circ c = \psi_P(\hat e_1\circ
+E_{P,1}[c/P],\ldots)$ and from the typing rule of $\psi_P$, $\hat
+e_j\circ E_{P,j}[c/P] = \hat e_j\circ c$ is an element of a functorial
+expression which is not more general than $E'_{P,j}[E_1/Y_1,\ldots]$
+which is not more general than $E'_{P,j}[E_i/Y_i]$.  Therefore, the
+premises of the rule are well-formed and
+\begin{displaymath}
+\displaylines{\qquad \hat e_j\circ E_{P,j}[c/P] \hfill \cr
+\qquad \llap{$=\;$} \hat e_j\circ c \quad \dotfill \mbox{($E_{P,j}$ is simply
+$P$)} \cr
+\qquad \llap{$=\;$} c' \quad \dotfill \mbox{(from $\pair{\hat e_j,c}
+\implies c'$)} \cr
+\qquad \llap{$=\;$} E'_{P,j}[E_i/Y_i][\psi_R(e_1,\ldots)/R]\circ
+c''. \quad \dotfill \mbox{(from $\pair{c',E'_{P,j}[E_i/Y_i],R} \leadsto
+\ldots$)} \cr}
+\end{displaymath}
+Therefore,
+\begin{displaymath}
+\displaylines{
+\qquad P(E_1,\ldots)[\psi_R(e_1,\ldots)/R]\circ \psi_P(\hat e_1\circ
+E_{P,1}[c/P],\ldots,c'',\ldots) \hfill \cr
+\qquad \llap{$=\;$}
+\psi_P(\alpha_{P,1},\ldots,E'_{P,j}[E_i/Y_i][\psi_R(e_1,\ldots)/R],\ldots)
+\hfill \cr
+\qquad \qquad \qquad \qquad \qquad {} \circ \psi_P(\hat e_1\circ
+E_{P,1}[c/P],\ldots,c'',\ldots) \quad \dotfill \mbox{(expand $P$)} \cr
+\qquad \llap{$=\;$} \psi_P(\hat e_1\circ
+E_{P,1}[c/P],\ldots,E'_{P,j}[E_i/Y_i][\psi_R(e_1,\ldots)/R]\circ
+c'',\ldots) \hfill \cr
+\qquad \qquad \qquad \qquad \qquad \qquad
+\dotfill \mbox{(from \ref{prop-unconditioned} and $(\mbox{REQ}_k)$)} \cr
+\qquad \llap{$=\;$} \psi_P(\hat e_1\circ E_{P,1}[c/P],\ldots,\hat
+e_j\circ E_{P,j}[c/P],\ldots) \quad \dotfill \mbox{(from above)} \cr
+\qquad \llap{$=\;$} \psi_P(\hat e_1,\ldots,\hat e_m)\circ c. \quad \dotfill
+\mbox{(from \ref{prop-unconditioned})} \cr}
+\end{displaymath}
+Of course, $\psi_P(\hat e_1\circ E_{P,1}[c/P],\ldots,c'',\ldots)$ is a
+canonical element.
+\end{enumerate}
+We have proved the theorem as well as shown the well-formedness of the
+reduction rules.
+\end{theorem}
+
+Next, we prove the normalization, that is to prove the following
+theorem.
+\begin{theorem}
+\label{th-reduct-complete}
+{\bf Normalization Theorem:} For a canonical element $c$ and a CSL
+expression $e$ whose domain is compatible with the codomain of $c$
+(i.e.\ we can have $e\circ c$ as an element), there is a canonical
+element $c'$ such that
+\begin{displaymath}
+\pair{e,c} \implies c'
+\end{displaymath}
+by the rules listed in definition~\ref{def-reduct-rules}.
+\end{theorem}
+Before proving this theorem, we need some preparation.  Note that the
+theorem proves the two things together: the existence of $c'$ and the
+reducibility of $\pair{e,c} \implies c'$.  Therefore, from the existence
+part, we will have the following corollary.
+\begin{corollary}
+For any element $e$ in $\pair{\Gamma,\Delta,\Psi}$, there is a canonical
+element $c$ such that $e=c$ holds in $\pair{\Gamma,\Delta,\Psi,\Theta}$.
+\end{corollary}
+Showing the reducibility can be regarded as showing the termination of
+computation in CPL.  So, every program terminates in CPL.  This is what
+we expected because we only use primitive recursions.
+
+First, we show a property of canonical elements.
+\begin{proposition}
+\label{prop-cano-form}
+A canonical element of $R(E_1,\ldots,E_n)$ for a right object $R$
+defined by $(\mbox{RC})$ has the following form.
+\begin{displaymath}
+\psi_R(e_1,\ldots,e_m)\circ c
+\end{displaymath}
+where $c$ is another canonical element. \\
+On the other hand, a canonical element of $L(E_1,\ldots,E_n)$ for a left
+object $L$ defined by $(\mbox{LC})$ has the following form.
+\begin{displaymath}
+\alpha_{L,j}\circ c
+\end{displaymath}
+where $c$ is another canonical element. \\
+{\bf Proof:} A canonical element only consists of natural
+transformations of left objects and factorizers of right objects.
+Therefore, a canonical element should look like either
+\begin{displaymath}
+\alpha_{L,j}\circ c \qquad \mbox{or} \qquad \psi_R(e_1,\ldots,e_m)\circ c.
+\end{displaymath}
+From the typing rules in section~\ref{sec-fun-calc-2}, the first one
+always gives an element of $L(E_1,\ldots,E_n)$ and the second one gives
+an element of $R(E_1,\ldots,E_n)$.
+\end{proposition}
+From this proposition, we can see that whenever we have
+\begin{displaymath}
+\pair{e,c} \qquad \mbox{or} \qquad \pair{c,E,R}
+\end{displaymath}
+we can always apply exactly one of the rules in
+definition~\ref{def-reduct-rules}.  In other words, the computation in
+CPL is never stuck and deterministic.  We can always proceed to {\it
+the} next computation step.
+
+We are going to prove the normalization theorem by the
+{\it computability} method due to Tait \cite{tait-67}.  This method is
+often used to show normalization of various systems especially that of
+lambda calculi (see, for example, \cite{stenlund} and
+\cite{lambek-scott-86}) where two kinds of induction are used: induction
+on types and induction on structures.  The method usually goes for
+lambda calculi as follows:
+\begin{enumerate}
+\item Define the notion of computable terms inductively on types.
+\item Show that any computable term is normalizable.
+\item Show that all the terms are computable by induction on terms.
+\item Therefore, any term is normalizable.
+\end{enumerate}
+The notion of computable terms is stronger than that of normalizable
+terms, but we need this stronger notion (which is a part of the essence
+of the Tait computability method) to carry out the normalization proof.
+The computability predicate also divide the two inductions involved in
+the proof clearly.  In our case, the normalization proof goes as follows.
+\begin{enumerate}
+\item We define the notion of {\it computable canonical elements}
+inductively on types.  Intuitively, a canonical element $c$ is
+computable if
+\begin{enumerate}
+\item $\alpha_L\circ c$ is computable if $c$ is computable.
+\item $\psi_R(e)\circ c$ is computable if there is a reduction
+$\pair{\alpha_R,\psi_R(e)\circ c} \implies c'$ such that $c'$ is
+computable, that is all the components of $\psi_R(e)\circ c$ are
+computable.
+\end{enumerate}
+\item We define the notion of {\it calculability} for expressions (we
+could have called it computability as well as is conventional in proofs
+about lambda calculi, but we distinguish them for clarity).  An
+expression $e$ is {\it calculable} if for any computable canonical
+element $c$ there is a reduction $\pair{e,c} \implies c'$ such that $c'$
+is computable.  Note that an expression $e$ is normalizable if for any
+canonical element $e$ there is a reduction $\pair{e,c} \implies c$,
+whereas $e$ is calculable if there is a reduction for any {\it
+computable} canonical element.  Therefore, it should be easier to
+prove that an expression is calculable than to prove it is normalizable.
+\item We will prove that all the expressions are calculable by
+structural induction.
+\item As an easy corollary, we can show that any canonical element is
+computable.
+\item Finally, we prove that all the reductions are normalizing.
+\end{enumerate}
+
+First, let us assign for each $n$-ary functor $F$ a function which
+given sets $C_1\ldots,C_n$ of canonical elements of type
+$E_1,\ldots,E_n$ gives a set of canonical elements $C$ of type
+$F(E_1,\ldots,E_n)$.  We write $\tilde F$ for the function (i.e.\ $C =
+\tilde F(C_1,\ldots,C_n)$).  $\tilde F$ is monotonic in the {\it i\/}th
+argument if $F$ is covariant in the {\it i\/}th argument, and $\tilde F$
+is anti-monotonic in the {\it i\/}th argument if $F$ is contravariant in
+the {\it i\/}th argument.
+\begin{definition}
+\label{def-assoc-cano-fun}
+\begin{enumerate}
+\item For a left object\footnote{For simplicity, we define this for a
+simple left object, but the general case should be obvious.}
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X)$ with $\psi_L$ is \\
+$\qquad \alpha_L: E_L(L,X) \rightarrow L$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\tilde L(C)$ is the minimal fixed point of the following monotonic
+function:
+\begin{displaymath}
+S \longmapsto \{\; \alpha_L\circ c \;\mid\; c \in \tilde E_L(S,C) \;\}
+\end{displaymath}
+The minimal fixed point can be calculated as the least upper bound of
+the following ascending chain:
+\begin{displaymath}
+\tilde L_0(C) \subseteq \tilde L_1(C) \subseteq \cdots \subseteq \tilde
+L_n(C) \subseteq \tilde L_{n+1}(C) \subseteq \cdots \subseteq \tilde
+L_\omega(C) \subseteq \cdots {}
+\end{displaymath}
+where $\tilde L_0(C)$ is $\emptyset$ and
+\begin{displaymath}
+\tilde L_{\beta+1}(C) \defeq \{\; \alpha_L\circ c \;\mid\; c \in \tilde
+E_L(\tilde L_\beta(C),C) \;\}.
+\end{displaymath}
+\item For a right object
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X)$ with $\psi_R$ is \\
+$\qquad \alpha_R: R \rightarrow E'_R(R,X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\tilde R(C)$ is the maximal fixed point of the following monotonic
+function:
+\begin{displaymath}
+S \longmapsto \{\; \psi_R(e)\circ c \;\mid\;
+\mbox{$\pair{\alpha_R,\psi_R(e)\circ c} \implies c'$ such that $c' \in
+\tilde E'_R(S,C)$} \;\}
+\end{displaymath}
+The maximal fixed point can be calculated as the greatest lower bound of
+the following descending chain:
+\begin{displaymath}
+\tilde R_0(C) \supseteq \tilde R_1(C) \supseteq \cdots \supseteq \tilde
+R_n(C) \supseteq \tilde R_{n+1}(C) \supseteq \cdots \supseteq \tilde
+R_\omega(C) \supseteq \cdots {}
+\end{displaymath}
+where $\tilde R_0(C)$ is the set of all the canonical elements of $R(E)$
+(where $C$ is a set of canonical elements of type $E$) and
+\begin{displaymath}
+\displaylines{
+\qquad \tilde R_{\beta+1}(C) \defeq \{\; \psi_R(e)\circ c \;\mid\; {}
+\hfill \cr
+\hfill \mbox{$\pair{\alpha_R,\psi_R(e)\circ c} \implies c'$ such that
+$c' \in \tilde E'_R(\tilde R_\beta(C),C)$} \;\}. \qquad \cr}
+\end{displaymath}
+\item For a right object\footnote{For a right object $R$, since the
+domain of $\alpha_R: E_R(R,X) \rightarrow E'_R(R,X)$ needs to be
+productive in $R$, there are basically these two cases: when $E_R(R,X)$
+is $R$ and when it is ${\rm prod}(R,E''(X))$.}
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R'(X)$ with $\psi_{R'}$ is \\
+$\qquad \alpha_{R'}: {\rm prod}(R,E_{R'}(X)) \rightarrow E'_{R'}(R',X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\tilde R'(C)$ is the maximal fixed point of the following monotonic
+function:
+\begin{displaymath}
+S \longmapsto \{\; \psi_{R'}(e)\circ c \;\mid\;
+\parbox[t]{3.5in}{For any $c' \in \tilde E_{R'}(C)$ $\pair{\alpha_{R'},{\rm
+pair}(\psi_{R'}(e)\circ c,c')} \implies c''$ such that $c'' \in \tilde
+E'_{R'}(S,C)$ $\;\}$}
+\end{displaymath}
+We can similarly define $\tilde R'_\beta(C)$.
+\end{enumerate}
+{\bf Well-definedness:} We have to show that $\tilde F$ is monotonic or
+anti-monotonic according to the variance of $F$.  We prove this by
+induction on the order of declaration of objects.
+\begin{enumerate}
+\item If $F$ is the left object $L$ above and covariant, we show that
+$\tilde L_\beta$ is monotonic by induction on $\beta$.  $\tilde L_0$ is
+trivially monotonic.  $\tilde L_{\beta+1}(C)$ is
+\begin{displaymath}
+\{\; \alpha_L\circ c \;\mid\; c \in \tilde E_L(\tilde L_\beta(C),C) \;\}.
+\end{displaymath}
+From the induction hypothesis $\tilde L_\beta$ is monotonic.  Since
+$E_L(L,X)$ is covariant in both $L$ and $X$, from the other induction
+hypothesis $\tilde E_L$ is monotonic.  Therefore, $\tilde E_L(\tilde
+L_\beta(C),C)$ is monotonic in $C$, and $\tilde L_{\beta+1}$ is
+monotonic.  Hence, $\tilde L$ is monotonic.  Similarly, we can show that
+$\tilde L$ is anti-monotonic if $L$ is contravariant.
+\item If $F$ is the right object $R$ above and covariant, we show that $\tilde
+R_\beta$ is monotonic by induction on $\beta$.  $\tilde R_0$ is
+trivially monotonic.  $\tilde R_{\beta+1}(C)$ is
+\begin{displaymath}
+\{\; \psi_R(e)\circ c \;\mid\; \pair{\alpha_R,\psi_R(e)\circ c} \implies
+c' \land c' \in \tilde E'_R(\tilde R_\beta(C),C) \;\}.
+\end{displaymath}
+From the induction hypothesis, $\tilde R_\beta$ is monotonic, and from
+the other induction hypothesis, $\tilde E'_R$ is monotonic in both
+arguments.  Therefore, $\tilde R_{\beta+1}$ is monotonic, and by
+induction $\tilde R$ is monotonic.  We can similarly show that $\tilde
+R$ is anti-monotonic if $R$ is contravariant.
+\item If $F$ is the right object $R'$ above and covariant, we show that
+$\tilde R'_\beta$ is monotonic by induction on $\beta$.  $\tilde R'_0$ is
+trivially monotonic.  $\tilde R'_{\beta+1}(C)$ is
+\begin{displaymath}
+\displaylines{
+\qquad \{\; \psi_{R'}(e)\circ c \;\mid\; \forall c'\in \tilde E_{R'}(C) \;
+\pair{\alpha_{R'},{\rm pair}(\psi_{R'}(e)\circ c,c')} \implies 
+c'' \land {} \hfill \cr
+\hfill c'' \in \tilde E'_{R'}(\tilde R'_\beta(C),C) \;\}. \qquad \cr}
+\end{displaymath}
+From the induction hypothesis, $\tilde R'_\beta$ is monotonic, and from
+the other induction hypothesis, $\tilde E_{R'}$ is anti-monotonic and
+$\tilde E'_{R'}$ is monotonic in both arguments.  Therefore, $\tilde
+R'_{\beta+1}$ is monotonic, and by induction $\tilde R'$ is monotonic.
+We can similarly show that $\tilde R'$ is anti-monotonic if $R'$ is
+contravariant. \qed
+\end{enumerate}
+\end{definition}
+
+We now define the notion of {\it computability} and {\it calculability}.
+\begin{definition}
+\label{def-computable}
+The set $\Omega_{F(E_1,\ldots,E_n)}$ of {\it computable} canonical
+elements of type $F(E_1,\ldots,E_n)$ is defined inductively by $\tilde
+F(\Omega_{E_1},\ldots,\Omega_{E_n})$.
+\end{definition}
+
+\begin{definition}
+\label{def-calculable}
+An CSL expression $e$ of type $E \rightarrow E'$ is called {\it
+calculable with respect to} $C \rightarrow C'$ for $C \subseteq
+\Omega_E$ and $C' \subseteq \Omega_{E'}$ if for any $c$ in $C$ there is
+a reduction $\pair{e,c} \implies c'$ such that $c'$ is in $C'$.  When
+$e$ is calculable with respect to $\Omega_E \rightarrow \Omega_{E'}$, we
+simply say that $e$ is {\it calculable}.
+\end{definition}
+
+\begin{example}
+\label{ex-computable}
+\begin{enumerate}
+\item For the terminal object `1'
+\begin{displaymath}
+\begin{tabular}{l}
+right object 1 with ! \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+since there is no natural transformation, any canonical element is
+computable.  Let us use $\star$ to denote an arbitrary element of $\tilde 1$.
+\item For the left object `nat' of natural numbers
+\begin{displaymath}
+\begin{tabular}{l}
+left object nat with pr is \\
+$\qquad {\rm zero}: 1 \rightarrow {\rm nat}$\\
+$\qquad {\rm succ}: {\rm nat} \rightarrow {\rm nat}$\\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\widetilde{\rm nat}_0$ is $\emptyset$.  $\widetilde{\rm nat}_1$ is
+\begin{displaymath}
+\{\; {\rm zero}\circ c,\; {\rm succ}\circ c' \;\mid\; c \in \tilde 1
+\land c' \in \widetilde{\rm nat}_0 \;\} = \{\; {\rm zero}\circ \star \;\}.
+\end{displaymath}
+Similarly $\widetilde{\rm nat}_2$ consists of ${\rm zero}\circ\star$ and
+${\rm succ}\circ{\rm zero}\circ\star$.   In general, $\widetilde{\rm
+nat}_n$ is the set of $n$ elements corresponding to a set of 0, 1, 2,
+\ldots, and $n-1$.  Therefore, $\widetilde{\rm nat}$ is the set of all the
+canonical elements of ${\rm nat}$.
+\item For the right object `prod' of products
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm prod}(X,Y)$ with pair is \\
+$\qquad {\rm pi1}: {\rm prod} \rightarrow X$ \\
+$\qquad {\rm pi2}: {\rm prod} \rightarrow Y$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+a canonical element ${\rm pair}(e_1,e_2)\circ c$ is computable if there
+are reductions
+\begin{displaymath}
+\pair{{\rm pi1},{\rm pair}(e_1,e_2)\circ c} \implies c_1 \qquad
+\mbox{and} \qquad \pair{{\rm pi2},{\rm pair}(e_1,e_2)\circ c} \implies
+c_2
+\end{displaymath}
+such that $c_1$ and $c_2$ are computable, that is a canonical element of
+${\rm prod}$ is computable if its components are computable.  Since the
+reductions above are equivalent to $\pair{e_1,c} \implies c_1$ and
+$\pair{e_2,c} \implies c_2$, if $c$ is computable and $e_1$ and $e_2$
+are calculable, ${\rm pair}(e_1,e_2)\circ c$ is computable.
+\item For the right object `exp' of exponentials
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm exp}(X,Y)$ with curry is \\
+$\qquad {\rm eval}: {\rm prod}({\rm exp},X) \rightarrow Y$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+a canonical element ${\rm curry}(e)\circ c$ of type ${\exp}(E,E')$ is
+computable, if for any computable canonical element $c'$ of type $E'$
+there is a reduction
+\begin{displaymath}
+\pair{{\rm eval},{\rm pair}({\rm curry}(e)\circ c,c')} \implies c''
+\end{displaymath}
+and $c''$ is computable.  The reduction is equivalent to $\pair{e,{\rm
+pair}(c,c')} \implies c''$.  Since ${\rm pair}(c,c')$ is computable,
+there is such a reduction if $e$ is calculable.  Remember that ${\rm
+curry}(e)$ corresponds to the closure of $e$ (or lambda closed term of
+$e$) so that we can say that a closure is calculable if the application
+with canonical elements always results canonical elements.  This exactly
+corresponds to the definition of computability for lambda expressions
+(see~\cite{stenlund}).
+\item For the right object `inflist' of infinite lists
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm inflist}(X)$ with fold is \\
+$\qquad {\rm head}: {\rm inflist} \rightarrow X$ \\
+$\qquad {\rm tail}: {\rm inflist} \rightarrow {\rm inflist}$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+let us figure out the computable canonical elements of type ${\rm
+inflist}({\rm nat})$.  $\widetilde{\rm inflist}_0(\Omega_{\rm nat})$ is
+the set of all the canonical elements of type ${\rm inflist}({\rm
+nat})$.  $\widetilde{\rm inflist}_1(\Omega_{\rm nat})$ is
+\begin{displaymath}
+\displaylines{
+\qquad \{\; {\rm fold}(e_1,e_2)\circ c \;\mid\;
+\begin{array}[t]{l}
+\pair{{\rm head},{\rm fold}(e_1,e_2)\circ c} \implies c_1 \land c_1 \in
+\Omega_{\rm nat} \land {} \\
+\pair{{\rm tail},{\rm fold}(e_1,e_2)\circ c} \implies c_2 \land c_2 \in
+\widetilde{\rm inflist}_0(\Omega_{\rm nat}) \;\} \\
+\end{array}
+\hfill \cr
+\qquad \llap{${}={}$} \{\; {\rm fold}(e_1,e_2)\circ c \;\mid\;
+\pair{e_1,c} \implies c_1 \land \pair{{\rm fold}(e_1,e_2)\circ e_2,c}
+\implies c_2 \;\}.
+\hfill \cr}
+\end{displaymath}
+Therefore, if $e_1$ and $e_2$ are calculable and $c$ is computable,
+${\rm fold}(e_1,e_2)\circ c$ is in $\widetilde{\rm inflist}_1(\Omega_{\rm
+nat})$.  We can inductively show that it is in any $\widetilde{\rm
+inflist}_\beta(\Omega_{\rm nat})$, and, therefore, it is in
+$\widetilde{\rm inflist}(\Omega_{\rm nat})$.
+\item For the left object of ordinals
+\begin{displaymath}
+\begin{tabular}{l}
+left object ord with pro is \\
+$\qquad {\rm ozero}: 1 \rightarrow {\rm ord}$ \\
+$\qquad {\rm sup}: {\rm exp}({\rm nat},{\rm ord}) \rightarrow {\rm ord}$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\widetilde{\rm ord}_0$ is empty, $\widetilde{\rm ord}_1$ is $\{\; {\rm
+ozero}\circ\star \;\}$, and
+\begin{displaymath}
+\displaylines{
+\qquad \widetilde{\rm ord}_2 \hfill \cr
+\qquad \llap{${}={}$} \{\; {\rm sup}\circ c, \; {\rm ozero}\circ \star
+\;\mid\; c \in \widetilde{\rm exp}(\widetilde{\rm nat},\widetilde{\rm
+ord}_1) \;\} \hfill \cr
+\qquad \llap{${}={}$} \{\; {\rm sup}\circ{\rm curry}(e)\circ c,\; {\rm
+ozero}\circ \star \;\mid\; \forall c'\in \widetilde{\rm nat} \;
+\pair{e,{\rm pair}(c,c')} \implies c'' \land {} \hfill \cr
+\hfill c'' \in \widetilde{\rm ord}_1 \;\} \qquad \cr
+\qquad \llap{${}={}$} \{\; {\rm sup}\circ{\rm curry}(e)\circ c, \; {\rm
+ozero}\circ\star \;\mid\; \forall c'\in \Omega_{\rm nat} \; \pair{e,{\rm
+pair}(c,c')} \implies {\rm ozero}\circ\star \;\}. \cr}
+\end{displaymath}
+In general,
+\begin{displaymath}
+\displaylines{
+\qquad \widetilde{\rm ord}_{\beta+1} = \{\; {\rm sup}\circ{\rm curry}(e)\circ
+c, \; {\rm ozero}\circ\star \;\mid\; {} \hfill \cr
+\hfill \forall c'\in \Omega_{\rm nat} \;
+\pair{e,{\rm pair}(c,c')} \implies c'' \land c'' \in \widetilde{\rm
+ord}_\beta \;\} \qquad \cr}
+\end{displaymath}
+Therefore, a canonical element ${\rm sup}\circ{\rm curry}(e)\circ c$ is
+computable if the following reductions always exist:
+\begin{displaymath}
+\begin{array}{l}
+\pair{e,{\rm pair}(c,c_1)} \implies {\rm sup}\circ{\rm curry}(e_1)\circ
+c'_1 \\
+\qquad \pair{e_1,{\rm pair}(c'_1,c_2)} \implies {\rm sup}\circ{\rm
+curry}(e_2)\circ c'_2 \\
+\qquad \qquad \pair{e_2,{\rm pair}(c'_2,c_3)} \implies {\rm
+sup}\circ{\rm curry}(e_3)\circ c'_3 \\
+\qquad \qquad \quad \cdots \\
+\qquad \qquad \qquad \pair{e_\beta,{\rm pair}(c'_\beta,c_{\beta+1})}
+\implies {\rm ozero}\circ\star \rlap{\qquad \qquad \qquad \qed}
+\end{array}
+\end{displaymath}
+\end{enumerate}
+\end{example}
+
+The next proposition intuitively means that functors preserve the
+structure of data.  For example, when the functor `list' (or {\tt map}
+in ML and {\tt MAPCAR} in LISP) is applied to a list, it only changes
+the components of the list and preserves the length.
+\begin{proposition}
+\label{prop-func-preserve}
+Let $F$ be $n$-ary functor, and $e_1,\ldots,e_n$ be CSL
+expressions calculable with respect to $C_i \rightarrow C'_i$.
+Then $F(e_1,\ldots,e_n)$ is calculable with respect to $\tilde
+F(C''_1,\ldots,C''_n) \rightarrow \tilde F(C'''_1,\ldots,C'''_n)$, where
+$C''_i$ is $C_i$ and $C'''_i$ is $C'_i$ if $F$ is covariant in the {\it
+i\/}th argument and $C''_i$ is $C'_i$ and $C'''_i$ is $C_i$ if $F$ is
+contravariant in the {\it i\/}th argument. \\
+{\bf Proof:} We prove this by induction on the order of declarations
+of objects.
+\begin{enumerate}
+\item Let $F$ be a left object declared by
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X)$ with $\psi_L$ is \\
+$\qquad \alpha_L: E_L(L,X) \rightarrow L$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+which is covariant in $X$, $e$ be a CSL expression which is calculable
+with respect to $C \rightarrow C'$.  We prove that $L(e)$ is calculable
+with respect to $\tilde L_\beta(C) \rightarrow \tilde L_\beta(C')$ by
+induction on $\beta$.  Trivially, $L(e)$ is calculable with respect to
+$\tilde L_0(C) \rightarrow \tilde L_0(C)$ because $\tilde L_0(C)$ is
+empty.  Assume we have proved that $L(e)$ is calculable with respect to
+$\tilde L_\beta(C) \rightarrow \tilde L_\beta(C')$.  An element of
+$\tilde L_{\beta+1}(C)$ is $\alpha_L\circ c$ such that $c \in \tilde
+E_L(\tilde L_\beta(C),C)$.  From L-FACT we get
+\begin{displaymath}
+\logicrule{
+\logicrule{\pair{\alpha_L\circ E_L({\bf I},e)\circ E_L(L(e),{\bf I}),c}
+\implies c'}{\pair{\alpha_L\circ E_L({\bf I},e)\circ
+E_L(\psi_L(\alpha_L\circ E_L({\bf I},c)),{\bf I}),c} \implies c'}}{
+\logicrule{\pair{\psi_L(\alpha_L\circ E_L({\bf I},e)),\alpha_L\circ c}
+\implies c'}{\pair{L(e),\alpha_L\circ c} \implies \alpha_L\circ c'}}
+\end{displaymath}
+Since $E_L(L,X)$ consists of functors declared before $L$, from the
+induction hypothesis, $E_L(L(e),{\bf I})$ is calculable with respect to
+$\tilde E_L(\tilde L_\beta(C),C) \rightarrow \tilde E_L(\tilde
+L_\beta(C'),C)$ and $E_L({\bf I},e)$ is calculable with respect to
+$\tilde E_L(\tilde L_\beta(C'),C) \rightarrow \tilde E_L(\tilde
+L_\beta(C'),C')$.  Therefore, there is a reduction
+\begin{displaymath}
+\pair{E_L({\bf I},e)\circ E_L(L(e),{\bf I}),c} \implies c'
+\end{displaymath}
+such that $c'$ is in $\tilde E_L(\tilde L_\beta(C'),C')$.  From
+definition~\ref{def-assoc-cano-fun}, $\alpha_L\circ c'$ is in $\tilde
+L_{\beta+1}(C')$.   Hence, $L(e)$ is calculable with respect to $\tilde
+L_{\beta+1}(C) \rightarrow \tilde L_{\beta+1}(C')$.   By induction,
+$L(e)$ is calculable with respect to $\tilde L_\beta(C) \rightarrow
+\tilde L_\beta(C')$ for any $\beta$, and, therefore, $L(e)$ is
+calculable with respect to $\tilde L(C) \rightarrow \tilde L(C')$.  When
+$L(X)$ is contravariant, we can similarly prove that $L(e)$ is
+calculable with respect to $\tilde L(C') \rightarrow \tilde L(C)$.
+\item Let $F$ be a right object declared by
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X)$ with $\psi_R$ is \\
+$\qquad \alpha_R: R \rightarrow E'_R(R,X)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+which is covariant, and $e$ be a CSL expression which is calculable
+with respect to $C \rightarrow C'$.  We prove that $R(e)$ is calculable
+with respect to $\tilde R_\beta(C) \rightarrow \tilde R_\beta(C')$ by
+induction on $\beta$.  From R-FACT, we have
+\begin{displaymath}
+\pair{R(e),c} \implies \psi_R(E'_R({\bf I},e)\circ \alpha_R)\circ c.
+\end{displaymath}
+Trivially, $R(e)$ is calculable with respect to $\tilde R_0(C)
+\rightarrow \tilde R_0(C')$ because $\tilde R_0(C')$ is the set of all
+the canonical elements of $R$.  Assume we have proved that $R(e)$ is
+calculable with respect to $\tilde R_\beta(C) \rightarrow \tilde
+R_\beta(C')$.  An element of $\tilde R_{\beta+1}(C)$ is $\psi_R(e')\circ
+c'$ such that there is a reduction $\pair{\alpha_R,\psi_R(e')\circ c'}
+\implies c''$ and $c''$ is in $\tilde E'_R(\tilde R_\beta(C),C)$.  We
+will show that the following canonical element is in $\tilde
+R_{\beta+1}(C')$:
+\begin{displaymath}
+\psi_R(E'_R({\bf I},e)\circ \alpha_R)\circ \psi_R(e')\circ c' \eqno(*)
+\end{displaymath}
+From R-NAT, we have
+\begin{displaymath}
+\logicrule{
+\logicrule{\pair{E'_R(R(e),{\bf I})\circ E'_R({\bf I},e),c''} \implies
+c'''}{\pair{E'_R(R(e),{\bf I})\circ E'_R({\bf I},e)\circ
+\alpha_R,\psi_R(e')\circ c'} \implies c'''}
+}{
+\logicrule{\pair{E'_R(\psi_R(E'_R({\bf I},c)\circ \alpha_R),{\bf
+I}),E'_R({\bf I},e)\circ \alpha_R,\psi_R(e')\circ c'} \implies c'''}{
+\pair{\alpha_R,\psi_R(E'_R({\bf I},e)\circ \alpha_R)\circ
+\psi_R(e')\circ c'} \implies c'''}
+}
+\end{displaymath}
+Since $E'_R(R,X)$ consists of functors declared before $R$,
+$E'_R(R(e),{\bf I})\circ E'_R({\bf I},e)$ is calculable with respect to
+$\tilde E'_R(\tilde R_\beta(C),C) \rightarrow \tilde E'_R(\tilde
+R_\beta(C'),C')$ from the induction hypothesis.  Therefore, $c'''$ is in
+$\tilde E'_R(\tilde R_\beta(C'),C')$, and from
+definition~\ref{def-assoc-cano-fun}, $(*)$ is in $\tilde
+R_{\beta+1}(C)$.  Therefore, by induction, $R(e)$ is calculable with
+respect to $\tilde R_\beta(C) \rightarrow \tilde R_\beta(C')$ for any
+$\beta$, so it is calculable with respect to $\tilde R(C) \rightarrow
+\tilde R(C')$.  When $R(X)$ is contravariant, we can similarly prove
+that $R(e)$ is calculable with respect to $\tilde R(C') \rightarrow
+\tilde R(C)$.
+\item If $F$ be a right object declared by
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R'(X)$ with $\psi_{R'}$ is \\
+$\qquad \alpha_{R'}: {\rm prod}(R',E_{R'}(X)) \rightarrow E'_R(R,X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+we can similarly prove that $R(e)$ is calculable with respect to $\tilde
+R(C) \rightarrow \tilde R(C')$ (or with respect to $\tilde R(C')
+\rightarrow \tilde R(C)$ when $R(X)$ is contravariant). \qed
+\end{enumerate}
+\end{proposition}
+
+In the following few lemmas, we are to prove all the expressions are
+calculable.
+\begin{lemma}
+\label{lem-calc-I}
+{\bf I} is calculable. \\
+{\bf Proof:} We have to show that for any computable canonical
+element $c$ there is a reduction of $\pair{{\bf I},c} \implies c'$
+and that $c'$ is computable.  This is immediate from the
+reduction rule {IDENT} and that $c'$ is $c$
+\end{lemma}
+
+\begin{lemma}
+\label{lem-calc-comp}
+If both $e_1$ and $e_2$ are calculable, so is $e_1\circ e_2$. \\
+{\bf Proof:} For any computable canonical element $c$' we have the
+following reduction from {COMP}:
+\begin{displaymath}
+\logicrule{\pair{e_2,c} \implies c'' \qquad \pair{e_1,c''} \implies
+c'}{\pair{e_1\circ e_2,c} \implies c'}
+\end{displaymath}
+Since $e_2$ is calculable, there is a reduction for $\pair{e_2,c}
+\implies c''$ so that $c''$ is computable.  Since $e_1$ is
+calculable, there is a reduction for $\pair{e_1,c''} \implies c'$ so
+that $c'$ is computable.  Therefore, there is a reduction for
+$\pair{e_1\circ e_2,c} \implies c'$ so that $c'$ is computable.
+\end{lemma}
+
+\begin{lemma}
+\label{lem-calc-l-nat}
+For any natural transformation $\alpha_L$ of a left object $L$,
+$\alpha_L$ is calculable. \\
+{\bf Proof:} For any computable canonical element $c$, we have the
+following reduction by L-NAT:
+\begin{displaymath}
+\pair{\alpha_L,c} \implies \alpha_L\circ c
+\end{displaymath}
+From definition~\ref{def-computable}, $\alpha_L\circ c$ is computable.
+Therefore, $\alpha_L$ is calculable.
+\end{lemma}
+
+\begin{lemma}
+\label{lem-calc-r-nat}
+For any natural transformation $\alpha_R$ of a right object $R$,
+$\alpha_R$ is calculable. \\
+{\bf Proof:} Let $R$ be
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X)$ with $\psi_R$ is \\
+$\qquad \alpha_R: R \rightarrow E'_R(R,X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+and $c$ be a computable canonical element $R(E)$.  For any $\beta$, $c$
+is in $\tilde R_{\beta+1}(\Omega_E)$.  From
+definition~\ref{def-assoc-cano-fun}, there exists a reduction
+$\pair{\alpha_R,c} \implies c'$ such that $c'$ is in $\tilde E'_R(\tilde
+R_\beta(\Omega_E),\Omega_E)$.  Because the result of reductions does not
+depend on $\beta$, $c'$ is in
+\begin{displaymath}
+\tilde E'_R(\bigcap_\beta \tilde R_\beta(\Omega_E),\Omega_E) = \tilde
+E'_R(\tilde R(\Omega_E),\Omega_E) = \Omega_{E'_R(R(E),E)}.
+\end{displaymath}
+Therefore, $\alpha_R$ is calculable.  We can similarly prove that for a
+right object
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R'(X)$ with $\psi_{R'}$ is \\
+$\qquad \alpha_{R'}: {\rm prod}(R',E_{R'}(X)) \rightarrow E'_{R'}(R',X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\alpha_{R'}$ is calculable.
+\end{lemma}
+
+\begin{lemma}
+\label{lem-calc-l-fact}
+If $e$ is calculable, so is $\psi_L(e)$ where $L$ is a left object and
+$\psi_L$ is its factorizer. \\
+{\bf Proof:} Let $L$ be
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X)$ with $\psi_L$ is \\
+$\qquad \alpha_L: E_L(L,X) \rightarrow L$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+and $e: E_L(E,E') \rightarrow E$ be a calculable CSL expression.
+We will prove that $\psi_L(e)$ is calculable with respect to $\tilde
+L_\beta(\Omega_{E'}) \rightarrow \Omega_E$ by induction on $\beta$.
+Trivially, it is calculable with respect to $\tilde L_0(\Omega_{E'})
+\rightarrow \Omega_E$ because $\tilde L_0(\Omega_{E'})$ is empty.
+Assume we have proved that $\psi_L(e)$ is calculable with respect to
+$\tilde L_\beta(\Omega_{E'}) \rightarrow \Omega_E$.  An element in
+$\tilde L_{\beta+1}(\Omega_{E'})$ is $\alpha_L\circ c$ for $c$ which is
+in $\tilde E_L(\tilde L_\beta(\Omega_{E'}),\Omega_{E'})$.  From L-FACT,
+we get
+\begin{displaymath}
+\logicrule{
+  \pair{E_L(\psi_L(e),{\bf I}),c} \implies c'' \qquad
+  \pair{e,c''} \implies c'
+}{
+  \logicrule{
+    \pair{e\circ E_L(\psi_L(e),{\bf I}),c} \implies c'
+  }{
+    \pair{\psi_L(e),\alpha_L\circ c} \implies c'
+  }
+}
+\end{displaymath}
+From proposition~\ref{prop-func-preserve} and the induction hypothesis,
+$E_L(\psi_L(e),{\bf I})$ is calculable with respect to $\tilde
+E_L(\tilde L_\beta(\Omega_{E'}),\Omega_{E'}) \rightarrow \tilde
+E_L(\Omega_E,\Omega_{E'})$, and there is a reduction
+$\pair{E_L(\psi_L(e),{\bf I}),c} \implies c''$.  Since $e$ is
+calculable, there is a reduction $\pair{e,c''} \implies c'$ such that
+$c'$ is in $\Omega_E$.  Therefore, $\psi_R(e)$ is calculable with
+respect to $\tilde L_{\beta+1}(\Omega_{E'}) \rightarrow \Omega_E$, and
+by induction it is calculable with respect to $\tilde
+L_\beta(\Omega_{E'}) \rightarrow \Omega_E$ for any $\beta$.  Because
+$\Omega_{L(E')} = \tilde L(\Omega_{E'})$ is $\bigcup_\beta \tilde
+L_\beta(\Omega_{E'})$, we have proved that $\psi_L(e)$ is calculable.
+\end{lemma}
+
+\begin{lemma}
+\label{lem-calc-r-fact}
+If $e$ is calculable, so is $\psi_R(e)$ where $R$ is a right object and
+$\psi_R$ is its factorizer. \\
+{\bf Proof:} Let $R$ be
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X)$ with $\psi_R$ is \\
+$\qquad \alpha_R: R \rightarrow E'_R(R,X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+and $e$ be a CSL expression of type $E \rightarrow E'_R(E,E')$.
+We are to prove that $\psi_R(e): E \rightarrow R(E')$ is calculable.
+Since $\Omega_{R(E')} = \tilde R(\Omega_{E'})$ is $\bigcap_\beta \tilde
+R_\beta(\Omega_{E'})$, we prove that $\psi_R(e)$ is calculable with
+respect to $\Omega_E \rightarrow \tilde R_\beta(\Omega_{E'})$ by
+induction on $\beta$.  Trivially, it is calculable with respect to
+$\Omega_E \rightarrow \tilde R_0(\Omega_{E'})$ because for any $c\in
+\Omega_E$ we have $\pair{\psi_R(e),c} \implies \psi_R(e)\circ c$ and
+$\tilde R_0(\Omega_{E'})$ is the set of all the canonical elements of
+type $R(E')$.  Assume we have proved that $\psi_R(e)$ is calculable with
+respect to $\Omega_E \rightarrow \tilde R_\beta(\Omega_{E'})$.  For any
+$c\in \Omega_E$ we have $\pair{\psi_R(e),c} \implies \psi_R(e)\circ c$.
+From R-NAT, we get
+\begin{displaymath}
+\logicrule{\pair{e,c} \implies c'' \qquad \pair{E'_R(\psi_R(e),{\bf
+I}),c''} \implies c'}{\pair{\alpha_R,\psi_R(e)\circ c} \implies c'}.
+\end{displaymath}
+Since $e$ is calculable, there is a reduction $\pair{e,c} \implies c''$
+and $c''$ is in $\tilde E'_R(\Omega_E,\Omega_{E'})$.  As we assumed that
+$\psi_R(e)$ is calculable with respect to $\Omega_E \rightarrow \tilde
+R_\beta(\Omega_{E'})$, $E'_R(\psi_R(e),{\bf I})$ is calculable with
+respect to $\tilde E'_R(\Omega_E,\Omega_{E'}) \rightarrow \tilde
+E'_R(\tilde R_\beta(\Omega_{E'}),\Omega_{E'})$ from
+proposition~\ref{prop-func-preserve}.  Therefore, there is a reduction
+$\pair{E'_R(\psi_R(e),{\bf I})c''} \implies c'$ and $c'$ is in $\tilde
+E'_R(\tilde R_\beta(\Omega_{E'}),\Omega_{E'})$.  From
+definition~\ref{def-assoc-cano-fun}, $\psi_R(e)\circ c$ is in $\tilde
+R_{\beta+1}(\Omega_{E'})$, so $\psi_R(e)$ is calculable with respect to
+$\Omega_E \rightarrow \tilde R_{\beta+1}(\Omega_{E'})$, and by induction
+it is calculable with respect to $\Omega_E \rightarrow \tilde
+R_{\beta}(\Omega_{E'})$ for any $\beta$.  Therefore, it is
+calculable with respect to $\Omega_E \rightarrow \tilde R(\Omega_{E'})$.
+We can similarly prove that for a right object
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R'(X)$ with $\psi_{R'}$ is \\
+$\qquad \alpha_{R'}: {\rm prod}(R',E_{R'}(X)) \rightarrow E'_{R'}(R',X)$ \\
+end object, \\
+\end{tabular}
+\end{displaymath}
+$\psi_{R'}(e)$ is calculable.
+\end{lemma}
+
+\begin{theorem}
+\label{th-calculable}
+Any CSL expression $e$ is calculable. \\
+{\bf Proof:} This is proved by structural induction and each case
+follows from the lemmas, \ref{lem-calc-I}, \ref{lem-calc-comp},
+\ref{lem-calc-l-nat}, \ref{lem-calc-r-nat}, \ref{lem-calc-l-fact} and
+\ref{lem-calc-r-fact}.
+\end{theorem}
+
+\begin{corollary}
+\label{cor-computable}
+Any canonical element is computable. \\
+{\bf Proof:} As a canonical element $c$ is a CSL expression, and
+therefore, from theorem~\ref{th-calculable} it is calculable.  Because
+any canonical element of the terminal object 1 is computable, specially
+${\bf I}$ is computable.  Therefore, there is a
+reduction $\pair{c,{\bf I}} \implies c'$ such that $c'$ is computable.
+Trivially, $c'$ is $c$ (using L-NAT, R-FACT and COMP), so $c$ is computable.
+\end{corollary}
+
+We now finish this section by proving the normalization theorem.
+\begin{separateproof}{Normalization~\ref{th-reduct-complete}}
+From theorem~\ref{th-calculable}, any expression $e$ is calculable, and
+from corollary~\ref{cor-computable}, any canonical element is
+computable.  Therefore, from the definition~\ref{def-calculable} of
+calculable expressions, there is a reduction $\pair{e,c} \implies c'$.
+\end{separateproof}
+
+\section{Properties of Computable Objects}
+\label{sec-prop-comp-object}
+
+In section~\ref{sec-reduct-rule}, we saw that we have to restrict
+ourselves to computable objects (definition~\ref{def-comp-object}) in
+order to introduce our notion of computability into CDT.  Let us see in
+this section some of the properties which these particular objects
+enjoy.
+
+First, we show that computable left objects are fixed points of some
+domain equations.
+\begin{theorem}
+\label{th-left-isomorphism}
+Let $L$ be a computable left object declared as follows.
+\begin{displaymath}
+\begin{tabular}{l}
+left object $L(X_1,\ldots,X_n)$ with $\psi_L$ is \\
+$\qquad \alpha_{L,1}: E_{L,1}(L,X_1,\ldots,X_n) \rightarrow L$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{L,m}: E_{L,m}(L,X_1,\ldots,X_n) \rightarrow L$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+Then, the following isomorphism holds in any CSL structure which has $L$ and
+coproducts.
+\begin{displaymath}
+L(X_1,\ldots,X_n) \iso \sum_{j=1}^m
+E_{L,j}(L(X_1,\ldots,X_n),X_1,\ldots,X_n)
+\end{displaymath}
+where $\sum_{j=1}^m{}$ is the $m$-ary coproduct.  Furthermore, if $A$ is
+an object which satisfies
+\begin{displaymath}
+A \iso \sum_{j=1}^m E_{L,j}(A,X_1,\ldots,X_n),
+\end{displaymath}
+there is a unique morphism $h$ from $L(X_1,\ldots,X_n)$ to $A$ such that
+the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(120,50)(0,2.5)
+\put(45,10){\makebox(0,0){$\displaystyle \sum_{j=1}^m
+E_{L,j}(A,X_1,\ldots,X_n)$}}
+\put(85,8){\makebox(0,0)[t]{$\iso$}}
+\put(110,10){\makebox(0,0){$A$}}
+\put(43,25){\makebox(0,0)[r]{$\displaystyle \sum_{j=1}^m
+E_{L,j}(h,X_1,\ldots,X_n)$}}
+\put(80,25){\makebox(0,0){\commute}}
+\put(112,25){\makebox(0,0)[l]{$h$}}
+\put(45,40){\makebox(0,0){$\displaystyle \sum_{j=1}^m
+E_{L,j}(L(X_1,\ldots,X_n),X_1,\ldots,X_n)$}}
+\put(85,42){\makebox(0,0)[b]{$\iso$}}
+\put(110,40){\makebox(0,0){$L(X_1,\ldots,X_n)$}}
+\put(77.5,40){\vector(1,0){17.5}}
+\put(70,10){\vector(1,0){35}}
+\multiput(45,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(45,17.5){\vector(0,-1){5}}
+\multiput(110,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(110,17.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+{\bf Proof:} For simplicity, we prove the isomorphism in case $L$ does
+not have any parameters (i.e.\ $n=0$).  Therefore, the isomorphism we
+prove is
+\begin{displaymath}
+L \iso \sum_{j=1}^m E_{L,j}(L).
+\end{displaymath}
+Let $f$ be a morphism
+\begin{displaymath}
+{}[\alpha_{L,1},\ldots,\alpha_{L,m}]
+\end{displaymath}
+where $[~,\ldots,~]$ is the factorizer of $\sum_{j=1}^m$.  $f$ is a morphism
+from $\sum_{j=1}^m E_{L,j}(L)$ to $L$.  Let $g$ be a morphism
+\begin{displaymath}
+\psi_L(\nu_1\circ E_{L,1}(f),\ldots,\nu_m\circ E_{L,m}(f))
+\end{displaymath}
+where $\nu_j$ is the $j$-th injection of $\sum_{j=1}^m{}$.  $g$ is a
+morphism from $L$ to $\sum_{j=1}^m E_{L,j}(L)$.  We show that $f$ is the
+inverse of $g$.  Let us first show that $f\circ g = {\bf I}$.
+\begin{displaymath}
+\displaylines{
+\qquad f\circ g\circ \alpha_{L,j} \hfill\cr
+\qquad\llap{$=\;$} f\circ \nu_j\circ E_{L,j}(f)\circ E_{L,j}(g) \dotfill
+\mbox{(from $(\mbox{LEQ}_j)$)}\cr
+\qquad\llap{$=\;$} \alpha_{L,j}\circ E_{L,j}(f)\circ E_{L,j}(g) \hfill\cr
+\qquad\llap{$=\;$} \alpha_{L,j}\circ E_{L,j}(f\circ g) \dotfill
+\mbox{($E_{L,j}(L)$ is covariant)}\cr}
+\end{displaymath}
+From $(\mbox{LCEQ})$,
+\begin{displaymath}
+\qquad f\circ g = \psi_R(\alpha_{L,1},\ldots,\alpha_{L,m}) = {\bf I}. \hfill
+\end{displaymath}
+The second equality holds again from $(\mbox{LCEQ})$.  Next we show that
+$g \circ f = {\bf I}$.
+\begin{displaymath}
+\displaylines{
+\qquad g\circ f \hfill \cr
+\qquad\llap{$=\;$} [g\circ \alpha_{L,1},\ldots,g\circ \alpha_{L,m}] \hfill\cr
+\qquad\llap{$=\;$} [\nu_1\circ E_{L,1}(f\circ g),\ldots,\nu_m\circ
+E_{L,m}(f\circ g)] \hfill\cr
+\qquad\llap{$=\;$} [\nu_1\circ E_{L,1}({\bf I}),\ldots,\nu_m\circ
+E_{L,m}({\bf I})] \hfill\cr
+\qquad\llap{$=\;$} [\nu_1,\ldots,\nu_m] \hfill\cr
+\qquad\llap{$=\;$} {\bf I} \hfill\cr}
+\end{displaymath}
+Therefore, $L \iso \sum_{j=1}^m E_{L,j}(L)$.  For any object $A$ which
+satisfies $A \iso \sum_{j=1}^m E_{L,j}(A)$, let $i$ be the isomorphism
+from $\sum_{j=1}^m E_{L,j}(A)$ to $A$, then the unique morphism is given
+by
+\begin{displaymath}
+\psi_R(i\circ\nu_1,\ldots,i\circ\nu_m).
+\end{displaymath}
+It is easy to see the diagram commutes from $(\mbox{LEQ}_j)$ and the
+uniqueness from $(\mbox{LCEQ})$.
+\end{theorem}
+If we apply this theorem to the objects we defined in
+chapter~\ref{ch-cdt}, we get the following isomorphisms.
+\begin{displaymath}
+\begin{array}{l}
+{\rm nat} \iso 1 + {\rm nat} \\
+{\rm list}(X) \iso 1 + {\rm prod}(X,{\rm list}(X)) \\
+\end{array}
+\end{displaymath}
+We can see the exact correspondence to domain theory.  In domain theory,
+the domain of natural numbers and that of lists are defined as the
+minimal domains which satisfies the above isomorphisms.
+
+By duality principle, we have the dual theorem of
+theorem~\ref{th-left-isomorphism}.
+\begin{theorem}
+\label{th-right-isomorphism}
+Let $R$ be a computable right object declared as follows.
+\begin{displaymath}
+\begin{tabular}{l}
+right object $R(X_1,\ldots,X_n)$ with $\psi_R$ is \\
+$\qquad \alpha_{R,1}: R \rightarrow E'_{R,1}(R,X_1,\ldots,X_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{R,m}: R \rightarrow E'_{R,m}(R,X_1,\ldots,X_n)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+Then, the following isomorphism holds in any CSL structure which has $R$ and
+products.
+\begin{displaymath}
+R(X_1,\ldots,X_n) \iso \prod_{j=1}^m
+E'_{R,j}(R(X_1,\ldots,X_n),X_1,\ldots,X_n)
+\end{displaymath}
+where $\prod_{j=1}^m{}$ is the $m$-ary product.  Furthermore, if $A$ is
+an object which satisfies
+\begin{displaymath}
+A \iso \prod_{j=1}^m E'_{R,j}(A,X_1,\ldots,X_n),
+\end{displaymath}
+there is a unique morphism $h$ from $A$ to $R(X_1,\ldots,X_n)$ such that
+the following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(120,50)(0,2.5)
+\put(10,10){\makebox(0,0){$R(X_1,\ldots,X_n)$}}
+\put(10,40){\makebox(0,0){$A$}}
+\put(8,25){\makebox(0,0)[r]{$h$}}
+\put(35,8){\makebox(0,0)[t]{$\iso$}}
+\put(35,42){\makebox(0,0)[b]{$\iso$}}
+\put(40,25){\makebox(0,0){\commute}}
+\put(75,10){\makebox(0,0){$\displaystyle \prod_{j=1}^m
+E'_{R,j}(R(X_1,\ldots,X_n),X_1,\ldots,X_n)$}}
+\put(77,25){\makebox(0,0)[l]{$\displaystyle \prod_{j=1}^m
+E'_{R,j}(h,X_1,\ldots,X_n)$}}
+\put(75,40){\makebox(0,0){$\displaystyle \prod_{j=1}^m
+E'_{R,j}(A,X_1,\ldots,X_n)$}}
+\put(25,10){\vector(1,0){17.5}}
+\put(15,40){\vector(1,0){35}}
+\multiput(10,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(10,17.5){\vector(0,-1){5}}
+\multiput(75,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(75,17.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+{\bf Proof:} By duality.
+\end{theorem}
+We can see that the infinite list defined in
+subsection~\ref{ssec-final-coalg} is the maximal fixed point of the
+following domain equation.
+\begin{displaymath}
+{\bf inflist}(X) \iso X\times {\bf inflist}(X)
+\end{displaymath}
+
+The next theorem states that productive objects define products.
+\begin{theorem}
+\label{th-prod-isomorphism}
+Let $P(Y_1,\ldots,Y_n)$ be a functor which is productive in $Y_i$.
+Then, there is a functor $F(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$ such
+that
+\begin{displaymath}
+P(Y_1,\ldots,Y_n) \iso Y_i \times F(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)
+\end{displaymath}
+{\bf Proof:} First, note that it is easy to extend the theorem to
+productive functorial expressions by simply applying the theorem
+repeatedly.  Let us prove the theorem by induction on the order of
+declaration of productive objects.  Let the declaration of $P$ to be as
+follows.
+\begin{displaymath}
+\begin{tabular}{l}
+right object $P(Y_1,\ldots,Y_i,\ldots,Y_n)$ with $\psi_P$ is \\
+$\qquad \alpha_{P,1}: E_{P,1}(P,Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)
+\rightarrow E'_{P,1}(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,j}: P \rightarrow
+E'_{P,j}(Y_1,\ldots,Y_{i-1},Y_i,Y_{i+1},\ldots,Y_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,m}: E_{P,m}(P,Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)
+\rightarrow E'_{P,m}(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+By induction hypothesis and from what we note at the beginning of the
+proof, there is a functor $F'(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$
+such that
+\begin{displaymath}
+E'_{P,j}(Y_1,\ldots,Y_n) \iso Y_i \times
+F'(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n).
+\end{displaymath}
+Since $P$ is a computable object as well,
+$E_{P,k}(P,Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$ is productive in $P$.
+Therefore, from induction hypothesis there are functors
+\begin{displaymath}
+G_k(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)
+\end{displaymath}
+such that
+\begin{displaymath}
+E_{P,k}(P,Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n) \iso P \times
+G_k(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n).
+\end{displaymath}
+Using exponentials, the above definition of $P$ is essentially the same
+as
+\begin{displaymath}
+\begin{tabular}{l}
+right object $P(Y_1,\ldots,Y_i,\ldots,Y_n)$ with $\psi_P$ is \\
+$\qquad \alpha_{P,1}: P \rightarrow {\rm
+exp}(G_1(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n), \qquad \qquad$ \\
+\multicolumn{1}{r}{$E'_{P,1}(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n))$} \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,j}: P \rightarrow
+Y_i \times F'(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{P,m}: P \rightarrow {\rm
+exp}(G_m(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n),$ \qquad \qquad \\
+\multicolumn{1}{r}{$E'_{P,m}(Y_1,\ldots,Y_{i-1},Y_{i+1},\ldots,Y_n))$} \\
+end object \\
+\end{tabular}
+\end{displaymath}
+From theorem~\ref{th-right-isomorphism}, we have
+\begin{displaymath}
+P(Y_1,\ldots,Y_n) \iso Y_i \times F'(Y_1,\ldots) \times
+\prod_{k=1\atop k\not= j}^m {\rm exp}(G_k(Y_1,\ldots),E'_{P,k}(Y_1,\ldots)).
+\end{displaymath}
+$F'(Y_1,\ldots) \times \prod_{k=1\atop k\not= j}^m {\rm
+exp}(G_k(Y_1,\ldots),E'_{P,k}(Y_1,\ldots))$ does not depend on $Y_i$.
+We have proved the theorem.
+\end{theorem}
+From this theorem, we can always make the declaration of computable objects
+into an equivalent declaration to which we can apply
+theorem~\ref{th-right-isomorphism}.  For example, the declaration of the
+object for automata in subsection~\ref{ssec-automata} was
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm dyn}'(I,O)$ with ${\rm univ}'$ is \\
+$\qquad {\rm next}': {\rm prod}({\rm dyn}',I) \rightarrow {\rm dyn}'$ \\
+$\qquad {\rm output}': {\rm dyn}' \rightarrow O$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+to which we cannot apply theorem~\ref{th-right-isomorphism}, but the
+above declaration is equivalent to the following one.
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm dyn}'(I,O)$ with ${\rm univ}'$ is \\
+$\qquad {\rm next}': {\rm dyn}' \rightarrow {\rm exp}(I,{\rm dyn}')$ \\
+$\qquad {\rm output}': {\rm dyn}' \rightarrow O$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+Then, from theorem~\ref{th-right-isomorphism} we can see ${\rm
+dyn}'(I,O)$ as the maximal fixed point of the following domain equation.
+\begin{displaymath}
+{\rm dyn}'(I,O) \iso {\rm exp}(I,{\rm dyn}'(I,O)) \times O
+\end{displaymath}
+
+\section{Reduction Rules for Full Evaluation}
+\label{sec-reduct-rule-full}
+
+In section~\ref{sec-reduct-rule} we presented a set of reduction rules
+which can reduce any element to a canonical element.  However, the
+notion of canonical element (definition~\ref{def-cpl-canonical}) was
+quite weak (or sloppy), and the canonical elements we get out of
+reductions sometimes not acceptable as `canonical'.  We can define a
+more refined notion of canonical elements.
+\begin{definition}
+\label{def-cpl-unconditioned-canonical}
+A canonical element is called {\it uncondition}, if it is generated by
+the following rule.
+\begin{displaymath}
+p \coloneq {\bf I} \mid \alpha_{L,j}\circ p \mid
+\psi_R(e_1,\ldots,e_m)\circ p \mid \psi_C(\ldots,e_j,\ldots,p_k,\ldots)
+\end{displaymath}
+where $R$ is not a unconditioned right object, $C$ is a unconditioned object
+\begin{displaymath}
+\begin{tabular}{l}
+right object $C(X_1,\ldots,X_n)$ with $\psi_C$ is \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{C,j}: E_{C,j}(C,X_1,\ldots,X_n) \rightarrow
+E'_{C,j}(X_1,\ldots,X_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+$\qquad \alpha_{C,k}: C \rightarrow E'_{C,k}(X_1,\ldots,X_n)$ \\
+\multicolumn{1}{c}{$\cdots$} \\
+end object \\
+\end{tabular}
+\end{displaymath}
+and if $E_{C,k}(C,X_1,\ldots,X_n)$ is simply $C$ then the {\it k\/}th
+argument of $\psi_C$ needs to be a unconditioned canonical element.
+\end{definition}
+For example,
+\begin{displaymath}
+{\rm pair}({\rm succ},{\bf I})\circ {\rm zero} \qquad \mbox{and} \qquad
+{\rm pair}({\rm pi1}\circ{\rm pair}({\rm succ}\circ {\rm zero},{\rm
+nil}),{\rm zero})
+\end{displaymath}
+are canonical elements but not unconditioned.  Their equivalent
+unconditioned canonical element is `${\rm pair}({\rm succ}\circ{\rm
+zero},{\rm zero})$'.
+
+We can define reduction rules which only produce unconditioned canonical
+elements as result.
+\begin{definition}
+\label{def-reduct-rules-2}
+The form of reduction rules is
+\begin{displaymath}
+\pair{e,p} \dimplies p'
+\end{displaymath}
+where $e$ is a CSL expression and $p$ is a unconditioned canonical
+element whose domain is compatible with the domain of $e$.
+\begin{enumerate}
+\item FULL-IDENT
+\begin{displaymath}
+\pair{{\bf I},p} \dimplies p
+\end{displaymath}
+\item FULL-COMP
+\begin{displaymath}
+\logicrule{\pair{e_2,p} \dimplies p'' \qquad \pair{e_1,p''} \dimplies
+p'}{\pair{e_1\circ e_2,p} \dimplies p'}
+\end{displaymath}
+\item FULL-L-NAT
+\begin{displaymath}
+\pair{\alpha_{L,j},p} \dimplies \alpha_{L,j}\circ p
+\end{displaymath}
+\item FULL-R-FACT
+\begin{displaymath}
+\pair{\psi_R(e_1,\ldots,e_m),p} \dimplies \psi_R(e_1,\ldots,e_m)\circ p
+\end{displaymath}
+where $R$ is not a unconditioned right object.
+\item FULL-C-FACT
+\begin{displaymath}
+\logicrule{\pair{e_j,p} \dimplies e'_j \quad \mbox{or} \quad e'_j \equiv
+e_j\circ E_{C,j}[p/C]}{\pair{\psi_C(e_1,\ldots,e_m),p} \dimplies
+\psi_C(e'_1,\ldots,e'_m)}
+\end{displaymath}
+where $C$ is a unconditioned right object and $e'_j$ is either the result of
+evaluating $\pair{e_j,p}$ or $e_j\circ E_{C,j}[p/C]$ depending of
+whether $E_{C,j}$ is simply $C$ or not.
+\item FULL-L-FACT
+\begin{displaymath}
+\logicrule{\pair{e_j\circ E_{L,j}[\psi_L(e_1,\ldots,e_m)/L],p}
+\dimplies p'}{\pair{\psi_L(e_1,\ldots,e_m),\alpha_{L,j}\circ p} \dimplies
+p'}
+\end{displaymath}
+\item FULL-R-NAT
+\begin{displaymath}
+\logicrule{\pair{E'_{R,j}[\psi_R(e_1,\ldots,e_m)/R]\circ
+e_j,\psi_P(\ldots,p,\ldots)} \dimplies
+p'}{\pair{\alpha_{R,j},\psi_P(\ldots,\psi_R(e_1,\ldots,e_m)\circ
+p,\ldots)} \dimplies p'}
+\end{displaymath}
+In writing down this rule, $\psi_P(\ldots,\psi_R(e_1,\ldots,e_m)\circ
+p,\ldots)$ is rather inaccurate.  It means picking up
+$\psi_R(e_1,\ldots,e_m)$ according to the occurrence of $R$ in $E_{R,j}$.
+$\psi_P$'s are nested as productive objects $P$'s are in $E_{R,j}$.  For
+example, the rule for `pi1' of object `prod' is
+\begin{displaymath}
+\logicrule{\pair{p_1,{\bf I}} \dimplies p'}{\pair{{\rm pi1},{\rm
+pair}(p_1,p_2)} \dimplies p'}.
+\end{displaymath}
+$E_{{\rm prod},1}$ is simply `prod', so there is no $\psi_C$'s.  The rule
+for `eval' of object `exp' is
+\begin{displaymath}
+\logicrule{\pair{e,{\rm pair}({\bf I},p)} \dimplies p'}{\pair{{\rm
+eval},{\rm pair}({\rm curry}(e),p)} \dimplies p'}.
+\end{displaymath}
+Remember that $E_{{\rm exp},1}$ is `${\rm prod}({\rm exp},X)$'.
+\end{enumerate}
+Let us call the new system FULL and the previous system defined in
+definition~\ref{def-reduct-rules} LAZY.
+\end{definition}
+As we have proved theorem~\ref{th-reduct-sound}, we can easily show that
+FULL system is well-defined.  In addition, we can show that
+the reduction in FULL system is stronger than that in LAZY system, that
+is,
+\begin{proposition}
+If $\pair{e,p} \dimplies p'$ in FULL system, then $\pair{e,p} \implies
+c'$ in LAZY system.
+\end{proposition}
+
+On the other hand, since a FULL reduction is nothing but the repeated
+application of LAZY reductions, we have the normalization theorem.
+\begin{theorem}
+For a unconditioned canonical element $p$ and a CSL expression $e$ whose
+domain is compatible with the codomain of $p$, there is a unconditioned
+canonical element $p'$ such that
+\begin{displaymath}
+\pair{e,p} \dimplies p'
+\end{displaymath}
+in FULL reduction system.
+\end{theorem}

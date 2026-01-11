@@ -1,0 +1,82 @@
+%\documentstyle{euthesis}
+\documentstyle[12pt,a4]{report}
+% fix some bogus definitions in euthesis
+\makeatletter
+\def\@normalsize{\@setsize\normalsize{14.5pt}\xiipt\@xiipt
+\abovedisplayskip 12pt plus3pt minus7pt%
+\belowdisplayskip \abovedisplayskip
+\abovedisplayshortskip  \z@ plus3pt%   
+\belowdisplayshortskip  6.5pt plus3.5pt minus3pt}
+\def\small{\@setsize\small{13.6pt}\xipt\@xipt
+\abovedisplayskip 11pt plus3pt minus6pt%
+\belowdisplayskip \abovedisplayskip
+\abovedisplayshortskip  \z@ plus3pt%   
+\belowdisplayshortskip  6.5pt plus3.5pt minus3pt
+\def\@listi{\parsep 4.5pt plus 2pt minus 1pt
+            \itemsep \parsep
+            \topsep 9pt plus 3pt minus 5pt}}
+\def\footnotesize{\@setsize\footnotesize{12pt}\xpt\@xpt
+\abovedisplayskip 10pt plus2pt minus5pt%
+\belowdisplayskip \abovedisplayskip
+\abovedisplayshortskip  \z@ plus3pt%   
+\belowdisplayshortskip  6pt plus3pt minus3pt
+\def\@listi{\topsep 6pt plus 2pt minus 2pt\parsep 3pt plus 2pt minus 1pt
+\itemsep \parsep}}
+\def\scriptsize{\@setsize\scriptsize{9.5pt}\viiipt\@viiipt}
+\def\tiny{\@setsize\tiny{7pt}\vipt\@vipt}
+\def\large{\@setsize\large{18pt}\xivpt\@xivpt}
+\def\Large{\@setsize\Large{22pt}\xviipt\@xviipt}
+\def\LARGE{\@setsize\LARGE{25pt}\xxpt\@xxpt}
+\def\huge{\@setsize\huge{30pt}\xxvpt\@xxvpt}
+\let\Huge=\huge
+\@normalsize  % Choose the normalsize font.
+\makeatother
+%
+%For preparation, I would prefer report style
+%\documentstyle[a4,11pt]{report}
+%
+% personal macros
+\input{mymacros}
+%
+% I would like verbatim environment single-spaced
+\makeatletter
+\def\verbatim{\def\baselinestretch{1.0} \@normalsize
+\@verbatim \frenchspacing\@vobeyspaces \@xverbatim}
+\let\endverbatim=\endtrivlist
+\def\computer{\quote \ulfalse \def\baselinestretch{1.0} \footnotesize
+\@verbatim \activeul \frenchspacing\@vobeyspaces \@xcomputer}
+\def\endcomputer{\endtrivlist\endquote}
+\def\bcomputer{\quote \ulfalse \def\baselinestretch{1.0} \@normalsize
+\@verbatim \activeul \frenchspacing\@vobeyspaces \@xbcomputer}
+\makeatother
+%
+% Title
+%\title{Category Theoretic Approach\\ to\\ Data Types}
+\title{A Categorical Programming Lanuage}
+\author{Tatsuya Hagino\\ Department of Computer Science\\
+		University of Edinburgh}
+%
+\begin{document}
+\pagenumbering{roman}
+\include{begin}
+\pagenumbering{arabic}
+\pagestyle{headings}
+%\setcounter{page}{1}
+\include{ch1}
+%\setcounter{page}{1}
+\include{ch2}
+%\setcounter{page}{1}
+\include{ch3}
+%\setcounter{page}{1}
+\include{ch4}
+%\setcounter{page}{1}
+\include{ch5}
+%\setcounter{page}{1}
+\include{ch6}
+%\setcounter{page}{1}
+%\include{bib}
+%\setcounter{page}{1}
+\include{end}
+%\setcounter{page}{1}
+%\include{sym}
+\end{document}

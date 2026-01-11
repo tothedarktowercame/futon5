@@ -1,0 +1,43 @@
+@flexiarg futon5/facet
+@title Faceted Pattern Contract
+@sigils [面/构]
+@audience futon5 operator designers, futon2/futon3 integrators
+@tone formal-analytic
+@style pattern
+@allow-new-claims true
+@references [futon5/reference/uplift.flexiarg futon3/library/ants/baseline-cyber-ant.flexiarg futon2/src/ants/aif/core.clj]
+
+! conclusion:
+  A facet is a two-layer metapattern: the generic layer defines the loop
+  contract (observation schema, latent drives, policy slots), and the binding
+  layer instantiates those slots for a specific species/domain.
+
+  + IF:
+    You want a Futon3 pattern to power multiple agents (ants, graph walkers,
+    proof scouts) without rewriting narrative or losing testability.
+
+  + HOWEVER:
+    When generic patterns reach into domain-specific quantities (food, pheromone,
+    white-streak) they stop being reusable; if you strip them out entirely the
+    code loses grounding and goldens.
+
+  + THEN:
+    Define a facet ABI with four pillars: (a) observation schema (slot names,
+    types, ranges), (b) latent/drive variables, (c) action vocabulary, (d)
+    tunable parameters + invariants. Store this ABI in Futon5 (generic), and
+    supply bindings from Futon2/other clients that map the slots to concrete
+    fields plus fixtures.
+
+  + BECAUSE:
+    This preserves both semantic fidelity (bindings with goldens) and reuse
+    (invariants stay constant). Later, LLM-based generators can implement new
+    bindings as long as they satisfy the facet interface.
+
+  + STATUS:
+    status[draft]
+    evidence[futon2/src/ants/aif/core.clj]
+
+  + NEXT:
+    next[Refactor existing ant patterns (e.g. hunger↔precision, white-space) to
+         publish their facet ABI + ant binding, then attempt a second binding
+         (e.g. a graph forager) to prove the split works.]

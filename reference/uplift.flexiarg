@@ -1,0 +1,42 @@
+@flexiarg futon5/uplift
+@title Uplift Operator Pattern
+@sigils [升/绽]
+@audience futon5 operator authors, futon3 librarians, futon2 integrators
+@tone formal-analytic
+@style pattern
+@allow-new-claims true
+@references [futon5/src/futon5/mmca/operators.clj futon5/resources/futon5/pattern-lifts.edn]
+
+! conclusion:
+  Uplift treats recurring motifs as promotable operators: scan genotypes for
+  repeated windows, decay/persist counts, and reinforce the promoted motifs so
+  they become callable transformations across layers (MMCA, CT, or narrative
+  agents).
+
+  + IF:
+    A pattern emits stable micro-motifs—sliding windows of sigils that recur
+    with frequency above `:freq_thresh` across successive observations.
+
+  + HOWEVER:
+    Without a generic lift, these motifs stay buried; other futons cannot refer
+    to them, and specialised uplifts (like the cyber-ant pipeline) have nothing
+    to inherit from.
+
+  + THEN:
+    Use the Futon5 `uplift-operator`: gather motif windows (`:window_size`),
+    decay counts, promote motifs once they cross the frequency threshold, and
+    reinforce the genotype with those motifs at act-time so they become
+    executable operators. Track the promoted set for downstream tooling.
+
+  + BECAUSE:
+    Uplift makes “motif → operator” a first-class story, so specialisations can
+    simply bind their pattern narratives to this operator rather than inventing
+    new machinery.
+
+  + STATUS:
+    status[ready]
+    evidence[futon5/src/futon5/mmca/operators.clj]
+
+  + NEXT:
+    next[Bind Futon3 pattern collisions to this operator so promotion happens
+         automatically when multiple entries share a sigil.]

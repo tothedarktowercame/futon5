@@ -1,0 +1,974 @@
+\chapter{Introduction}
+\label{ch-introduction}
+
+This is an exploration of data types through category theory.  It is an
+attempt to achieve better understanding of data types, their uniform
+classification, and discovery of a new world of data types.  Data types
+have been with us since the very first programming languages.  Even some
+machine languages now have some concept of data types, but early
+programming languages had only a fixed number of data types, like
+integers, reals and strings, and/or a fixed number of data type
+constructors, like array constructors and record constructors.  When we
+gradually realized how important data types were, programming languages
+started having richer and richer data types.  A number of programming
+languages now allow us to define our own data types.  Some might even
+say that the richer they are, the better the programming languages are.
+Programming languages can be classified by the way how they handle
+data types.
+
+There is no question about the importance of data types.  Much research
+in this area has produced various kinds of data types, so varied that
+one cannot capture them all.  We now need to systematically organize
+data types.  We want to know the connection between one data type and
+another.  We want to know the reason why those data types are with us
+and while some other data types are not.  After getting a clear view of
+data types, we might find the future direction to discover other
+important data types.
+
+There have been already some attempts to organize data types.  We can
+name some of the important ones: {\it Domain theory} is one, {\it
+algebraic specification} is another and {\it type theory} is one where a
+lot of research is going on at the moment.  In this thesis, we will
+present yet another attempt to organize data types.  We do so by using
+category theory.  We call our data types {\it Categorical Data Types}
+(or {\it CDT} for short).
+
+One might ask ``Why category theory?''  Category theory is known as
+highly abstract mathematics.  Some call it abstract nonsense.  It chases
+abstract arrows and diagrams, proves nothing but about those arrows and
+diagrams, rarely talks about what arrows are for and often concepts go
+beyond one's imagination.  However, when this `abstract nonsense' works,
+it is like magic.  One may discover a simple theorem actually means very
+deep things and some concepts beautifully unify and connect things which
+are unrelated before.
+
+In ordinary mathematics, whether we are aware or not, we are in the
+world of set theory.  Mathematics has been so well developed with set
+theory that we can hardly do anything without it.  Therefore, it is very
+natural that semantics of programming languages is generally based on set
+theory.  Note that it is often said that most of programming languages do
+not have set theoretic semantics and, therefore, domain theory has been
+developed, but this does not contradict with ``semantics based on set
+theory'', because domain theory itself is based on set theory.  A domain
+is a set with certain properties.
+
+Set theory is a powerful tool, but sometimes this power disfigures
+beautiful objects so that we cannot directly see their natural
+properties.  For example, in set theory it is not easy to see either
+the duality between injective and surjective functions or the duality
+between cartesian products and disjoint sums.  It is in category theory
+that these dualities come out clearly.  Category theory concentrates
+on the outer behaviour of objects.  It does not care what is in an
+object, whereas set theory is all about what is in an object.  It is
+interesting to know that seeing from the outside reveals the nature of
+an object more naturally than seeing its inside.  For example, one of
+the most important concepts discovered by category theory is {\it
+adjunction} (or {\it adjoint situation}), which is strikingly simple but
+very beautiful and unifies various concepts under the same name.
+
+Our slogan is: ``{\it category theory can provide a better and more
+natural understanding of mathematical objects than set theory\/}'', so
+we use it to guide our tour around the world of data types.  Note that
+we do not mean to abandon set theory by this.  We will still heavily
+rely on it, but our intuition should not be obstructed by it.
+
+\section{Backgrounds}
+\label{sec-backgrounds}
+
+\subsection{Algebraic Specification Methods}
+\label{ssec-alg-spec}
+
+Algebraic specification methods were first developed to describe what
+programs do.  They are not like operational semantics or denotational
+semantics.  These semantics also describe what programs do but in a
+different way.  They describe it by giving meaning to each part of
+programs.  They need to know how programs are written, that is, they
+need actual codes.  Whereas, algebraic specification methods never talk
+about how programs are implemented.  They describe their behaviour
+abstractly viewing from outside.
+
+This abstract view point, seeing from outside, led to the discovery of
+{\it abstract data types} (see e.g.\ \cite{goguen-thatcher-wagner-78}).
+It is interesting to know that algebraic specification methods were
+started to describe programs but it also developed a theory of data
+types.  Since algebraic specification methods try to describe things
+from an outside point of view, they cannot talk about the concrete
+nature of data types which programs handle.  Therefore, the data types
+also needed to be abstracted and, thus, abstract data types have been
+developed.  We may divide algebraic specification methods into two:
+specification of data types and specification of programs.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(95,50)
+\put(45,37){\makebox(0,0){Specification}}
+\put(45,30){\makebox(0,0){of Programs}}
+\put(45,17){\makebox(0,0){Specification of Data Types}}
+\put(45,3){\makebox(0,0){Algebraic Specification}}
+\put(45,50){\line(-1,-1){40}}
+\put(45,50){\line(1,-1){40}}
+\put(20,25){\line(1,0){50}}
+\put(5,10){\line(1,0){80}}
+\end{picture}
+\end{displaymath}
+It is the former, specification of data types, that concerns us in this
+thesis.
+
+Algebraic specification methods got their method of describing data
+types from abstract algebras in mathematics.  Mathematicians have been
+using abstract algebras for about a century.  Abstract algebras are only
+concerned with concrete real algebras insofar as they satisfy some laws.
+For example, a set with a binary operation is a group when the operation
+is associative, there is an identity and every element is invertible.  A
+real set and a real operation can be anything, integers and $+$,
+general linear matrixes and their multiplication, and so on.  Any theorem
+established for general groups can be applied to any real groups.  There
+are various kinds of abstract algebras: groups, rings, fields, and so
+on.  Those abstract algebras can be presented uniformly by {\it universal
+algebras}.  Algebraic specification methods use a many-sorted version of
+universal algebras.
+
+Na\"{\i}vely speaking, an algebraic specification is a triple $(S,\Sigma,E)$,
+where $S$ is a set of sorts, $\Sigma$ is a $S^\ast\times S$-indexed set
+of operations and $E$ is a set of equations over $\Sigma$.  For example,
+in an algebraic specification language CLEAR
+\cite{burstall-goguen-80,burstall-goguen-81} a specification of lists
+may be as follows.
+\begin{bcomputer}
+constant List =
+    theory
+        sorts element, list
+        opns nil : list
+             cons : element, list -> list
+             head : list -> element
+             tail : list -> list
+        eqns all e : element, l : list, head(cons(e,l)) = e
+             all e : element, l : list, tail(cons(e,l)) = l
+     endth
+\end{bcomputer}
+$S$ is $\{\; {\tt element}, {\tt list} \;\}$, $\Sigma_{\tt list}$ is
+$\{\; {\tt nil} \;\}$, $\Sigma_{{\tt list}\;{\tt element}}$ is $\{\;
+{\tt head} \;\}$, and so on.  $E$ consists of the two equations above.
+
+There are several problems about this specification as we will see
+immediately after we say what a specification means.  An algebraic
+specification $(S,\Sigma,E)$ defines a class of many sorted algebras
+each of which, say $A$, consists of an $S$-sorted set $|A|$ and functions
+$f_A: |A|_{s_1} \times\ldots\times |A|_{s_n} \longrightarrow |A|_s$ for each
+$f \in \Sigma_{s_1\ldots s_n s}$ which satisfy the equations in $E$.
+
+The first problem of the above specification is that not only lists
+satisfy it but also many of other data types as well.  There is actually
+no way to make it describe only lists so long as we stick to first order
+methods.  We need something of second order.  The way algebraic
+specification methods usually obtain this is to put {\it data
+constraints}.  We rely on the categorical fact that {\it the initial
+algebra is unique up to isomorphism}.  In this case, we put a data
+constraint onto the sort `{\tt list}', but not to `{\tt element}'
+because if we put a data constraint onto `{\tt element}' then the `{\tt
+element}' sort would be empty.
+
+The second problem is that `{\tt head}' and `{\tt tail}' are partial
+functions.  The specification does not say what is `{\tt head(nil)}' or
+what is `{\tt tail(nil)}'.  In order to fix this problem, we have to
+introduce, for example,  error algebras or go into partial algebras.
+
+The third problem is that although we put a data constraint on `{\tt
+list}' it is not immediately obvious that `{\tt nil}' and `{\tt cons}'
+can construct all the lists.  Some algebraic specification
+languages do distinguish these constructors from the others.
+
+The fourth problem is about the sort `{\tt element}'.  We actually need
+it as a parameter.  When we use this specification, `{\tt element}'
+denotes a particular data type defined by another specification and we
+need a way to plug in any specification of `{\tt element}' into this
+specification.  Actually, CLEAR has this facility.  `{\tt List}' can be
+defined as `{\tt procedure}' taking parametrized type `{\tt element}'.
+However, this new specification no longer corresponds to a class of
+algebras but to something one level higher.
+
+Many other problems there might be, but most of them have been solved in
+one way or another.  The important point we would like to make is that
+the na\"{\i}ve idea of
+\begin{displaymath}
+\mbox{algebraic specification} = \mbox{universal algebra}
+\end{displaymath}
+does not work well and we have to put a lot of other ideas into
+algebraic specification methods.  One might wonder why so many
+complications are needed to define everyday objects like lists.
+
+In CDT, we stick to the very simple relation
+\begin{displaymath}
+\mbox{categorical data type} = \mbox{$F,G$-dialgebra}
+\end{displaymath}
+$F,G$-dialgebras can be seen as an extension of universal algebras (see
+section~\ref{sec-what-cdt}).  We do not need to introduce meta arguments
+or any other complicated ideas into CDT in order to define lists or
+other basic data types.
+
+\subsection{Domain Theory}
+\label{ssec-domain-theory}
+
+Domain theory was started with denotational semantics
+\cite{stoy-77,scott-76}.  In order to give denotational semantics to
+programs, we need several domains to which the denotations are mapped.  Those
+domains are often interwoven and recursively defined.  The
+most famous example of this is the following $D$.
+\begin{displaymath}
+D \iso D \rightarrow D
+\end{displaymath}
+This domain $D$ was necessary to give denotational semantics to the
+untyped lambda calculus.  In general, we would like to solve the
+following domain equation:
+\begin{displaymath}
+D \iso F(D)
+\end{displaymath}
+where $F(D)$ is a domain expression involving $D$.
+
+Though domains are mathematical objects and not necessarily
+representable in computers, the idea of recursively defined data types
+has been adopted into several programming languages.  For example, we
+can have a domain $L$ for lists of $A$ elements by solving\footnote{We
+have to say what kind of domains we are dealing with.  Let us say in
+this thesis that a domain is a complete partially ordered set with the
+least element and a function between domains needs to be continuous and
+strict.}
+\begin{displaymath}
+L \iso 1 + A\times L,
+\end{displaymath}
+and in the original version of ML \cite{gordon-milner-wordsworth-79}, we
+could define the data type for lists just like the same.
+\begin{bcomputer}
+abstype 'a list = unit + 'a # 'a list
+    with ...
+\end{bcomputer}
+On the other hand, some domains cannot be represented in the same way.
+For example, we can have a domain $I$ for infinite lists of $A$ elements
+by solving
+\begin{displaymath}
+I \iso A \times I_\bot
+\end{displaymath}
+where $I_\bot$ is the lifting of $I$ by adding the new least element,
+but we cannot define infinite lists in ML in a similar way.
+
+Comparing with algebraic specification methods, in domain theory we
+can define data types easily and there is no complication of
+parametrized data types, but we have some difficulty of defining
+operations over data types.  In algebraic specification methods we
+define operations together with data types, but in domain theory we have
+to define them using the isomorphisms of domain equations.
+
+If an algebraic specification $(S,\Sigma,E)$ has no equational
+constraints (i.e.\ $E = \emptyset$), the initial algebra can be given by
+solving the following domain equations.
+\begin{displaymath}
+|A|_s \iso \sum_{f \in \Sigma_{s_1\ldots s_n s}} |A|_{s_1}\times \ldots
+\times |A|_{s_n}
+\end{displaymath}
+By this connection, we can see the possibility of combining algebraic
+specification methods and domain theory together.  Actually, data types
+in the current Standard ML \cite{milner-84,harper-macqueen-milner-86}
+are defined in this mixed fashion (see also section~\ref{sec-ml-cpl}).
+
+Categorically, we can go the other way round.  If $F(D)$ is a covariant
+functor, the initial fixed point of $F(D)$ can be characterized as the
+initial $F$-algebra.  A $F$-algebra is a categorical generalization of
+an ordinary algebra.  The main idea we borrow from domain theory is this
+connection between initial fixed points and initial algebras.
+
+After becoming familiar with category theory, one can notice the dual
+connection between final fixed points and final co-algebras.  People
+rarely talked about them until recently \cite{arbib-manes-80}.  One of
+the reasons is that co-algebras are not so popular and another reason is
+that final fixed points are often the same as initial fixed points in
+domain theory.  However, in CDT we will use this dual connection as
+well.  Final co-algebras give us some very intersting data types like
+infinite lists.  We defined infinite lists by the initial fixed point of
+\begin{displaymath}
+I \iso A \times I_\bot
+\end{displaymath}
+Actually, what we were doing using the lifting $I_\bot$ is to get the final
+fixed point of
+\begin{displaymath}
+I \iso A \times I.
+\end{displaymath}
+
+\section{Basic Category Theory}
+\label{sec-category-theory}
+
+This section is to roughly introduce some categorical concepts we
+will use in the rest of this thesis.  The author refers to category
+theory text books like \cite{maclane-71}, \cite{arbib-manes-75} and
+\cite{lambek-scott-86} for a more detailed account of category theory.
+
+A {\it category} $\cC$ is given by
+\begin{itemize}
+\item a collection of {\it objects} $|\cC|$,
+\item for any pair of objects $A$ and $B$, a collection
+$\Hom{\cC}{A}{B}$ of {\it morphisms} from domain $A$ to codomain $B$,
+(we write $f: A \rightarrow B$ for $f \in \Hom{\cC}{A}{B}$)
+\item for any objects $A$, $B$ and $C$, an operation called {\it
+composition} denoted by `$\circ$' from $\Hom{\cC}{B}{C}\times
+\Hom{\cC}{A}{B}$ to $\Hom{\cC}{A}{C}$ which is associative,
+\begin{displaymath}
+(f\circ g)\circ h = f\circ (g\circ h)
+\end{displaymath}
+\item for any object $A$, an {\it identity} morphism ${\bf I}_A: A \rightarrow
+A$ such that for any $f: B \rightarrow A$ and any $g: A \rightarrow C$
+\begin{displaymath}
+{\bf I}_A\circ f = f \qquad \mbox{and} \qquad g\circ {\bf I}_A = g
+\end{displaymath}
+\end{itemize}
+
+Two objects $A$ and $B$ are called {\it isomorphic} if there are two
+morphisms $f: A \rightarrow B$ and $g: B \rightarrow A$ such that
+\begin{displaymath}
+f\circ g = {\bf I}_B \qquad \mbox{and} \qquad g\circ f = {\bf I}_A.
+\end{displaymath}
+$f$ and $g$ are called {\it isomorphisms}.
+
+The {\it opposite category} $\cC^{\rm op}$ of a category $\cC$ is defined
+by reversing the direction of all the morphisms in $\cC$.
+\begin{displaymath}
+\Hom{\cC^{\rm op}}{A}{B} = \Hom{\cC}{B}{A}
+\end{displaymath}
+We may write $\cC^{\rm op}$ morphism $f^{\rm op}: A \rightarrow B$ for
+$\cC$ morphism $f: B \rightarrow A$.
+
+The {\it product category} $\cC\times \cD$ of a category $\cC$ and a
+category $\cD$ is given as
+\begin{itemize}
+\item a $\cC\times \cD$ object is $\pair{A,B}$ for a $\cC$ object $A$
+and a $\cD$ object $B$
+\item a $\cC\times \cD$ morphism from $\pair{A,B}$ to $\pair{A',B'}$ is
+$\pair{f,g}$ for a $\cC$ morphism $f: A \rightarrow B$ and a $\cD$
+morphism $g: A \rightarrow B$.
+\end{itemize}
+
+A {\it covariant functor} $F$ from a category $\cC$ to a category $\cD$
+(we write $F: \cC \rightarrow \cD$) is given by
+\begin{itemize}
+\item associating a $\cD$ object $F(A)$ for every $\cC$ object $A$
+\item associating a $\cD$ morphism $F(f): F(A) \rightarrow F(B)$ for
+every $\cC$ morphism $f: A \rightarrow B$ such that
+\begin{displaymath}
+F({\bf I}_A) = {\bf I}_{F(A)} \qquad \mbox{and} \qquad F(f\circ g) =
+F(f)\circ F(g)
+\end{displaymath}
+\end{itemize}
+A {\it contravariant functor} is defined in a similar way except that
+$F(f): F(B) \rightarrow F(A)$.
+
+A {\it natural transformation} $\alpha$ from a covariant functor $F: \cC
+\rightarrow \cD$ to a covariant functor $G: \cC \rightarrow \cD$ (we write
+$\alpha: F \natrightarrow G$) is given by
+\begin{itemize}
+\item associating a $\cD$ morphism $\alpha_A: F(A) \rightarrow G(A)$ for
+every $\cC$ object $A$ such that for any $\cC$ morphism $f: A
+\rightarrow B$ the following diagram commutes.
+\begin{displaymath}
+\sqdiagram{F(A)}{\alpha_A}{G(A)}{F(f)}{G(f)}{F(B)}{\alpha_B}{G(B)}{}
+\end{displaymath}
+\end{itemize}
+When every $\alpha_A$ is an isomorphism, we call $\alpha$ {\it natural
+isomorphism}.
+
+Two functors $F: \cC \rightarrow \cD$ and $G: \cD \rightarrow \cC$ are
+called {\it adjoints} if there exists a natural isomorphism
+\begin{displaymath}
+\psi_{A,B}: \Hom{\cD}{F(A)}{B} \stackrel{\iso}{\longrightarrow}
+\Hom{\cC}{A}{G(B)}.
+\end{displaymath}
+$F$ is called the left adjoint functor of $G$ and $G$ is called the
+right adjoint functor of $F$.  We also call $\psi_{A,B}$ (or its inverse
+$\psi_{A,B}^{-1}$) {\it factorizer} or {\it mediating morphism}.
+
+\section{Development of Categorical Data Types}
+\label{sec-develop-CDT}
+
+The motivation of CDT was to adopt the categorical way of defining data
+types into specification languages.  Anybody educated using set theory
+has quite a shock when he first sees the way category theory
+works.  It gives a totally different point of view to things which are
+familiar.  Things which were vaguely connected suddenly are fitted into
+systematic places.  It seems that the nature of things is finally
+revealed.
+
+There are many beautiful concepts discovered through category theory,
+but here we concentrate only one of them, namely {\it adjunction} (or
+{\it adjoint situation}).  In~\cite{maclane-71},
+one will find many equivalent forms of the definition of adjunction (we
+gave one of them in section~\ref{sec-category-theory}).  One may be first
+at a loss for chosing the definition.  Adjunction is so versatile
+that it can be seen in a number of different forms and it is sometimes
+difficult to understand it if one sticks to a particular form of the
+definition.  The form is not important if the spirit is understood.
+Adjunction can be regarded as a property of two functors or because of
+the unique correspondence between two functors it can be seen as
+defining one of them from the other.  It is the latter which is
+important to us because it is a typical way of defining things in category
+theory.  Let us see an example.
+
+Using set theory, we can define what the product of two sets is, what
+the product of two groups is, what the product of two topological
+spaces is, and so on.  Each definition is obviously deferent from the
+others but all of them are called by the same name, {\it product}.  Why
+is that so?  Is there any common property which all the different kinds
+of products should satisfy?  Can we give the general definition of {\it
+product}?  Category theory can give an affirmative answer to these
+questions.  The categorical definition of products is
+\begin{quote}
+For object $A$ and $B$, the product $A\times B$ is an object such that
+there are two morphisms
+\begin{displaymath}
+\pi_1: A\times B \longrightarrow A \qquad \mbox{and} \qquad \pi_2: A\times B
+\longrightarrow B
+\end{displaymath}
+and for any given two morphisms
+\begin{displaymath}
+f: C \longrightarrow A \qquad \mbox{and} \qquad g: C \longrightarrow B
+\end{displaymath}
+there is a unique morphism $h: C \longrightarrow A\times B$ such that the
+following diagram commutes.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(5,35){\makebox(0,0){$A$}}
+\put(35,35){\makebox(0,0){$A\times B$}}
+\put(65,35){\makebox(0,0){$B$}}
+\put(17,37){\makebox(0,0)[b]{$\pi_1$}}
+\put(53,37){\makebox(0,0)[b]{$\pi_2$}}
+\put(27.5,35){\vector(-1,0){20}}
+\put(42.5,35){\vector(1,0){20}}
+\put(35,5){\makebox(0,0){$C$}}
+\put(17.5,17.5){\makebox(0,0){$f$}}
+\put(52.5,17.5){\makebox(0,0){$g$}}
+\put(35,20){\makebox(0,0){$h$}}
+\put(22.5,27.5){\makebox(0,0){\commute}}
+\put(47.5,27.5){\makebox(0,0){\commute}}
+\put(32.5,7.5){\vector(-1,1){25}}
+\put(37.5,7.5){\vector(1,1){25}}
+\multiput(35,7.5)(0,5){2}{\line(0,1){3}}
+\put(35,22.5){\line(0,1){3}}
+\put(35,27.5){\vector(0,1){5}}
+\end{picture}
+\end{displaymath}
+It is easily shown that any two objects satisfy this definition are
+isomorphic.  We may write $\pair{f,g}$ for $h$.
+\end{quote}
+This definition is general enough to cover the definition of products for
+sets, groups, topological spaces, and so on.  We no longer need to define
+products for each individual case.
+
+The generality should not be bound only in mathematics.  Why should it not
+equally be appropriate to the definition of products in programming
+languages?  The product data type of type $A$ and type $B$ is usually
+defined as a type of records whose first component is of type $A$ and
+the second one is of type $B$, but this definition is like one in set
+theory.  It assumes too much about how elements of data types are
+represented.  It is not acceptable as an abstract description of the
+product data type.  If the product data type is defined as an abstract
+data type, how can we present it?
+
+We can directly adopt the categorical definition of products.  There are five
+ingredients in the definition.
+\begin{displaymath}
+\begin{tabular}{rl}
+1. & two given objects $A$ and $B$, \\
+2. & the object $A\times B$ we are defining, \\
+3. & two morphisms $\pi_1: A\times B \longrightarrow A$ and $\pi_2: A
+\times B \longrightarrow B$, \\
+4. & $\pair{f,g}: C \longrightarrow A\times B$ for $f: C \longrightarrow A$ and
+$g: C \longrightarrow B$, and \\
+5. & the commutative diagram. \\
+\end{tabular}
+\end{displaymath}
+We may write these down as follows
+\begin{displaymath}
+\begin{tabular}{l}
+object $A\times B$ is \\
+$\qquad \pi_1: A \times B \longrightarrow A$ \\
+$\qquad \pi_2: A \times B \longrightarrow B$ \\
+$\qquad \pair{f,g}: C \longrightarrow A\times B$ for $f: C
+\longrightarrow A$ and $g: C \longrightarrow B$ \\
+\quad where \\
+$\qquad \pi_1\circ \pair{f,g} = f$ \\
+$\qquad \pi_2\circ \pair{f,g} = g$ \\
+$\qquad \pi_1\circ h = f \land \pi_2\circ h = g \implies h = \pair{f,g}$
+\\
+end object. \\
+\end{tabular}
+\eqno(*)
+\end{displaymath}
+Can we call this a categorical definition of the product data type
+constructor?  Although this is an exact copy of the categorical
+definition, it has somehow lost the spirit of category theory; its beauty;
+its simplicity.  The categorical definition of products we gave is in a
+disguised form of adjunction.  The definition could have been sufficient
+to just say that the product functor is the right adjoint of the
+diagonal functor.  The previous definition expands this into plain words
+so that there are a lot of duplications.  One of them is that the type
+of $\pair{~,~}$ can be deduced from the type of $\pi_1$ and $\pi_2$.  If
+$f$ and $g$ has the same type as $\pi_1$ and $\pi_2$ except replacing
+$A\times B$ by $C$, $\pair{f,g}$ is a morphism from $C$ to $A\times B$.
+Another duplication is that the commutative diagram can also be deduced
+from the rest.  There are no other trivial ways to make diagrams
+involving $\pi_1$, $\pi_2$, $f$, $g$ and $\pair{f,g}$.  Therefore, the
+definition of product data types can be written simply as
+\begin{displaymath}
+\begin{tabular}{l}
+object $A\times B$ is \\
+$\qquad \pi_1: A\times B \longrightarrow A$ \\
+$\qquad \pi_2: A\times B \longrightarrow B$ \\
+end object. \\
+\end{tabular}
+\end{displaymath}
+This supplies the minimal information to get back to $(*)$.  Now, we
+have to use the fact that $A\times B$ is defined by adjunction (it was
+not necessary in $(*)$).  Let us indicate this by saying it is a {\it
+right object} as well as declaring $\pair{~,~}$.
+\begin{displaymath}
+\begin{tabular}{l}
+right object $A\times B$ with $\pair{~,~}$ is \\
+$\qquad \pi_1: A\times B \longrightarrow A$ \\
+$\qquad \pi_2: A\times B \longrightarrow B$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+This is the declaration of the product data type constructor in CDT
+(except for minor changes).
+
+Let us examine the generality and simplicity of this declaration
+mechanism through examples.  Let us try exponentials $B^A$.  The functor
+$\bullet^A$ is defined as the right adjoint functor of $\bullet \times A$.  The
+definition in CDT is
+\begin{displaymath}
+\begin{tabular}{l}
+right object $B^A$ with ${\rm curry}(~)$ is \\
+$\qquad {\rm eval}: B^A \times A \longrightarrow B$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+We can derive the usual definition of exponentials from this definition.
+First, the type of ${\rm curry}(~)$ should be
+\begin{displaymath}
+\logicrule{f: C \times A \longrightarrow B}{{\rm curry}(f): C \longrightarrow B^A}.
+\end{displaymath}
+The type of $f$ is obtained from the type of `eval' just replacing $B^A$
+by $C$.  The commutative diagram which ${\rm curry}(f)$ gives can be
+obtained by connecting
+\begin{displaymath}
+\ardiagram{B^A \times A}{\rm eval}{B} \qquad \mbox{and} \qquad
+\ardiagram{C \times A}{f}{B}
+\end{displaymath}
+by ${\rm curry}(f): C \longrightarrow B^A$.  The only way to connect them
+together results
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(55,45)
+\put(20,5){\makebox(0,0){$C\times A$}}
+\put(20,20){\makebox(0,0)[r]{${\rm curry}(f)\times A$}}
+\put(35,20){\makebox(0,0)[tl]{$f$}}
+\put(20,35){\makebox(0,0){$B^A\times A$}}
+\put(50,35){\makebox(0,0){$B$}}
+\put(35,37){\makebox(0,0)[b]{eval}}
+\put(28,35){\vector(1,0){19}}
+\put(20,8){\vector(0,1){24}}
+\put(23,8){\vector(1,1){24}}
+\end{picture}
+\end{displaymath}
+The morphism denoted by ${\rm curry}(f)$ is the unique one which
+makes this diagram commute.  Thus, we recovered the ordinary definition
+of exponentials.
+
+We said `right object' for products and exponentials.  It is natural to
+think that we also have `{\it left object\/}' as dual.  The dual of
+products are coproducts.  Let us define them in CDT.
+\begin{displaymath}
+\begin{tabular}{l}
+left object $A+B$ with $[~,~]$ is \\
+$\qquad \nu_1: A \longrightarrow A+B$ \\
+$\qquad \nu_2: B \longrightarrow A+B$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+The type of $[~,~]$ can be obtained from the type of $\nu_1$ and
+$\nu_2$.
+\begin{displaymath}
+\logicrule{f: A \longrightarrow C \qquad g: B \longrightarrow C}{[f,g]:
+A+B \longrightarrow C}
+\end{displaymath}
+Note that $[f,g]$ goes from $A+B$ to $C$ not the other way round as it
+would be if it were a right object.  The name `left object' came from
+the fact that $A+B$ is in the left hand side of $\longrightarrow$.
+Remember that $A\times B$ was in the right hand side of
+$\longrightarrow$ for $\pair{~,~}$.  A natural way of connecting $f$
+and $g$ with $\nu_1$ and $\nu_2$ by $[f,g]$ gives us the ordinary
+commutative diagram which $[f,g]$ should satisfy.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(70,40)(0,2.5)
+\put(5,35){\makebox(0,0){$A$}}
+\put(35,35){\makebox(0,0){$A+B$}}
+\put(65,35){\makebox(0,0){$B$}}
+\put(17,37){\makebox(0,0)[b]{$\nu_1$}}
+\put(53,37){\makebox(0,0)[b]{$\nu_2$}}
+\put(7.5,35){\vector(1,0){20}}
+\put(62.5,35){\vector(-1,0){20}}
+\put(35,5){\makebox(0,0){$C$}}
+\put(17.5,17.5){\makebox(0,0){$f$}}
+\put(52.5,17.5){\makebox(0,0){$g$}}
+\put(35,20){\makebox(0,0){$[f,g]$}}
+\put(22.5,27.5){\makebox(0,0){\commute}}
+\put(47.5,27.5){\makebox(0,0){\commute}}
+\put(7.5,32.5){\vector(1,-1){25}}
+\put(62.5,32.5){\vector(-1,-1){25}}
+\multiput(35,32.5)(0,-5){2}{\line(0,-1){3}}
+\put(35,17.5){\line(0,-1){3}}
+\put(35,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+
+We demonstrated that we can express basic categorical constructs in CDT.
+Those constructs, or data types, are primitives in ordinary programming
+languages.  Can we declare more familiar data types?  In fact, the `left
+object' declaration gives all those which can be defined by algebraic
+methods with no equations.  `Without equations' seems that we cannot
+define much, but actually it gives us all the important data types of
+ordinary programming languages.  For example, natural numbers can be
+defined as
+\begin{displaymath}
+\begin{tabular}{l}
+left object nat with ${\rm pr}(~,~)$ is \\
+$\qquad {\rm zero}: 1 \longrightarrow {\rm nat}$ \\
+$\qquad {\rm succ}: {\rm nat} \longrightarrow {\rm nat}$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+This is very much like a specification of natural numbers in algebraic
+specification methods except that we do not have the predecessor
+function or plus or times and that we have something called ${\rm
+pr}(~,~)$.  From analogy of the types of $[~,~]$ and $\pair{~,~}$, the
+type of ${\rm pr}(~,~)$ should be
+\begin{displaymath}
+\logicrule{f: 1 \longrightarrow C \qquad g: C \longrightarrow C}{{\rm
+pr}(f,g): {\rm nat} \longrightarrow C}.
+\end{displaymath}
+We also obtain the diagram characterizing `nat' as we did for products
+and others.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(75,45)(0,2.5)
+\put(5,40){\makebox(0,0){1}}
+\put(20,42){\makebox(0,0)[b]{zero}}
+\put(35,40){\makebox(0,0){nat}}
+\put(50,42){\makebox(0,0)[b]{succ}}
+\put(65,40){\makebox(0,0){nat}}
+\put(15,22){\makebox(0,0){$f$}}
+\put(25,30){\makebox(0,0){\commute}}
+\put(37,25){\makebox(0,0)[l]{${\rm pr}(f,g)$}}
+\put(55,25){\makebox(0,0){\commute}}
+\put(67,25){\makebox(0,0)[l]{${\rm pr}(f,g)$}}
+\put(35,10){\makebox(0,0){$C$}}
+\put(65,10){\makebox(0,0){$C$}}
+\put(50,8){\makebox(0,0)[t]{$g$}}
+\put(7.5,40){\vector(1,0){22.5}}
+\put(40,40){\vector(1,0){20}}
+\put(7.5,37.5){\vector(1,-1){25}}
+\put(40,10){\vector(1,0){20}}
+\multiput(35,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,17.5){\vector(0,-1){5}}
+\multiput(65,37.5)(0,-5){4}{\line(0,-1){3}}
+\put(65,17.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+This is exactly the definition of `nat' being a natural number object in
+category theory and it is well-known that we can define all the primitive
+recursive functions using ${\rm pr}(~,~)$.  For example, the addition
+function can be defined by
+\begin{displaymath}
+{\rm add} \defeq {\rm eval}\circ \pair{{\rm pr}({\rm curry}({\rm
+\pi_2}),{\rm curry}({\rm succ}\circ{\rm eval}))\circ \pi_1,\pi_2}.
+\end{displaymath}
+
+As another example, we give the definition of lists in CDT.  It is
+\begin{displaymath}
+\begin{tabular}{l}
+left object ${\rm list}(A)$ with ${\rm prl}(~,~)$ is \\
+$\qquad {\rm nil}: 1 \longrightarrow {\rm list}(A)$ \\
+$\qquad {\rm cons}: A \times {\rm list}(A) \longrightarrow {\rm list}(A)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+The type of ${\rm prl}(~,~)$ is
+\begin{displaymath}
+\logicrule{f: 1 \longrightarrow C \qquad g: A \times C \longrightarrow
+C}{{\rm prl}(f,g): {\rm list}(A) \longrightarrow C}.
+\end{displaymath}
+The diagram is
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(100,35)(0,2.5)
+\put(5,35){\makebox(0,0){1}}
+\put(35,35){\makebox(0,0){${\rm list}(A)$}}
+\put(72.5,35){\makebox(0,0){$A \times {\rm list}(A)$}}
+\put(35,5){\makebox(0,0){$B$}}
+\put(72.5,5){\makebox(0,0){$A\times B$}}
+\put(20,37){\makebox(0,0)[b]{nil}}
+\put(50,37){\makebox(0,0)[b]{cons}}
+\put(20,20){\makebox(0,0)[tr]{$f$}}
+\put(25,25){\makebox(0,0){\commute}}
+\put(37,20){\makebox(0,0)[l]{${\rm prl}(f,g)$}}
+\put(57.5,20){\makebox(0,0){\commute}}
+\put(74.5,20){\makebox(0,0)[l]{${\bf I}_A\times{\rm prl}(f,g)$}}
+\put(50,3){\makebox(0,0)[t]{$g$}}
+\put(7.5,35){\vector(1,0){20}}
+\put(7.5,32.5){\vector(1,-1){25}}
+\put(62.5,35){\vector(-1,0){20}}
+\put(65,5){\vector(-1,0){27.5}}
+\multiput(35,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(35,12.5){\vector(0,-1){5}}
+\multiput(72.5,32.5)(0,-5){4}{\line(0,-1){3}}
+\put(72.5,12.5){\vector(0,-1){5}}
+\end{picture}
+\end{displaymath}
+Remember that our definition of lists in CLEAR had `head' and `tail',
+but we do not declare them here.  We can define them by ${\rm prl}(~,~)$.
+\begin{displaymath}
+\begin{array}{rll}
+{\rm head} & {} \defeq {\rm prl}(\nu_2,\nu_1\circ \pi_1) & \qquad :\;
+{\rm list}(A) \longrightarrow A + 1 \\[1ex]
+{\rm tail} & {} \defeq [\nu_1\circ \pi_2,\nu_2]\circ {\rm
+prl}(\nu_2,\nu_1\circ \pair{\pi_1,[{\rm cons},{\rm nil}]}) & \qquad : \;
+{\rm list}(A) \longrightarrow {\rm list}(A) + 1 \\
+\end{array}
+\end{displaymath}
+`Without equations' is not a disadvantage to define everyday data types.
+
+By the connection between initial fixed points and $F$-algebras, we can
+define the initial fixed point $D$ of a covariant functor $F(X)$ as
+follows.
+\begin{displaymath}
+\begin{tabular}{l}
+left object $D$ with $\psi(~)$ is \\
+$\qquad \alpha: F(D) \longrightarrow D$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+$\alpha$ gives one direction of the isomorphism between $D$ and $F(D)$,
+and	 $\psi(~)$ gives unique arrows.
+\begin{displaymath}
+\sqdiagram{F(D)}{\alpha}{D}{F(\psi(f))}{\psi(f)}{F(A)}{f}{A}{}
+\end{displaymath}
+
+We have been using `left object' more than `right object', but they are
+dual and there are equally as many right objects as left objects.  Just
+they are not familiar in ordinary programming languages.  For example,
+the following definition gives the data type for infinite lists.
+\begin{displaymath}
+\begin{tabular}{l}
+right object ${\rm inflist}(A)$ with ${\rm fold}(~,~)$ is \\
+$\qquad {\rm hd}: {\rm inflist}(A) \longrightarrow A$ \\
+$\qquad {\rm tl}: {\rm inflist}(A) \longrightarrow {\rm inflist}(A)$ \\
+end object \\
+\end{tabular}
+\end{displaymath}
+This gives the final fixed point of $I \iso A\times I$.
+
+We have devised, based on category theory, a simple way of defining data
+types.  The next question is whether we can adopt this method into
+ordinary programming languages.  The answer is negative.  Although what
+we can define in this way is far less than what we can define using
+algebraic specification languages with equations, we still have some
+strange things that can be defined in this way.  Let us see an example.
+We defined ${\rm list}(A)$ as a parametrized data type but in fact it is
+a functor.
+\begin{displaymath}
+{\rm list}(f):  {\rm list}(A) \longrightarrow {\rm list}(B)
+\end{displaymath}
+for a morphism $f: A \longrightarrow B$ is often called {\it map
+function}.  In LISP it is `MAPCAR' and in ML it is `map'.  The general
+declaration mechanism of CDT allows us to define the left and right
+adjoint functors of ${\rm list}(A)$ which could not exist in the world
+of programming.  We need to put a restriction to prevent these objects.
+The restriction will come out of a notion of computability in our
+setting.  Interestingly, it turns out the category should be
+\begin{displaymath}
+\mbox{cartesian closed} + \mbox{initial fixed points} + \mbox{final fixed
+points}
+\end{displaymath}
+We might see the similarity between this and the connection of lambda
+calculus and cartesian closed categories.
+
+By putting this computability restriction, we can regard CDT as not only
+a device of defining data types but also a programming language.  We
+program in a categorical fashion; there are no concrete data but
+morphisms; programs are also morphisms; there are no variables in
+programs.  The computation in this language is reduction from morphisms
+to canonical ones.  For example, we can reduce
+\begin{displaymath}
+{\rm add}\circ\pair{{\rm succ}\circ{\rm zero},{\rm succ}\circ{\rm
+zero}} \implies {\rm succ}\circ {\rm succ}\circ {\rm zero}
+\end{displaymath}
+which corresponds to the calculation of $1+1 = 2$.
+
+We summerize the characteristics of CDT as follows.
+\begin{enumerate}
+\item CDT uses categorical characterization of data types.  We do not
+need to say things explicitly.  All the equations are automatically
+generated for definitions.
+\item CDT needs no primitive data types.  Ordinary programming languages
+(e.g.\ PASCAL, LISP, ML) have primitive data types: natural numbers,
+lists, records, and so on, but CDT does not.  They can be defined.  Thus,
+CDT is analogous to algebraic specification methods where we can specify
+them as well.  However, algebraic specification methods cannot specify
+higher order data types (i.e.\ function spaces or exponentials in
+a categorical term) nor can they specify products without using
+equations.
+\item CDT can not only define products without explicitly mentioning
+equations but also can define exponentials.
+\item CDT is symmetric in the sense that we can define initial algebras
+(or initial fixed points) as well as final co-algebras (or final fixed
+points).
+\item Algebraic specification methods use initiality implicitly and
+do not use the unique homomorphisms between the initial algebras and the
+others, whereas CDT has explicit access to the unique morphisms.  This
+gives the power of programming without going though equational
+characterization as it is necessary in algebraic specification methods.
+\item Domain theory does not use the initiality explicitly either.  The
+reason for this is that recursion in ordinary programming languages
+provide all the power of programming.
+\item CDT defines functors.  Functors are thought to be parametrized
+data types.  Algebraic specification methods usually introduce
+parametrization later, but in CDT functorial behaviour of parametrized
+data types is treated at the base level.
+\end{enumerate}
+
+\section{In This Thesis}
+\label{sec-in-thesis}
+
+The theory of categorical data types is divided into three: {\it Categorical
+Specification Language}, {\it Categorical Data Types} and {\it
+Categorical Programming Language}.
+\begin{displaymath}
+\setlength{\unitlength}{1mm}
+\begin{picture}(100,55)
+\put(25,50){\line(1,0){50}}
+\put(50,45){\makebox(0,0){Categorical}}
+\put(50,40){\makebox(0,0){Programming Language}}
+\put(25,50){\line(0,-1){15}}
+\put(75,50){\line(0,-1){15}}
+\put(15,35){\line(1,0){70}}
+\put(50,27.5){\makebox(0,0){Categorical Data Types}}
+\put(15,35){\line(0,-1){15}}
+\put(85,35){\line(0,-1){15}}
+\put(5,20){\line(1,0){90}}
+\put(50,12.5){\makebox(0,0){Categorical Specification Language}}
+\put(5,20){\line(0,-1){15}}
+\put(95,20){\line(0,-1){15}}
+\put(5,5){\line(1,0){90}}
+\end{picture}
+\end{displaymath}
+Chapter~\ref{ch-csl} is about Categorical Specification Language (CSL
+for short).  CSL is a specification language.  It is an extension of
+ordinary algebraic specification languages.  Whereas algebraic
+specifications specify algebras, it specifies categories.  In order to
+specify categories, CSL has to handle functors, natural transformations
+and factorizers (or mediating morphisms).  A CSL signature declares some
+functor names and their types (i.e.\ variances), some natural transformation
+names and their types and some factorizer names and their types.  A CSL
+sentence is a conditional equation of functors, natural transformations
+and factorizers.  A CSL model is a category equipped with functors,
+natural transformations and factorizers which have right types as are
+specified in the signature and which satisfy the sentences.
+
+Chapter~\ref{ch-cdt} gives the main idea of Categorical Data Types.  The
+difference between CSL and CDT is that whereas CSL declares functors,
+natural transformations and factorizers separately and connects them by
+sentences, CDT declare them together in a style of adjoint declarations.
+The semantics of CDT will be given informally in terms of
+$F,G$-algebras and formally in terms of CSL.  There are some examples
+of data types we can define in CDT.
+
+Chapter~\ref{ch-cpl} is about Categorical Programming Language (CPL for
+short).  CPL is a functional programming language which adopts the
+categorical declaration mechanism of data types from CDT.  In order to
+define the notion of computation in CPL, we have to put some
+restrictions to CDT.  We will introduce the notion of {\it elements} and
+{\it canonical elements} and present reduction rules to reduce
+elements to their equivalent canonical elements.  We will also prove
+that any reduction in CPL terminates using Tait's computability method.
+
+Each of those three languages, CSL, CDT and CPL, characterizes a
+category of data types in different ways.
+\begin{displaymath}
+\begin{tabular}{|r|l|l|}
+\cline{2-3}
+\multicolumn{1}{c|}{} & \multicolumn{1}{c|}{\bf Syntax} &
+\multicolumn{1}{c|}{\bf Semantics} \\
+\hline
+CSL & Signature and Sentences & Models \\
+\hline
+CDT & Adjoint Declarations & Freeness and Co-Freeness \\
+\hline
+CPL & Restricted Adjoint Declarations & Operational \\
+\hline
+\end{tabular}
+\end{displaymath}
+
+In chapter~\ref{ch-application}, we will investigate the real
+consequences of our study in CDT.  Section~\ref{sec-imp-cpl} is about an
+implementation of CPL as a real programming language.
+Section~\ref{sec-lambda-calculus} is about the connection between CDT
+and typed lambda calculi, and finally in section~\ref{sec-ml-cpl} we
+will attempt to extend ML incorporating the CDT data type declaration
+mechanism.
+
+\section{Comparison with Other Works}
+\label{sec-comparison}
+
+Systematic studies of data types have already been carried out by
+various people in various contexts: ADJ in the context of initial
+algebras \cite{goguen-thatcher-wagner-78}, Plotkin, Smyth and Lehmann in
+the context of domains \cite{lehmann-smyth-81,smyth-plotkin-82} and
+Martin-L\"of in the context of type theory \cite{martin-lof-79}.  This
+thesis is about a study of the same subject in the context of category
+theory.  We do not try to extend the traditional approaches as
+Parasaya-Ghomi did for algebraic specification methods to include higher
+order types \cite{ghomi-82}, nor do we try to unify two approaches
+together like \cite{dybjer-83}, but we just directly use categorical
+methods of defining things.
+
+Categorical Programming Language in chapter~\ref{ch-cpl} might resemble
+Categorical Abstract Machine (CAM) by Curien \cite{curien-86}, but he is
+only interested in cartesian closed categories whereas CPL deals with a
+class of different categories.  Moreover, the reduction rules in CPL is
+systematically generated for products, coproducts, exponentials, natural
+numbers, and so on.  We do not give any special reduction rules for any
+data types we define.  CPL can be seen as
+\begin{displaymath}
+{\rm CPL} = {\rm CAM} + \mbox{initial data types} + \mbox{final data types}.
+\end{displaymath}
+Actually, CAM can be absorbed into `initial data types' and `final data
+types', so in CPL we do not need to start with a particular set of
+reduction rules for cartesian closed categories.  CPL has an ability to
+define cartesian closed categories and the introduction of data types
+also gives the control structure over those data types.  Here is another
+slogan: ``{\it control structures in programming languages come out of
+the structure of data types\/}''.
+\begin{displaymath}
+\begin{tabular}{rcl}
+\multicolumn{1}{c}{Data Types} & & \multicolumn{1}{c}{Control Structures} \\
+boolean & $\leftrightarrow$ & {\tt if} statement \\
+disjoint union & $\leftrightarrow$ & {\tt case} statement \\
+natural number & $\leftrightarrow$ & primitive recursion, {\tt for}
+statement \\
+product & $\leftrightarrow$ & pairing \\
+function space & $\leftrightarrow$ & function call \\
+\end{tabular}
+\end{displaymath}
+
+Barr and Wells uses {\it sketches} in \cite{barr-wells-85} to describe
+algebras categorically.  It is more powerful than ordinary algebraic
+specification methods because sketches can use any kind of limits
+whereas algebraic specification methods uses only products.  It is
+interesting to investigate CSL by sketches.

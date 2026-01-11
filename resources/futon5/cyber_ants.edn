@@ -1,0 +1,68 @@
+{:patterns
+ [{:id :cyber/baseline
+   :title "Baseline Cyber-AIF"
+   :flexiarg "library/ants/baseline-cyber-ant.flexiarg"
+   :summary "Matches Futon2 default AIF config; use for drop-in cyber-ants."
+   :operator :UpliftOperator
+   :aif {:precision {:need-gain 0.6
+                     :dhdt-gain 0.8
+                     :tau-floor 0.08
+                     :tau-cap 1.5}
+         :modes {:cargo-high 0.60
+                 :cargo-low 0.10
+                 :home-high 0.80
+                 :home-low 0.50
+                 :reserve-low 0.20
+                 :trail-min 0.20
+                 :food-eps 0.02}
+         :policy {:white-space {:forage +0.90
+                                 :hold +0.35
+                                 :return -0.40
+                                 :pheromone -0.45}
+                  :mode-adjust {:outbound {:forage -0.35 :return 0.35 :hold 0.10 :pheromone -0.05}
+                                :homebound {:return -0.50 :forage 0.40 :hold 0.10 :pheromone -0.10}
+                                :maintain {:pheromone -0.40 :hold -0.20 :return 0.15 :forage 0.20}}}}
+   :telemetry {:policy-golden :forage-normal}}
+  {:id :cyber/white-space-scout
+   :title "White-Space Scout"
+   :flexiarg "library/ants/white-space-scout.flexiarg"
+   :summary "Bias toward pheromone scouting when the white-space detector fires."
+   :operator :UpliftOperator
+  :aif {:policy {:white-space {:forage +1.10
+                               :hold +0.25
+                               :return -0.55
+                               :pheromone -0.65}
+                  :tau-clamp {:nest {:cargo>0 0.65
+                                     :empty 1.15}}}}
+  :telemetry {:policy-golden :white-space-scout}}
+  {:id :cyber/cargo-discipline
+   :title "Cargo Return Discipline"
+   :flexiarg "library/ants/cargo-return-discipline.flexiarg"
+   :summary "Detect cargo stalls and clamp tau/return bias until deposits happen."
+   :operator :UpliftOperator
+   :aif {:policy {:cargo-stall {:return +0.60
+                                :hold -0.20}
+                  :tau-clamp {:stall 0.65}}}
+   :telemetry {:policy-golden :loaded-homebound}}
+  {:id :cyber/trail-tuner
+   :title "Adaptive Trail Tuner"
+   :flexiarg "library/ants/pheromone-trail-tuner.flexiarg"
+   :summary "Scale pheromone laying by novelty, reserves, and mode."
+   :operator :UpliftOperator
+   :aif {:policy {:pheromone {:base-cost 0.20
+                              :white-space-bonus -0.25
+                              :reserve-penalty 0.40}}}
+   :telemetry {:policy-golden :white-space-scout}}
+  {:id :cyber/hunger-precision
+   :title "Hunger↔Precision Coupling"
+   :flexiarg "library/ants/hunger-precision-coupling.flexiarg"
+   :summary "Use Futon2 hunger/tau goldens for the cyber-ant affect loop."
+   :operator :UpliftOperator
+   :aif {:precision {:need-gain 0.72
+                     :dhdt-gain 0.88
+                     :tau-reserve-gain 0.65
+                     :tau-survival-gain 0.55}
+         :hunger {:gather-feed 0.11
+                  :deposit-feed 0.08
+                  :home-bonus 0.025}}
+   :telemetry {:hunger-golden :normal}}]}

@@ -1,0 +1,15 @@
+Groundhog Day transport rehearsal
+---------------------------------
+Goal: produce a deterministic transcript that Futon3 can turn into MUSN hello / event / workday / check / clock-out frames while Futon1 captures the storage side and Tatami HUD cues.
+
+Include the following beats (keep the order, paraphrase as needed):
+
+1. Morning wake-up metadata line `[Day, Month DD, YYYY / 06:00]` followed by a HUD alert about Prototype 3 `check!` backlog (cite pattern IDs/clauses).
+2. Compose **three turns** (`Turn 1 – Morning`, `Turn 2 – Midday`, `Turn 3 – Afternoon/Clock-out`). Each turn must contain a `User:` question and an `Assistant:` reply with timestamps covering roughly one hour total.
+3. Turn 1: MUSN `hello` from the Emacs HUD, capture the `run-id`, mention the capability list from the ack, and tie in the Prototype 3 backlog.
+4. Turn 2: Replay the previous NDJSON events (identical `eid`s) and describe the workday submission that chains directly into `check!` (cite pattern IDs, missing evidence, derived tasks).
+5. After Turn 2, insert a **HUD detail table** listing active patterns plus fruits (emoji/name/score) and paramitā cues.
+6. Turn 3: narrate clock-out prep, referencing proof trail exports to Futon1/Futon2 and tomorrow’s target (Prototype 5 workday submit).
+7. Finish with a Futon0-style clock-out section containing at least three table rows (`HH:MM–HH:MM | Activity summary | Notes`) and 2–3 bullet insights, then “see you after the reset.”
+
+This text becomes the user portion of the relay payload. Keep it editable so we can tweak names/timestamps before running the real API call.

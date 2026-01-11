@@ -1,0 +1,258 @@
+[
+  {:bits "00000000" :sigil "一" :color "#000000" :translation "one"}
+  {:bits "00000001" :sigil "乙" :color "#010101" :translation "second"}
+  {:bits "00000010" :sigil "二" :color "#020202" :translation "two"}
+  {:bits "00000011" :sigil "丁" :color "#030303" :translation "fourth"}
+  {:bits "00000100" :sigil "十" :color "#040404" :translation "ten"}
+  {:bits "00000101" :sigil "厂" :color "#050505" :translation "factory"}
+  {:bits "00000110" :sigil "七" :color "#060606" :translation "seven"}
+  {:bits "00000111" :sigil "卜" :color "#070707" :translation "see"}
+  {:bits "00001000" :sigil "八" :color "#080808" :translation "eight"}
+  {:bits "00001001" :sigil "人" :color "#090909" :translation "man"}
+  {:bits "00001010" :sigil "入" :color "#0a0a0a" :translation "enter"}
+  {:bits "00001011" :sigil "九" :color "#0b0b0b" :translation "nine"}
+  {:bits "00001100" :sigil "儿" :color "#0c0c0c" :translation "son"}
+  {:bits "00001101" :sigil "几" :color "#0d0d0d" :translation "how much"}
+  {:bits "00001110" :sigil "了" :color "#0e0e0e" :translation "finish"}
+  {:bits "00001111" :sigil "乃" :color "#0f0f0f" :translation "so"}
+  {:bits "00010000" :sigil "刀" :color "#101010" :translation "knife"}
+  {:bits "00010001" :sigil "力" :color "#111111" :translation "power"}
+  {:bits "00010010" :sigil "又" :color "#121212" :translation "again"}
+  {:bits "00010011" :sigil "干" :color "#131313" :translation "trunk"}
+  {:bits "00010100" :sigil "三" :color "#141414" :translation "three"}
+  {:bits "00010101" :sigil "于" :color "#151515" :translation "in"}
+  {:bits "00010110" :sigil "亏" :color "#161616" :translation "deficit"}
+  {:bits "00010111" :sigil "士" :color "#171717" :translation "scholar"}
+  {:bits "00011000" :sigil "土" :color "#181818" :translation "earth"}
+  {:bits "00011001" :sigil "工" :color "#191919" :translation "work"}
+  {:bits "00011010" :sigil "才" :color "#1a1a1a" :translation "ability"}
+  {:bits "00011011" :sigil "寸" :color "#1b1b1b" :translation "inch"}
+  {:bits "00011100" :sigil "下" :color "#1c1c1c" :translation "down"}
+  {:bits "00011101" :sigil "丈" :color "#00ff33" :translation "ten feet  #1d1d1d 00011101 11100010 10111000 01000111"}
+  {:bits "00011110" :sigil "大" :color "#0033ff" :translation "big  #1e1e1e 00011110 11100001 01111000 10000111"}
+  {:bits "00011111" :sigil "与" :color "#1f1f1f" :translation "doubt"}
+  {:bits "00100000" :sigil "万" :color "#202020" :translation "see"}
+  {:bits "00100001" :sigil "上" :color "#212121" :translation "above"}
+  {:bits "00100010" :sigil "小" :color "#222222" :translation "small"}
+  {:bits "00100011" :sigil "山" :color "#232323" :translation "mountain"}
+  {:bits "00100100" :sigil "口" :color "#242424" :translation "mouth"}
+  {:bits "00100101" :sigil "巾" :color "#252525" :translation "cloth"}
+  {:bits "00100110" :sigil "千" :color "#262626" :translation "thousand"}
+  {:bits "00100111" :sigil "乞" :color "#272727" :translation "beg"}
+  {:bits "00101000" :sigil "川" :color "#282828" :translation "plain"}
+  {:bits "00101001" :sigil "亿" :color "#292929" :translation "100 million"}
+  {:bits "00101010" :sigil "个" :color "#2a2a2a" :translation "this"}
+  {:bits "00101011" :sigil "久" :color "#2b2b2b" :translation "long time"}
+  {:bits "00101100" :sigil "么" :color "#2c2c2c" :translation "what"}
+  {:bits "00101101" :sigil "勺" :color "#2d2d2d" :translation "spoon"}
+  {:bits "00101110" :sigil "丸" :color "#2e2e2e" :translation "pill"}
+  {:bits "00101111" :sigil "夕" :color "#2f2f2f" :translation "dusk"}
+  {:bits "00110000" :sigil "凡" :color "#303030" :translation "ordinary"}
+  {:bits "00110001" :sigil "及" :color "#313131" :translation "and"}
+  {:bits "00110010" :sigil "广" :color "#323232" :translation "wide"}
+  {:bits "00110011" :sigil "门" :color "#333333" :translation "door"}
+  {:bits "00110100" :sigil "亡" :color "#343434" :translation "lose"}
+  {:bits "00110101" :sigil "义" :color "#353535" :translation "justice"}
+  {:bits "00110110" :sigil "之" :color "#363636" :translation "him/her"}
+  {:bits "00110111" :sigil "尸" :color "#373737" :translation "corpse"}
+  {:bits "00111000" :sigil "已" :color "#383838" :translation "then"}
+  {:bits "00111001" :sigil "弓" :color "#393939" :translation "bow"}
+  {:bits "00111010" :sigil "己" :color "#3a3a3a" :translation "self"}
+  {:bits "00111011" :sigil "子" :color "#3b3b3b" :translation "child"}
+  {:bits "00111100" :sigil "卫" :color "#3c3c3c" :translation "guard"}
+  {:bits "00111101" :sigil "也" :color "#3d3d3d" :translation "also"}
+  {:bits "00111110" :sigil "女" :color "#3e3e3e" :translation "female"}
+  {:bits "00111111" :sigil "飞" :color "#3f3f3f" :translation "fly"}
+  {:bits "01000000" :sigil "刃" :color "#404040" :translation "edge of blade"}
+  {:bits "01000001" :sigil "习" :color "#414141" :translation "practice"}
+  {:bits "01000010" :sigil "叉" :color "#424242" :translation "cross"}
+  {:bits "01000011" :sigil "乡" :color "#434343" :translation "home"}
+  {:bits "01000100" :sigil "马" :color "#444444" :translation "horse"}
+  {:bits "01000101" :sigil "丰" :color "#454545" :translation "luxuriant"}
+  {:bits "01000110" :sigil "王" :color "#464646" :translation "king"}
+  {:bits "01000111" :sigil "井" :color "#00ff33" :translation "neat  #474747"}
+  {:bits "01001000" :sigil "开" :color "#484848" :translation "open"}
+  {:bits "01001001" :sigil "夫" :color "#494949" :translation "that"}
+  {:bits "01001010" :sigil "天" :color "#4a4a4a" :translation "heaven"}
+  {:bits "01001011" :sigil "无" :color "#4b4b4b" :translation "no"}
+  {:bits "01001100" :sigil "元" :color "#4c4c4c" :translation "money"}
+  {:bits "01001101" :sigil "云" :color "#4d4d4d" :translation "cloud"}
+  {:bits "01001110" :sigil "专" :color "#4e4e4e" :translation "special"}
+  {:bits "01001111" :sigil "扎" :color "#4f4f4f" :translation "tie"}
+  {:bits "01010000" :sigil "艺" :color "#505050" :translation "skill"}
+  {:bits "01010001" :sigil "木" :color "#515151" :translation "tree"}
+  {:bits "01010010" :sigil "五" :color "#525252" :translation "five"}
+  {:bits "01010011" :sigil "厅" :color "#535353" :translation "hall"}
+  {:bits "01010100" :sigil "支" :color "#545454" :translation "support"}
+  {:bits "01010101" :sigil "不" :color "#555555" :translation "not"}
+  {:bits "01010110" :sigil "太" :color "#565656" :translation "highest"}
+  {:bits "01010111" :sigil "犬" :color "#575757" :translation "dog"}
+  {:bits "01011000" :sigil "区" :color "#585858" :translation "area"}
+  {:bits "01011001" :sigil "历" :color "#595959" :translation "undergo"}
+  {:bits "01011010" :sigil "友" :color "#ffcc00" :translation "friend #5a5a5a 01011010 10100101"}
+  {:bits "01011011" :sigil "匹" :color "#5b5b5b" :translation "mate"}
+  {:bits "01011100" :sigil "尤" :color "#5c5c5c" :translation "particular"}
+  {:bits "01011101" :sigil "车" :color "#5d5d5d" :translation "car"}
+  {:bits "01011110" :sigil "巨" :color "#5e5e5e" :translation "huge"}
+  {:bits "01011111" :sigil "牙" :color "#5f5f5f" :translation "tooth"}
+  {:bits "01100000" :sigil "屯" :color "#606060" :translation "village"}
+  {:bits "01100001" :sigil "比" :color "#616161" :translation "near"}
+  {:bits "01100010" :sigil "互" :color "#626262" :translation "mutual"}
+  {:bits "01100011" :sigil "瓦" :color "#636363" :translation "tile"}
+  {:bits "01100100" :sigil "切" :color "#646464" :translation "definitely"}
+  {:bits "01100101" :sigil "止" :color "#656565" :translation "stop"}
+  {:bits "01100110" :sigil "少" :color "#666666" :translation "young"}
+  {:bits "01100111" :sigil "日" :color "#676767" :translation "sun"}
+  {:bits "01101000" :sigil "中" :color "#686868" :translation "hit"}
+  {:bits "01101001" :sigil "贝" :color "#696969" :translation "shellfish"}
+  {:bits "01101010" :sigil "内" :color "#6a6a6a" :translation "inside"}
+  {:bits "01101011" :sigil "冈" :color "#6b6b6b" :translation "ridge"}
+  {:bits "01101100" :sigil "水" :color "#6c6c6c" :translation "water"}
+  {:bits "01101101" :sigil "见" :color "#6d6d6d" :translation "meet"}
+  {:bits "01101110" :sigil "手" :color "#ff3300" :translation "hand #6e6e6e 01101110 01110110 10010001 10001001"}
+  {:bits "01101111" :sigil "午" :color "#6f6f6f" :translation "noon"}
+  {:bits "01110000" :sigil "牛" :color "#707070" :translation "ox"}
+  {:bits "01110001" :sigil "毛" :color "#717171" :translation "hair"}
+  {:bits "01110010" :sigil "气" :color "#727272" :translation "air"}
+  {:bits "01110011" :sigil "长" :color "#737373" :translation "long"}
+  {:bits "01110100" :sigil "升" :color "#747474" :translation "ascend"}
+  {:bits "01110101" :sigil "仁" :color "#757575" :translation "humane"}
+  {:bits "01110110" :sigil "什" :color "#ff3300" :translation "assorted #767676"}
+  {:bits "01110111" :sigil "片" :color "#777777" :translation "flake"}
+  {:bits "01111000" :sigil "仆" :color "#0033ff" :translation "servant #787878"}
+  {:bits "01111001" :sigil "化" :color "#797979" :translation "change"}
+  {:bits "01111010" :sigil "仇" :color "#7a7a7a" :translation "hatred"}
+  {:bits "01111011" :sigil "仍" :color "#7b7b7b" :translation "still"}
+  {:bits "01111100" :sigil "币" :color "#7c7c7c" :translation "money"}
+  {:bits "01111101" :sigil "仅" :color "#7d7d7d" :translation "barely"}
+  {:bits "01111110" :sigil "斤" :color "#7e7e7e" :translation "half kilo"}
+  {:bits "01111111" :sigil "爪" :color "#7f7f7f" :translation "claw"}
+  {:bits "10000000" :sigil "反" :color "#808080" :translation "contrary"}
+  {:bits "10000001" :sigil "介" :color "#818181" :translation "introduce"}
+  {:bits "10000010" :sigil "父" :color "#828282" :translation "father"}
+  {:bits "10000011" :sigil "今" :color "#838383" :translation "today"}
+  {:bits "10000100" :sigil "从" :color "#848484" :translation "from"}
+  {:bits "10000101" :sigil "凶" :color "#858585" :translation "terrible"}
+  {:bits "10000110" :sigil "分" :color "#868686" :translation "part"}
+  {:bits "10000111" :sigil "乏" :color "#0033ff" :translation "depleted #878787"}
+  {:bits "10001000" :sigil "公" :color "#888888" :translation "public"}
+  {:bits "10001001" :sigil "仓" :color "#ff3300" :translation "barn #898989"}
+  {:bits "10001010" :sigil "月" :color "#8a8a8a" :translation "moon"}
+  {:bits "10001011" :sigil "勿" :color "#8b8b8b" :translation "do not"}
+  {:bits "10001100" :sigil "氏" :color "#8c8c8c" :translation "name"}
+  {:bits "10001101" :sigil "风" :color "#8d8d8d" :translation "wind"}
+  {:bits "10001110" :sigil "欠" :color "#8e8e8e" :translation "owe"}
+  {:bits "10001111" :sigil "丹" :color "#8f8f8f" :translation "red"}
+  {:bits "10010000" :sigil "匀" :color "#909090" :translation "even"}
+  {:bits "10010001" :sigil "乌" :color "#ff3300" :translation "crow #919191"}
+  {:bits "10010010" :sigil "勾" :color "#929292" :translation "affair"}
+  {:bits "10010011" :sigil "六" :color "#939393" :translation "six"}
+  {:bits "10010100" :sigil "凤" :color "#949494" :translation "phoenix"}
+  {:bits "10010101" :sigil "文" :color "#959595" :translation "language"}
+  {:bits "10010110" :sigil "方" :color "#969696" :translation "square"}
+  {:bits "10010111" :sigil "火" :color "#979797" :translation "fire"}
+  {:bits "10011000" :sigil "为" :color "#989898" :translation "take"}
+  {:bits "10011001" :sigil "斗" :color "#999999" :translation "fight"}
+  {:bits "10011010" :sigil "忆" :color "#9a9a9a" :translation "remember"}
+  {:bits "10011011" :sigil "订" :color "#9b9b9b" :translation "agree"}
+  {:bits "10011100" :sigil "计" :color "#9c9c9c" :translation "calculate"}
+  {:bits "10011101" :sigil "户" :color "#9d9d9d" :translation "household"}
+  {:bits "10011110" :sigil "认" :color "#9e9e9e" :translation "recognize"}
+  {:bits "10011111" :sigil "心" :color "#9f9f9f" :translation "heart"}
+  {:bits "10100000" :sigil "尺" :color "#a0a0a0" :translation "foot"}
+  {:bits "10100001" :sigil "引" :color "#a1a1a1" :translation "pull"}
+  {:bits "10100010" :sigil "丑" :color "#a2a2a2" :translation "clown"}
+  {:bits "10100011" :sigil "孔" :color "#a3a3a3" :translation "hole"}
+  {:bits "10100100" :sigil "巴" :color "#a4a4a4" :translation "wish"}
+  {:bits "10100101" :sigil "队" :color "#ffcc00" :translation "team #a5a5a5"}
+  {:bits "10100110" :sigil "办" :color "#a6a6a6" :translation "manage"}
+  {:bits "10100111" :sigil "以" :color "#a7a7a7" :translation "because"}
+  {:bits "10101000" :sigil "允" :color "#a8a8a8" :translation "fair"}
+  {:bits "10101001" :sigil "予" :color "#a9a9a9" :translation "give"}
+  {:bits "10101010" :sigil "劝" :color "#aaaaaa" :translation "advise"}
+  {:bits "10101011" :sigil "书" :color "#ababab" :translation "document"}
+  {:bits "10101100" :sigil "双" :color "#acacac" :translation "pair"}
+  {:bits "10101101" :sigil "幻" :color "#adadad" :translation "fantasy"}
+  {:bits "10101110" :sigil "玉" :color "#aeaeae" :translation "jade"}
+  {:bits "10101111" :sigil "刊" :color "#afafaf" :translation "publish"}
+  {:bits "10110000" :sigil "末" :color "#b0b0b0" :translation "end"}
+  {:bits "10110001" :sigil "未" :color "#b1b1b1" :translation "not yet"}
+  {:bits "10110010" :sigil "示" :color "#b2b2b2" :translation "show"}
+  {:bits "10110011" :sigil "打" :color "#b3b3b3" :translation "dozen"}
+  {:bits "10110100" :sigil "击" :color "#b4b4b4" :translation "hit"}
+  {:bits "10110101" :sigil "巧" :color "#b5b5b5" :translation "opportunely"}
+  {:bits "10110110" :sigil "正" :color "#b6b6b6" :translation "straight"}
+  {:bits "10110111" :sigil "扑" :color "#b7b7b7" :translation "devote"}
+  {:bits "10111000" :sigil "扒" :color "#00ff33" :translation "cling #b8b8b8"}
+  {:bits "10111001" :sigil "功" :color "#b9b9b9" :translation "achievement"}
+  {:bits "10111010" :sigil "扔" :color "#bababa" :translation "throw"}
+  {:bits "10111011" :sigil "甘" :color "#bbbbbb" :translation "sweet"}
+  {:bits "10111100" :sigil "去" :color "#bcbcbc" :translation "go"}
+  {:bits "10111101" :sigil "世" :color "#bdbdbd" :translation "life"}
+  {:bits "10111110" :sigil "古" :color "#bebebe" :translation "ancient"}
+  {:bits "10111111" :sigil "节" :color "#bfbfbf" :translation "festival"}
+  {:bits "11000000" :sigil "本" :color "#c0c0c0" :translation "source"}
+  {:bits "11000001" :sigil "术" :color "#c1c1c1" :translation "method"}
+  {:bits "11000010" :sigil "可" :color "#c2c2c2" :translation "see"}
+  {:bits "11000011" :sigil "左" :color "#c3c3c3" :translation "unorthodox"}
+  {:bits "11000100" :sigil "丙" :color "#c4c4c4" :translation "third"}
+  {:bits "11000101" :sigil "厉" :color "#c5c5c5" :translation "strict"}
+  {:bits "11000110" :sigil "石" :color "#c6c6c6" :translation "stone"}
+  {:bits "11000111" :sigil "右" :color "#c7c7c7" :translation "right"}
+  {:bits "11001000" :sigil "布" :color "#c8c8c8" :translation "spread"}
+  {:bits "11001001" :sigil "龙" :color "#c9c9c9" :translation "dragon"}
+  {:bits "11001010" :sigil "平" :color "#cacaca" :translation "flat"}
+  {:bits "11001011" :sigil "轧" :color "#cbcbcb" :translation "crush"}
+  {:bits "11001100" :sigil "灭" :color "#cccccc" :translation "extinguish"}
+  {:bits "11001101" :sigil "东" :color "#cdcdcd" :translation "east"}
+  {:bits "11001110" :sigil "卡" :color "#cecece" :translation "block"}
+  {:bits "11001111" :sigil "北" :color "#cfcfcf" :translation "north"}
+  {:bits "11010000" :sigil "占" :color "#d0d0d0" :translation "occupy"}
+  {:bits "11010001" :sigil "业" :color "#d1d1d1" :translation "job"}
+  {:bits "11010010" :sigil "旧" :color "#d2d2d2" :translation "worn"}
+  {:bits "11010011" :sigil "归" :color "#d3d3d3" :translation "return"}
+  {:bits "11010100" :sigil "帅" :color "#d4d4d4" :translation "smart"}
+  {:bits "11010101" :sigil "目" :color "#d5d5d5" :translation "eye"}
+  {:bits "11010110" :sigil "旦" :color "#d6d6d6" :translation "dawn"}
+  {:bits "11010111" :sigil "且" :color "#d7d7d7" :translation "moreover"}
+  {:bits "11011000" :sigil "叮" :color "#d8d8d8" :translation "sting"}
+  {:bits "11011001" :sigil "叶" :color "#d9d9d9" :translation "harmony"}
+  {:bits "11011010" :sigil "甲" :color "#dadada" :translation "first"}
+  {:bits "11011011" :sigil "号" :color "#dbdbdb" :translation "roar"}
+  {:bits "11011100" :sigil "申" :color "#dcdcdc" :translation "extend"}
+  {:bits "11011101" :sigil "电" :color "#dddddd" :translation "electric"}
+  {:bits "11011110" :sigil "田" :color "#dedede" :translation "field"}
+  {:bits "11011111" :sigil "由" :color "#dfdfdf" :translation "follow"}
+  {:bits "11100000" :sigil "只" :color "#e0e0e0" :translation "only"}
+  {:bits "11100001" :sigil "央" :color "#0033ff" :translation "center #e1e1e1"}
+  {:bits "11100010" :sigil "史" :color "#00ff33" :translation "history #e2e2e2"}
+  {:bits "11100011" :sigil "叼" :color "#e3e3e3" :translation "hold in the mouth"}
+  {:bits "11100100" :sigil "兄" :color "#e4e4e4" :translation "elder brother"}
+  {:bits "11100101" :sigil "叫" :color "#e5e5e5" :translation "shout"}
+  {:bits "11100110" :sigil "叨" :color "#e6e6e6" :translation "garrulous"}
+  {:bits "11100111" :sigil "另" :color "#e7e7e7" :translation "another"}
+  {:bits "11101000" :sigil "叹" :color "#e8e8e8" :translation "sigh"}
+  {:bits "11101001" :sigil "四" :color "#e9e9e9" :translation "four"}
+  {:bits "11101010" :sigil "生" :color "#eaeaea" :translation "life"}
+  {:bits "11101011" :sigil "禾" :color "#ebebeb" :translation "grain"}
+  {:bits "11101100" :sigil "失" :color "#ececec" :translation "lose"}
+  {:bits "11101101" :sigil "丘" :color "#ededed" :translation "mound"}
+  {:bits "11101110" :sigil "付" :color "#eeeeee" :translation "pay"}
+  {:bits "11101111" :sigil "仗" :color "#efefef" :translation "weild"}
+  {:bits "11110000" :sigil "代" :color "#f0f0f0" :translation "substitute"}
+  {:bits "11110001" :sigil "仙" :color "#f1f1f1" :translation "immortl"}
+  {:bits "11110010" :sigil "们" :color "#f2f2f2" :translation "plural"}
+  {:bits "11110011" :sigil "白" :color "#f3f3f3" :translation "free"}
+  {:bits "11110100" :sigil "仪" :color "#f4f4f4" :translation "apparatus"}
+  {:bits "11110101" :sigil "仔" :color "#f5f5f5" :translation "meticulous"}
+  {:bits "11110110" :sigil "他" :color "#f6f6f6" :translation "him"}
+  {:bits "11110111" :sigil "斥" :color "#f7f7f7" :translation "blame"}
+  {:bits "11111000" :sigil "瓜" :color "#f8f8f8" :translation "melon"}
+  {:bits "11111001" :sigil "乎" :color "#f9f9f9" :translation "in"}
+  {:bits "11111010" :sigil "丛" :color "#fafafa" :translation "cluster"}
+  {:bits "11111011" :sigil "用" :color "#fbfbfb" :translation "use"}
+  {:bits "11111100" :sigil "令" :color "#fcfcfc" :translation "see"}
+  {:bits "11111101" :sigil "甩" :color "#fdfdfd" :translation "throw"}
+  {:bits "11111110" :sigil "印" :color "#fefefe" :translation "mark"}
+  {:bits "11111111" :sigil "乐" :color "#ffffff" :translation ""}
+]

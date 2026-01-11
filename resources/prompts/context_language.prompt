@@ -1,0 +1,23 @@
+Return a normal response plus an EDN block.
+Append the EDN block at the end using the markers:
+---FROM-CHATGPT-EDN---
+<EDN payload here>
+---END-FROM-CHATGPT-EDN---
+
+Do not put markdown or prose inside the EDN block.
+
+Input format (EDN block labeled FROM-TATAMI-EDN):
+{:dir "library/stack-coherence"
+ :patterns [{:path "..." :arg "namespace/name" :title "..." :has-context false :block "..."}]}
+
+Output format (EDN map):
+{:contexts [{:path "..." :arg "namespace/name" :context "..."}]}
+
+Rules:
+- Only generate context lines for patterns with has-context = false.
+- Use the language of the pattern block to infer its purpose and scope.
+- Keep context to 1-2 sentences, concrete and domain-specific.
+- Specify the context in second person (\"you\") when that makes sense.
+- Do not introduce new claims; reflect what the pattern already implies.
+- Preserve tone; do not add citations.
+- One context per pattern.

@@ -1,0 +1,1835 @@
+\chapter{Categorical Specification Language}
+\label{ch-csl}
+
+CDT can be seen from various points of view and can be presented in many
+ways.  In this chapter, we present it as a specification language for
+categories (we call the specification language {\it Categorical
+Specification Language} or {\it CSL} for short).  This is not the way
+originated, and it is difficult to recognize natural properties of data
+types in this way.  We will give an alternative and more intuitive
+definition of CDT in chapter~\ref{ch-cdt}.  However, the aim of CSL is
+to give mathematically rigorous background for the more intuitive
+presentation of CDT.
+
+In applicative functional programming languages like ML, it is natural
+to see that their data types and functions form a category; each data
+type is an object; each function is a morphism; we have an identity
+function; and two functions can be composed in a usual way.  We can also
+treat other programming languages including procedural ones semantically
+as defining domains and functions, and we can see that they form a
+category.  These categories associated with programming languages
+reflect the characteristics of the programming languages.  Thus, the
+study of data types can be carried out by examining these categories.
+CSL is a specification language for these categories.
+
+Usually, a category is given by defining what an object consists of
+(e.g.\ a set for {\bf Set}, the category of sets) and what a morphism
+between objects is (e.g.\ a set function for {\bf Set}), but this is not
+the way CSL works.  We are trying to understand a category in an
+abstract manner; we do not say what an object is; instead, we specify
+how it is constructed through its relationship among other objects.  We
+saw in chapter~\ref{ch-introduction} an ML data type for lists and it
+was a parameterized data type.  We can now see it as a data type
+constructor; given a data type it constructs a new data type for the
+lists of the given data type.  Categorically, constructors of objects
+are functors and they provide structures for categories.  Remember that
+a cartesian closed category is a category with three functors, the
+terminal (constant) functor, the product functor and the exponential
+functor.  Thus, CSL specifies a category equipped with some functors.
+Because the properties of functors are often described in terms of their
+interaction with natural transformations and factorizers (e.g.\ the
+binary product functor is explained with two natural transformations,
+$\pi_1$ and $\pi_2$, and factorizer $\pair{~,~}$), CSL also specifies
+natural transformations and factorizers.
+
+Let us make a comparison with algebraic specification languages like
+CLEAR \cite{burstall-goguen-80,burstall-goguen-81}.  An algebraic
+specification consists of declarations of some sorts and some operations
+on these sorts.  Sorts are their data types.  A model of an algebraic
+specification is a many-sorted algebra.  On the other hand, a CSL
+specification consists of declarations of some functors, some natural
+transformations between them and some factorizers.  Functors correspond
+to sorts, and natural transformations and factorizers correspond to
+operations.  A model of a CSL specification is a category equipped with
+some functors, some natural transformations between them and some
+factorizers.  It is abstract in the sense that the specification does
+not distinguish between equivalent categories (an algebraic
+specification does not distinguish isomorphic algebras).  Note that, in
+general, the various models of a specification are not equivalent (e.g.\
+not all the cartesian categories are equivalent).
+
+As CSL specifies functors, the treatment of parametrized data types is
+different from algebraic specification languages.  It specifies one
+level higher objects.  The concept of parameterized data types and how
+to combine them play very essential roles in algebraic specification
+languages, but parameterized data types are treated in their meta-level
+(one level higher than the level treating algebras), that is
+specifications themselves are parameterized rather than dealing with
+parameterized sorts in specifications.  In CSL, on the other hand,
+parameterized data types are the basic objects in specifications.  In
+one specification, several parameterized data types can be declared and
+their relationship is directly specified.  Therefore, combining
+specifications does not play as important a role as it does in algebraic
+specification languages.
+
+Our goal in this chapter is to define the specification language CSL.  In
+section~\ref{sec-fun-calc}, we will introduce several notations for
+dealing with functors which will be necessary later.  In
+section~\ref{sec-csl-sig}, we will define the CSL signatures and in
+section~\ref{sec-cls-mod} the CSL structures.  The definition of CSL
+sentences and the CSL satisfaction relation will be in
+section~\ref{sec-csl-sen} which follows section~\ref{sec-fun-calc-2} in
+which we will introduce expressions involving natural transformations
+and factorizers.  Finally, in section~\ref{sec-free-cat} we will show
+that there is an initial CSL structure for each CSL theory.
+
+\section{A Functorial Calculus}
+\label{sec-fun-calc}
+
+Before giving the definition of CSL signatures, we will look at some
+aspects of functors.  This will be a kind of a functorial calculus though
+not as abstract as \cite{kelly-72} is.  \cite{kelly-72} develops a
+calculus of combining functors as we will do in this section, but for
+the purpose of solving the coherence problems, and he treats many
+variable functors quite extensively.  However, he does not say much about
+mixed variant functors which we are interested in.  We will also
+generalize variances to include free-variance and fixed-variance for
+uniform treatment.
+
+Functors are very much like ordinary functions except that functors have
+variances.  Let $F$ be a unary functor $\cC \rightarrow \cC$ and $G$ be
+a binary functor $\cC\times \cC \rightarrow \cC$.  Then, we can combine
+them to get more complex functors:
+\begin{displaymath}
+G(F(X),Y) \qquad F(G(X,F(Y))) \qquad G(F(X),G(X,Y)) \qquad \ldots
+\end{displaymath}
+We call them {\it functorial expressions}.  Of course, not every such
+expression denotes a functor.  For example, $G(X,X)$ is not a proper
+functor if $G$ is covariant in one argument and contravariant in the
+other.  It is a functor if $G$ is covariant in both arguments or
+contravariant in both arguments, or if $G$ does not depend on one of the
+arguments.
+
+In order to cope with these situations uniformly, we introduce two new
+variances: fixed-variance and free-variance.  We say that a functor
+$F(X)$ is {\it fixed-variant} in $X$ if $F$ is not functorial in $X$, that is,
+$F$ maps objects to objects, but not morphisms.  We also say that a
+functor $F(X)$ is {\it free-variant} in $X$ if $F$ does not depend on $X$.
+Therefore, when $G:\cC \times \cC \rightarrow \cC$ is covariant in the
+first argument and contravariant in the second, $G(X,X)$ is a
+fixed-variant functor.
+
+Let us introduce the symbols for variances.
+\begin{definition}
+Let {\bf Var} be the set of variances $\{ +,\; -,\; \bot,\; \top \}$:
+$+$ for covariance, $-$ for contravariance, $\bot$ for free-variance
+and $\top$ for fixed-variance.
+\end{definition}
+
+The next definition is extending the notion of opposite categories.
+\begin{definition}
+Let $\cC$ be a category.
+\begin{enumerate}
+\item $\cC^+$ is $\cC$ itself.
+\item $\cC^-$ is the opposite category of $\cC$.
+\item $\cC^\bot$ is the category which has only one object and only one
+morphism (i.e.\ the identity of the one object).  We may call the
+category {\it one point category}.
+\item $\cC^\top$ is the category which has the same objects as $\cC$ but
+no morphisms except identities. \qed
+\end{enumerate}
+\end{definition}
+In this way, we can regard the variances as functions mapping categories
+to categories (i.e.\ ${\bf Cat} \rightarrow {\bf Cat}$, where ${\bf
+Cat}$ is the category of (small) categories) or we can even regard them
+as a monoid acting on {\bf Cat}.
+
+\begin{definition}
+\label{def-var-monoid}
+$\pair{{\bf Var},\bullet}$ is a commutative monoid with unit $+$, where
+the monoid operation $\bullet: {\bf Var}\times {\bf Var} \rightarrow
+{\bf Var}$ is defined by the following table.
+\begin{displaymath}
+\begin{array}{c|c|c|c|c}
+\;\bullet\; & \;\bot\; & \;+\; & \;-\; & \;\top\; \\
+\hline
+\bot & \bot & \bot & \bot & \bot \\
+\hline
++ & \bot & + & - & \top \\
+\hline
+- & \bot & - & + & \top \\
+\hline
+\top & \bot & \top & \top & \top
+\end{array}
+\end{displaymath}
+\end{definition}
+
+\begin{proposition}
+\label{prop-var-monoid}
+$\pair{{\bf Var},\bullet}$ is a monoid acting on {\bf Cat}, that is,
+$\cC^{u\bullet v} = (\cC^u)^v$ for any $u,v \in {\bf Var}$. \\
+{\bf Proof:} We have to show $(\cC^-)^- = \cC$ (i.e.\ the opposite of
+opposite is itself) and so on, but they are trivial.
+\end{proposition}
+
+Since we will deal with many variable functors and they are functors
+from products of categories $\cC \times \cdots \times \cC$ to a category
+$\cC$, {\bf Var} action for product categories should be investigated.
+\begin{proposition}
+\label{prop-var-prod}
+{\bf Var} action on {\bf Cat} distributes over products, that is, for
+any categories $\cC$ and $\cD$
+\begin{displaymath}
+(\cC \times \cD)^u \iso \cC^u \times \cD^u.
+\end{displaymath}
+{\bf Proof:} In case $u$ is $-$, it says that the opposite of the
+product category is isomorphic to the product of the opposite categories
+and it is the case because $\pair{f,g}^{\rm op}: \pair{A,B} \rightarrow
+\pair{C,D}$ $\iff$ $\pair{f,g}: \pair{C,D} \rightarrow \pair{A,B}$
+$\iff$ $f: C \rightarrow A$ and $g: D \rightarrow B$ $\iff$ $f^{\rm op}:
+A \rightarrow C$ and $g^{\rm op}: B \rightarrow D$ $\iff$ $\pair{f^{\rm
+op},g^{\rm op}}: \pair{A,B} \rightarrow \pair{C,D}$.  The other cases
+are trivial.
+\end{proposition}
+
+We need one more preparation before talking about mixed variant
+functors.  The category $\cC^\top$ can be embedded into $\cC^+$ as well
+as into $\cC^-$ and they themselves are embedded into $\cC^\bot$, that
+is we have the following embedding functors.
+\begin{displaymath}
+\begin{array}{ccccc}
+& & \cC^+ & & \\
+& \swarrow & & \nwarrow & \\
+\cC^\bot & & & & \cC^\top \\
+& \nwarrow & & \swarrow & \\
+& & \cC^- & &
+\end{array}
+\end{displaymath}
+We introduce a partial order on ${\bf Var}$ to respect these
+embeddings.
+\begin{definition}
+$\lleq$ is a partial order on {\bf Var} such that $\bot \lleq {+} \lleq
+\top$ and $\bot \lleq {-} \lleq \top$.
+\end{definition}
+From the definition, it is clear that
+\begin{proposition}
+If $u \lleq v$, there is an embedding functor $e_{u,v}: \cC^v
+\rightarrow \cC^u$.
+\end{proposition}
+
+Now we can start talking about mixed variant functors and their
+calculus.  As a function is associated with an arity (simply a natural
+number), a mixed variant functor over a particular category $\cC$ is
+associated with a {\it varity} which is a sequence of variances.  For
+example, binary functor $G: \cC \times \cC \rightarrow \cC$ which is
+contravariant in the first argument and covariant in the second is a
+functor with a varity $-+$.
+\begin{definition}
+\label{def-pseudo-functor}
+A mixed variant functor $F$ of varity $v_1\ldots v_n$ is a (covariant)
+functor from $\cC^{v_1}\times \cdots \times \cC^{v_n}$ to $\cC$.
+\end{definition}
+When we are given a \indexed{{\bf Var}^\ast} set $\Gamma$ of primitive
+mixed variant functors, where $F \in \Gamma_{v_1\ldots v_n}$ is a
+functor of varity $v_1\ldots v_n$, we would like to establish how
+to combine these primitive functors and get more complex
+functors like $H(G(X,Y),F(X))$.
+
+Firstly, we extend the action of variances on categories to that on
+functors.  For example, from a contravariant functor $F: \cC^-
+\rightarrow \cC$ we get a covariant functor $F^-: \cC \rightarrow \cC^-$
+as $F^-(f: A \rightarrow B) \defeq F(f^{\rm op}: B \rightarrow A)$.
+\begin{definition}
+\label{def-fun-var-act}
+For a functor $F: \cC \rightarrow \cD$,
+\begin{enumerate}
+\item a functor $F^+ :\cC^+ \rightarrow \cD^+$ is $F$ itself,
+\item a functor  $F^- :\cC^- \rightarrow \cD^-$ is given by
+$F^-(A) = A$ for an object $A$ in $\cC$ and $F^-(f^{\rm op}) =
+F(f)^{\rm op}$ for a morphism $f$ in $\cC$,
+\item a functor $F^\bot:\cC^\bot \rightarrow \cD^\bot$ is the
+identity functor since both $\cC^\bot$ and $\cD^\bot$ are
+the one point category, and
+\item a functor $F^\top:\cC^\top \rightarrow \cD^\top$ has the same
+object mapping as $F$ but no morphism mapping.
+\end{enumerate}
+\begin{displaymath}
+\begin{picture}(65,50)
+\put(10,25){\makebox(0,0){$F:\cC \rightarrow \cD$}}
+\put(50,45){\makebox(0,0){$F^\top: \cC^\top \rightarrow \cD^\top$}}
+\put(50,25){\makebox(0,0){$F^-: \cC^- \rightarrow \cD^-$}}
+\put(50,5){\makebox(0,0){$F^\bot: \cC^\bot \rightarrow \cD^\bot$}}
+\put(15,30){\vector(4,3){20}}
+\put(20,25){\vector(1,0){15}}
+\put(15,20){\vector(4,-3){20}}
+\put(80,0){\makebox(0,0)[b]{\qed}}
+\end{picture}
+\end{displaymath}
+\end{definition}
+This definition is forced from the definition of $\cC^u$, so ${\bf Var}$
+action has more structure.
+
+\begin{proposition}
+For a functor $F: \cC \rightarrow \cD$, $(F^u)^v = F^{u\bullet v}$. \\
+{\bf Proof:} We have to check this for all the combinations of $u$ and
+$v$.  For example, $(F^-)^\top = F^\top$ is true because $F^-$ only
+changes the mapping of morphisms but $(F^-)^\top$ forgets it.
+\end{proposition}
+
+We have the two propositions which give us the basis for combining mixed
+variant functors.
+\begin{proposition}
+\label{prop-fun-comp}
+For functors $F: \cC^{u_1}\times\cdots\times\cC^{u_n} \rightarrow
+\cC^{v_1}\times\cdots\times\cC^{v_m}$ and $G:
+\cC^{v_1}\times\cdots\times\cC^{v_m} \rightarrow \cC$ (i.e.\ varity
+$v_1\ldots v_m$), $G\circ F$ is a functor of
+$\cC^{u_1}\times\cdots\times\cC^{u_n} \rightarrow \cC$ (i.e. varity
+$u_1\ldots u_n$).
+\begin{displaymath}
+\begin{picture}(110,10)
+\put(15,5){\makebox(0,0){$\cC^{u_1}\times\cdots\times\cC^{u_n}$}}
+\put(40,7){\makebox(0,0)[b]{$F$}}
+\put(65,5){\makebox(0,0){$\cC^{v_1}\times\cdots\times\cC^{v_m}$}}
+\put(90,7){\makebox(0,0)[b]{$G$}}
+\put(105,5){\makebox(0,0){$\cC$}}
+\put(30,5){\vector(1,0){20}}
+\put(80,5){\vector(1,0){20}}
+\end{picture}
+\end{displaymath}
+{\bf Proof:} Trivial from the definition of composition of functors.
+\end{proposition}
+
+\begin{proposition}
+\label{prop-fun-pair}
+For functors $F_1: \cC^{u_1}\times\cdots\times\cC^{u_n} \rightarrow
+\cC^{v_1}, \ldots, F_m:\cC^{u_1}\times\cdots\times\cC^{u_n} \rightarrow
+\cC^{v_m}$, $\pair{F_1,\ldots,F_m}$ is a functor of
+$\cC^{u_1}\times\cdots\times\cC^{u_n} \rightarrow
+\cC^{v_1}\times\cdots\times\cC^{v_m}$.
+\begin{displaymath}
+\begin{picture}(145,50)
+\put(15,25){\makebox(0,0){$\cC^{u_1}\times\cdots\times\cC^{u_n}$}}
+\put(35,40){\makebox(0,0)[b]{$F_1$}}
+\put(35,35){\makebox(0,0){$\vdots$}}
+\put(35,27){\makebox(0,0)[b]{$F_i$}}
+\put(35,20){\makebox(0,0){$\vdots$}}
+\put(35,10){\makebox(0,0)[t]{$F_m$}}
+\put(50,45){\makebox(0,0){$\cC^{v_1}$}}
+\put(50,35){\makebox(0,0){$\vdots$}}
+\put(50,25){\makebox(0,0){$\cC^{v_i}$}}
+\put(50,15){\makebox(0,0){$\vdots$}}
+\put(50,5){\makebox(0,0){$\cC^{v_m}$}}
+\put(20,30){\vector(2,1){25}}
+\put(30,25){\vector(1,0){15}}
+\put(20,20){\vector(2,-1){25}}
+\put(60,25){\makebox(0,0){$\implies$}}
+\put(80,25){\makebox(0,0){$\cC^{u_1}\times\cdots\times\cC^{u_n}$}}
+\put(105,27){\makebox(0,0)[b]{$\pair{F_1,\ldots,F_m}$}}
+\put(130,25){\makebox(0,0){$\cC^{v_1}\times\cdots\times\cC^{v_m}$}}
+\put(95,25){\vector(1,0){20}}
+\end{picture}
+\end{displaymath}
+{\bf Proof:} It is trivial from the definition of products in {\bf Cat}.
+\end{proposition}
+The two propositions allow us to combine functors only if the source and
+target categories match exactly.  For example, $F: \cC \rightarrow \cC$
+and $G: \cC^- \rightarrow \cC$ cannot be composed into $G\circ F$.
+Therefore, we have to first convert functors of
+$\cC^{v_1}\times\cdots\times\cC^{v_n} \rightarrow \cC$ into those of
+$\cC^{v'_1}\times\cdots\times\cC^{v'_n} \rightarrow \cC^u$.  There are
+two ways to do so.
+
+Firstly, from definition~\ref{def-fun-var-act}, functor $F$ of
+varity $v_1\ldots v_n$, that is $F$ is a functor of
+$\cC^{v_1}\times\cdots\times\cC^{v_n} \rightarrow \cC$, into
+\begin{displaymath}
+F^u:(\cC^{v_1}\times\cdots\times\cC^{v_n})^u \rightarrow \cC^u \iso
+\cC^{v_1\bullet u}\times\cdots\times\cC^{v_n\bullet u} \rightarrow \cC^u
+\end{displaymath}
+The isomorphism is from proposition~\ref{prop-var-prod} and
+proposition~\ref{prop-var-monoid}.
+
+The other way of conversion is using embedding functors and coercing
+functors into greater variances (e.g.\ covariant functor can be a fixed
+variant functor).
+\begin{definition}
+\label{def-fun-coerce}
+If $u_1 \lleq v_1,\ldots, u_n \lleq v_n$ and $F$ is a functor of
+varity $u_1\ldots u_n$, we can coerce it to a functor of varity
+$v_1\ldots v_n$ by
+\begin{displaymath}
+F|_{u_1\ldots u_n}^{v_1\ldots v_n} \defeq
+F\circ(e_{u_1,v_1}\times\cdots\times e_{u_n,v_n}).
+\end{displaymath}
+\begin{displaymath}
+\begin{picture}(70,30)
+\put(25,25){\makebox(0,0){$\cC^{v_1}\times\cdots\times\cC^{v_n}$}}
+\put(23,15){\makebox(0,0)[r]{$e_{u_1,v_1}\times\cdots\times
+e_{u_n,v_n}$}}
+\put(25,5){\makebox(0,0){$\cC^{u_1}\times\cdots\times\cC^{u_n}$}}
+\put(50,7){\makebox(0,0)[b]{$F$}}
+\put(65,5){\makebox(0,0){$\cC$}}
+\put(25,22.5){\vector(0,-1){15}}
+\put(40,5){\vector(1,0){22.5}}
+\end{picture}
+\end{displaymath}
+We may write $F|^{v_1\ldots v_n}$ when $u_1\ldots u_n$ is obvious.
+\end{definition}
+
+Let us now define the composition of mixed variant functors.
+\begin{definition}
+\label{def-mixed-fun-comp}
+Let $F$ be a functor of varity $u_1\ldots u_n$ and
+$G_1,\ldots,G_n$ be functors of varity $v_{11}\ldots
+v_{1m},\ldots,v_{n1}\ldots v_{nm}$, respectively.  Then we have a
+functor $F[G_1,\ldots,G_n]$ of varity $w_1\ldots w_m$ where $w_i
+\defeq u_1\bullet v_{1i} \lub \cdots \lub u_n\bullet
+v_{ni}$\footnote{{\bf Var} is a commutative semiring with unit: $\lub$ as
+its addition and $\bullet$ as its multiplication.  If we express
+varities as vectors, then varity of $F[G_1,\ldots,G_n]$ can be computed
+by the following matrix multiplication.
+\begin{displaymath}
+(w_1,\ldots,w_m) = (u_1,\ldots,u_n) \left(
+\begin{array}{ccc}
+v_{11} & \ldots & v_{1m} \\
+\vdots & \ddots & \vdots \\
+v_{n1} & \ldots & v_{nm} \\
+\end{array}
+\right)
+\end{displaymath}
+}.  The definition of the functor is
+\begin{displaymath}
+F[G_1,\ldots,G_n] \defeq F \circ \pair{G_1^{u_1}|^{w_1\ldots
+w_m},\ldots,G_n^{u_n}|^{w_1\ldots w_m}}
+\end{displaymath}
+{\bf Proof of well-definedness:} $G_i$ is a functor of
+$\cC^{v_{i1}}\times\cdots\times\cC^{v_{im}} \rightarrow \cC$.
+$G_i^{u_i}$ is a functor of $\cC^{u_i\bullet
+v_{i1}}\times\cdots\times\cC^{u_i\bullet v_{im}} \rightarrow \cC^{u_i}$.
+Since $u_i\bullet v_{i1} \lleq w_1, \ldots, u_i\bullet v_{im} \lleq
+w_m$, from definition~\ref{def-fun-coerce}
+$G_i^{u_i}|^{w_1\ldots w_m}$ is a functor of
+$\cC^{w_1}\times\cdots\times\cC^{w_m} \rightarrow \cC^{u_i}$.  From
+proposition~\ref{prop-fun-pair} 
+$\pair{G^{u_1}|^{w_1\ldots w_m},\ldots,G^{u_n}|^{w_1\ldots w_m}}$ is a
+functor of $\cC^{w_1}\times\cdots\times\cC^{w_m} \rightarrow
+\cC^{u_1}\times\cdots\times\cC^{u_n}$.  Therefore, from
+proposition~\ref{prop-fun-comp},
+\begin{displaymath}
+F\circ \pair{G^{u_1}|^{w_1\ldots w_m},\ldots,G^{u_n}|^{w_1\ldots w_m}}:
+\cC^{w_1}\times\cdots\times\cC^{w_m} \rightarrow \cC
+\end{displaymath}
+is a functor of varity $w_1\ldots w_m$.
+\end{definition}
+The variances of $G_1,\ldots,G_n$ are appropriately modified according
+to the varity of $F$ and then the least upper bound is taken so that we
+can pair them together.
+
+We need some lemmas to show the associativity of the composition.
+\begin{lemma}
+Let $u \lleq v$ and $F$ be a functor of varity $w_1\ldots w_n$.
+\begin{enumerate}
+\item For any $w$, $u\bullet w \lleq v\bullet w$ and $(e_{u,v})^w =
+e_{u\bullet w,v\bullet w}$.
+\item The following diagram commutes.
+\begin{displaymath}
+\begin{picture}(85,30)
+\put(30,25){\makebox(0,0){$\cC^{v\bullet
+w_1}\times\cdots\times\cC^{v\bullet w_n}$}}
+\put(28,15){\makebox(0,0)[r]{$e_{u,v}^{w_1}\times\cdots\times e_{u,v}^{w_n}$}}
+\put(30,5){\makebox(0,0){$\cC^{u\bullet
+w_1}\times\cdots\times\cC^{u\bullet w_n}$}}
+\put(60,27){\makebox(0,0)[b]{$F^v$}}
+\put(60,15){\makebox(0,0){\commute}}
+\put(60,7){\makebox(0,0)[b]{$F^u$}}
+\put(75,25){\makebox(0,0){$\cC^v$}}
+\put(77,15){\makebox(0,0)[l]{$e_{u,v}$}}
+\put(75,5){\makebox(0,0){$\cC^v$}}
+\put(47.5,25){\vector(1,0){22.5}}
+\put(47.5,5){\vector(1,0){22.5}}
+\put(30,22.5){\vector(0,-1){15}}
+\put(75,22.5){\vector(0,-1){15}}
+\end{picture}
+\end{displaymath}
+In other words, the action of {\bf Var} on functors is natural with
+respect to the partial order $\lleq$.
+\item $e_{u,v}\circ F^v = F^u|^{w_1\bullet v\ldots w_n\bullet v}$
+\item $F|^{u_1\ldots u_n}|^{v_1\ldots v_n} = F|^{u_1\lub v_1\ldots
+u_n\lub v_n}$
+\item $(F\circ G)^u = F^u\circ G^u$
+\item $\pair{F_1,\ldots,F_n}^u = \pair{F_1^u,\ldots,F_n^u}$
+\item $(F|^{v_1\ldots v_n})^u = F^u|^{v_1\bullet u\ldots v_n\bullet u}$
+\end{enumerate}
+{\bf Proof:} We have to check any pairs of $u$ and $v$ 1 and 2 hold from
+the definitions.  3 follows 2. 4, 5 and 6 are
+easy to show and 7 follows them.
+\begin{displaymath}
+\displaylines{
+\qquad (F|^{v_1\ldots v_n})^u = (F\circ (e_{w_1,v_1} \times \cdots \times
+e_{w_n,v_n}))^u \hfill \cr
+\qquad \llap{${}={}$} F^u \circ (e_{w_1,v_1} \times \cdots \times
+e_{w_n,v_n})^u = F^u \circ ((e_{w_1,v_1})^u \times \cdots \times
+(e_{w_n,v_n})^u) \hfill \cr
+\qquad \llap{${}={}$} F^u \circ (e_{w_1\bullet u,v_1\bullet u} \times
+\cdots \times e_{w_n\bullet u,v_n\bullet u}) = F^u|^{v_1\bullet u\ldots
+v_n\bullet u} \hfill {\qed} \cr}
+\end{displaymath}
+\end{lemma}
+
+\begin{proposition}
+\label{prop-fun-comp-assoc}
+Let $F$, $G_1,\ldots,G_n$ and $H_1,\ldots,H_m$ be functors of the
+following varities:
+\begin{displaymath}
+\begin{array}{c}
+F: u_1\ldots u_n \\
+G_1: v_{11}\ldots v_{1m},\quad \ldots \quad, G_n: v_{n1}\ldots v_{nm} \\
+H_1: w_{11}\ldots w_{1l},\quad \ldots \quad, H_n: w_{m1}\ldots w_{ml} \\
+\end{array}
+\end{displaymath}
+Then, the following equality between functors holds:
+\begin{displaymath}
+(F[G_1,\ldots,G_n])[H_1,\ldots,H_m] =
+F[G_1[H_1,\ldots,H_m],\ldots,G_n[H_1,\ldots,H_m]].
+\end{displaymath}
+{\bf Proof:} Let varity $a_1\ldots a_m$, $b_{11}\ldots
+b_{1l},\ldots,b_{n1}\ldots b_{nl}$ and $c_1\ldots c_l$ be
+\begin{displaymath}
+\displaylines{
+\qquad (a_1,\ldots,a_m) \defeq (u_1,\ldots,u_n) \left(
+\begin{array}{ccc}
+v_{11} & \ldots & v_{1m} \\
+\vdots & \ddots & \vdots \\
+v_{n1} & \ldots & v_{nm} \\
+\end{array}
+\right), \hfill \cr
+\qquad \left(
+\begin{array}{ccc}
+b_{11} & \ldots & b_{1l} \\
+\vdots & \ddots & \vdots \\
+b_{n1} & \ldots & b_{nl} \\
+\end{array}
+\right) \defeq  \left(
+\begin{array}{ccc}
+v_{11} & \ldots & v_{1m} \\
+\vdots & \ddots & \vdots \\
+v_{n1} & \ldots & v_{nm} \\
+\end{array}
+\right) \left(
+\begin{array}{ccc}
+w_{11} & \ldots & w_{1l} \\
+\vdots & \ddots & \vdots \\
+w_{m1} & \ldots & w_{ml} \\
+\end{array}
+\right), \quad \mbox{and} \hfill \cr
+\qquad (c_1,\ldots,c_l) \defeq (u_1,\ldots,u_n) \left(
+\begin{array}{ccc}
+v_{11} & \ldots & v_{1m} \\
+\vdots & \ddots & \vdots \\
+v_{n1} & \ldots & v_{nm} \\
+\end{array}
+\right) \left(
+\begin{array}{ccc}
+w_{11} & \ldots & w_{1l} \\
+\vdots & \ddots & \vdots \\
+w_{m1} & \ldots & w_{ml} \\
+\end{array}
+\right). \hfill \cr}
+\end{displaymath}
+Then,
+\begin{displaymath}
+\displaylines{
+\qquad (F[G_1,\ldots,G_n])[H_1,\ldots,H_m] \hfill \cr
+\qquad \llap{${}={}$} F\circ \pair{G_1^{u_1}|^{a_1\ldots
+a_m},\ldots,G_n^{u_n}|^{a_1\ldots a_m}} \circ
+\pair{H_1^{a_1}|^{c_1\ldots c_l},\ldots,H_m^{a_m}|^{c_1\ldots c_l}}
+\hfill \cr
+\qquad \llap{${}={}$} F\circ \pair{G_1^{u_1}|^{a_1\ldots
+a_m} \circ \pair{H_1^{a_1}|^{c_1\ldots c_l},\ldots},\ldots} \hfill \cr
+\qquad \llap{${}={}$} F\circ \pair{G_1^{u_1} \circ (e_{v_{11}\bullet
+u_1,a_1}\times\cdots\times e_{v_{1m}\bullet u_1,a_m}) \circ
+\pair{H_1^{a_1}|^{c_1\ldots c_l},\ldots},\ldots} \hfill \cr
+\qquad \llap{${}={}$} F\circ \pair{G_1^{u_1} \circ
+\pair{e_{v_{11}\bullet u_1,a_1} \circ H_1^{a_1}|^{c_1\ldots
+c_l},\ldots},\ldots} \hfill \cr
+\qquad \llap{${}={}$} F\circ \pair{G_1^{u_1} \circ
+\pair{H^{v_11\bullet u_1}|^{w_{11}\bullet v_1\bullet u_1\ldots
+w_{1l}\bullet v_1\bullet u_1}|^{c_1\ldots c_l},\ldots},\ldots} \hfill \cr
+\qquad \llap{${}={}$} F\circ \pair{G_1^{u_1} \circ
+\pair{H^{v_11\bullet u_1}|^{c_1\ldots c_l},\ldots},\ldots} \hfill \cr}
+\end{displaymath}
+whereas
+\begin{displaymath}
+\displaylines{
+\qquad F[G_1[H_1,\ldots,H_m],\ldots,G_n[H_1,\ldots,H_m]] \hfill \cr
+\qquad \llap{${}={}$} F \circ \pair{(G_1\circ
+\pair{H_1^{v_{11}}|^{b_{11}\ldots
+b_{1l}},\ldots,H_m^{v_{1m}}|^{b_{11}\ldots b_{1l}}})^{u_1}|^{c_1\ldots
+c_l},\ldots} \hfill \cr
+\qquad \llap{${}={}$} F \circ \pair{G_1^{u_1} \circ
+\pair{H_1^{v_{11}\bullet u_1}|^{b_{11}\bullet u_1\ldots
+b_{1l}\bullet u_1}|^{c_1\ldots c_l},\ldots},\ldots} \hfill \cr
+\qquad \llap{${}={}$} F \circ \pair{G_1^{u_1} \circ
+\pair{H_1^{v_{11}\bullet u_1}|^{c_1\ldots c_l},\ldots},\ldots} \hfill \cr}
+\end{displaymath}
+Therefore, the proposition holds.
+\end{proposition}
+Mixed variant functors form an algebraic theory but with an extra
+structure.  Mixed variant functors are functions between four sorts,
+$+$, $-$, $\bot$ and $\top$.
+
+Finally, we can show what functorial expressions like $H(G(X,Y),F(X))$
+mean.  Let $\Gamma$ be a \indexed{{\bf Var}^\ast} set of primitive
+functor names\footnote{From now on, we distinguish names (or
+symbols) from what they denote.}.  Then, we define
+\begin{displaymath}
+\displaylines{
+\qquad {\bf FE}(\Gamma) \defeq \parbox[t]{4.5in}{the set of terms
+constructed from $\Gamma$ and variables like term algebras.} \hfill \cr
+\qquad {\bf CFE}(\Gamma) \defeq \{\; \lambda(X_1,\ldots,X_n).E \;\mid\;
+\parbox[t]{3in}{$E\in {\bf FE}(\Gamma)$ and $X_1,\ldots,X_n$
+includes all the variables in $E$ $\;\}$} \hfill \cr}
+\end{displaymath}
+We call elements of ${\bf FE}(\Gamma)$ {\it functorial expressions} over
+$\Gamma$ and call elements of ${\bf CFE}(\Gamma)$ {\it closed functorial
+expressions} over $\Gamma$.  As we can convert any lambda closed term in
+a term algebra to a morphism in the corresponding algebraic theory, we
+can convert any closed functorial expression into functors.  Let $\xi$
+be an assignment of functor symbols in $\Gamma_{v_1\ldots v_n}$ to real
+functors of varity $v_1\ldots v_n$ in $\cC$, that is, $\xi$ is a
+\indexed{{\bf Var}^\ast} function such that
+\begin{displaymath}
+\xi_{v_1\ldots v_n}: \Gamma_{v_1\ldots v_n} \rightarrow {\bf
+Funct}(\cC^{v_1}\times\cdots\times\cC^{v_n},\cC)
+\end{displaymath}
+where ${\bf Funct}(\cD,\cE)$ is the category of functors from $\cD$ to
+$\cE$.  We may write $\xi F$ for $\xi_{v_1\ldots v_n}(F)$.  We can
+extend assignment $\xi$ to that over ${\bf CFE}(\Gamma)$ as follows
+\begin{displaymath}
+\xi(\lambda(X_1,\ldots,X_n).E) \defeq \xi_{X_1,\ldots,X_n}(E)
+\end{displaymath}
+where $\xi_{X_1,\ldots,X_n}$ assigns expressions in ${\bf
+FE}(\Gamma)$ which have $X_1,\ldots,X_n$ as variables to functors
+of $n$ variables and is defined by
+\begin{displaymath}
+\displaylines{
+\qquad \xi_{X_1,\ldots,X_n}(X_i) \defeq \Pi^n_i:
+\cC^\bot\times\cdots\cC^+\times\cdots\cC^\bot \rightarrow \cC \hfill \cr
+\qquad \xi_{X_1,\ldots,X_n}(F(E_1,\ldots,E_n)) \defeq \xi
+F[\xi_{X_1,\ldots,X_n}(E_1),\ldots,\xi_{X_1,\ldots,X_n}(E_n)] \hfill \cr}
+\end{displaymath}
+where $\Pi^n_i$ is the $i$th projection of the $n$ fold product of $\cC$.
+
+\begin{example}
+Let $\Gamma$ consist of a unary functor symbol $F$ which is covariant, a
+functor symbol $G$ of varity $++$ and a functor symbol $H$ of varity
+$-+$.  Let $\xi$ be an assignment of $\Gamma$.  Then,
+$\lambda(X,Y).H(G(X,Y),F(X))$ denotes the following functor by $\xi$.
+\begin{displaymath}
+\xi(\lambda(X,Y).H(G(X,Y),F(X))) = \xi H[\xi
+G[\Pi^2_1,\Pi^2_2],\xi F[\Pi^2_1]]
+\end{displaymath}
+The varity of $\Pi^2_1$ is $+\bot$, that of $\xi F$ is $+$ and,
+therefore, from definition~\ref{def-mixed-fun-comp}, $\xi F[\Pi^2_1]$
+has varity $+\bot$.  The varity of $\Pi^2_1$ is $+\bot$, that of
+$\Pi^2_2$ is $\bot+$, that of $\xi G$ is $++$ and from
+definition~\ref{def-mixed-fun-comp} the varity of $\xi
+G[\Pi^2_1,\Pi^2_2]$ is
+\begin{displaymath}
+({+}, {+}) \left(
+\begin{array}{ccc}
+{+} &\; & {\bot} \\
+{\bot} &\; & {+} \\
+\end{array}
+\right) = ({+}\bullet{+}\lub{+}\bullet{\bot},
+{+}\bullet{\bot}\lub{+}\bullet{+}) = ({+}\lub{\bot}, {\bot}\lub{+}) =
+({+}, {+})
+\end{displaymath}
+Finally, the varity of the whole functor is
+\begin{displaymath}
+({-}, {+}) \left(
+\begin{array}{ccc}
+{+} &\; & {+} \\
+{+} &\; & {\bot} \\
+\end{array}
+\right) = ({-}\bullet{+}\lub{+}\bullet{+},
+{-}\bullet{+}\lub{+}\bullet{\bot}) = ({-}\lub{+}, {-}\lub{\bot}) =
+({\top}, {-}),
+\end{displaymath}
+so it is fixed-variant in $X$ and contravariant in $Y$.
+\end{example}
+
+The last proposition in this section is to establish the relationship
+between the syntactic substitution of functorial expressions and the
+composition of functors defined in
+definition~\ref{def-mixed-fun-comp}.
+\begin{proposition}
+\label{prop-fun-comp-subst}
+Let
+\begin{displaymath}
+\lambda(X_1,\ldots,X_n).E \qquad \mbox{and} \qquad
+\lambda(Y_1,\ldots,Y_m).E_1,\; \ldots,\; \lambda(Y_1,\ldots,Y_m).E_n
+\end{displaymath}
+be closed functorial expressions.  Then,
+\begin{displaymath}
+\displaylines{
+\qquad \xi(\lambda(X_1,\ldots,X_n).E)[\xi(\lambda(Y_1,\ldots,Y_m).E_1),\ldots,
+\xi(\lambda(Y_1,\ldots,Y_m).E_n)]\hfill \cr
+\hfill {} = \xi(\lambda(Y_1,\ldots,Y_m).E[E_1/X_1,\ldots,E_n/X_n])
+\qquad \cr}
+\end{displaymath}
+where $E[E_1/X_1,\ldots,E_n/X_n]$ is $E$ in which $X_1,\ldots,X_n$ are
+replaced by $E_1,\ldots,E_n$, respectively. \\
+{\bf Proof:} We can easily prove it by structural induction on $E$ using proposition~\ref{prop-fun-comp-assoc}
+\end{proposition}
+From this correspondence, for closed functorial expression $K$ of $n$
+variables and $L_1,\ldots,L_n$ of $m$ variables, we write
+\begin{displaymath}
+K[L_1,\ldots,L_n]
+\end{displaymath}
+for a closed functorial expression of $m$ variables which is obtained by
+replacing $n$ variables in $K$ by $L_1,\ldots,L_n$.  Then, the
+proposition is
+\begin{displaymath}
+\xi(K[L_1,\ldots,L_n]) = \xi K[\xi L_1,\ldots,\xi L_n].
+\end{displaymath}
+
+\section[Signatures of Categorical Specification Language]{Signatures of
+Categorical Specification\\ Language}
+\label{sec-csl-sig}
+
+A specification normally consists of a {\it signature}, which says what
+kind of sorts there are and what kinds of operations there are, and a
+set of {\it sentences} (or {\it equations}), which give properties of
+the operations.  A specification defines a class of {\it models} which
+have what the signature says and satisfies the sentences.  Therefore, in
+order to define a specification language, we have to define what its
+signatures are, what its sentences are and what its models are.
+However, it is often convenient to define, first, models without being
+constrained by sentences and, then, define a {\it satisfaction relation}
+between a statement and a model determining whether the statement is
+true in the model or not.  A model which satisfies all the sentences is
+called a {\it theory model}.  See {\it institutions}
+\cite{goguen-burstall-83} for a categorical abstract definition of what
+specification languages are.
+
+A CSL signature will be divided into three parts; in the first part,
+we will declare some names for functors, which will serve as parameterized
+data types (or data type constructors); in the second part, we will
+declare some names for natural transformations, which will serve as
+polymorphic functions over the parameterized data types; and in the
+third part, we will declare some names for factorizers (or mediating
+morphisms), which will be necessary to put initial or final constrains
+on the data types.
+
+The first part can be presented as a \indexed{{\bf Var}^\ast} set
+$\Gamma$.  $F$ in $\Gamma_{v_1\ldots v_n}$ is said to have varity
+$v_1\ldots v_n$.  We may write $F(v_1,\ldots,v_n)$ to indicate this.
+
+$\Gamma$ looks almost like an equational signature for algebraic
+specification languages.  It is as if {\bf Var} were the set of sorts
+and $\Gamma$ were a set of operations over the sorts.  The only
+difference is that $\Gamma$ is not a \indexed{{\bf Var}^\ast\times{\bf
+Var}} set but simply a \indexed{{\bf Var}^\ast} set.  This is because we
+can apply {\bf Var} to functors to get other functors as we explained in
+definition~\ref{def-fun-var-act}, so it is sufficient to give $\Gamma$ as
+a \indexed{{\bf Var}^\ast} set.
+
+Note that $\Gamma$ is one sorted.  Each signature describes only one
+category.  However, because we are dealing with one level higher
+objects, it has the power to describe more than one data type (or sort)
+inside one signature.  We will illustrate this later in this section.
+
+In the second part, a CSL signature introduces some symbols for natural
+transformations.  Normally, a natural transformation is defined as
+follows: given two functors $F,G:\cC \rightarrow \cD$, a natural
+transformation $\alpha: F \natrightarrow G$ is a function which assigns
+to each $A \in |\cC|$ a morphism $\alpha_A: F(A) \rightarrow G(A)$ such
+that for any morphism $f: A \rightarrow B$ in $\cC$ the following
+diagram commutes.
+\begin{displaymath}
+\sqdiagram{F(A)}{\alpha_A}{G(A)}{F(f)}{G(f)}{F(B)}{\alpha_B}{G(B)}{}
+\end{displaymath}
+
+As we have seen in section~\ref{sec-fun-calc}, closed functorial
+expressions provide more complicated functors constructed from primitive
+functors in $\Gamma$.  Let $\Lambda$ be ${\bf CFE}(\Gamma)$.  We index
+the set of natural transformations by two closed functorial expressions,
+that is, the second part of a CSL signature is given by a
+\indexed{\Lambda\times \Lambda} set $\Delta$; $\alpha \in \Delta_{K,L}$
+will denote a natural transformation $\xi K \natrightarrow \xi L$, where
+$\xi K$ and $\xi L$ will be the denotations of $K$ and $L$,
+respectively.  We may write $\alpha: K \natrightarrow L$ to indicate
+this.  Since a natural transformation should go between functors of the
+same number of variables, $\Delta_{K,L}$ should be empty when $K$ and
+$L$ have different number of variables.  Even if they have the same
+number of variables, their variances may be different.  In that case, we
+take the least upper bound of two variances.
+
+The third and the final part of a CSL signature introduces symbols for
+factorizers (or mediating morphisms).  In general, a factorizer is an
+isomorphism associated with an adjunction.  If $F \adjoint G$ where $F:
+\cC \rightarrow \cD$ and $G: \cD \rightarrow \cC$, the factorizer $\psi$
+gives the following natural isomorphism between hom sets.
+\begin{displaymath}
+\psi: \Hom{\cD}{F(A)}{B} \stackrel{\iso}{\longrightarrow} \Hom{\cC}{A}{G(B)}
+\end{displaymath}
+For example, the factorizer associated with the binary product functor
+`prod' ($: \cC \times \cC \rightarrow \cC$) is `pair' which gives for
+any two morphisms $f: C \rightarrow A$ and $g: C \rightarrow B$ a
+morphism ${\rm pair}(f,g): C \rightarrow {\rm prod}(A,B)$.  We can write
+this situation as the following rule.
+\begin{displaymath}
+\logicrule{C \rubberrightarrow{f} A \qquad C \rubberrightarrow{g}
+B}{C \rubberrightarrow{{\rm pair}(f,g)} {\rm prod}(A,B)}
+\end{displaymath}
+
+In CSL, factorizers are given by a \indexed{(\Lambda\times
+\Lambda)^\ast\times(\Lambda\times \Lambda)} set $\Psi$ ($\Lambda =
+{\bf CFE}(\Gamma)$). The index $\scriptstyle (\Lambda\times \Lambda)^\ast$
+specifies the type of morphisms to which a factorizer can be applied and
+the index $\scriptstyle \Lambda\times \Lambda$ specifies the type of morphisms
+obtained by applying the factorizer.  For
+\begin{displaymath}
+\psi \in \Psi_{\pair{K_1,L_1}\ldots\pair{K_m,L_m},\pair{K,L}},
+\end{displaymath}
+we may write it as the following rule.
+\begin{displaymath}
+\logicrule{f_1: K_1 \rightarrow L_1 \quad\ldots\quad f_m: K_m
+\rightarrow L_m}{\psi(f_1,\ldots,f_m): K \rightarrow L}
+\end{displaymath}
+where $f_1,\ldots,f_n$ are auxiliary names of morphisms introduced for
+this rule.  As we have restricted the indexed set $\Delta$, $\Psi$ should be
+indexed by functors of the same number of variables, and also we take
+the least upper bound of the variances and regard it as the overall
+variance.
+
+Hence, we come to the definition of CSL signatures.
+\begin{definition}
+A {\it CSL signature} is a triple $\pair{\Gamma,\Delta,\Psi}$, where $\Gamma$ is a \indexed{{\bf Var}^\ast} set, $\Delta$ is a
+\indexed{\Lambda\times \Lambda} set (where $\Lambda = {\bf
+CFE}(\Gamma)$) for natural transformations and $\Psi$ is a
+\indexed{(\Lambda\times \Lambda)^\ast\times(\Lambda\times \Lambda)} set for
+factorizers.
+%\footnote{If we had introduced the terminology of dependent
+%data types \cite{burstall-lampson-84}, we could have presented CSL
+%signatures as the following {\it dependent product}:
+%\begin{displaymath}
+%\displaylines{
+%\qquad \Gamma\in{\bf Set}({\bf Var}^\ast) \depprod ({\bf Set}({\bf
+%CFE}(\Gamma)\times{\bf CFE}(\Gamma)) \times {\bf Set}(({\bf
+%CFE}(\Gamma)\times{\bf CFE}(\Gamma))^\ast \times {} \hfill \cr
+%\hfill ({\bf CFE}(\Gamma)\times{\bf CFE}(\Gamma)))) \qquad \cr}
+%\end{displaymath}
+%where ${\bf Set}(I)$ denotes the class of all $I$-indexed sets.}
+As a restriction to the triple, $\Delta_{K,L}$ should be empty if $K$ and $L$
+has the different number of variables and
+$\Psi_{\pair{\pair{K_1,L_1}\ldots\pair{K_m,L_m},\pair{K,L}}}$ should
+also be empty if $K_i$, $L_i$, $K$ and $L$ do not have the same number
+of variables.
+\end{definition}
+
+As an example, we will give a CSL signature for cartesian closed
+categories.
+\begin{example}
+\label{ex-ccc-sig}
+A cartesian closed category can be characterized as a category having
+three special functors: terminal object `1' (which is a constant
+functor), binary product `prod' and exponential `exp'.  Therefore,
+\begin{displaymath}
+\Gamma_{()} = \{ {\rm 1} \}, \qquad \Gamma_{{+}{+}} = \{ {\rm prod} \}, \qquad
+\Gamma_{{-}{+}} = \{ {\rm exp} \},
+\end{displaymath}
+where `$()$' denotes the empty string in ${\bf Var}^\ast$.  The rest of
+$\Gamma_s$ are empty.  We sometimes write the index set $\Gamma$ as
+\begin{displaymath}
+\{ {\rm 1},\; {\rm prod}(+,+),\; {\rm exp}(-,+) \}.
+\end{displaymath}
+
+The product functor `prod' is associated with two natural
+transformations which give projection morphisms.
+\begin{displaymath}
+\displaylines{
+\pi_1: \lambda(X,Y).{\rm prod}(X,Y) \natrightarrow \lambda(X,Y).X\cr
+\pi_2: \lambda(X,Y).{\rm prod}(X,Y) \natrightarrow \lambda(X,Y).Y\cr}
+\end{displaymath}
+If there is no ambiguity, we may write them by listing their components
+as follows:
+\begin{displaymath}
+\displaylines{
+{\pi_1}_{A,B}: {\rm prod}(A,B) \rightarrow A\cr
+{\pi_2}_{A,B}: {\rm prod}(A,B) \rightarrow B\cr}
+\end{displaymath}
+We might even omit subscripts from ${\pi_1}_{A,B}$ and ${\pi_2}_{A,B}$.
+The exponential functor `exp' is associated with one natural
+transformation which gives evaluation morphisms.
+\begin{displaymath}
+{\rm ev}: \lambda(X,Y).{\rm prod}({\rm exp}(X,Y),X) \natrightarrow
+\lambda(X,Y).Y
+\end{displaymath}
+Note that the variance of these two functors is $\top+$.  Therefore,
+$\Delta$ is
+\begin{displaymath}
+\begin{array}{l@{\;=\;}l}
+\Delta_{\lambda(X,Y).{\rm prod}(X,Y),\lambda(X,Y).X} & \{ \pi_1 \} \\
+\Delta_{\lambda(X,Y).{\rm prod}(X,Y),\lambda(X,Y).Y} & \{ \pi_2 \} \\
+\Delta_{\lambda(X,Y).{\rm prod}({\rm exp}(X,Y),X),\lambda(X,Y).Y} & \{
+{\rm ev} \}
+\end{array}
+\end{displaymath}
+For any other combinations of closed functorial expression $K$ and $L$,
+$\Delta_{K,L}$ is empty.
+
+Finally, there are three factorizers for the three functors: `!' for
+`1', `pair' for `prod' and `curry' for `exp'.
+\begin{displaymath}
+\logicrule{}{{\rm !}: \lambda(X).X \rightarrow \lambda(X).{\rm 1}}
+\end{displaymath}
+\begin{displaymath}
+\logicrule{f: \lambda(X,Y,Z).Z \rightarrow \lambda(X,Y,Z).X \qquad
+g: \lambda(X,Y,Z).Z \rightarrow \lambda(X,Y,Z).Y}{{\rm
+pair}(f,g): \lambda(X,Y,Z).Z \rightarrow \lambda(X,Y,Z).{\rm
+prod}(X,Y)}
+\end{displaymath}
+\begin{displaymath}
+\logicrule{h: \lambda(X,Y,Z).{\rm prod}(Z,X) \rightarrow
+\lambda(X,Y,Z).Y}{{\rm curry}(h): \lambda(X,Y,Z).Z
+\rightarrow \lambda(X,Y,Z).{\rm exp}(X,Y)}
+\end{displaymath}
+If there is no ambiguity, we might write these rules down as in
+figure~\ref{fig-ccc-sig}, where we summarize the definition of the CSL
+signature for cartesian closed categories.
+\myfigure{fig-ccc-sig}{CSL Signature for Cartesian Closed Categories}{
+\begin{center}
+\begin{tabular}{rl}
+{\small Functors ($\Gamma$)} & ${\rm 1}\quad{\rm prod}({+},{+})\quad{\rm
+exp}({-},{+})$ \\[2ex]
+{\small Natural Transformations ($\Delta$)} & $\pi_1:{\rm prod}(A,B)
+\rightarrow A$ \\
+& $\pi_2:{\rm prod}(A,B) \rightarrow B$ \\
+& ${\rm ev}:{\rm prod}({\rm exp}(A,B),A) \rightarrow B$ \\[2ex]
+{\small Factorizers ($\Psi$)} & $\logicrule{}{{\rm !}:A
+\rightarrow {\rm 1}}$ \\[2ex]
+& $\logicrule{f:C \rightarrow A \qquad g: C \rightarrow
+B}{{\rm pair}(f,g):C \rightarrow {\rm prod}(A,B)}$ \\[2ex]
+& $\logicrule{h:{\rm prod}(C,A) \rightarrow B}{{\rm
+curry}(h):C \rightarrow {\rm exp}(A,B)}$ \\
+\end{tabular}
+\end{center}
+}
+We will omit the tedious formal definition of $\Psi$ as an indexed set.
+\end{example}
+
+As we mentioned earlier, a CSL signature is one sorted, but because it
+handles higher objects, it is no less powerful than a many sorted
+equational signature.  Let us demonstrate this.  An equational signature
+is given by a pair $\pair{S,\Sigma}$ where $S$ is a set (of sort names)
+and $\Sigma$ is an \indexed{S^\ast\times S} set (of operator names).  We
+will translate it to a corresponding CSL signature
+$\pair{\Gamma,\Delta,\Psi}$.  Since functors play a role of sorts, we
+declare a constant functor for each sort in $S$.
+\begin{displaymath}
+\Gamma_{()} = S,
+\end{displaymath}
+and we have a binary product functor to deal with sequences of
+sorts,\footnote{We could have {\it n}-ary product functors for all natural
+numbers as well, but since we can represent them using a binary
+one, we only declare the binary one.} and the terminal object for constants.
+\begin{displaymath}
+\Gamma_{{+}{+}} = \{\; {\rm prod} \;\} \qquad \mbox{and} \qquad \Gamma_{()}
+= \{\; 1 \;\}
+\end{displaymath}
+Operations will be translated to natural transformations: for each
+operation $o \in \Sigma_{s_1\ldots s_n,s}$, we have a natural
+transformation of the same name.
+\begin{displaymath}
+o: {\rm prod}(s_1,{\rm prod}(\ldots,{\rm prod}(s_{n-1},s_n)))
+\rightarrow s
+\end{displaymath}
+that is,
+\begin{displaymath}
+\Delta_{\lambda().{\rm prod}(s_1,{\rm prod}(\ldots,{\rm
+prod}(s_{n-1},s_n))),\lambda().s} = \Sigma_{s_1\ldots s_n,s}
+\end{displaymath}
+We also have two projections for `prod' in $\Delta$ and $\Psi$ has only
+one factorizer `pair' for pairing.  It is easy to see that the CSL
+signature $\pair{\Gamma,\Delta,\Psi}$ corresponds to the equational
+signature $\pair{S,\Sigma}$.
+\begin{proposition}
+A many-sorted equational signature can be represented by a CSL
+signature.
+\end{proposition}
+It is interesting to know that we represented a many-sorted equational
+signature by a category with products because an {\it algebraic
+theory} can exactly be given as a category with products \cite{lawvere-63}.
+
+Let us make CSL signatures form a category by extending a pre-CSL
+signature morphism in a natural way.  Intuitively, a signature morphism
+(not only in CSL but in general) does some renamings of symbols and/or
+some mergings of symbols.
+\begin{definition}
+A {\it CSL signature morphism} $\sigma$ from a CSL signature
+$\pair{\Gamma,\Delta,\Psi}$ to a CSL signature
+$\pair{\Gamma',\Delta',\Psi'}$ is a triple
+$\pair{\sigma',\sigma'',\sigma'''}$ consisting of
+\begin{enumerate}
+\item a \indexed{{\bf Var}^\ast} function $\sigma'_{v_1\ldots v_n}:
+\Gamma_{v_1\ldots v_n} \rightarrow \Gamma'_{v_1\ldots v_n}$ for mapping
+functor names,
+\item a \indexed{\Lambda\times \Lambda} function 
+(where $\Lambda = {\bf CFE}(\Gamma)$) $\sigma''_{K,L}:
+\Delta_{K,L} \rightarrow \Delta'_{\sigma' K,\sigma' L}$ for mapping
+natural transformation names, and
+\item a \indexed{(\Lambda\times \Lambda)^\ast\times(\Lambda\times
+\Lambda)} function
+\begin{displaymath}
+\displaylines{
+\quad\sigma'''_{\pair{\pair{K_1,L_1}\ldots\pair{K_m,L_m},\pair{K,L}}}:\hfill\cr
+\hfill \Psi_{\pair{\pair{K_1,L_1}\ldots\pair{K_m,L_m},\pair{K,L}}} \rightarrow
+\Psi'_{\pair{\pair{\sigma' K_1,\sigma' L_1}\ldots\pair{\sigma' K_m,\sigma'
+L_m},\pair{\sigma' K,\sigma' L}}}\quad\cr}
+\end{displaymath}
+for mapping factorizer names.
+\end{enumerate}
+We often write $\sigma F$ for $\sigma'_{v_1\ldots v_n}(F)$, $\sigma
+\alpha$ for $\sigma''_{K,L}(\alpha)$ and $\sigma \psi$ for
+$\sigma'''_{\pair{\pair{K_1,L_1}\ldots,\pair{K,L}}}(\psi)$.
+\end{definition}
+
+\begin{definition}
+\label{def-csig}
+The {\it category of CSL signatures} {\bf CSig} has CSL signatures as its
+objects and CSL signature morphisms as its morphisms.  The identity
+morphism on a CSL signature $\pair{\Gamma,\Delta,\Psi}$ consists of the
+corresponding identity functions for the components and the composition
+of CSL morphisms is given by combining the component-wise compositions
+as indexed functions.  This clearly forms a category.
+\end{definition}
+
+\section{Structures of Categorical Specification Language}
+\label{sec-cls-mod}
+
+In this section, we will define {\it CSL structures}.  A CSL signature
+specifies symbols for functors, natural transformations and factorizers,
+so intuitively, a CSL structure is a category associated with these
+functors, natural transformations and factorizers.
+\begin{definition}
+\label{def-csl-mod}
+Given a CSL signature $\pair{\Gamma,\Delta,\Psi}$, a {\it CSL structure}
+$\pair{\cC,\xi}$ is a small category $\cC$ together with an assignment $\xi$
+\begin{enumerate}
+\item $\xi$ assigns each functor name of varity $v_1\ldots v_n$ to a
+functor $\cC^{v_1}\times\cdots\times\cC^{v_n} \rightarrow
+\cC$.\footnote{We could say
+$\xi$ is a \indexed{{\bf Var}^\ast} function
+\begin{displaymath}
+\xi_{v_1\ldots v_n}: \Gamma_{v_1\ldots v_n} \rightarrow {\bf
+Funct}(\cC^{v_1}\times\cdots\times\cC^{v_n},\cC).
+\end{displaymath}}
+As we have seen in section~\ref{sec-fun-calc}, $\xi$ can be extended to
+the assignment of closed functorial expressions to functors.
+\item $\xi$ assigns each natural transformation name $\alpha \in
+\Delta_{K,L}$, where $K$ and $L$ are closed functorial expressions of $n$
+variables, to a set of $\cC$ morphisms
+\begin{displaymath}
+\xi\alpha_{A_1,\ldots,A_n}: \xi K(A_1,\ldots,A_n) \rightarrow \xi
+L(A_1,\ldots,A_n)
+\end{displaymath}
+for arbitrary $\cC$ objects $A_1,\ldots,A_n$.\footnote{We could
+express it as a \indexed{\Lambda\times \Lambda} function (where $\Lambda
+= {\bf CFE}(\Gamma)$)
+\begin{displaymath}
+\xi_{K,L}: \Delta_{K,L} \rightarrow {\bf Nat}(\xi
+K|^{\top\ldots\top},\xi L|^{\top\ldots\top}).
+\end{displaymath}}
+\item Each factorizer symbol $\psi \in
+\Psi_{\pair{\pair{K_1,L_1}\ldots,\pair{K,L}}}$, where
+$K_1,L_1$,\ldots, $K_m,L_m$, $K,L$ are closed functorial expressions of
+$n$ variables, is assigned to a set of {\bf Set} functions
+\begin{displaymath}
+\displaylines{
+\qquad \xi\psi_{A_1,\ldots,A_n}: \prod_{i=1}^m \Hom{\cC}{\xi
+K_i(A_1,\ldots,A_n)}{\xi L_i(A_1,\ldots,A_n)} \hfill \cr
+\hfill {} \rightarrow \Hom{\cC}{\xi K(A_1,\ldots,A_n)}{\xi
+L(A_1,\ldots,A_n)} \qquad \cr}
+\end{displaymath}
+for arbitrary $\cC$ objects $A_1,\ldots,A_n$. \qed
+\end{enumerate}
+\end{definition}
+Note that we do not assign a natural transformation symbol to a natural
+transformation, but it is mapped to a set of morphisms and whether they
+form a natural transformation or not is left to be stated by equations.
+
+\begin{example}
+Let $\pair{\Gamma,\Delta,\Psi}$ be the CSL signature for cartesian
+closed categories defined in example~\ref{ex-ccc-sig}.  Then, any
+cartesian closed category is a CSL structure of this signature by obvious
+assignment of the symbols to the functors, natural transformations and
+factorizers.  However, the converse is not true.  We can have a category
+which has three functors, three natural-transformation-look-alikes and
+three factorizer-look-alikes.  CSL structures do not require mapping natural
+transformation symbols to natural transformations but only to a set of
+morphisms, nor do they require mapping factorizer symbols to
+factorizers.  The factorizer-look-alikes may not give unique morphisms
+or may not commute some diagrams.
+\end{example}
+
+CSL structure morphisms are defined simply as a kind of homomorphisms.  They
+keep the structure nicely.
+\begin{definition}
+Given a CSL signature $\pair{\Gamma,\Delta,\Psi}$, a {\it CSL structure
+morphism} from a CSL structure $\pair{\cC,\xi}$ to another
+$\pair{\cD,\zeta}$ is a covariant functor $T:\cC \rightarrow \cD$ such
+that
+\begin{enumerate}
+\item for any $F$ in $\Gamma_{v_1\ldots v_n}$
+\begin{displaymath}
+T\circ \xi F = \zeta F \circ (T^{v_1}\times\cdots\times T^{v_n})
+\end{displaymath}
+holds,
+\begin{displaymath}
+\begin{picture}(70,30)
+\put(25,25){\makebox(0,0){$\cC^{v_1}\times\cdots\times\cC^{v_n}$}}
+\put(23,15){\makebox(0,0)[r]{$T^{v_1}\times\cdots\times T^{v_n}$}}
+\put(25,5){\makebox(0,0){$\cD^{v_1}\times\cdots\times\cD^{v_n}$}}
+\put(50,27){\makebox(0,0)[b]{$\xi F$}}
+\put(50,15){\makebox(0,0){\commute}}
+\put(50,3){\makebox(0,0)[t]{$\zeta F$}}
+\put(65,25){\makebox(0,0){$\cC$}}
+\put(65,5){\makebox(0,0){$\cD$}}
+\put(25,22.5){\vector(0,-1){15}}
+\put(40,25){\vector(1,0){22.5}}
+\put(40,5){\vector(1,0){22.5}}
+\put(65,22.5){\vector(0,-1){15}}
+\end{picture}
+\end{displaymath}
+\item for any $\alpha \in \Delta_{K,L}$ and for any $\cC$ objects
+$A_1,\ldots,A_n$
+\begin{displaymath}
+T(\xi \alpha_{A_1,\ldots,A_n}) = \zeta \alpha_{T(A_1),\ldots,T(A_n)},
+\end{displaymath}
+and
+\item for any $\psi \in
+\Psi_{\pair{K_1,L_1}\ldots\pair{K_m,L_m},\pair{K,L}}$, for any $\cC$
+objects $A_1,\ldots,A_n$ and for any $\cC$ morphisms $f_i:\xi
+K_i(A_1,\ldots,A_n) \rightarrow \xi L_i(A_1,\ldots,A_n)$ ($i=1,\ldots,m$),
+\begin{displaymath}
+T(\xi \psi_{A_1,\ldots,A_n}(f_1,\ldots,f_m)) = \zeta
+\psi_{T(A_1),\ldots,T(A_n)}(T(f_1),\ldots,T(f_m)). \qed
+\end{displaymath}
+\end{enumerate}
+\end{definition}
+
+Hence, the category of CSL structures is:
+\begin{definition}
+\label{def-CMod}
+For a CSL signature $\pair{\Gamma,\Delta,\Psi}$, the category of CSL
+structures, ${\bf CMod}(\pair{\Gamma,\Delta,\Psi})$, has CSL structures
+as objects and CSL structure morphisms as morphisms; the identity morphism
+on $\pair{\cC,\xi}$ is the identity functor ${\bf I}_\cC$ and the
+composition of morphisms is the composition of their underlying
+functors.
+\end{definition}
+
+\section{Functorial Calculus (revisit)}
+\label{sec-fun-calc-2}
+
+In section~\ref{sec-fun-calc} we saw functorial expressions denote
+functors.  In this section we will see an expression involving natural
+transformation symbols and factorizer symbols denote a set of
+morphisms.\footnote{Some may want it to denote a natural transformation,
+but the treatment of factorizers seems very complicated to do so.}
+For example, under the signature of cartesian closed categories given in
+example~\ref{ex-ccc-sig}, what should the following expression denote?
+\begin{displaymath}
+\pi_1\circ {\rm prod}({\rm curry}(\pi_2),{\bf I})
+\end{displaymath}
+We even have a problem for expressions like $\pi_1\circ\pi_2$ because
+$\pi_1$ and $\pi_2$ are not projections of the same product: $\pi_2$ is
+of ${\rm prod}(A,{\rm prod}(B,C))$ and $\pi_1$ is of ${\rm prod}(B,C)$.
+Actually, natural transformations are polymorphic like ML functions
+are.\footnote{Conversely, ML polymorphic functions are natural
+transformations.  The author has not yet seen the definite statement of
+this, but it is a folklore among computer scientists dealing with
+category theory.  This fact is rarely used in practice, but it sometimes
+helps to understand the behaviour of polymorphic functions.  For
+example, any ML function $f$ of type $\alpha {\rm list} \rightarrow {\rm
+int}$ should never depend on elements in the list but only to the length
+of list.  As another example, if $f$ is of type $\alpha {\rm list}
+\rightarrow \alpha {\rm list}$ and if we apply it to an integer list
+$[1,4,3,5]$ and get $[5,1,3]$, we know the result of applying $f$ to
+$[2,8,6,10]$ (each element is doubled) without actually applying it.
+The result should be $[10,2,6]$, i.e.\ each element of the result is
+doubled as well.} As we defined in definition~\ref{def-csl-mod}, $\pi_1$
+denotes a set of morphisms.
+\begin{displaymath}
+{\xi \pi_1}_{A,B}: \xi {\rm prod}(A,B) \rightarrow A
+\end{displaymath}
+We have to figure out for each occurrence of $\pi_1$ what $A$ and $B$
+are.
+
+\begin{definition}
+\label{def-exp}
+For a CSL signature $\pair{\Gamma,\Delta,\Psi}$, we have a set ${\bf
+Exp}(\Gamma,\Delta,\Psi)$ of {\it CSL expressions} defined by the
+following BNF.
+\begin{displaymath}
+e \coloneq {\bf I} \;\mid\; e_1\circ e_2 \;\mid\; \alpha \;\mid\;
+\psi(e_1,\ldots,e_m) \;\mid\; F(e_1,\ldots,e_n) \;\mid\; f
+\end{displaymath}
+where $\alpha \in \Delta$, $\psi \in \Psi$ and $f$ is a variable for
+morphisms.  We also have a set ${\bf AExp}(\Gamma,\Delta,\Psi)$ of {\it
+CSL annotated expressions} defined by the following BNF.
+\begin{displaymath}
+e \coloneq {}
+\begin{array}[t]{l}
+{\bf I}\anno{K} \;\mid\; e_1\circ e_2 \;\mid\;
+\alpha\anno{K_1,\ldots,K_n} \;\mid\;
+\psi\anno{K_1,\ldots,K_n}(e_1,\ldots,e_m) \;\mid\; \\
+F(e_1,\ldots,e_n) \;\mid\; f \\
+\end{array}
+\end{displaymath}
+where $K_1,\ldots,K_n$ are closed functorial expressions over $\Gamma$.
+\end{definition}
+It is trivial to see that for each annotated expression there is a
+corresponding expression (i.e.\ forgetting all the annotations,
+$\anno{\ldots}$), which we call {\it skeleton} of the annotated
+expression.  We are going to type-check an expression first and, then,
+we determine its denotation.  Annotated expressions are used to remember
+the type-checking information inside expressions.  We will give the typing
+rules for annotated expressions and show that every expression has the
+most general annotated expression and we take the type of this annotated
+expression as the type of the expression.
+
+First, we define the notion of unification.
+\begin{definition}
+A closed functorial expression $K$ of $n$ variables is said to be {\it
+more general} than a closed functorial expression $K'$ of $m$ variables
+if there are closed functorial expressions $K_1,\ldots,K_n$ of $m$
+variables such that
+\begin{displaymath}
+K[K_1,\ldots,K_n] \equiv K'
+\end{displaymath}
+where $\equiv$ is the equivalence relation ignoring variable renaming.
+(Trivially, $K \equiv K'$ implies $\xi K = \xi K'$.)
+\end{definition}
+
+\begin{definition}
+Closed functorial expressions $K$ and $L$ are said to be {\it unifiable}
+when there is a closed functorial expression $K'$ such that $K'$ is less
+general than $K$ as well as $L$.
+\end{definition}
+
+\begin{proposition}
+If closed functorial expressions $K$ and $L$ are unifiable, then there
+is a most general unification, that is, there exist $K_1,\ldots,K_n$ and
+$L_1,\ldots,L_m$ such that $K[K_1,\ldots,K_n] \equiv L[L_1,\ldots,L_m]$
+and for any $K'$ which is less general than $K$ and $K'$ there are
+$K'_1,\ldots,K'_l$ such that $K' \equiv
+K[K_1,\ldots,K_n][K'_1,\ldots,K'_l]$. \\
+{\bf Proof:} Same as ordinary unification of terms.
+\end{proposition}
+
+Let us now define the type of annotated expressions.
+\begin{definition}
+\label{def-anno-exp-type}
+Let $\pair{\Gamma,\Delta,\Psi}$ be a CSL signature.  An annotated
+expression $e$ has a type $\rho \vdash e: K \rightarrow L$ when it can
+be derived from the following rules, where $\rho$ is a given assignment
+of each morphism variable to its type and $K$ and $L$ are closed
+functorial expressions.
+\begin{enumerate}
+\item For the identity, $\rho \vdash {\bf I}\anno{K}: K \rightarrow K$.
+\item For the composition,
+\begin{displaymath}
+\logicrule{\rho \vdash e_1: K' \rightarrow L \qquad \rho \vdash e_2: K
+\rightarrow K'}{\rho \vdash e_1\circ e_2: K \rightarrow L}.
+\end{displaymath}
+\item For a natural transformation $\alpha \in \Delta_{K,L}$, where $K$
+and $L$ are of $n$ variables,
+\begin{displaymath}
+\rho \vdash \alpha\anno{K_1,\ldots,K_n}: K[K_1,\ldots,K_n] \rightarrow
+L[K_1,\ldots,K_n]
+\end{displaymath}
+\item For a factorizer $\psi \in
+\Psi_{\pair{\pair{K_1,L_1}\ldots\pair{K_m,L_m},\pair{K,L}}}$, where
+$K_i,L_i,K,L$ are of $n$ variables,
+\begin{displaymath}
+\logicrule{\rho \vdash e_i: K_i[K'_1,\ldots,K'_n] \rightarrow
+L_i[K'_1,\ldots,K'_n]}{\rho \vdash
+\psi\anno{K'_1,\ldots,K'_n}(e_1,\ldots,e_m): K[K'_1,\ldots,K'_n] \rightarrow
+L[K'_1,\ldots,K'_n]}
+\end{displaymath}
+\item For a functor $F \in \Gamma_{v_1\ldots v_n}$
+\begin{displaymath}
+\logicrule{\rho \vdash e_i: K_i \subrightarrow{v_i} L_i}{\rho \vdash
+F(e_1,\ldots,e_n): F[K_1,\ldots,K_n] \rightarrow  F[L_1,\ldots,L_n]}
+\end{displaymath}
+where $e_i: K_i \subrightarrow{v_i} L_i$ is $e_i: K_i \rightarrow L_i$
+if $v_i$ is $+$ or $\bot$, $e_i: L_i \rightarrow K_i$ if $v_i$ is $-$
+and ${\bf I}: K_i \rightarrow K_i$ if $v_i$ is $\top$.
+\item For a morphism variable $f$, $\rho \vdash f: \rho(f)$. \qed
+\end{enumerate}
+\end{definition}
+
+\begin{definition}
+We say an annotated expression $e$ is {\it more general} than $e'$ if
+there exist closed functorial expressions $K_1,\ldots,K_n$ such that $e'
+\equiv e[K_1,\ldots,K_n]$, where $e[K_1,\ldots,K_n]$ is $e$ with
+all its annotations being composed with $K_1,\ldots,K_n$, e.g.\
+$\alpha\anno{L_1,\ldots,L_m}[K_1,\ldots,K_n]$ is
+$\alpha\anno{L_1[K_1,\ldots,K_n],\ldots,L_m[K_1,\ldots,K_n]}$.
+\end{definition}
+
+\begin{proposition}
+If an annotated expression $e$ has a type $\rho \vdash e: K \rightarrow L$,
+$e[K_1,\ldots,K_n]$ has the following type.
+\begin{displaymath}
+\rho[K_1,\ldots,K_n] \vdash e[K_1,\ldots,K_n]: K[K_1,\ldots,K_n] \rightarrow
+L[K_1,\ldots,K_n]
+\end{displaymath}
+where $\rho[K_1,\ldots,K_n](f)$ is $K'[K_1,\ldots,K_n] \rightarrow
+L'[K_1,\ldots,K_n]$ when $\rho(f)$ is $K' \rightarrow L'$. \\
+{\bf Proof:} It can easily proved from definition~\ref{def-anno-exp-type}
+by structural induction on $e$.
+\end{proposition}
+
+\begin{proposition}
+\label{prop-exp-type}
+Let $e \in {\bf Exp}(\Gamma,\Delta,\Psi)$ be an expression of a CSL
+signature $\pair{\Gamma,\Delta,\Psi}$.  If there exists an annotated
+expression $e'$ whose skeleton is $e$ and if it has a type, then there
+exists a most general annotated expression which has a type and whose
+skeleton is $e$. \\
+{\bf Proof:} It can be proved by structural induction on $e$.  Here, we
+present an algorithm of calculating a most general annotated expression.
+\begin{enumerate}
+\item If $e$ is ${\bf I}$, the most general annotated expression is
+${\bf I}\anno{I}$, where $I$ is the identity closed functorial expression
+$\lambda(X).X$.
+\item If $e$ is $e_1\circ e_2$, from induction hypothesis, we have the
+most general annotated expressions for $e_1$ and $e_2$.
+\begin{displaymath}
+\rho_1 \vdash e'_1: K \rightarrow K' \qquad \rho_2 \vdash e'_2: L
+\rightarrow L'
+\end{displaymath}
+We unify $K$ with $L'$ achieving $K[K_1,\ldots,K_n] \equiv
+L'[L_1,\ldots,L_m]$.  The most general annotated expression for $e$
+and its type is
+\begin{displaymath}
+\rho \vdash e'_1[K_1,\ldots,K_n]\circ e'_2[L_1,\ldots,L_m]:
+L[L_1,\ldots,L_m] \rightarrow K'[K_1,\ldots,K_n]
+\end{displaymath}
+where $\rho$ is the result of combining $\rho_1[K_1,\ldots,K_n]$ and
+$\rho_2[L_1,\ldots,L_m]$.
+\item If $e$ is a natural transformation $\alpha \in \Delta_{K,L}$, the
+most general annotated expression and its type is
+\begin{displaymath}
+\rho \vdash \alpha\anno{\Pi^n_1,\ldots,\Pi^n_n}: K \rightarrow L,
+\end{displaymath}
+where $\Pi^n_i$ is the closed functorial expression
+$\lambda(X_1,\ldots,X_n).X_i$.
+\item If $e$ is $\psi(e_1,\ldots,e_m)$ for a factorizer $\psi \in
+\Psi_{\pair{\pair{K_1,L_1}\ldots,\pair{K,L}}}$, from
+induction hypothesis, we have annotated expressions $e'_i$ such that
+\begin{displaymath}
+\rho_i \vdash e'_i: K'_i \rightarrow L'_i.
+\end{displaymath}
+We unify $K'_i$ with $K_i$ and $L'_i$ with $L_i$.  If the unification is
+successful, we have the most general annotated expression for $e$.
+\begin{displaymath}
+\displaylines{
+\qquad \rho \vdash
+\psi\anno{J_1,\ldots,J_n}(e'_1[J'_{11},\ldots],\ldots,e'_m[J'_{1m},\ldots]):
+\hfill \cr
+\hfill K[J_1,\ldots,J_n] \rightarrow L[J_1,\ldots,J_n] \qquad \cr}
+\end{displaymath}
+where $J_1,\ldots,J_n,J'_{11},\ldots$ are the substitution for $K_i$ and
+$L_i$ obtained from the unification and $\rho$ is the result of
+combining $\rho_i[J'_{1i},\ldots]$.
+\item If $e$ is $F(e_1,\ldots,e_n)$, let the most general annotated
+expressions for $e_i$ be
+\begin{displaymath}
+\rho_i \vdash e'_i: K_i \subrightarrow{v_i} L_i.
+\end{displaymath}
+Then, the most general annotated expression for $e$ and its type is
+\begin{displaymath}
+\rho \vdash F(e'_1,\ldots,e'_n): F[K_1,\ldots,K_n] \rightarrow
+F[L_1,\ldots,L_n].
+\end{displaymath}
+\item If $e$ is a morphism variable $f$, its most general annotated
+expression is itself and has the following type.
+\begin{displaymath}
+\rho \vdash f: \lambda(X,Y).X \rightarrow \lambda(X,Y).Y \rlap{\qquad
+\qquad \qed}
+\end{displaymath}
+\end{enumerate}
+\end{proposition}
+From this proposition,
+\begin{definition}
+We define the type of an expression $e\in {\bf Exp}(\Gamma,\Delta,\Psi)$
+to be the type of the most general annotated expression $e'$ whose
+skeleton is $e$.
+\end{definition}
+
+Let us finally define the denotation of expressions in ${\bf
+Exp}(\Gamma,\Delta,\Psi)$ when a CSL structure $\pair{\cC,\xi}$ is given.
+Since each expression $e$ is associated uniquely to the most general
+annotated expression $e'$ by proposition~\ref{prop-exp-type}, we can
+define the denotation of $e$ to be that of $e'$ and define the
+denotation of annotated expressions.
+\begin{definition}
+\label{def-anno-deno}
+Let $\pair{\Gamma,\Delta,\Psi}$ be a CSL signature and $\pair{\cC,\xi}$
+be a CSL structure.  For an annotated expression $e \in {\bf
+AExp}(\Gamma,\Delta,\Psi)$ of type $\rho \vdash e: K \rightarrow L$
+(where $K$ and $L$ are of $l$ variables), we define its denotation, $\xi
+e$, to be a set of morphisms
+\begin{displaymath}
+(\xi e)_{A_1,\ldots,A_l}: \xi K(A_1,\ldots,A_l) \rightarrow \xi
+L(A_1,\ldots,A_n)
+\end{displaymath}
+for any $\cC$ objects $A_1,\ldots,A_l$ and for any morphism variable
+assignment $\omega$ (where $\omega(f,A_1,\ldots,A_l)$ gives a morphism
+of type $\xi K'(A_1,\ldots,A_l) \rightarrow \xi L'(A_1,\ldots,A_l)$ when
+$\rho(f)$ is $K' \rightarrow L'$).
+\begin{enumerate}
+\item For the identity,
+\begin{displaymath}
+(\xi {\bf I}\anno{K})_{A_1,\ldots,A_l} \defeq {\bf I}_{{\xi K}[A_1,\ldots,A_l]}
+\end{displaymath}
+\item For compositions,
+\begin{displaymath}
+(\xi e_1\circ e_2)_{A_1,\ldots,A_l} \defeq (\xi e_1)_{A_1,\ldots,A_l}
+\circ (\xi e_2)_{A_1,\ldots,A_l}
+\end{displaymath}
+\item For natural transformations,
+\begin{displaymath}
+(\xi \alpha\anno{K_1,\ldots,K_n})_{A_1,\ldots,A_l} \defeq
+\xi\alpha_{\xi K_1(A_1,\ldots,A_l),\ldots,\xi K_n(A_1,\ldots,A_l)}
+\end{displaymath}
+\item For factorizers,
+\begin{displaymath}
+\displaylines{
+\qquad (\xi \psi\anno{K_1,\ldots,K_n}(e_1,\ldots,e_m))_{A_1,\ldots,A_l}
+\defeq \hfill \cr
+\hfill \psi_{\xi K_1(A_1,\ldots,A_l),\ldots,\xi K_n(A_1,\ldots,A_l)}((\xi
+e_1)_{A_1,\ldots,A_l},\ldots,(\xi e_m)_{A_1,\ldots,A_l}) \qquad \cr}
+\end{displaymath}
+\item For functors,
+\begin{displaymath}
+(\xi F(e_1,\ldots,e_n))_{A_1,\ldots,A_l} \defeq \xi F((\xi
+e_1)_{A_1,\ldots,A_l},\ldots,(\xi e_n)_{A_1,\ldots,A_l})
+\end{displaymath}
+\item For morphism variables,
+\begin{displaymath}
+(\xi f)_{A_1,\ldots,A_n} \defeq \omega(f,A_1,\ldots,A_l)
+\end{displaymath}
+\end{enumerate}
+{\bf Proof of well-definedness:} We have to show, for example, for a
+natural transformation $\alpha \in \Delta_{K,L}$, $(\xi
+\alpha\anno{K_1,\ldots,K_n})_{A_1,\ldots,A_l}$ is a morphism from
+\begin{displaymath}
+\xi K[K_1,\ldots,K_n](A_1,\ldots,A_l) \qquad \mbox{to} \qquad \xi
+L[K_1,\ldots,K_n](A_1,\ldots,A_l).
+\end{displaymath}
+This holds because from definition~\ref{def-csl-mod} $\xi\alpha_{\xi
+K_1(A_1,\ldots,A_l),\ldots,\xi K_n(A_1,\ldots,A_l)}$
+is a morphism from $\xi K(\xi K_1(A_1,\ldots,A_l),\ldots))$ to $\xi
+L(\xi K_1(A_1,\ldots,A_l),\ldots)$ and from
+proposition~\ref{prop-fun-comp-subst} it is from $\xi
+K[K_1,\ldots,K_n](A_1,\ldots,A_l)$ to $\xi
+L[K_1,\ldots,K_n](A_1,\ldots,A_l)$.
+\end{definition}
+
+\begin{example}
+Let $\pair{\Gamma,\Delta,\Psi}$ be a CSL signature for cartesian closed
+categories presented in example~\ref{ex-ccc-sig} and $\pair{\cC,\xi}$ be
+a CSL structure of this signature where $\cC$ is a cartesian closed category
+and $\xi$ is the standard assignment (i.e.\ the product symbol to the
+product functor and so on).  Let us find out the denotation of ${\rm
+ev}\circ{\rm pair}(f,\pi_2)$.  First, we have to find out the
+corresponding most general annotated expression and its type by the
+algorithm used to prove proposition~\ref{prop-exp-type}.
+\begin{enumerate}
+\item ${\rm ev}\circ{\rm pair}(f,\pi_2)$ is given by composing ${\rm ev}$
+and ${\rm pair}(f,\pi_2)$, so we need to calculate the most general
+annotated expressions for these two sub-expressions first.
+\begin{enumerate}
+\item ${\rm ev}$ is a natural transformation, and its most general
+annotated expression is
+\begin{displaymath}
+\rho_1 \vdash {\rm ev}\anno{\Pi^2_1,\Pi^2_2}: {\rm prod}[{\rm exp},\Pi^2_1]
+\rightarrow \Pi^2_2.
+\end{displaymath}
+\item ${\rm pair}(f,\pi_2)$ is given by applying the factorizer ${\rm pair}$
+to $f$ and $\pi_2$.
+\begin{enumerate}
+\item `$f$' is a morphism variable, its most general annotated expression is
+\begin{displaymath}
+\rho_2 \vdash f: \Pi^2_1 \rightarrow \Pi^2_2.
+\end{displaymath}
+\item $\pi_2$ is a natural transformation, and its most general
+annotated expression is
+\begin{displaymath}
+\rho_3 \vdash \pi_2\anno{\Pi^2_1,\Pi^2_1}: {\rm prod} \rightarrow \Pi^2_2.
+\end{displaymath}
+\end{enumerate}
+${\rm pair}$ has the type
+\begin{displaymath}
+\pair{\pair{\Pi^3_3,\Pi^3_1}\pair{\Pi^3_3,\Pi^3_2},\pair{\Pi^3_3,{\rm
+prod}[\Pi^3_1,\Pi^3_2]}}
+\end{displaymath}
+By unification, we get the most general annotated expression for ${\rm
+pair}(f,\pi_2)$.
+\begin{displaymath}
+\displaylines{
+\qquad \rho_4 \vdash {\rm pair}\anno{\Pi^3_3,\Pi^3_2,{\rm
+prod}[\Pi^3_1,\Pi^3_2]}(f,\pi_2\anno{\Pi^3_1,\Pi^3_2}): \hfill \cr
+\hfill {\rm prod}[\Pi^3_1,\Pi^3_2] \rightarrow {\rm
+prod}[\Pi^3_3,\Pi^3_2] \qquad \cr}
+\end{displaymath}
+where $\rho_4$ maps $f$ to ${\rm prod}[\Pi^3_1,\Pi^3_2] \rightarrow
+\Pi^3_3$.
+\end{enumerate}
+Unifying ${\rm prod}[\Pi^3_3,\Pi^3_2]$ and ${\rm prod}[{\rm
+exp},\Pi^2_1]$, we get the most general annotated expression
+for ${\rm ev} \circ {\rm pair}(f,\pi_2)$.
+\begin{displaymath}
+\displaylines{
+\qquad \rho_5 \vdash {\rm ev}\anno{\Pi^3_2,\Pi^3_3} \circ {\rm pair}\anno{{\rm
+exp}[\Pi^3_2,\Pi^3_3],\Pi^3_2,{\rm
+prod}[\Pi^3_1,\Pi^3_2]}(f,\pi_2\anno{\Pi^3_1,\Pi^3_2}) 
+\hfill \cr
+\hfill : {\rm prod}[\Pi^3_1,\Pi^3_2] \rightarrow \Pi^3_3 \qquad \cr}
+\end{displaymath}
+where $\rho_5$ maps $f$ to ${\rm prod}[\Pi^3_1,\Pi^3_2] \rightarrow
+{\rm exp}[\Pi^3_2,\Pi^3_3]$.
+\end{enumerate}
+From definition~\ref{def-anno-deno}, the denotation of this annotated
+expression is a set of morphisms for objects $A$,
+$B$ and $C$ and a morphism
+variable assignment
+\begin{displaymath}
+\omega(f,A,B,C): \xi{\rm prod}(A,B) \rightarrow \xi{\rm exp}(B,C).
+\end{displaymath}
+\begin{enumerate}
+\item $(\xi {\rm ev}[\Pi^3_2,\Pi^3_3])_{A,B,C} = \xi{\rm ev}_{B,C}$
+\item $(\xi f)_{A,B,C} = \omega(f,A,B,C)$
+\item $(\xi \pi_2[\Pi^3_1,\Pi^3_2])_{A,B,C} = {\xi\pi_2}_{A,B}$
+\item $(\xi {\rm pair}[\ldots](f,\pi_2[\ldots]))_{A,B,C} = {}$ \\
+${} \qquad \xi{\rm pair}_{\xi{\rm exp}(B,C),B,\xi{\rm
+prod}(A,B)}(\omega(f,A,B,C),{\xi\pi_2}_{A,B})$
+\item $(\xi {\rm ev}[\ldots]\circ{\rm
+pair}[\ldots](f,\pi_2[\ldots]))_{A,B,C} = {}$ \\
+${} \qquad \xi{\rm ev}_{B,C} \circ \xi{\rm pair}_{\xi{\rm
+exp}(B,C),B,\xi{\rm prod}(A,B)}(\omega(f,A,B,C),{\xi\pi_2}_{A,B})$
+\end{enumerate}
+Therefore, the denotation of ${\rm ev}\circ{\rm pair}(f,\pi_2)$ is
+\begin{displaymath}
+\xi{\rm ev}_{B,C} \circ \xi{\rm pair}_{\xi{\rm exp}(B,C),B,\xi{\rm
+prod}(A,B)}(\omega(f,A,B,C),{\xi\pi_2}_{A,B}) \rlap{\qquad\qquad \qed}
+\end{displaymath}
+\end{example}
+
+\section{Sentences and Satisfaction Relation of Categorical
+Specification Language}
+\label{sec-csl-sen}
+
+In this section, we will finish defining the specification language CSL
+at last.  First, we define what a CSL sentence is.
+\begin{definition}
+A {\it CSL conditional equation} is a sequence of CSL expression pairs and a
+CSL expression pair.  We usually write it as
+\begin{displaymath}
+e_1 = e'_1 \land \ldots \land e_n = e'_n \implies e = e',
+\end{displaymath}
+or simply $e = e'$ if the preceding sequence is empty.  To be typed, it
+needs to share the same morphism variable environment, $e_i$ and $e'_i$
+have to have the same type and $e$ and $e'$ have to have the same type.
+We may write the types as follows:
+\begin{displaymath}
+\rho \vdash e_1 = e'_1: K_1 \rightarrow L_1 \land\ldots\land
+e_n = e'_n: K_n \rightarrow L_n \implies e = e': K \rightarrow L
+\end{displaymath}
+We write ${\bf CEq}(\Gamma,\Delta,\Psi)$ for the set of all the CSL
+conditional equations which can be typed.
+\end{definition}
+
+The CSL conditional equations are the CSL sentences.  We now have to
+define the {\it satisfaction relation} for CSL.  We have separately
+defined what CSL structures are and what CSL conditional equations are.  The
+satisfaction relation connects these two together so that we can say a
+CSL conditional equation holds or not in a particular CSL structure.
+\begin{definition}
+\label{def-csl-sat}
+Let $\pair{\Gamma,\Delta,\Psi}$ be a CSL signature.  A CSL structure
+$\pair{\cC,\xi}$ satisfies a CSL conditional equation
+\begin{displaymath}
+e_1 = e'_1 \land \ldots \land e_n = e'_n \implies e = e'
+\end{displaymath}
+having a type
+\begin{displaymath}
+\rho \vdash e_1 = e'_1: K_1 \rightarrow L_1 \land\ldots\land e_n = e'_n:
+K_n \rightarrow L_n \implies e = e': K \rightarrow L,
+\end{displaymath}
+if and only if for any objects $A_1,\ldots,A_l$ and any morphism
+variable assignment $\omega$ we have either
+\begin{enumerate}
+\item a CSL equation $e_i = e'_i$ such that
+$(\xi e_i)_{A_1,\ldots,A_l} \not= (\xi e'_i)_{A_1,\ldots,A_l}$, or
+\item $(\xi e)_{A_1,\ldots,A_l} = (\xi e')_{A_1,\ldots,A_l}$.
+\end{enumerate}
+We will write
+\begin{displaymath}
+\pair{\cC,\xi} \models e_1 = e'_1 \land \ldots \land e_n = e'_n \implies
+e = e'
+\end{displaymath}
+when $\pair{\cC,\xi}$ satisfies this CSL conditional equation.
+\end{definition}
+
+We have defined the specification language, CSL: CSL signatures, CSL
+structures, CSL conditional equations and CSL satisfaction relation.  We
+could have defined it as an institution (see~\cite{goguen-burstall-83})
+by defining {\bf CMod} as a contravariant functor and showing CSL
+satisfaction condition.
+
+Finally, let us finish presenting the CSL theory (i.e.\ a pair of CSL
+signature and CSL conditional equations) of cartesian
+closed categories.
+\begin{example}
+\label{ex-ccc-th}
+We have presented the signature for cartesian closed categories in
+example~\ref{ex-ccc-sig} (or figure~\ref{fig-ccc-sig}), so all we have
+to do is to list the CSL conditional equations. (Note that they are not
+conditional for this example.)
+\begin{displaymath}
+\displaylines{
+\qquad\llap{1.} f = {\rm !} \hfill \cr
+\qquad\llap{2.} {\rm 1} = {\bf I} \hfill \cr
+\qquad\llap{3.} {\rm pair}(\pi_1,\pi_2) = {\bf I} \hfill \cr
+\qquad\llap{4.} \pi_1\circ{\rm pair}(f,g) = f \hfill \cr
+\qquad\llap{5.} \pi_2\circ{\rm pair}(f,g) = g \hfill \cr
+\qquad\llap{6.} {\rm pair}(f,g)\circ h = {\rm pair}(f\circ h,g\circ h)
+\hfill \cr
+\qquad\llap{7.} {\rm prod}(f,g) = {\rm pair}(f\circ\pi_1,g\circ\pi_2)
+\hfill \cr
+\qquad\llap{8.} {\rm curry}({\rm ev}) = {\bf I} \hfill \cr
+\qquad\llap{9.} {\rm ev}\circ{\rm curry}({\rm prod}(f,{\bf I})) = f
+\hfill \cr
+\qquad\llap{10.} {\rm curry}(f)\circ g = {\rm curry}(f\circ{\rm
+prod}(g,{\bf I})) \hfill \cr
+\qquad\llap{11.} {\rm exp}(f,g) = {\rm curry}(g\circ{\rm eval}\circ{\rm
+prod}(f,{\bf I})) \hfill \cr}
+\end{displaymath}
+The naturality of $\pi_1$, $\pi_2$ and ${\rm ev}$ can be derived from
+these equations.  For example, the naturality of $\pi_1$ is shown by
+\begin{displaymath}
+\pi_1\circ{\rm prod}(f,g) = \pi_1\circ{\rm
+pair}(f\circ\pi_1,g\circ\pi_2) = f\circ\pi_1. \rlap{\qquad \qquad \qed}
+\end{displaymath}
+\end{example}
+
+\section{Free Categories}
+\label{sec-free-cat}
+
+One of the major advantages of algebraic specification methods using
+equations or conditional equations over other specification methods is
+that any theory has an initial model (i.e.\ the initial object in the
+category of models which satisfy the theory).  This also holds for CSL,
+and in this section, we will construct an initial structure for a CSL
+theory.  Remember that a CSL structure is a pair of a category and an
+interpretation.  The category of an initial CSL structure corresponds to a
+so-called {\it free category}.
+
+Given a CSL signature $\pair{\Gamma,\Delta,\Psi}$ and a set $\Theta$ of
+CSL conditional equations, we are going to define a special category
+$\cC$ and an interpretation $\xi$.  For simplicity, we assume that
+$\Gamma$ does not contain any free-variant functors.  (We can always get
+such a signature by discarding free-variant arguments.  This does not
+affect its semantics at all.)
+
+\begin{definition}
+\label{def-free-cat}
+We say that a closed functorial expression is {\it ground} if it has no
+variables, that is, its basic form is $\lambda().E$.  We take ground
+closed functorial expressions as the objects of $\cC$.
+\end{definition}
+
+The definition of morphisms of $\cC$ is a little bit more complicated, so we
+define them step by step.
+\begin{definition}
+A ground annotated expression is an annotated expression such that
+\begin{enumerate}
+\item all the annotation, $\anno{K_1,\ldots,K_n}$ consists of ground
+closed functorial expressions, and
+\item it does not contain any morphism variables. \qed
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}
+If a ground annotated expression $e$ has a type $\rho \vdash e: K
+\rightarrow L$, and both $K$ and $L$ are ground
+functorial expressions. \\
+{\bf Proof:} We can easily prove it from
+definition~\ref{def-anno-exp-type} by structural induction.
+\end{proposition}
+
+The following will give us the basis of the morphisms in $\cC$.
+\begin{definition}
+For ground closed functorial expressions $K$ and $L$, we define
+\begin{displaymath}
+{\bf GExp}(K,L) \defeq \{\; e \mid \mbox{$e$ is ground and $\emptyset
+\vdash e: K \rightarrow L$} \;\} \qed
+\end{displaymath}
+\end{definition}
+
+To make ${\bf GExp}$ proper morphisms, we introduce a family of equivalence
+relations $\equiv$ indexed by a pair of ground functorial expressions.  Each
+$\equiv_{K,L}$ is an equivalence relation on ${\bf GExp}(K,L)$.
+\begin{definition}
+\label{def-eqv-gfe}
+We define $\equiv$ to be the smallest relation satisfying the following
+conditions.  (In the following, to simplify the presentation, we omit
+indexes of $\equiv$ if there is no ambiguity.)
+\begin{enumerate}
+\item $\equiv$ is an equivalence relation, that is, reflexive, symmetric
+and transitive.
+\item If $e_1 \equiv_{K,L} e'_1$ and $e_2 \equiv_{K',K} e'_2$, then $e_1
+\circ e_2 \equiv_{K',L} e'_1 \circ e'_2$.
+\item If $e \in {\bf GExp}(K,L)$, then ${\bf I}\anno{L}\circ e \equiv e$
+and $e \circ {\bf I}\anno{K} \equiv e$.
+\item For a functor symbol $F \in \Gamma_{v_1\ldots v_n}$, if $e_1
+\equiv e'_1$, \ldots and $e_n \equiv e'_n$, then $F(e_1,\ldots,e_n)
+\equiv F(e'_1,\ldots,e'_n)$.
+\item For a factorizer symbol $\psi \in
+\Psi_{\pair{\pair{K'_1,L'_1}\ldots\pair{K'_l,L'_l},\pair{K',L'}}}$ and
+ground functorial expressions $K_1,\ldots,K_n$, if $e_1 \equiv e'_1$, \ldots
+and $e_l \equiv e'_l$, then
+\begin{displaymath}
+\psi\anno{K_1,\ldots,K_n}(e_1,\ldots,e_l) \equiv
+\psi\anno{K_1,\ldots,K_n}(e'_1,\ldots,e'_l).
+\end{displaymath}
+\item Finally, for a conditional CSL equation $e_1 = e'_1 \land \ldots
+\land e_n = e'_n \implies e = e' \in \Theta$ whose type is
+\begin{displaymath}
+\rho \vdash e_1 = e'_1: K'_1 \rightarrow L'_1 \land\ldots\land
+e_n = e'_n: K'_n \rightarrow L'_n \implies e = e': K' \rightarrow L'
+\end{displaymath}
+with $\rho(f_i)$ is $K''_i \rightarrow L''_i$, ground functorial
+expressions $K_1,\ldots,K_m$, and ground annotated expressions
+\begin{displaymath}
+e''_i \in {\bf GExp}(K''_i[K_1,\ldots,K_m],L''_i[K_1,\ldots,K_m]),
+\end{displaymath}
+if for all $j = 1,\ldots,n$
+\begin{displaymath}
+\displaylines{
+\qquad (e_j[K_1,\ldots,K_m])[e''_1,\ldots,e''_l/f_1,\ldots,f_l] \equiv
+{} \hfill \cr
+\hfill (e'_j[K_1,\ldots,K_m])[e''_1,\ldots,e''_l/f_1,\ldots,f_l], \qquad
+\cr}
+\end{displaymath}
+then
+\begin{displaymath}
+\displaylines{
+\qquad (e[K_1,\ldots,K_m])[e''_1,\ldots,e''_l/f_1,\ldots,f_l] \equiv {}
+\hfill \cr
+\hfill (e'[K_1,\ldots,K_m])[e''_1,\ldots,e''_l/f_1,\ldots,f_l]. \qquad
+\qed \cr}
+\end{displaymath}
+\end{enumerate}
+\end{definition}
+
+We can now define the morphisms of $\cC$.
+\begin{contdefinition}{\ref{def-free-cat}}
+The $\cC$ morphisms from $K$ to $L$ are the equivalence
+classes of ${\bf GExp}(K,L)$ by $\equiv_{K,L}$, or simply,
+\begin{displaymath}
+\Hom{\cC}{K}{L} \defeq {\bf GExp}(K,L)/{\equiv_{K,L}}.
+\end{displaymath}
+We write $\eqvelm{e}$ for the equivalence class to which $e$ belongs.
+\end{contdefinition}
+
+\begin{proposition}
+$\cC$ is a category. \\
+{\bf Proof:} The identity morphism of a $\cC$ object $K$ is given
+by $\eqvelm{{\bf I}\anno{K}}$.  The composition of $\eqvelm{e}: K
+\rightarrow L$ and $\eqvelm{e'}: K' \rightarrow K$ is defined by
+\begin{displaymath}
+\eqvelm{e} \circ \eqvelm{e'} \defeq \eqvelm{e \circ e'}.
+\end{displaymath}
+The composition is trivially associative, and the satisfiability of the
+absorption rules of the identities is guaranteed by the third condition of
+the equivalence relation $\equiv$ defined in definition~\ref{def-eqv-gfe}.
+\end{proposition}
+
+Let us define an interpretation $\xi$ so that $\pair{\cC,\xi}$ is a CSL
+structure of the CSL signature $\pair{\Gamma,\Delta,\Psi}$.
+\begin{definition}
+\label{def-free-xi}
+The definition of $\xi$ is divided into three.
+\begin{enumerate}
+\item For a functor symbol $F \in \Gamma_{v_1\ldots v_n}$, $\xi F$ is a
+functor $\cC^{v_1\ldots v_n} \rightarrow \cC$ defined by
+\begin{displaymath}
+\begin{array}{l}
+\xi F(K_1,\ldots,K_n) \defeq F[K_1,\ldots,K_n)], \quad \mbox{and} \\
+\xi F(\eqvelm{e_1},\ldots,\eqvelm{e_n}) \defeq
+\eqvelm{F(e_1,\ldots,e_n)}. \\
+\end{array}
+\end{displaymath}
+\item For a natural transformation symbol $\alpha \in \Delta_{K,L}$,
+$\xi\alpha$ is
+\begin{displaymath}
+\xi\alpha_{K_1,\ldots,K_n} \defeq \eqvelm{\alpha\anno{K_1,\ldots,K_n}}.
+\end{displaymath}
+\item Finally, for a factorizer symbol $\psi \in
+\Psi_{\pair{\pair{K_1,L_1}\ldots\pair{K_n,L_n},\pair{K,L}}}$, $\xi\psi$
+is
+\begin{displaymath}
+\xi\psi_{K'_1,\ldots,K'_n}(\eqvelm{e_1},\ldots,
+\eqvelm{e_n}) \defeq
+\eqvelm{\psi\anno{K'_1,\ldots,K'_n}(e_1,\ldots,e_n)}. \qed
+\end{displaymath}
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}
+$\pair{\cC,\xi}$ is a CSL structure of $\pair{\Gamma,\Delta,\Psi}$.
+Moreover, it is a theory structure of the CSL theory given by the set
+$\Theta$ of CSL conditional equations. \\
+{\bf Proof:} The condition 6 in definition~\ref{def-eqv-gfe} makes it
+satisfy the conditional equations.
+\end{proposition}
+
+We have constructed a special CSL structure $\pair{\cC,\xi}$, and we will
+next show that it is the initial object in the full-subcategory of ${\bf
+CMod}(\pair{\Gamma,\Delta,\Psi})$ of all the structures satisfying $\Theta$.
+\begin{theorem}
+For any CSL structure satisfying $\Theta$, there is a unique CSL
+structure morphism from $\pair{\cC,\xi}$. \\ {\bf Proof:} Let
+$\pair{\cD,\zeta}$ be an arbitrary CSL structure satisfying $\Theta$.  Using
+the denotation of annotated expressions on this structure (see
+definition~\ref{def-anno-deno}), we define a functor $T$ from $\cC$ to
+$\cD$ as follows:
+\begin{displaymath}
+T(K) \defeq \zeta K \quad \mbox{and} \quad T(\eqvelm{e}) \defeq
+\zeta e.
+\end{displaymath}
+Note that, since $K$ is a ground functorial expression $\zeta K$ is an
+$\cD$ object, and that, since $e$ is a ground annotated expression,
+$\zeta e$ is a $\cD$ morphism (it does not need objects $A_1,\ldots,A_m$
+or a morphism variable assignment $\omega$).  It is easy to see that $T$
+is a (covariant) functor (note that we have to show the well-definedness
+first).  It is also not so difficult to show that $T$ is a CSL structure
+morphism and that it is the unique one from $\pair{\cC,\xi}$ to
+$\pair{\cD,\zeta}$ (simply extending the result on algebraic
+specifications).
+\end{theorem}
+
+The advantage of working in an initial CSL structure is that, if we show that
+a conditional equation holds in the initial one, then we automatically know
+that it holds in any CSL structure.  In chapter~\ref{ch-cpl}, we will define
+the symbolic computation in categories and it can be regarded as the
+computation in free categories.

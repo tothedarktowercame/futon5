@@ -1,0 +1,830 @@
+\chapter{Application of Categorical Data Types}
+\label{ch-application}
+
+In this chapter we see some applications of CDT and CPL.  We have
+concentrated on category theory in the previous chapters and it is
+sometimes hard to relate our results to others if they are not familiar
+with category theory.  The author is not claiming that it is better to
+use category theory in practice.  Category theory is used as a guiding
+principle to see things without being obscured by inessentials.  Therefore,
+once one establishes some results using category theory, it is very
+interesting to see what it means in other terms and we might get some
+deep insight.
+
+In section~\ref{sec-imp-cpl}, we will see an implementation of CPL.  In
+section~\ref{sec-lambda-calculus}, we will examine the connection
+between CDT and typed lambda calculi and in section~\ref{sec-ml-cpl} we
+will propose a new ML which is obtained by combining the current ML and
+CPL.
+
+\section[An implementation of Categorical Programming Language]{An
+implementation of\\ Categorical Programming Language}
+\label{sec-imp-cpl}
+
+In chapter~\ref{ch-cpl}, we introduced a programming language CPL and
+its computation rules.  A CPL system has been implemented using {\it
+Franz Lisp}.  In the section, we will demonstrate the system and see
+some examples of reductions which it can manage.
+
+When the system is started, it prints the following message and waits
+for user commands.
+\begin{computer}
+Categorical Programming Language (version 3)
+cpl>
+\end{computer}
+First, we have to declare some objects because the system does not know
+any objects when it is started.  The very first object we declare is the
+terminal object.  We use {\tt edit} command to enter its declaration.
+\begin{computer}
+cpl>/edit/
+| /right object 1 with !/
+| /end object;/
+right object 1 defined
+cpl>
+\end{computer}
+Note that user inputs are in {\it italic} font.  We define products,
+exponentials and natural number object as well.  The declarations are
+exactly the same as we presented in chapter~\ref{ch-cdt} (except that to
+make output shorter we use `{\tt s}' for successor and `{\tt 0}' for
+zero).
+\begin{computer}
+cpl>/edit/
+| /right object prod(a,b) with pair is/
+| /  pi1: prod -> a/
+| /  pi2: prod -> b/
+| /end object;/
+right object prod(+,+) defined
+cpl>/edit/
+| /right object exp(a,b) with curry is/
+| /  eval: prod(exp,a) -> b/
+| /end object;/
+right object exp(-,+) defined
+cpl>/edit/
+| /left object nat with pr is/
+| /  0: 1 -> nat/
+| /  s: nat -> nat/
+| /end object;/
+left object nat defined
+cpl>/edit/
+| /left object coprod(a,b) with case is/
+| /  in1: a -> coprod/
+| /  in2: b -> coprod/
+| /end object;/
+left object coprod(+,+) defined
+cpl>
+\end{computer}
+Each time we declare an object the system remembers its factorizer and
+natural transformations as well as the functor associated with.  In the
+above transaction, `{\tt prod(+,+)}' indicates that system recongnized
+`{\tt prod}' as a covariant functor of two arguments whereas `{\tt
+exp(-,+)}' indicates that `{\tt exp}' is a functor which is
+contravariant in the first argument and covariant in the second.  The
+variance is calculated as we formulated in section~\ref{sec-decl-CDT}.
+The system can type CSL expressions using the rules in
+section~\ref{sec-fun-calc-2}.  For example, we can ask the type of `{\tt
+pair(pi2,eval)}'.
+\begin{computer}
+cpl>/show pair(pi2,eval)/
+pair(pi2,ev)
+    : prod(exp(*b,*a),*b) -> prod(*b,*a)
+cpl>
+\end{computer}
+where `{\tt *a}' and `{\tt *b}' are variables for objects, or we can see
+them as a kind of type variables in ML; `{\tt pair(pi2,eval)}' is a
+polymorphic function in this sense.
+
+As we have done in section~\ref{sec-reduct-example}, we can ask to the
+system to calculate `1+1' using `{\tt simp}' command.
+\begin{computer}
+cpl>/simp eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)/
+s.s.0
+    :1 -> nat
+cpl>
+\end{computer}
+Note that the composition `$\circ$' is typed as `{\tt .}'.  The system
+applied reduction rules to get the following reduction:
+\begin{displaymath}
+\pair{{\tt eval.pair(\ldots).pair(s.0,s.0)},{\bf I}} \implies {\tt s.s.0}.
+\end{displaymath}
+We can see how the system deduced the reduction by enabling the trace mode.
+\begin{computer}
+cpl>/set trace on/
+cpl>/simp eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)/
+0:eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)*
+1:eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2)*pair(s.0,s.0)
+2:eval*pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)
+3[1]:pr(curry(pi2),curry(s.eval)).pi1*pair(s.0,s.0)
+4[1]:pr(curry(pi2),curry(s.eval)).s.0*id
+5[1]:pr(curry(pi2),curry(s.eval)).s*0
+6[1]:pr(curry(pi2),curry(s.eval))*s.0
+7[1]:curry(s.eval).pr(curry(pi2),curry(s.eval))*0
+8[1]:curry(s.eval).curry(pi2).!*
+9[1]:curry(s.eval).curry(pi2)*!
+10[1]:curry(s.eval)*curry(pi2).!
+11[1]:*curry(s.eval).curry(pi2).!
+12:s.eval*pair(curry(pi2).!,pi2.pair(s.0,s.0))
+13[1]:curry(pi2).!*
+14[1]:curry(pi2)*!
+15[1]:*curry(pi2).!
+16:s.pi2*pair(!,pi2.pair(s.0,s.0))
+17:s.pi2.pair(s.0,s.0)*id
+18:s.pi2*pair(s.0,s.0)
+19:s.s.0*id
+20:s.s*0
+21:s*s.0
+22:*s.s.0
+s.s.0
+    :1 -> nat
+cpl>
+\end{computer}
+Each line has the following form:
+\begin{sdisplaymath}
+\fbox{step number}\;{\tt [}\;\fbox{depth of computation}\;{\tt
+]:}\;\fbox{expression}\; {\tt *}\; \fbox{canonical element}
+\end{sdisplaymath}
+It indicates the following reduction:
+\begin{sdisplaymath}
+\pair{\;\fbox{expression}\;,\;\fbox{canonical element}\;} \implies {\ldots}
+\end{sdisplaymath}
+Step 0 denotes the reduction of
+\begin{sdisplaymath}
+\pair{{\tt
+eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)},{\bf I}}
+\implies {\ldots}.
+\eqno(+)
+\end{sdisplaymath}
+Step 1 is obtained from R-FACT rule (and R-COMP); the reduction
+$(+)$ is the same as the reduction of
+\begin{sdisplaymath}
+\pair{{\tt
+eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2)},{\tt pair(s.0,s.0)}}
+\implies {\ldots}.
+\end{sdisplaymath}
+Again from R-FACT, this reduction is the same as
+\begin{sdisplaymath}
+\pair{{\tt
+eval},{\tt pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)}}
+\implies {\ldots}.
+\eqno(++)
+\end{sdisplaymath}
+which is step 2.  From R-NAT, we have to calculate
+\begin{sdisplaymath}
+\displaylines{
+\qquad \langle {\tt
+pair(pr(curry(pi2),curry(s.eval)).pi1,pi2).pair(s.0,s.0)}, \hfill \cr
+\hfill {\tt prod(exp,a)}, {\tt exp} \rangle \leadsto \pair{{\tt
+curry(\ldots)},\ldots}. \qquad \cr}
+\end{sdisplaymath}
+In order to do this, from R-NAT-F we have to calculate
+\begin{sdisplaymath}
+\pair{{\tt pr(curry(pi2),curry(s.eval)).pi1},{\tt pair(s.0,s.0)}}
+\implies {\ldots}
+\eqno(\dagger)
+\end{sdisplaymath}
+This reduction is carried out from step 3 to step 12 and we get
+\begin{sdisplaymath}
+\pair{{\tt pr(curry(pi2),curry(s.eval)).pi1},{\tt pair(s.0,s.0)}}
+\implies {\tt curry(s.eval).curry(pi2).!}.
+\end{sdisplaymath}
+Note that from step 3 to 4 it did the reduction
+\begin{sdisplaymath}
+\pair{{\tt pi1},{\tt pair(s.0,s.0)}} \implies {\tt s.0},
+\end{sdisplaymath}
+and from step 6 to 7 it used L-FACT and did the reduction
+\begin{sdisplaymath}
+\logicrule{\pair{{\tt curry(s.eval).pr(curry(pi1),curry(s.eval))},{\tt
+0}} \implies {\ldots}}{
+\pair{{\tt pr(curry(pi2),curry(s.eval))},{\tt s.0}} \implies {\ldots}}.
+\end{sdisplaymath}
+Therefore, $(\dagger)$ is
+\begin{sdisplaymath}
+\pair{{\tt pr(curry(pi2),curry(s.eval)).pi1},{\tt pair(s.0,s.0)}}
+\implies \pair{{\tt curry(s.eval)},{\tt curry(pi2).!}},
+\end{sdisplaymath}
+and from R-NAT the reduction of $(++)$ is the same as
+\begin{sdisplaymath}
+\pair{{\tt s.eval},{\tt pair(curry(pi2).!,pi2.pair(s.0,s.0))}} \implies
+{\ldots}.
+\end{sdisplaymath}
+The rest of the steps are done similarly.
+
+It is inconvenient to write down the definition of the addition
+every time we want to add something.  Therefore, the system has the
+facility to give names to morphisms.  For example, we can name the
+addition function `{\tt add}' and use it as follows:
+\begin{computer}
+cpl>/let add=eval.pair(pr(curry(pi2),curry(s.eval)).pi1,pi2)/
+add : prod(nat,nat) -> nat defined
+cpl>/simp add.pair(s.0,s.s.0)/
+s.s.s.0
+    :1 -> nat
+\end{computer}
+We can define the multiplication and factorial functions.
+\begin{computer}
+cpl>/let mult=eval.prod(pr(curry(0.!),curry(add.pair(eval,pi2))),id)/
+mult : prod(nat,nat) -> nat defined
+cpl>/let fact=pi1.pr(pair(s.0,0),pair(mult.pair(s.pi2,pi1),s.pi2))/
+fact : nat -> nat defined
+cpl>/simp mult.pair(s.s.0,s.s.s.0)/
+s.s.s.s.s.s.0
+    :1 -> nat
+cpl>/simp fact.s.s.s.s.0/
+s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.0.!
+    :1 -> nat
+cpl>
+\end{computer}
+
+Let us next define the object for lists.
+\begin{computer}
+cpl>/edit/
+| /left object list(p) with prl is/
+| /  nil:1->list/
+| /  cons:prod(p,list)->list/
+| /end object;/
+left object list(+) defined
+cpl>/edit/
+| /let append=eval.prod(prl(curry(pi2),/
+| /                         curry(cons.pair(pi1.pi1,eval.pair(pi2.pi1,pi2)))),/
+| /                id);/
+append : prod(list(*a),list(*a)) -> list(*a) defined
+cpl>/let reverse=prl(nil,append.pair(pi2,cons.pair(pi1,nil.!)))/
+reverse : list(*a) -> list(*a) defined
+cpl>/let hd=prl(in2,in1.pi1)/
+hd : list(*a) -> coprod(*a,1) defined
+cpl>/let hdp=case(hd,in2)/
+hdp : coprod(list(*a),1) -> coprod(*a,1) defined
+cpl>/let tl=case(in1.pi2,in2).prl(in2,in1.pair(pi1,case(cons,nil).pi2))/
+tl : list(*a) -> coprod(list(*a),1) defined
+cpl>/let tlp=case(tl,in2)/
+tlp : coprod(list(*a),1) -> coprod(list(*a),1) defined
+cpl>/let seq=pi2.pr(pair(0,nil),pair(s.pi1,cons))/
+seq : nat -> list(nat) defined
+cpl>
+\end{computer}
+The morphism `{\tt seq}' returns a list of length $n$ for a given
+natural number $n$ such that the list consists of the descending
+sequence of natural numbers, $n-1, n-2, \ldots, 2, 1, 0$.  We can try it
+in the system.
+\begin{computer}
+cpl>/simp seq.s.s.s.0/
+cons.pair(s.pi1,cons).pair(s.pi1,cons).pair(0,nil).!
+    :1 -> list(nat)
+cpl>
+\end{computer}
+The result dose not look like the sequence of 2, 1 and 0, but this is
+because our definition of canonical element
+(definition~\ref{def-cpl-canonical}) is weak.  We can ask the system to
+reduce an element to unconditioned canonical elements (see
+definition~\ref{def-cpl-unconditioned-canonical}) using reduction rules
+listed in definition~\ref{def-reduct-rules-2}.
+\begin{computer}
+cpl>/simp full seq.s.s.s.0/
+cons.pair(s.s.0.!,cons.pair(s.0.!,cons.pair(0.!,nil.!)))
+    :1 -> list(nat)
+cpl>
+\end{computer}
+Now, it looks more like the sequence of 2, 1, and 0.  We may continue
+to do some more reductions about lists.
+\begin{computer}
+cpl>/simp hd.seq.s.s.s.0/
+in1.s.s.0.!
+    :1 -> coprod(nat,1)
+cpl>/simp hd.nil/
+in2.!
+    :1 -> coprod(*a,1)
+cpl>/simp hdp.tl.seq.s.s.s.0/
+in1.s.0.!
+    :1 -> coprod(nat,1)
+cpl>/simp full append.pair(seq.s.s.0,seq.s.s.s.0)/
+cons.pair(s.0.!,cons.pair(0.!,cons.pair(s.s.0.!,cons.pair(s.0.!,cons.
+    pair(0.!,nil.!)))))
+    :1 -> list(nat)
+cpl>/simp full reverse.it/
+cons.pair(0.!,cons.pair(s.0.!,cons.pair(s.s.0.!,cons.pair(0.!,cons.
+    pair(s.0.!,nil.!)))))
+    :1 -> list(nat)
+cpl>
+\end{computer}
+where `{\tt it}' denotes the result of the immediately-preceding
+reduction.
+
+Let us next experiment with infinite lists.
+\begin{computer}
+cpl>/edit/
+| /right object inflist(a) with fold is/
+| /  head: inflist -> a/
+| /  tail: inflist -> inflist/
+| /end object;/
+right object inflist(+) defined
+cpl>/let incseq=fold(id,s).0/
+incseq : 1 -> inflist(nat) defined
+cpl>/simp head.incseq/
+0
+    :1 -> nat
+cpl>/simp head.tail.tail.tail.incseq/
+s.s.s.0
+    :1 -> nat
+cpl>/let alt=fold(head.pi1,pair(pi2,tail.pi1))/
+alt : prod(inflist(*a),inflist(*a)) -> inflist(*a)
+cpl>/let infseq=fold(id,id).0/
+infseq : 1 -> inflist(nat)
+cpl>/simp head.tail.tail.alt.pair(incseq,infseq)/
+s.0
+    :1 -> nat
+cpl>
+\end{computer}
+where `{\tt incseq}' is the infinite increasing sequence 0, 1, 2, 3, 4,
+\ldots, and `{\tt infseq}' is the infinite sequence of 0s.  We can merge
+two infinite lists by `{\tt alt}' which picks up elements alternatively
+from the two infinite lists.
+
+\section{Typed Lambda Calculus}
+\label{sec-lambda-calculus}
+
+In this section, we will investigate connection between CPL and typed
+lambda calculi.  Lambda calculi were invented to mathematically
+formalize the notion of computation.  Typed lambda calculi (first order)
+are an important part of lambda calculi and are studied in various ways.
+Usually a typed lambda calculus starts with a fixed number of
+ground types and allows only $\rightarrow$ as type constructors.  For
+example, \cite{stenlund} treats natural numbers and ordinals, and
+\cite{troelstra-73} deals with one level higher ordinals.  An
+interesting question is ``What kind of types can be added to lambda
+calculi?''  Natural numbers, ordinals, lists, \ldots.  We will show in
+this section that any data types we can define in CPL can be added into
+typed lambda calculi.
+
+We are to define a typed lambda calculus.  As CPL does not have any
+ground objects to start with, our lambda calculus does not have any
+ground types either.  Instead it has two ways of constructing types, one
+corresponding to forming left objects and the other corresponding to
+forming right objects.
+\begin{definition}
+The syntax of our lambda calculus is given as follows.
+\begin{enumerate}
+\item An enumerable set {\it TVar} of type variables.  $\rho, \nu, \ldots
+\in {\rm TVar}$.
+\item The set {\it Type} of types is defined by the following rules.
+\begin{displaymath}
+\begin{array}{c}
+\logicrule{\rho \in {\rm TVar} \qquad \rho \in \Gamma}{\Gamma \vdash \rho
+\in {\rm Type}}
+\qquad \logicrule{\emptyset \vdash \sigma \in {\rm Type} \qquad \Gamma
+\vdash \tau \in {\rm Type}}{\Gamma \vdash \sigma \rightarrow \tau \in
+{\rm Type}} \\
+\strut \\
+\logicrule{\Gamma \cup \{\;\rho\;\} \vdash \sigma_1 \in {\rm Type}
+\qquad \ldots \qquad \Gamma \cup \{\;\rho\;\} \vdash \sigma_n \in {\rm
+Type}}{\Gamma \vdash \minfix{\rho}{\sigma_1,\ldots,\sigma_n} \in {\rm
+Type}} \\
+\strut \\
+\logicrule{\Gamma \cup \{\;\rho\;\} \vdash \sigma_1 \in {\rm Type}
+\qquad \ldots \qquad \Gamma \cup \{\;\rho\;\} \vdash \sigma_n \in {\rm
+Type}}{\Gamma \vdash \maxfix{\rho}{\sigma_1,\ldots,\sigma_n} \in {\rm
+Type}} \\
+\end{array}
+\end{displaymath}
+We use $\sigma, \tau, \ldots$ for the meta-variables of Type.
+$\minfix{\rho}{\sigma_1,\ldots,\sigma_n}$ corresponds to left objects
+and $\maxfix{\rho}{\sigma_1,\ldots,\sigma_n}$ corresponds to right
+objects.
+\item An enumerable set {\it Var} of variables.  $x, y, z, \ldots
+\in {\rm Var}$.
+\item The set {\it Term} of terms and their types are defined by the
+following rules.
+\begin{displaymath}
+\begin{array}{l}
+\logicrule{x \in {\rm Var} \qquad x \;:\; \sigma \in \Gamma}{\Gamma
+\vdash x \;:\; \sigma} \\
+\strut \\
+\logicrule{\Gamma \cup \{\; x \;:\; \sigma \} \vdash t \;:\;
+\tau}{\Gamma \vdash \lambda x^\sigma.t \;:\; \sigma \rightarrow \tau} \\
+\strut \\
+\logicrule{\Gamma \vdash t_1 \;:\; \sigma \rightarrow \tau \qquad \Gamma
+\vdash t_2 \;:\; \sigma}{\Gamma \vdash t_1 t_2 \;:\; \tau} \\
+\strut \\
+\Gamma \vdash C_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},i}
+\;:\; \sigma_i[\minfix{\rho}{\sigma_1,\ldots,\sigma_n}/\rho] \rightarrow
+\minfix{\rho}{\sigma_1,\ldots,\sigma_n} \\
+\strut \\
+\begin{array}{r}
+\Gamma \vdash J_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau} \;:\;
+(\sigma_1[\tau/\rho] \rightarrow \tau) \rightarrow \ldots \rightarrow
+(\sigma_n[\tau/\rho] \rightarrow \tau) \rightarrow {} \qquad \\
+\minfix{\rho}{\sigma_1,\ldots,\sigma_n} \rightarrow \tau \\
+\end{array}
+\\
+\strut \\
+\Gamma \vdash D_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},i}
+\;:\; \maxfix{\rho}{\sigma_1,\ldots,\sigma_n} \rightarrow
+\sigma_i[\maxfix{\rho}{\sigma_1,\ldots,\sigma_n}/\rho] \\
+\strut \\
+\begin{array}{r}
+\Gamma \vdash P_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau} \;:\;
+(\tau \rightarrow \sigma_1[\tau/\rho]) \rightarrow \ldots \rightarrow
+(\tau \rightarrow \sigma_n[\tau/\rho]) \rightarrow {} \qquad  \\
+\tau \rightarrow \maxfix{\rho}{\sigma_1,\ldots,\sigma_n} \\
+\end{array}
+\\
+\end{array}
+\end{displaymath}
+$C_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},i}$ is the $i$-th
+constructor of $\minfix{\rho}{\sigma_1,\ldots,\sigma_n}$ and
+$J_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau}$ is the generalized
+iterator for it.  $D_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},i}$ and
+$P_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau}$ are the dual pairs. \qed
+\end{enumerate}
+\end{definition}
+
+We have the usual reduction rules $\alpha$ and $\beta$ and two $delta$
+rules.  We write $a \reduce b$ for the term $a$ reducing
+to the term $b$ by one step reduction and write $a \reducen b$ for $a$
+reducing to $b$ by some steps.  The two delta rules are:
+\begin{displaymath}
+J_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau} a_1 \ldots a_n
+(C_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},i} b)
+\reduce a_i
+(\sigma_i[J_{\minfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau} a_1 \ldots
+a_n/\rho] b)
+\end{displaymath}
+and
+\begin{displaymath}
+D_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},i}
+(P_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau} a_1 \ldots a_n b)
+\reduce
+\sigma_i[P_{\maxfix{\rho}{\sigma_1,\ldots,\sigma_n},\tau} a_1 \ldots 
+a_n/\rho] (a_i b)
+\end{displaymath}
+where $\sigma[t/\rho]$ is a term of type $\sigma[\tau/\rho] \rightarrow
+\sigma[\upsilon/\rho]$ when the type of $t$ is $\tau \rightarrow
+\upsilon$ and is defined as follows.
+\begin{enumerate}
+\item If $\rho$ does not appear in $\sigma$, then $\sigma[t/\rho] \equiv
+\lambda x^\sigma.x$.
+\item $\rho[t/\rho] \equiv t$.
+\item $(\sigma_1 \rightarrow \sigma_2)[t/\rho] \equiv \lambda
+x^{\sigma_1 \rightarrow \sigma_2[\tau/\rho]}.\lambda
+y^{\sigma_1}.\sigma_2[t/\rho](x y)$.
+\item $\minfix{\nu}{\sigma_1,\ldots,\sigma_n}[t/\rho] \equiv
+J_{\minfix{\nu}{\sigma_1[\tau/\rho],\ldots},\minfix{\nu}{\sigma_1[\upsilon/\rho],\ldots}}
+a_1 \ldots a_n$ \\
+where $a_i \equiv \lambda
+x^{\sigma_i[\tau/\rho][\minfix{\nu}{\sigma_1[\upsilon/\rho],\ldots}/\nu]}.C_{\minfix{\nu}{\sigma_1[\tau/\rho],\ldots},i}
+(\sigma_i[\minfix{\nu}{\sigma_1[\upsilon/\rho],\ldots}/\nu][t/\rho] x)$.
+\item $\maxfix{\nu}{\sigma_1,\ldots,\sigma_n}[t/\rho] \equiv
+P_{\maxfix{\nu}{\sigma_1[\upsilon/\rho],\ldots},\maxfix{\nu}{\sigma_1[\tau/\rho],\ldots}}
+a_1 \ldots a_n$ \\
+where $a_i \equiv \lambda x^{\maxfix{\nu}{\sigma_1[\tau/\rho],\ldots}}.
+\sigma_i[\maxfix{\nu}{\sigma_1[\tau/\rho],\ldots}/\nu][t/\rho](
+D_{\maxfix{\nu}{\sigma_1[\tau/\rho],\ldots},i} x)$.
+\end{enumerate}
+It looks very complicated but this is the faithful translation of
+$\sigma[t/\rho]$ as $\sigma$ being a functor.
+
+Let us see some types we can define in our lambda calculus.
+\begin{example}
+The empty type can be defined as $\emptyset \equiv \minfix{\rho}{}$, and
+one point type can be defined as $1 \equiv \maxfix{\rho}{}$.  We denote
+the element of $1$ as $\ast \equiv P_{1,1\rightarrow 1} \lambda x^1.x$.
+\end{example}
+
+\begin{example}
+The product of two types, $\sigma$ and $\tau$ can be defined as
+$\sigma\times \tau \equiv \maxfix{\rho}{\sigma,\tau}$.  We have two
+projections.
+\begin{displaymath}
+\pi_1 \equiv D_{\sigma\times\tau,1} \quad :\; \sigma\times\tau \rightarrow
+\sigma \qquad \qquad
+\pi_2 \equiv D_{\sigma\times\tau,2} \quad :\; \sigma\times\tau \rightarrow
+\tau
+\end{displaymath}
+If $a$ is a term of type $\sigma$ and $b$ is a term of type $\tau$, we
+can define a term $\pair{a,b}$ of type $\sigma\times\tau$.
+\begin{displaymath}
+\pair{a,b} \equiv P_{\sigma\times\tau}(\lambda x^1.a)(\lambda x^1.b)\ast
+\quad :\; \sigma\times\tau
+\end{displaymath}
+We have the following reduction.
+\begin{displaymath}
+\pi_1 \pair{a,b} \equiv
+D_{\sigma\times\tau,1}(P_{\sigma\times\tau,1}(\lambda x.a)(\lambda
+x.b)\ast) \reduce (\lambda x.x)((\lambda x.a)\ast) \reducen a
+\end{displaymath}
+Similarly, we can show that $\pi_2\pair{a,b} \reducen b$.
+\end{example}
+
+\begin{example}
+Dually, the coproduct of $\sigma$ and $\tau$ is defined as $\sigma+\tau
+\equiv \minfix{\rho}{\sigma,\tau}$.  Two injections are defined as
+follows.
+\begin{displaymath}
+\iota_1 \equiv C_{\sigma+\tau,1} \quad :\; \sigma \rightarrow
+\sigma+\tau \qquad \qquad
+\iota_2 \equiv C_{\sigma+\tau,2} \quad :\; \tau \rightarrow
+\sigma+\tau
+\end{displaymath}
+$J_{\sigma+\tau,\nu}$ satisfies the following reductions.
+\begin{displaymath}
+\begin{array}{l}
+J_{\sigma+\tau,\nu} a b (\iota_1 c) \equiv J_{\sigma+\tau,\nu} a b
+(C_{\sigma+\tau,1} c) \reduce a ((\lambda x.x) c) \reduce a c \\
+\strut \\
+J_{\sigma+\tau,\nu} a b (\iota_2 c) \reducen b c \rlap{\qquad \qquad \qed}\\
+\end{array}
+\end{displaymath}
+\end{example}
+
+\begin{example}
+Let us define the natural numbers in our lambda calculus.  The definition of
+type is
+\begin{displaymath}
+\omega \equiv \minfix{\rho}{1,\rho}.
+\end{displaymath}
+Zero and the successor function are defined by
+\begin{displaymath}
+0 \equiv C_{\omega,1}\ast \quad :\; \omega \qquad {\rm s} \equiv
+C_{\omega,2} \quad :\; \omega \rightarrow \omega
+\end{displaymath}
+$J$ gives us almost the ordinary well-known iterator but its type is
+\begin{displaymath}
+J_{\omega,\sigma} \quad : \; (1 \rightarrow \sigma) \rightarrow (\sigma
+\rightarrow \sigma) \rightarrow \omega \rightarrow \sigma.
+\end{displaymath}
+We can define the ordinary one by this $J_{\omega,\sigma}$ as follows.
+\begin{displaymath}
+\tilde J_\sigma \equiv \lambda x.\lambda y.\lambda n. J_{\omega,\sigma}
+(\lambda z.x) y n \quad : \; \sigma \rightarrow (\sigma \rightarrow \sigma)
+\rightarrow \omega \rightarrow \sigma
+\end{displaymath}
+It satisfies the usual reductions:
+\begin{displaymath}
+\tilde J_\sigma a b 0 \reducen J_{\omega,\sigma} (\lambda z.a) b (C_{\omega,1}
+\ast) \reduce (\lambda z.a)((\lambda x.x)\ast) \reducen a
+\end{displaymath}
+and
+\begin{displaymath}
+\tilde J_\sigma a b ({\rm s} n) \reducen J_{\omega,\sigma}(\lambda z.a) b
+(C_{\omega,2} n) \reduce b (J_{\omega,\sigma} (\lambda z.a) b n) \approx
+b (\tilde J_\sigma a b n)
+\end{displaymath}
+where $\approx$ is the equivalence relation generated by $\reducen$.  Using
+$\tilde J_\sigma$, we can define all the primitive recursive functions.  For
+example, the addition function can be define as
+\begin{displaymath}
+{\rm add} \equiv \lambda n. \lambda m. \tilde J_\omega m {\rm s} n \quad
+: \; \omega \rightarrow \omega \rightarrow \omega. \rlap{\qquad \qquad \qed}
+\end{displaymath}
+\end{example}
+
+\begin{example}
+As \cite{stenlund} and \cite{troelstra-73}, we can define the type for
+ordinals by $\Omega \equiv \minfix{\rho}{1,\omega \rightarrow \rho}$.
+We only check whether our definition of the iterator coincides with the
+ordinary one.
+\begin{displaymath}
+\begin{array}{l}
+\Omega \equiv \minfix{\rho}{1,\omega \rightarrow \rho} \\
+\strut \\
+0_\Omega \equiv C_{\Omega,1}\ast \quad : \; \Omega \\
+\strut \\
+\sup \equiv C_{\Omega,2} \quad : \; (\omega \rightarrow \Omega)
+\rightarrow \omega \\
+\strut \\
+J_{\Omega,\sigma} \quad : \; (1 \rightarrow \sigma) \rightarrow ((\omega
+\rightarrow \sigma) \rightarrow \sigma) \rightarrow \Omega \rightarrow
+\sigma \\
+\strut \\
+J_{\Omega,\sigma} (\lambda x.a) b 0_\Omega \reduce (\lambda
+x.a)((\lambda x.x)\ast) \reducen a \\
+\strut \\
+J_{\Omega,\sigma} (\lambda x.a) b (\sup t) \reduce b ((\omega
+\rightarrow \rho)[J_{\Omega,\sigma} (\lambda x.a) b/\rho] t) \\
+\qquad \qquad \equiv b ((\lambda y. \lambda z. J_{\Omega,\sigma}
+(\lambda x.a) b (y z)) t) \reduce b (\lambda z.
+J_{\Omega,\sigma}(\lambda x.a) b (t z)) \rlap{\qquad \qquad \qed}
+\end{array}
+\end{displaymath}
+\end{example}
+
+\begin{example}
+Finally, the type for finite lists can be defined by
+\begin{displaymath}
+L_\sigma \equiv \minfix{\rho}{1,\sigma\times\rho}
+\end{displaymath}
+with
+\begin{displaymath}
+\begin{array}{c}
+{\rm nil} \equiv C_{L_\sigma,1}\ast \quad : \; L_\sigma \qquad \qquad
+{\rm cons} \equiv C_{L_\sigma,2} \quad : \; \sigma\times L_\sigma
+\rightarrow L_\sigma \\
+\strut \\
+J_{L_\sigma,\tau} \quad : \; (1 \rightarrow \tau) \rightarrow (
+\sigma\times \tau \rightarrow \tau) \rightarrow L_\sigma \rightarrow
+\tau \\
+\end{array}
+\end{displaymath}
+whereas the type for infinite lists can be defined by $I_\sigma \equiv
+\maxfix{\rho}{\sigma,\rho}$ with
+\begin{displaymath}
+\begin{array}{c}
+{\rm head} \equiv D_{I_\sigma,1} \quad : \; I_\sigma \rightarrow \sigma
+\qquad \qquad 
+{\rm tail} \equiv D_{I_\sigma,2} \quad : \; I_\sigma \rightarrow
+I_\sigma \\
+\strut \\
+P_{I_\sigma,\tau} \quad : \; (\tau \rightarrow \sigma) \rightarrow (\tau
+\rightarrow \tau) \rightarrow \tau \rightarrow I_\sigma \\
+\strut \\
+{\rm head} (P_{I_\sigma,\tau}a b c) \reducen a c \qquad \qquad
+{\rm tail} (P_{I_\sigma,\tau}a b c) \reducen P_{I_\sigma,\tau}a b (b c)
+\rlap{\qquad \qquad \qed} \\
+\end{array}
+\end{displaymath}
+\end{example}
+
+After finishing this section, the author is communicate with
+\cite{mendler-86} where recursive types are introduced into
+first-order and second-order typed lambda calculi.  He uses least fixed
+points and greatest fixed points as we do, but their recursion
+combinator $R$ has a different type from ours.
+\begin{displaymath}
+\logicrule{M : (\rho \arrow \tau) \arrow \sigma \arrow
+\tau}{R_{\sigma,\tau}(M[\minfixop\rho.\sigma/\rho]) :
+\minfixop\rho.\sigma \arrow \tau}
+\end{displaymath}
+The author cannot give a clear connection between our iterator and
+his.  In addition, he takes fixed points over a single type
+expression and, therefore, he needs some basic type constructors like
+$1$ and $+$, whereas in our lambda calculus there are no basic type
+constructors.
+
+\section[ML and Categorical Programming Language]{ML and Categorical
+Programming\\ Language}
+\label{sec-ml-cpl}
+
+We might say that ML is based on (first order) typed lambda calculi as we
+might say that LISP is based on untyped lambda calculi.  The type
+structure of ML depends on the version of ML we are talking about.  If
+we are talking about the original ML developed with LCF
+\cite{gordon-milner-wordsworth-79}, it had some base types, product,
+disjoint sum, integer, etc.\ , and had ability to introduce new
+types via recursively defined type equations.  For example, the data
+type for binary trees whose leaves are integers were defined as
+\begin{bcomputer}
+absrectype btree = int + (btree # btree)
+    with leaf n = absbtree(inl n)
+    and node(t1,t2) = absbtree(inr(t1,t2))
+    and isleaf t = isl(repbtree t)
+    and leafvalue t = outl(repbtree t)
+    and left t = fst(outr(repbtree t))
+    and right t = snd(outr(repbtree t));;
+\end{bcomputer}
+Here, we needed the coproduct type constructor `\verb"+"' as a
+primitive.  We could not do without it, whereas `int' can be defined in
+terms of others primitives (ML has it as a primitive type just because
+of efficiency).
+
+At the next evolution of ML which yielded the current Standard ML
+\cite{milner-84,harper-macqueen-milner-86}, we
+discovered that the coproduct type constructor is no longer needed as a
+primitive.  Standard ML has a `datatype' declaration mechanism by which
+the coproduct type constructor can be defined.
+\begin{bcomputer}
+datatype 'a + 'b = inl of 'a | inr of 'b;
+\end{bcomputer}
+A datatype declaration lists the constructors of the defining type.  An
+element of `\verb"'a + 'b"' can be obtained by either applying
+`\verb"inl"' to an element of `\verb"'a"' or applying `\verb"inr"' to an
+element of `\verb"'b"'.  We can define the data type for binary trees in
+Standard ML as follows.
+\begin{bcomputer}
+datatype btree = leaf of int | node of btree * btree;
+\end{bcomputer}
+The symbol `\verb"|"' is just like `\verb"+"', but we shifted from the
+object level of the language to the syntax level.  Note that we no
+longer need the separate definition of `\verb"leaf"' or `\verb"node"'.
+We can define the other functions using {\tt case} statements.
+\begin{bcomputer}
+exception btree;
+
+fun isleaf t = case t of
+                 leaf _ => true
+               | node _ => false;
+
+fun leafvalue t = case t of
+                    leaf n => n
+                  | node _ => raise btree;
+
+fun left t = case t of
+               leaf _ => raise btree
+             | node(t1,t2) => t1;
+
+fun right t = case t of
+                leaf _ => raise btree
+              | node(t1,t2) => t2;
+\end{bcomputer}
+
+We got rid of the coproduct type constructor from the primitives, but
+Standard ML still needs the product type constructor.  From a category
+theoretic point of view, we can sense asymmetry in the type structure
+of Standard ML.  Let us remember that CPL (or the lambda calculus
+defined in section~\ref{sec-lambda-calculus}) needs neither the
+coproduct type constructor nor the product type constructor as a primitive.  We
+should be able to introduce the symmetry of CPL into ML.  Let us proceed
+to the next stage of the ML evolution and define Symmetric ML.
+\begin{displaymath}
+\begin{tabular}{||r|l|l||}
+\hline
+& \multicolumn{1}{c|}{Primitives} & \multicolumn{1}{c||}{Declaration
+Mechanism} \\
+\hline
+ML & \verb"->", \verb"unit", \verb"#", \verb"+" & \verb"abstype" \\
+\hline
+Standard ML & \verb"->", \verb"unit", \verb"*" & \verb"datatype" \\
+\hline
+Symmetric ML & \verb"->" & \verb"datatype", \verb"codatatype" \\
+\hline
+CPL & & \verb"left object", \verb"right object" \\
+\hline
+\multicolumn{1}{c}{\strut} \\
+\multicolumn{3}{c}{{\bf ML Evolution}} \\
+\end{tabular}
+\end{displaymath}
+Remember that datatype declarations correspond to left object
+declarations.  We list constructors for types.  In order to get rid of
+the product type constructor from primitives, we should have a declaration
+mechanism which corresponds to the right object declaration mechanism.
+Its syntax is
+\begin{bcomputer}
+codatatype /TypeParam/ /TypeId/ =
+      /Id/ is /TypeExp/ & ... & /Id/ is /TypeExp/;
+\end{bcomputer}
+A codatatype declaration introduces a type by listing its destructors.
+The product type constructor can be defined as follows.
+\begin{bcomputer}
+codatatype 'a * 'b = fst is 'a & snd is 'b;
+\end{bcomputer}
+where `\verb"fst : 'a * 'b -> 'a"' gives the projection function to the
+first component and `\verb"snd : 'a * 'b -> 'b"' gives the projection
+function to the second component.  If the declaration is recursive, we
+do not take the initial fixed point of the type equation but the final
+fixed point.  This is firstly because of symmetry and secondly because
+the initial fixed points are often trivial.  Because of this, we can
+define infinite objects by codatatype declarations.  For example, the
+following declaration gives us the data type for infinite lists.
+\begin{bcomputer}
+codatatype 'a inflist = head is 'a & tail is 'a inflist;
+\end{bcomputer}
+If we took the initial fixed point, we would get the empty data type.
+
+Obviously we have destructors for co-data types because we declare them,
+but how can we construct data for co-data types?  We had {\tt case}
+statements for data types, so we have `merge' statements as dual.  Its
+syntax is
+\begin{bcomputer}
+merge /Destructor/ <= /Exp/ & ... & /Destructor/ <= /Exp/
+\end{bcomputer}
+For example, the function `\verb"pair"' which makes a pair of given two
+elements can be defined as follows.
+\begin{bcomputer}
+fun pair(x,y) = merge fst <= x & snd <= y;
+\end{bcomputer}
+As a more complicated example, we might define a function which combines
+two infinite lists together.
+\begin{bcomputer}
+fun comb(l1,l2) = merge head <= head l1
+                      & tail <= comb(l2,tail l1);
+\end{bcomputer}
+It is now clear that, if elements of co-data types are just records and
+`{\tt merge}' creates records after evaluating expressions, this `{\tt
+comb}' function never terminates because it tries to sweep the entire
+infinite lists which cannot be done in finite time.  We need lazyness in
+the evaluation mechanism.  An element of `{\tt inflist}' is a record of
+two components but each component is a closure whose computation leads to
+a value.  A `{\tt merge}' statement creates a record consisting of these
+records.   Therefore, the declaration of `{\tt inflist}' is not like
+\begin{bcomputer}
+datatype 'a inflist = something of 'a * 'a inflist;
+\end{bcomputer}
+but is closer to
+\begin{bcomputer}
+datatype 'a inflist = something of (unit -> 'a) *
+                                   (unit -> 'a inflist);
+\end{bcomputer}
+and `{\tt head}', `{\tt tail} and `{\tt comb}' are like
+\begin{bcomputer}
+fun head(something(x,l)) = x();
+
+fun tail(something(x,l)) = l();
+
+fun comb(l1,l2) = something(fn () => head l1,
+                            fn () => comb(l2,tail l1));
+\end{bcomputer}
+Note that, as we use pattern matching to declare functions over data
+types, we can also use it to declare functions over co-data types.  For
+example, an alternative definition of `{\tt comb}' may be
+\begin{bcomputer}
+fun head comb(l1,_) = head l1
+  & tail comb(l1,l2) = comb(l2,tail l1);
+\end{bcomputer}
+

@@ -1,0 +1,16 @@
+[
+ {:sigil "手" :role "BlendHand" :pattern "blending-curation" :description "Control blend/selector balance for improvisation engines."}
+ {:sigil "升" :role "UpliftOperator" :pattern "uplift" :description "Promote recurring motifs into executable operators (general uplift)."}
+ {:sigil "川" :role "WhiteSpaceScout" :pattern "white-space-scout" :description "Pulse sparse regions into exploratory stances (borrowed from ants)."}
+{:sigil "义" :role "HungerPrecision" :pattern "hunger-precision" :description "Map hunger trends and reserve pressure onto tau/precision adjustments."}
+{:sigil "面" :role "Facet" :pattern "facet" :description "Two-layer contract: generic inference loop + domain binding."}
+{:sigil "代" :role "HyperAnt" :pattern "hyperant" :description "Text-crawling AIF agent chaining lifted ant instincts to produce facets."}
+{:sigil "付" :role "Accumulator" :pattern "accumulator" :description "Generalised queen/energy pool shared by multi-agent practice."}
+{:sigil "止" :role "FreezeGenotype" :pattern "freeze-genotype" :description "Keep genotype fixed during MMCA runs (classic CA baseline)."}
+{:sigil "门" :role "LockKernel" :pattern "lock-kernel" :description "Lock the kernel so operators cannot change it mid-run."}
+{:sigil "凡" :role "RandomGenotype" :pattern "random-genotype" :description "Initialize genotype randomly (stochastic baseline)."}
+{:sigil "专" :role "GlobalRuleGenotype" :pattern "global-rule-genotype" :description "Initialize genotype as a single repeated rule sigil."}
+{:sigil "术" :role "UseOperators" :pattern "use-operators" :description "Enable MMCA operator hooks for the run."}
+{:sigil "生" :role "PhenotypeOn" :pattern "phenotype-on" :description "Initialize a phenotype so genotype/phenotype co-evolve."}
+{:sigil "屯" :role "GenotypeGate" :pattern "genotype-gate" :description "Gate genotype changes using phenotype bits (keep-signal)."}
+]
