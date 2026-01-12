@@ -2433,3 +2433,26 @@ Artifacts:
 - Xenotype blending shifts the score distribution upward and reduces confetti rate (0.11 -> 0.0525).
 - The population update cadence stays at 100 evaluations, matching the long-horizon requirement.
 - In the high and mid examples, the nomination runs show thriving vertical bands that are damped in the locked-kernel reruns, suggesting the xenotype currently trades spatially rich zones for bounded quasi-stability.
+
+** Mission 7 (draft): Exotic programming layer
+
+- Goal: make exotypes first-class programs by defining a compositional CT category and a manifest for the 256 super-sigils.
+- Approach: introduce a new category (`:futon5/exotype-program`) with labeled inputs/outputs, then map each sigil to a program template + params.
+
+*** Category sketch
+- Objects: `:history`, `:context`, `:kernel-spec`, `:params`, `:rng`
+- Morphisms: `:sample-context`, `:gate-update`, `:contextual-mutate`, `:set-mix`, `:normalize`
+- Program shape: `[:kernel-spec :context :params :rng] -> :kernel-spec`
+
+*** Generate manifest (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [futon5.ct.exotype-programs :as xp]))
+(spit "resources/exotype-program-manifest.edn" (pr-str (xp/manifest :super)))'
+#+END_SRC
+
+Artifacts:
+- resources/exotype-program-manifest.edn
+
+*** Notes
+- The manifest encodes the program template plus sigil-derived params for each super-sigil.
+- Mapping back to `:futon5/meta-kernel` is deferred; this keeps the exotype-program category explicit and compositional.
