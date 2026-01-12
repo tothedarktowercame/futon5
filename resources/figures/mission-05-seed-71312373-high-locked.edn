@@ -1,0 +1,1 @@
+{:lesion {:tick 60, :target :genotype, :half :left, :mode :zero}, :lock-kernel true, :exotype {:bits "01010010", :tier :super}, :generations 120, :seed 71312373, :render {:exotype? true}, :label "mission-05-seed-71312373-high-locked", :length 120, :kernel "spec-f7e9cd"}

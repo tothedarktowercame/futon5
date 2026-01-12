@@ -186,7 +186,7 @@
 
 (defn- print-header [{:keys [kernel mode generations operators]}]
   (println "MMCA run"
-           "| kernel" (name kernel)
+           "| kernel" (ca/kernel-label kernel)
            "| mode" (name mode)
            "| generations" generations)
   (when-let [ops (seq operators)]
@@ -397,7 +397,7 @@
                               (when-not @printed?
                                 (if raw
                                   (write-raw (str "MMCA run | kernel "
-                                                  (name (:kernel state))
+                                                  (ca/kernel-label (:kernel state))
                                                   " | mode " (name mode)
                                                   " | generations " generations))
                                   (print-header {:kernel (:kernel state)

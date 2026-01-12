@@ -40,6 +40,7 @@
     "  --input PATH          Render from an EDN run result instead of running."
     "  --out PATH            Output image path (PPM only; default mmca.ppm)."
     "  --save-run PATH       Write the run result to EDN (optional)."
+    "  --render-exotype      Render a genotype/phenotype/exotype triptych."
     "  --help                Show this message."]))
 
 (defn- parse-int [s]
@@ -129,6 +130,9 @@
           (= "--save-run" flag)
           (recur (rest more) (assoc opts :save-run (first more)))
 
+          (= "--render-exotype" flag)
+          (recur more (assoc opts :render-exotype true))
+
           :else
           (recur more (assoc opts :unknown flag))))
       opts)))
@@ -157,7 +161,7 @@
 (defn -main [& args]
   (let [{:keys [help unknown genotype length phenotype phenotype-length generations kernel mode
                 pattern-sigils no-operators lock-kernel freeze-genotype genotype-gate
-                gate-signal seed input out save-run] :as opts}
+                gate-signal seed input out save-run render-exotype] :as opts}
         (parse-args args)]
     (cond
       help
@@ -203,7 +207,7 @@
                                 no-operators (assoc :operators []))]
                      {:result (mmca/run-mmca opts)
                       :fresh? true})))]
-        (render/render-run->file! result out)
+        (render/render-run->file! result out {:exotype? render-exotype})
         (when (and save-run (or fresh? input))
           (spit save-run (pr-str result))
           (println "Saved run" save-run))

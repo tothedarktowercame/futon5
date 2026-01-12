@@ -3,6 +3,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
+            [clojure.set :as set]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.adapters :as adapters]
@@ -15,6 +16,7 @@
 (def ^:private default-length 50)
 (def ^:private default-runs 50)
 (def ^:private default-generations 50)
+(def ^:dynamic *quiet-kernel?* false)
 
 (defn- usage []
   (str/join
@@ -40,17 +42,27 @@
     "  --lesion-half H       lesion half: left or right."
     "  --lesion-mode M       lesion mode: zero or default."
     "  --feedback-top K     Accumulate top-K lifted sigils per run."
-    "  --feedback-edn PATH  Write accumulated sigils to EDN."
-    "  --feedback-load PATH Load initial sigils from EDN."
+    "  --feedback-edn PATH  Write accumulated sigils/learned specs to EDN."
+    "  --feedback-load PATH Load initial sigils/specs from EDN."
+    "  --feedback-every N   Write feedback EDN every N runs (streaming)."
+    "  --leaderboard-size N Keep top-N rules and reuse them across runs."
+    "  --leaderboard-chance P  Probability to seed a run from leaderboard (0-1)."
     "  --aif-weight P       Blend AIF score into composite (0-1)."
     "  --aif-guide          Use AIF score to gate feedback sigils."
     "  --aif-guide-min P    Minimum AIF score (0-100) to fully accept sigils."
     "  --aif-mutate         Use AIF deficits to steer kernel selection."
     "  --aif-mutate-min P   Apply AIF steering when score below P (0-100)."
-    "  --no-pulses          Disable pulse-based operators (global events)."
+    "  --kernel-context     Use run-local heredity to mutate kernel specs."
+    "  --exotype-update-threshold P  Only update kernel output when match <= P (0-1)."
+    "  --exotype-invert     Invert match check when phenotype bit is black."
+    "  --quiet-kernel       Bias kernel specs toward metastability (no mix, low mutation)."
+    "  --pulses             Enable pulse-based operators (default off)."
+    "  --no-pulses          Disable pulse-based operators (override)."
     "  --save-top N         Save the top N runs (EDN + image)."
     "  --save-top-dir PATH  Directory for saved runs (default ./mmca_top_runs)."
     "  --save-top-pdf PATH  Render saved images into a PDF (optional)."
+    "  --render-exotype     Render genotype/phenotype/exotype triptychs."
+    "  --report-every N     Write report EDN every N runs (streaming)."
     "  --help           Show this message."]))
 
 (defn- parse-int [s]
@@ -119,6 +131,15 @@
           (= "--feedback-load" flag)
           (recur (rest more) (assoc opts :feedback-load (first more)))
 
+          (= "--feedback-every" flag)
+          (recur (rest more) (assoc opts :feedback-every (parse-int (first more))))
+
+          (= "--leaderboard-size" flag)
+          (recur (rest more) (assoc opts :leaderboard-size (parse-int (first more))))
+
+          (= "--leaderboard-chance" flag)
+          (recur (rest more) (assoc opts :leaderboard-chance (Double/parseDouble (first more))))
+
           (= "--aif-weight" flag)
           (recur (rest more) (assoc opts :aif-weight (Double/parseDouble (first more))))
 
@@ -134,6 +155,21 @@
           (= "--aif-mutate-min" flag)
           (recur (rest more) (assoc opts :aif-mutate-min (Double/parseDouble (first more))))
 
+          (= "--kernel-context" flag)
+          (recur more (assoc opts :kernel-context true))
+
+          (= "--exotype-update-threshold" flag)
+          (recur (rest more) (assoc opts :exotype-update-threshold (Double/parseDouble (first more))))
+
+          (= "--exotype-invert" flag)
+          (recur more (assoc opts :exotype-invert true))
+
+          (= "--quiet-kernel" flag)
+          (recur more (assoc opts :quiet-kernel true))
+
+          (= "--pulses" flag)
+          (recur more (assoc opts :pulses true))
+
           (= "--no-pulses" flag)
           (recur more (assoc opts :no-pulses true))
 
@@ -145,6 +181,12 @@
 
           (= "--save-top-pdf" flag)
           (recur (rest more) (assoc opts :save-top-pdf (first more)))
+
+          (= "--render-exotype" flag)
+          (recur more (assoc opts :render-exotype true))
+
+          (= "--report-every" flag)
+          (recur (rest more) (assoc opts :report-every (parse-int (first more))))
 
           :else
           (recur more (assoc opts :unknown flag))))
@@ -164,19 +206,87 @@
 (defn- rng-bool [^java.util.Random rng]
   (zero? (rng-int rng 2)))
 
-(defn- random-kernel [^java.util.Random rng]
-  (let [ks (vec (keys ca/kernels))]
-    (nth ks (rng-int rng (count ks)))))
+(def ^:private blend-modes [:none :neighbors :all])
+(def ^:private template-modes [:none :context :collection])
+(def ^:private mutation-modes [:none :fixed :baldwin])
+(def ^:private mutation-probs [0.2 0.33 0.5 1.0])
+(def ^:private balance-chances [0.02 0.05 0.1])
+(def ^:private balance-min-ones [1 2 3])
+(def ^:private balance-max-ones [5 6 7])
+(def ^:private balance-flip-counts [1 2])
+(def ^:private mix-modes [:none :rotate-left :rotate-right :reverse :xor-neighbor :majority :swap-halves :scramble])
+(def ^:private mix-shifts [0 1 2 3])
+(def ^:private quiet-blend-modes [:none :neighbors])
+(def ^:private quiet-template-modes [:context :collection])
+(def ^:private quiet-mutation-modes [:none :fixed])
+(def ^:private quiet-mutation-probs [0.2 0.33])
+
+(defn- rng-choice [^java.util.Random rng xs]
+  (nth xs (rng-int rng (count xs))))
+
+(defn- rng-choice-except [^java.util.Random rng xs current]
+  (let [candidates (vec (remove #{current} xs))]
+    (if (seq candidates)
+      (rng-choice rng candidates)
+      current)))
+
+(defn- random-mutation
+  ([^java.util.Random rng] (random-mutation rng (rng-choice rng mutation-modes)))
+  ([^java.util.Random rng mode]
+   (case mode
+     :fixed {:mode :fixed
+             :count (inc (rng-int rng 3))
+             :prob (rng-choice rng mutation-probs)}
+     :baldwin {:mode :baldwin
+               :offset (inc (rng-int rng 3))
+               :prob (rng-choice rng mutation-probs)}
+     {:mode :none :count 0 :prob 0.0})))
+
+(defn- normalize-balance
+  [{:keys [min-ones max-ones] :as balance}]
+  (let [min-ones (long (or min-ones 0))
+        max-ones (long (or max-ones min-ones))
+        [min-ones max-ones] (if (< min-ones max-ones)
+                              [min-ones max-ones]
+                              [max-ones (inc min-ones)])]
+    (assoc balance :min-ones min-ones :max-ones max-ones)))
+
+(defn- random-balance [^java.util.Random rng]
+  (normalize-balance
+   {:enabled? (rng-bool rng)
+    :min-ones (rng-choice rng balance-min-ones)
+    :max-ones (rng-choice rng balance-max-ones)
+    :chance (rng-choice rng balance-chances)
+    :flip-count (rng-choice rng balance-flip-counts)}))
+
+(defn- random-kernel-spec [^java.util.Random rng]
+  (ca/normalize-kernel-spec
+   (let [quiet? *quiet-kernel?*]
+     (cond-> {:blend-mode (rng-choice rng (if quiet? quiet-blend-modes blend-modes))
+              :flip? (rng-bool rng)
+              :template-mode (rng-choice rng (if quiet? quiet-template-modes template-modes))
+              :mutation (if quiet?
+                          (random-mutation rng (rng-choice rng quiet-mutation-modes))
+                          (random-mutation rng))
+              :balance (random-balance rng)
+              :mix-mode (rng-choice rng (if quiet? [:none] mix-modes))
+              :mix-shift (rng-choice rng mix-shifts)
+              :reserved (apply str (repeatedly 6 #(rng-int rng 2)))}
+       quiet? (update :mutation (fn [m] (update m :prob (fn [_] (rng-choice rng quiet-mutation-probs)))))))))
 
 (defn- toggle [x]
   (not (boolean x)))
 
 (defn- random-meta-rule [^java.util.Random rng _no-freeze? require-phenotype? require-gate?]
-  (let [genotype-gate (if require-gate? true (rng-bool rng))
-        phenotype? (if require-phenotype?
-                     true
-                     (if genotype-gate true (rng-bool rng)))]
-    {:kernel (random-kernel rng)
+  (let [kernel (random-kernel-spec rng)
+        needs-context? (ca/kernel-spec-needs-context? kernel)
+        genotype-gate (if require-gate? true (rng-bool rng))
+        phenotype? (cond
+                     require-phenotype? true
+                     needs-context? true
+                     genotype-gate true
+                     :else (rng-bool rng))]
+    {:kernel kernel
      :lock-kernel (rng-bool rng)
      :freeze-genotype false
      :genotype-gate genotype-gate
@@ -184,9 +294,90 @@
      :operator-scope :genotype
      :genotype-mode :random
      :global-rule nil
-     :phenotype? phenotype?}))
+      :phenotype? phenotype?}))
 
-(defn- mutate-meta-rule [^java.util.Random rng _no-freeze? require-phenotype? require-gate? rule]
+(defn- mutate-kernel-spec [^java.util.Random rng kernel]
+  (let [spec (ca/normalize-kernel-spec kernel)
+        mutations (if *quiet-kernel?*
+                    [:blend-mode :flip :template-mode :mutation-mode :mutation-count
+                     :mutation-prob :mutation-offset :balance-enable :balance-chance :balance-thresholds]
+                    [:blend-mode :flip :template-mode :mutation-mode :mutation-count
+                     :mutation-prob :mutation-offset :balance-enable :balance-chance :balance-thresholds
+                     :mix-mode :mix-shift :reserved-bit])
+        pick (rng-choice rng mutations)
+        prob-pool (if *quiet-kernel?* quiet-mutation-probs mutation-probs)
+        update-mutation
+        (fn [spec mode]
+          (assoc spec :mutation (random-mutation rng mode)))]
+    (-> (case pick
+          :blend-mode (assoc spec :blend-mode (rng-choice-except rng blend-modes (:blend-mode spec)))
+          :flip (update spec :flip? toggle)
+          :template-mode (assoc spec :template-mode (rng-choice-except rng template-modes (:template-mode spec)))
+          :mutation-mode (update-mutation spec (rng-choice-except rng mutation-modes (get-in spec [:mutation :mode])))
+          :mutation-count (if (= :none (get-in spec [:mutation :mode]))
+                            (update-mutation spec :fixed)
+                            (update-in spec [:mutation :count] (fn [_] (inc (rng-int rng 3)))))
+          :mutation-prob (if (= :none (get-in spec [:mutation :mode]))
+                           (update-mutation spec :fixed)
+                           (update-in spec [:mutation :prob] (fn [_] (rng-choice rng prob-pool))))
+          :mutation-offset (if (= :none (get-in spec [:mutation :mode]))
+                             (update-mutation spec :baldwin)
+                             (update-in spec [:mutation :offset] (fn [_] (inc (rng-int rng 3)))))
+          :balance-enable (update-in spec [:balance :enabled?] toggle)
+          :balance-chance (update-in spec [:balance :chance] (fn [_] (rng-choice rng balance-chances)))
+          :balance-thresholds (normalize-balance
+                               (assoc (:balance spec)
+                                      :min-ones (rng-choice rng balance-min-ones)
+                                      :max-ones (rng-choice rng balance-max-ones)))
+          :mix-mode (assoc spec :mix-mode (rng-choice-except rng mix-modes (:mix-mode spec)))
+          :mix-shift (assoc spec :mix-shift (rng-choice-except rng mix-shifts (:mix-shift spec)))
+          :reserved-bit (let [bits (vec (ca/kernel-spec->bits spec))
+                              idx (rng-int rng (count bits))
+                              bit (bits idx)
+                              flipped (if (= bit \0) \1 \0)]
+                          (ca/bits->kernel-spec (apply str (assoc bits idx flipped)))))
+        (assoc :label nil)
+        (cond-> *quiet-kernel?* (assoc :mix-mode :none :mix-shift 0)))))
+
+(defn- noisy-summary? [summary]
+  (and summary
+       (> (double (or (:gen/avg-change summary) (:avg-change summary) 0.0)) 0.35)
+       (> (double (or (:gen/lz78-ratio summary) (:lz78-ratio summary) 0.0)) 0.7)))
+
+(defn- stable-summary? [summary]
+  (and summary
+       (< (double (or (:gen/avg-change summary) (:avg-change summary) 0.0)) 0.08)
+       (> (double (or (:gen/temporal-autocorr summary) (:temporal-autocorr summary) 0.0)) 0.85)))
+
+(defn- clamp-mutation [mutation]
+  (let [mode (:mode mutation)
+        count (long (or (:count mutation) 0))
+        prob (double (or (:prob mutation) 0.0))
+        offset (long (or (:offset mutation) 0))]
+    (cond-> mutation
+      (= mode :fixed) (assoc :count (min count 2))
+      (= mode :baldwin) (assoc :offset (min (max offset 1) 2))
+      (number? prob) (assoc :prob (min prob 0.5)))))
+
+(defn- dampen-kernel-spec [kernel summary]
+  (if (ca/kernel-spec? kernel)
+    (let [spec (ca/normalize-kernel-spec kernel)
+          mutation (clamp-mutation (:mutation spec))
+          spec (assoc spec :mutation mutation)]
+      (cond
+        (noisy-summary? summary)
+        (assoc spec :mutation {:mode :fixed :count 1 :prob 0.2})
+
+        (stable-summary? summary)
+        (if (= :none (:mode mutation))
+          (assoc spec :mutation {:mode :fixed :count 1 :prob 0.2})
+          (assoc spec :mutation (assoc mutation :count (max 1 (:count mutation))
+                                       :prob (max 0.33 (:prob mutation)))))
+
+        :else spec))
+    kernel))
+
+(defn- mutate-meta-rule [^java.util.Random rng _no-freeze? require-phenotype? require-gate? rule kernel-context]
   (let [mutations [:kernel :lock-kernel :phenotype? :genotype-gate]
         pick (nth mutations (rng-int rng (count mutations)))
         rule (assoc rule
@@ -197,25 +388,32 @@
                     :operator-scope :genotype)
         rule (if (and (:genotype-gate rule) (not (:phenotype? rule)))
                (assoc rule :phenotype? true)
-               rule)]
-    (case pick
-      :kernel (assoc rule :kernel (random-kernel rng))
-      :lock-kernel (update rule :lock-kernel toggle)
-      :phenotype? (if require-phenotype?
-                    (assoc rule :phenotype? true)
-                    (let [next (toggle (:phenotype? rule))]
-                      (cond-> (assoc rule :phenotype? next)
-                        (not next) (assoc :genotype-gate false))))
-      :genotype-gate (if require-gate?
-                       (assoc rule :genotype-gate true :phenotype? true)
-                       (let [next (toggle (:genotype-gate rule))]
-                         (cond-> (assoc rule :genotype-gate next)
-                           next (assoc :phenotype? true))))
-      rule)))
+               rule)
+        rule (case pick
+               :kernel (assoc rule :kernel (if kernel-context
+                                             (ca/mutate-kernel-spec-contextual (:kernel rule) kernel-context)
+                                             (mutate-kernel-spec rng (:kernel rule))))
+               :lock-kernel (update rule :lock-kernel toggle)
+               :phenotype? (if require-phenotype?
+                             (assoc rule :phenotype? true)
+                             (let [next (toggle (:phenotype? rule))]
+                               (cond-> (assoc rule :phenotype? next)
+                                 (not next) (assoc :genotype-gate false))))
+               :genotype-gate (if require-gate?
+                                (assoc rule :genotype-gate true :phenotype? true)
+                                (let [next (toggle (:genotype-gate rule))]
+                                  (cond-> (assoc rule :genotype-gate next)
+                                    next (assoc :phenotype? true))))
+               rule)
+        kernel (:kernel rule)]
+    (cond-> rule
+      (ca/kernel-spec-needs-context? kernel) (assoc :phenotype? true)
+      (and require-phenotype? (not (:phenotype? rule))) (assoc :phenotype? true)
+      (and require-gate? (not (:genotype-gate rule))) (assoc :genotype-gate true :phenotype? true))))
 
 (defn- enforce-baldwin [rule]
   (-> rule
-      (assoc :kernel :blending-baldwin
+      (assoc :kernel (ca/kernel-spec-for :blending-baldwin)
              :freeze-genotype false
              :genotype-gate true
              :phenotype? true
@@ -241,6 +439,43 @@
 
 (defn- normalize-sigils [sigils]
   (vec (remove nil? (map normalize-sigil sigils))))
+
+(defn- sigil-at [s idx]
+  (if (and s (<= 0 idx) (< idx (count s)))
+    (str (nth s idx))
+    ca/default-sigil))
+
+(defn- bit-at [s idx]
+  (if (and s (<= 0 idx) (< idx (count s)))
+    (nth s idx)
+    \0))
+
+(defn- kernel-context
+  [gen-history phe-history ^java.util.Random rng {:keys [exotype-update-threshold exotype-invert?]}]
+  (let [rows (count gen-history)
+        cols (count (or (first gen-history) ""))]
+    (when (and (> rows 1) (pos? cols))
+      (let [t (rng-int rng (dec rows))
+            x (rng-int rng cols)
+            row (nth gen-history t)
+            next-row (nth gen-history (inc t))
+            pred (sigil-at row (dec x))
+            self (sigil-at row x)
+            next (sigil-at row (inc x))
+            out (sigil-at next-row x)
+            phe (when (and phe-history (> (count phe-history) (inc t)))
+                  (let [phe-row (nth phe-history t)
+                        phe-next (nth phe-history (inc t))]
+                    (str (bit-at phe-row (dec x))
+                         (bit-at phe-row x)
+                         (bit-at phe-row (inc x))
+                         (bit-at phe-next x))))]
+        (cond-> {:context-sigils [pred self next out]
+                 :phenotype-context phe
+                 :rotation (rng-int rng 4)}
+          (number? exotype-update-threshold)
+          (assoc :match-threshold (min 1.0 (max 0.0 (double exotype-update-threshold))))
+          exotype-invert? (assoc :invert-on-phenotype? true))))))
 
 (defn- normalize-counts [counts]
   (reduce (fn [acc [sigil count]]
@@ -489,7 +724,7 @@
                (< trail 0.45) (into [:blending-mutation :blending-flip :mutating-template :ad-hoc-template])
                (< biodiversity 0.6) (into [:collection-template :ad-hoc-template :mutating-template])
                (< food 0.45) (into [:blending :mutating-template :ad-hoc-template]))]
-    (vec (distinct pool))))
+    (mapv ca/kernel-spec-for (distinct pool))))
 
 (defn- aif-guided-rule [rule summary ^java.util.Random rng aif-mutate? aif-mutate-min]
   (if (and aif-mutate? summary)
@@ -497,13 +732,16 @@
           min-score (double (or aif-mutate-min default-aif-mutate-min))]
       (if (< score min-score)
         (let [pool (aif-kernel-pool summary)
-              pool (if (seq pool)
-                     pool
-                     (vec (remove #{:blending-baldwin} (keys ca/kernels))))
-              kernel (nth pool (rng-int rng (count pool)))]
-          (-> rule
-              (assoc :kernel kernel)
-              (assoc :lock-kernel false)))
+              base (if (seq pool)
+                     (rng-choice rng pool)
+                     (random-kernel-spec rng))
+              kernel (if (rng-bool rng)
+                       (mutate-kernel-spec rng base)
+                       (mutate-kernel-spec rng (:kernel rule)))]
+          (cond-> (-> rule
+                      (assoc :kernel kernel)
+                      (assoc :lock-kernel false))
+            (ca/kernel-spec-needs-context? kernel) (assoc :phenotype? true)))
         rule))
     rule))
 
@@ -579,6 +817,8 @@
      :seed run-seed
      :genotype-hash (sha1 genotype)
      :phenotype-hash (when phenotype (sha1 phenotype))
+     :gen-history (:gen-history result)
+     :phe-history (:phe-history result)
      :meta-lift {:top-sigils top-sigils
                  :sigil-counts (:sigil-counts lift)}
      :learned-sigils learned-sigils
@@ -587,18 +827,23 @@
 (defn- report-top [ranked]
   (println "Top meta-rules:")
   (doseq [{:keys [rule summary]} (take 5 ranked)]
-    (println (format "score %.2f | kernel %s | lock %s | freeze %s | ops %s | mode %s | rule %s"
-                     (double (:composite-score summary))
-                     (name (:kernel rule))
-                     (boolean (:lock-kernel rule))
-                     (boolean (:freeze-genotype rule))
-                     (boolean (:use-operators rule))
-                     (name (:genotype-mode rule))
-                     (or (:global-rule rule) "-")))
-    (println (format "  interesting %.2f | compress %.3f | autocorr %.3f"
-                     (double (or (:score summary) 0.0))
-                     (double (or (:lz78-ratio summary) 0.0))
-                     (double (or (:temporal-autocorr summary) 0.0))))))
+    (let [kernel (:kernel rule)
+          kernel-label (ca/kernel-label kernel)
+          kernel-summary (ca/kernel-spec-summary kernel)]
+      (println (format "score %.2f | kernel %s | lock %s | freeze %s | ops %s | mode %s | rule %s"
+                       (double (:composite-score summary))
+                       kernel-label
+                       (boolean (:lock-kernel rule))
+                       (boolean (:freeze-genotype rule))
+                       (boolean (:use-operators rule))
+                       (name (:genotype-mode rule))
+                       (or (:global-rule rule) "-")))
+      (when kernel-summary
+        (println (str "  kernel " kernel-summary)))
+      (println (format "  interesting %.2f | compress %.3f | autocorr %.3f"
+                       (double (or (:score summary) 0.0))
+                       (double (or (:lz78-ratio summary) 0.0))
+                       (double (or (:temporal-autocorr summary) 0.0)))))))
 
 (defn- report-baseline [history]
   (let [grouped (group-by (comp boolean :genotype-gate :rule) history)
@@ -617,27 +862,35 @@
                          (double (or avg 0.0))
                          (double (or best 0.0))))))))
 
-(defn- log-run [idx runs {:keys [rule summary seed genotype-hash phenotype-hash policy meta-lift learned-sigils]} feedback-count]
-  (println (format "run %02d/%02d | score %.2f | kernel %s | lock %s | freeze %s | ops %s | mode %s | rule %s"
-                   (inc idx)
-                   runs
-                   (double (:composite-score summary))
-                   (name (:kernel rule))
-                   (boolean (:lock-kernel rule))
-                   (boolean (:freeze-genotype rule))
-                   (boolean (:use-operators rule))
-                   (name (:genotype-mode rule))
-                   (or (:global-rule rule) "-")))
-  (println (format "  policy %s | gate %s | seed %s | gen %s | phe %s"
+(defn- log-run [idx runs {:keys [rule summary seed genotype-hash phenotype-hash policy policy-source meta-lift learned-sigils]} feedback-count learned-total learned-new]
+  (let [kernel (:kernel rule)
+        kernel-label (ca/kernel-label kernel)
+        kernel-summary (ca/kernel-spec-summary kernel)]
+    (println (format "run %02d/%02d | score %.2f | kernel %s | lock %s | freeze %s | ops %s | mode %s | rule %s"
+                     (inc idx)
+                     runs
+                     (double (:composite-score summary))
+                     kernel-label
+                     (boolean (:lock-kernel rule))
+                     (boolean (:freeze-genotype rule))
+                     (boolean (:use-operators rule))
+                     (name (:genotype-mode rule))
+                     (or (:global-rule rule) "-")))
+    (when kernel-summary
+      (println (str "  kernel " kernel-summary))))
+  (println (format "  policy %s | source %s | gate %s | seed %s | gen %s | phe %s"
                    (or policy "-")
+                   (or policy-source "-")
                    (boolean (:genotype-gate rule))
                    (or seed "-")
                    (or genotype-hash "-")
                    (or phenotype-hash "-")))
   (when feedback-count
     (println (format "  feedback sigils: %d" (long feedback-count))))
-  (when (seq learned-sigils)
-    (println (format "  learned ops: %d" (long (count learned-sigils)))))
+  (when (or (pos? (long (or learned-total 0))) (seq learned-sigils))
+    (println (format "  learned ops: %d | new %d"
+                     (long (or learned-total (count learned-sigils)))
+                     (long (or learned-new 0)))))
   (when-let [aif-score (:aif/score summary)]
     (println (format "  aif %.2f | food %d | mass %.2f"
                      (double aif-score)
@@ -667,15 +920,40 @@
                    (double (or (:temporal-autocorr summary) 0.0))))
   (flush))
 
-(defn evolve-meta-rules [runs length generations seed no-freeze? require-phenotype? require-gate? baldwin-share lesion feedback-top initial-feedback aif-weight aif-guide? aif-guide-min aif-mutate? aif-mutate-min pulses-enabled save-top]
+(defn- policy-key [policy]
+  (or policy :baseline))
+
+(defn- policy-best-line [policy-best]
+  (let [baldwin (get policy-best :baldwin)
+        baseline (get policy-best :baseline)
+        leader (cond
+                 (and baldwin baseline (> baldwin baseline)) :baldwin
+                 (and baldwin baseline (< baldwin baseline)) :baseline
+                 baldwin :baldwin
+                 baseline :baseline
+                 :else :none)
+        gap (when (and baldwin baseline)
+              (Math/abs (- (double baldwin) (double baseline))))]
+    (format "  policy-best baldwin %s | baseline %s | lead %s%s"
+            (if baldwin (format "%.2f" (double baldwin)) "-")
+            (if baseline (format "%.2f" (double baseline)) "-")
+            (name leader)
+            (if gap (format " (%.2f)" (double gap)) ""))))
+
+(declare update-leaderboard pick-leaderboard-rule feedback-payload report-payload)
+
+(defn evolve-meta-rules [runs length generations seed no-freeze? require-phenotype? require-gate? baldwin-share lesion feedback-top initial-feedback initial-learned-specs aif-opts kernel-context-opts pulses-enabled save-top leaderboard-opts checkpoint-opts report-opts]
   (loop [i 0
          best nil
          history []
          policy-rng (java.util.Random. (long (+ seed 4242)))
          feedback-sigils (vec (distinct (or initial-feedback [])))
-         learned-specs {}
+         learned-specs (or initial-learned-specs {})
+         policy-best {}
+         leaderboard (vec (or (:initial leaderboard-opts) []))
          top-runs []
-         last-summary nil]
+         last-summary nil
+         last-history nil]
     (if (= i runs)
       (let [ranked (sort-by (comp :composite-score :summary) > history)]
         {:best best
@@ -683,11 +961,32 @@
          :history history
          :feedback-sigils feedback-sigils
          :learned-specs learned-specs
+         :leaderboard leaderboard
          :top-runs top-runs})
       (let [rng (java.util.Random. (long (+ seed i)))
             guide-rng (java.util.Random. (long (+ seed i 42420)))
-            candidate (if (and best (pos? i))
-                        (mutate-meta-rule rng no-freeze? require-phenotype? require-gate? (:rule best))
+            aif-weight (:weight aif-opts)
+            aif-guide? (:guide? aif-opts)
+            aif-guide-min (:guide-min aif-opts)
+            aif-mutate? (:mutate? aif-opts)
+            aif-mutate-min (:mutate-min aif-opts)
+            leaderboard-size (:size leaderboard-opts)
+            leaderboard-chance (:chance leaderboard-opts)
+            kernel-context? (boolean (:enabled? kernel-context-opts))
+            context (when (and kernel-context? last-history)
+                      (kernel-context (:gen-history last-history)
+                                      (:phe-history last-history)
+                                      rng
+                                      {:exotype-update-threshold (:exotype-update-threshold kernel-context-opts)
+                                       :exotype-invert? (:exotype-invert? kernel-context-opts)}))
+            leaderboard-rule (pick-leaderboard-rule leaderboard leaderboard-chance rng)
+            base-rule (or leaderboard-rule (when (and best (pos? i)) (:rule best)))
+            policy-source (cond
+                            leaderboard-rule :leaderboard
+                            base-rule :evolve
+                            :else :random)
+            candidate (if base-rule
+                        (mutate-meta-rule rng no-freeze? require-phenotype? require-gate? base-rule context)
                         (random-meta-rule rng no-freeze? require-phenotype? require-gate?))
             policy (when (number? baldwin-share)
                      (if (< (.nextDouble policy-rng) baldwin-share)
@@ -697,9 +996,11 @@
                         :baldwin (enforce-baldwin candidate)
                         candidate)
             candidate (aif-guided-rule candidate last-summary guide-rng aif-mutate? aif-mutate-min)
+            candidate (update candidate :kernel dampen-kernel-spec last-summary)
             run-seed (+ seed i 1000)
             result (assoc (evaluate-rule candidate length generations run-seed lesion feedback-sigils feedback-top learned-specs aif-weight (pos? (long (or save-top 0))) pulses-enabled)
-                          :policy policy)
+                          :policy policy
+                          :policy-source policy-source)
             best' (if (or (nil? best)
                           (> (get-in result [:summary :composite-score])
                              (get-in best [:summary :composite-score])))
@@ -717,19 +1018,87 @@
                              (update-learned-specs learned-specs {:top-sigils guided-top
                                                                   :sigil-counts (get-in result [:meta-lift :sigil-counts])})
                              learned-specs)
-            top-runs' (update-top-runs top-runs result save-top)]
-        (log-run i runs result (count feedback-sigils'))
-        (recur (inc i) best' (conj history result) policy-rng feedback-sigils' learned-specs' top-runs' (:summary result))))))
+            learned-prev (set (keys learned-specs))
+            learned-next (set (keys learned-specs'))
+            learned-new (count (set/difference learned-next learned-prev))
+            learned-total (count learned-next)
+            policy-k (policy-key policy)
+            score (double (or (get-in result [:summary :composite-score]) 0.0))
+            prev-best (get policy-best policy-k)
+            policy-best' (assoc policy-best policy-k (if (number? prev-best) (max prev-best score) score))
+            policy-line (when (or (nil? prev-best) (> score prev-best))
+                          (policy-best-line policy-best'))
+            leaderboard' (update-leaderboard leaderboard {:score score :rule (:rule result) :seed run-seed} leaderboard-size)
+            top-runs' (update-top-runs top-runs result save-top)
+            last-history' (select-keys result [:gen-history :phe-history])]
+        (log-run i runs result (count feedback-sigils') learned-total learned-new)
+        (when policy-line
+          (println policy-line))
+        (when (and checkpoint-opts
+                   (:path checkpoint-opts)
+                   (number? (:every checkpoint-opts))
+                   (pos? (long (:every checkpoint-opts)))
+                   (zero? (mod (inc i) (long (:every checkpoint-opts)))))
+          (spit (:path checkpoint-opts)
+                (pr-str (feedback-payload {:meta (:meta checkpoint-opts)
+                                           :feedback-sigils feedback-sigils'
+                                           :learned-specs learned-specs'
+                                           :leaderboard leaderboard'
+                                           :runs-completed (inc i)}))))
+        (when (and report-opts
+                   (:path report-opts)
+                   (number? (:every report-opts))
+                   (pos? (long (:every report-opts)))
+                   (zero? (mod (inc i) (long (:every report-opts)))))
+          (let [ranked (sort-by (comp :composite-score :summary) > (conj history result))
+                payload (report-payload (merge {:ranked ranked
+                                                :learned-specs learned-specs'
+                                                :leaderboard leaderboard'
+                                                :runs-detail (conj history result)
+                                                :top-runs (map #(dissoc % :run-result) top-runs')}
+                                               (:meta report-opts)
+                                               {:runs-completed (inc i)}))]
+            (spit (:path report-opts) (pr-str payload))))
+        (recur (inc i) best' (conj history result) policy-rng feedback-sigils' learned-specs' policy-best' leaderboard' top-runs' (:summary result) last-history')))))
 
 (defn- load-feedback [path]
   (try
     (let [data (edn/read-string (slurp path))]
       (cond
-        (vector? data) data
-        (map? data) (:feedback-sigils data)
-        :else nil))
+        (vector? data) {:feedback-sigils data}
+        (map? data) {:feedback-sigils (:feedback-sigils data)
+                     :learned-specs (:learned-specs data)
+                     :leaderboard (:leaderboard data)}
+        :else {}))
     (catch Exception _
-      nil)))
+      {})))
+
+(defn- update-leaderboard [leaderboard {:keys [score rule seed]} max-size]
+  (let [entry {:score score :rule rule :seed seed}
+        ranked (->> (conj (vec (or leaderboard [])) entry)
+                    (sort-by :score >))]
+    (if (and (number? max-size) (pos? (long max-size)))
+      (vec (take (long max-size) ranked))
+      (vec ranked))))
+
+(defn- pick-leaderboard-rule [leaderboard chance ^java.util.Random rng]
+  (when (and (seq leaderboard) (number? chance) (< (.nextDouble rng) (double chance)))
+    (:rule (nth leaderboard (rng-int rng (count leaderboard))))))
+
+(defn- feedback-payload [{:keys [meta feedback-sigils learned-specs leaderboard runs-completed]}]
+  (cond-> (merge {:feedback-sigils feedback-sigils
+                  :learned-specs learned-specs
+                  :leaderboard leaderboard}
+                 meta)
+    runs-completed (assoc :runs-completed runs-completed)))
+
+(defn- report-payload [{:keys [meta ranked learned-specs leaderboard runs-detail top-runs]}]
+  (merge meta
+         {:ranked ranked
+          :learned-specs learned-specs
+          :leaderboard leaderboard
+          :runs-detail runs-detail
+          :top-runs top-runs}))
 
 (defn- safe-name [s]
   (-> s str (str/replace #"[^a-zA-Z0-9._-]" "_")))
@@ -739,11 +1108,11 @@
     (.mkdirs f)
     path))
 
-(defn- write-top-runs! [dir top-runs]
+(defn- write-top-runs! [dir top-runs render-opts]
   (let [dir (ensure-dir! dir)]
     (mapv (fn [idx {:keys [summary rule run-result seed]}]
             (let [score (format "%.2f" (double (or (:composite-score summary) 0.0)))
-                  kernel (name (:kernel rule))
+                  kernel (ca/kernel-id (:kernel rule))
                   base (safe-name (format "run%02d_score%s_seed%s_%s"
                                           (inc idx)
                                           score
@@ -753,7 +1122,7 @@
                   img-path (str dir "/" base ".ppm")]
               (when run-result
                 (spit edn-path (pr-str run-result))
-                (render/render-run->file! run-result img-path))
+                (render/render-run->file! run-result img-path render-opts))
               {:edn edn-path
                :img img-path
                :seed seed}))
@@ -771,10 +1140,11 @@
   (let [{:keys [help unknown length generations runs seed report no-freeze
                 require-phenotype require-gate baldwin-share
                 lesion lesion-tick lesion-target lesion-half lesion-mode
-                feedback-top feedback-edn feedback-load aif-weight
+                feedback-top feedback-edn feedback-load feedback-every leaderboard-size leaderboard-chance aif-weight
                 aif-guide aif-guide-min aif-mutate aif-mutate-min
-                no-pulses
-                save-top save-top-dir save-top-pdf]} (parse-args args)]
+                kernel-context exotype-update-threshold exotype-invert quiet-kernel
+                pulses no-pulses render-exotype
+                save-top save-top-dir save-top-pdf report-every]} (parse-args args)]
     (cond
       help
       (println (usage))
@@ -794,22 +1164,71 @@
             aif-guide-min (when (number? aif-guide-min) aif-guide-min)
             aif-mutate-min (when (number? aif-mutate-min) aif-mutate-min)
             save-top (when (number? save-top) save-top)
-            pulses-enabled (not (boolean no-pulses))
+            exotype-threshold (if (and quiet-kernel (not (number? exotype-update-threshold)))
+                                0.1
+                                exotype-update-threshold)
+            kernel-context-opts (when (or kernel-context exotype-threshold exotype-invert)
+                                  {:enabled? (boolean kernel-context)
+                                   :exotype-update-threshold exotype-threshold
+                                   :exotype-invert? (boolean exotype-invert)})
+            render-opts (when render-exotype {:exotype? true})
+            pulses-enabled (and (boolean pulses) (not (boolean no-pulses)))
             lesion-map (when (or lesion lesion-tick lesion-target lesion-half lesion-mode)
                          (cond-> {}
                            lesion-tick (assoc :tick lesion-tick)
                            lesion-target (assoc :target lesion-target)
                            lesion-half (assoc :half lesion-half)
                            lesion-mode (assoc :mode lesion-mode)))
-            initial-feedback (when feedback-load (load-feedback feedback-load))
+            loaded-feedback (when feedback-load (load-feedback feedback-load))
+            initial-feedback (:feedback-sigils loaded-feedback)
+            initial-learned-specs (:learned-specs loaded-feedback)
+            initial-leaderboard (:leaderboard loaded-feedback)
+            leaderboard-size (when (number? leaderboard-size) leaderboard-size)
+            leaderboard-chance (cond
+                                 (number? leaderboard-chance) leaderboard-chance
+                                 (number? leaderboard-size) 0.25
+                                 :else nil)
+            aif-opts {:weight aif-weight
+                      :guide? (boolean aif-guide)
+                      :guide-min aif-guide-min
+                      :mutate? (boolean aif-mutate)
+                      :mutate-min aif-mutate-min}
+            leaderboard-opts {:size leaderboard-size
+                              :chance leaderboard-chance
+                              :initial initial-leaderboard}
+            checkpoint-opts (when (and feedback-edn (number? feedback-every) (pos? (long feedback-every)))
+                              {:path feedback-edn
+                               :every feedback-every
+                               :meta {:seed seed
+                                      :length length
+                                      :generations generations
+                                      :runs runs}})
+            report-opts (when (and report (number? report-every) (pos? (long report-every)))
+                          {:path report
+                           :every report-every
+                           :meta {:seed seed
+                                  :length length
+                                  :generations generations
+                                  :runs runs
+                                  :aif-weight aif-weight
+                                  :aif-guide (boolean aif-guide)
+                                  :aif-guide-min aif-guide-min
+                                  :aif-mutate (boolean aif-mutate)
+                                  :aif-mutate-min aif-mutate-min
+                                  :leaderboard-size leaderboard-size
+                                  :leaderboard-chance leaderboard-chance
+                                  :exotype-update-threshold exotype-update-threshold
+                                  :exotype-invert (boolean exotype-invert)
+                                  :pulses-enabled pulses-enabled}})
             {:keys [ranked history feedback-sigils learned-specs top-runs] :as result}
-            (evolve-meta-rules runs length generations seed no-freeze require-phenotype require-gate baldwin-share lesion-map feedback-top initial-feedback aif-weight aif-guide aif-guide-min aif-mutate aif-mutate-min pulses-enabled save-top)]
+            (binding [*quiet-kernel?* (boolean quiet-kernel)]
+              (evolve-meta-rules runs length generations seed no-freeze require-phenotype require-gate baldwin-share lesion-map feedback-top initial-feedback initial-learned-specs aif-opts kernel-context-opts pulses-enabled save-top leaderboard-opts checkpoint-opts report-opts))]
         (println (format "Evolved %d runs | length %d | generations %d" runs length generations))
         (report-baseline history)
         (report-top ranked)
         (when (and save-top (pos? save-top))
           (let [dir (or save-top-dir "./mmca_top_runs")
-                paths (write-top-runs! dir top-runs)
+                paths (write-top-runs! dir top-runs render-opts)
                 images (mapv :img paths)]
             (println (format "Saved top %d runs to %s" (long (count paths)) dir))
             (when save-top-pdf
@@ -817,24 +1236,31 @@
               (println "Wrote PDF" save-top-pdf))))
         (when feedback-edn
           (spit feedback-edn
-                (pr-str {:seed seed
-                         :length length
-                         :generations generations
-                         :runs runs
-                         :feedback-sigils feedback-sigils})))
+                (pr-str (feedback-payload {:meta {:seed seed
+                                                  :length length
+                                                  :generations generations
+                                                  :runs runs}
+                                           :feedback-sigils feedback-sigils
+                                           :learned-specs learned-specs
+                                           :leaderboard (:leaderboard result)}))))
         (when report
           (spit report
-                (pr-str {:seed seed
-                         :length length
-                         :generations generations
-                         :runs runs
-                         :aif-weight aif-weight
-                         :aif-guide (boolean aif-guide)
-                         :aif-guide-min aif-guide-min
-                         :aif-mutate (boolean aif-mutate)
-                         :aif-mutate-min aif-mutate-min
-                         :pulses-enabled pulses-enabled
-                         :ranked ranked
-                         :learned-specs learned-specs
-                         :runs-detail history
-                         :top-runs (map #(dissoc % :run-result) top-runs)})))))))
+                (pr-str (report-payload {:meta {:seed seed
+                                                :length length
+                                                :generations generations
+                                                :runs runs
+                                                :aif-weight aif-weight
+                                                :aif-guide (boolean aif-guide)
+                                                :aif-guide-min aif-guide-min
+                                                :aif-mutate (boolean aif-mutate)
+                                                :aif-mutate-min aif-mutate-min
+                                                :leaderboard-size leaderboard-size
+                                                :leaderboard-chance leaderboard-chance
+                                                :exotype-update-threshold exotype-update-threshold
+                                                :exotype-invert (boolean exotype-invert)
+                                                :pulses-enabled pulses-enabled}
+                                   :ranked ranked
+                                   :learned-specs learned-specs
+                                   :leaderboard (:leaderboard result)
+                                   :runs-detail history
+                                   :top-runs (map #(dissoc % :run-result) top-runs)}))))))))

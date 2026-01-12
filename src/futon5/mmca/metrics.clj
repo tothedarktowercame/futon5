@@ -1,5 +1,6 @@
 (ns futon5.mmca.metrics
-  "Metric helpers for MMCA runs.")
+  "Metric helpers for MMCA runs."
+  (:require [futon5.ca.core :as ca]))
 
 (defn avg [xs]
   (when (seq xs)
@@ -124,6 +125,7 @@
                    (max 0.05 diversity)))]
     {:score score
      :avg-entropy avg-entropy
+     :avg-entropy-n avg-entropy-n
      :avg-change avg-change
      :avg-unique avg-unique
      :phe-entropy phe-entropy
@@ -133,6 +135,18 @@
   (when (number? x)
     (max 0.0 (- 1.0 (* 2.0 (Math/abs (- x 0.5)))))))
 
+(defn- band-score [x center width]
+  (when (and (number? x) (pos? (double width)))
+    (max 0.0 (- 1.0 (/ (Math/abs (- x center)) (double width))))))
+
+(defn coherence-score
+  [{:keys [avg-entropy-n avg-change]} {:keys [spatial-autocorr temporal-autocorr]}]
+  (let [entropy-score (or (band-score avg-entropy-n 0.6 0.35) 0.0)
+        change-score (or (band-score avg-change 0.2 0.18) 0.0)
+        spatial-score (or (band-score spatial-autocorr 0.55 0.3) 0.0)
+        temporal-score (or (band-score temporal-autocorr 0.6 0.3) 0.0)]
+    (* entropy-score change-score spatial-score temporal-score)))
+
 (defn- lesion-penalty
   [lesion-summary]
   (if-let [discrepancy (:lesion/half-discrepancy lesion-summary)]
@@ -140,13 +154,14 @@
     1.0))
 
 (defn composite-score
-  "Blend interestingness with compressibility and autocorr balance."
-  [{:keys [score]} {:keys [lz78-ratio]} {:keys [temporal-autocorr]} lesion-summary]
+  "Blend interestingness with compressibility, autocorr balance, and coherence."
+  [{:keys [score]} {:keys [lz78-ratio]} {:keys [temporal-autocorr]} lesion-summary coherence]
   (let [i (or score 0.0)
         i-n (/ i 100.0)
         c (or (centered-score lz78-ratio) 0.0)
         a (or (centered-score temporal-autocorr) 0.0)
-        base (+ (* 0.6 i-n) (* 0.2 c) (* 0.2 a))
+        coh (or coherence 0.0)
+        base (+ (* 0.45 i-n) (* 0.2 c) (* 0.2 a) (* 0.15 coh))
         penalty (lesion-penalty lesion-summary)]
     (* 100.0 base penalty)))
 
@@ -165,13 +180,28 @@
           (range (count entries))
           entries)))
 
+(defn- prefixed-summary
+  [prefix summary]
+  (let [k (fn [suffix] (keyword prefix suffix))]
+    {(k "composite-score") (:composite-score summary)
+     (k "coherence") (:coherence summary)
+     (k "score") (:score summary)
+     (k "avg-change") (:avg-change summary)
+     (k "avg-entropy-n") (:avg-entropy-n summary)
+     (k "avg-unique") (:avg-unique summary)
+     (k "lz78-ratio") (:lz78-ratio summary)
+     (k "temporal-autocorr") (:temporal-autocorr summary)
+     (k "spatial-autocorr") (:spatial-autocorr summary)}))
+
 (defn summarize-series [series]
   (let [metrics-history (series-metrics-history series)
         interesting (interestingness metrics-history nil)
         compress (compressibility-metrics series)
         autocorr (autocorr-metrics series)
-        composite (composite-score interesting compress autocorr nil)]
-    (merge {:composite-score composite}
+        coherence (coherence-score interesting autocorr)
+        composite (composite-score interesting compress autocorr nil coherence)]
+    (merge {:composite-score composite
+            :coherence coherence}
            interesting
            compress
            autocorr)))
@@ -201,10 +231,25 @@
   (let [metrics-history (:metrics-history result)
         gen-history (:gen-history result)
         phe-history (:phe-history result)
+        stasis-step (ca/first-stasis-step gen-history)
         interesting (interestingness metrics-history phe-history)
+        gen-interesting (interestingness metrics-history nil)
+        gen-compress (compressibility-metrics gen-history)
+        gen-autocorr (autocorr-metrics gen-history)
+        gen-coherence (coherence-score gen-interesting gen-autocorr)
+        gen-composite (composite-score gen-interesting gen-compress gen-autocorr nil gen-coherence)
+        gen-summary (prefixed-summary "gen"
+                                      (merge gen-interesting
+                                             gen-compress
+                                             gen-autocorr
+                                             {:coherence gen-coherence
+                                              :composite-score gen-composite}))
+        phe-series-summary (when (seq phe-history) (summarize-series phe-history))
+        phe-summary (when phe-series-summary (prefixed-summary "phe" phe-series-summary))
         basis (if (seq phe-history) phe-history gen-history)
         compress (compressibility-metrics basis)
         autocorr (autocorr-metrics basis)
+        coherence (coherence-score interesting autocorr)
         lesion (:lesion result)
         lesion-target (:target lesion)
         lesion-series (cond
@@ -225,11 +270,18 @@
                                    (double (:composite-score right-summary)))))
         lesion-summary (cond-> lesion-summary
                          discrepancy (assoc :lesion/half-discrepancy discrepancy))
-        composite (composite-score interesting compress autocorr lesion-summary)]
-    (merge {:composite-score composite}
+        base-composite (composite-score interesting compress autocorr lesion-summary coherence)
+        composite (if (seq phe-history)
+                    (+ (* 0.65 base-composite) (* 0.35 gen-composite))
+                    base-composite)]
+    (merge {:composite-score composite
+            :coherence coherence}
            interesting
            compress
            autocorr
+           {:first-stasis-step stasis-step}
+           gen-summary
+           phe-summary
            lesion-summary
            (when (and lesion-summary left-summary right-summary)
              {:lesion/half (:half lesion)

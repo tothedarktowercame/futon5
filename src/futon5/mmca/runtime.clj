@@ -1,6 +1,7 @@
 (ns futon5.mmca.runtime
   "MetaMetaCA runtime that wires compiled pattern operators into the CA loop."
   (:require [futon5.ca.core :as ca]
+            [futon5.mmca.exotype :as exotype]
             [futon5.mmca.functor :as functor]
             [futon5.mmca.operators :as operators]))
 
@@ -184,16 +185,19 @@
       (let [kernel delta]
         (assoc state
                :kernel kernel
+               :kernel-spec nil
                :kernel-fn (ca/kernel-fn kernel)))
 
       (fn? delta)
       (assoc state :kernel :custom :kernel-fn delta)
 
       (map? delta)
-      (let [state' (cond-> state
-                     (:kernel delta) (assoc :kernel (:kernel delta))
-                     (:kernel-fn delta) (assoc :kernel-fn (:kernel-fn delta)))
-            kernel-delta (:kernel delta)]
+      (let [kernel-delta (or (:kernel-spec delta) (:kernel delta))
+            kernel-spec (when (ca/kernel-spec? kernel-delta)
+                          (ca/normalize-kernel-spec kernel-delta))
+            state' (cond-> state
+                     kernel-delta (assoc :kernel kernel-delta :kernel-spec kernel-spec)
+                     (:kernel-fn delta) (assoc :kernel-fn (:kernel-fn delta)))]
         (if (and kernel-delta (not (:kernel-fn delta)))
           (assoc state' :kernel-fn (ca/kernel-fn kernel-delta))
           state'))
@@ -342,6 +346,57 @@
                      :genotype next-gen)
               (update-in [:history :genotypes] conj next-gen)))))))
 
+(defn- update-kernel-by-exotype
+  [state exotype ^java.util.Random rng]
+  (if (or (nil? exotype) (:lock-kernel state))
+    state
+    (let [gen-history (get-in state [:history :genotypes])
+          phe-history (get-in state [:history :phenotypes])
+          kernel (or (:kernel-spec state) (:kernel state))
+          kernel-spec (when kernel
+                        (try
+                          (ca/kernel-spec-for kernel)
+                          (catch Exception _ nil)))
+          ctx (exotype/sample-context gen-history phe-history rng)]
+      (if-let [next-kernel (and ctx
+                                kernel-spec
+                                (exotype/apply-exotype kernel-spec exotype ctx rng))]
+        (assoc state
+               :kernel next-kernel
+               :kernel-spec next-kernel
+               :kernel-fn (ca/kernel-fn next-kernel))
+        state))))
+
+(defn- nominate-kernel-by-exotype
+  [state exotype ^java.util.Random rng tick]
+  (if (or (nil? exotype) (:lock-kernel state))
+    state
+    (let [gen-history (get-in state [:history :genotypes])
+          phe-history (get-in state [:history :phenotypes])
+          kernel (or (:kernel-spec state) (:kernel state))
+          kernel-spec (when kernel
+                        (try
+                          (ca/kernel-spec-for kernel)
+                          (catch Exception _ nil)))
+          ctx (exotype/sample-context gen-history phe-history rng)
+          next-kernel (and ctx
+                           kernel-spec
+                           (exotype/apply-exotype kernel-spec exotype ctx rng))]
+      (if next-kernel
+        (update state :exotype-nominations
+                (fnil conj [])
+                {:tick tick
+                 :kernel next-kernel
+                 :kernel-id (ca/kernel-id next-kernel)})
+        state))))
+
+(defn- apply-exotype-mode
+  [state exotype rng tick exotype-mode]
+  (case exotype-mode
+    :inline (update-kernel-by-exotype state exotype rng)
+    :nominate (nominate-kernel-by-exotype state exotype rng tick)
+    state))
+
 (defn- zap-half [s fill half]
   (let [len (count s)
         mid (quot len 2)
@@ -380,16 +435,19 @@
 
 (defn- build-world [state metas]
   (-> state
-      (select-keys [:generation :genotype :phenotype :history :metrics :metrics-history :kernel :kernel-fn])
+      (select-keys [:generation :genotype :phenotype :history :metrics :metrics-history :kernel :kernel-spec :kernel-fn])
       (assoc :meta-states metas)))
 
-(defn- prepare-initial-state [{:keys [genotype phenotype kernel lock-kernel freeze-genotype
+(defn- prepare-initial-state [{:keys [genotype phenotype kernel kernel-spec lock-kernel freeze-genotype
                                       genotype-gate genotype-gate-signal]}]
-  (let [kernel* (or kernel default-kernel)]
+  (let [kernel* (or kernel-spec kernel default-kernel)
+        kernel-spec (when (ca/kernel-spec? kernel*)
+                      (ca/normalize-kernel-spec kernel*))]
     (-> {:generation 0
          :genotype genotype
          :phenotype phenotype
          :kernel kernel*
+         :kernel-spec kernel-spec
          :kernel-fn (ca/kernel-fn kernel*)
          :lock-kernel (boolean lock-kernel)
          :freeze-genotype (boolean freeze-genotype)
@@ -412,6 +470,9 @@
   - :pattern-sigils (optional vector of sigil strings)
   - :operators (optional pre-compiled operator maps)
   - :lesion (optional map with :tick, :target, :half, :mode)
+  - :exotype (optional exotype spec or sigil)
+  - :seed (optional RNG seed for exotype updates)
+  - :exotype-mode (optional :inline or :nominate; default :inline)
 
   Returns a map containing genotype history, phenotype history, metrics, and
   the final meta-state for each operator."
@@ -420,7 +481,11 @@
         generations (or generations default-generations)
         operators (resolve-operators opts genotype)
         mode (or mode default-mode)
-        pulses-enabled (not (false? pulses-enabled))
+        pulses-enabled (true? pulses-enabled)
+        exotype (exotype/resolve-exotype (:exotype opts))
+        exotype-mode (or (:exotype-mode opts) :inline)
+        exotype-rng (when exotype
+                      (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
         lesion (when lesion (merge {:tick (quot generations 2)
                                     :half :left
                                     :mode :zero}
@@ -453,16 +518,23 @@
                     state (if lesion-now?
                             (refresh-metrics (apply-lesion state lesion) true)
                             state)
+                    state (if exotype
+                            (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
+                            state)
                     state (advance-world state)
                     state (refresh-metrics state true)]
                 (recur state metas proposals (inc tick) (or lesion-applied? lesion-now?) operators)))))]
     (let [{:keys [state metas proposals operators]} result
-          {:keys [history metrics-history kernel]} state]
+          {:keys [history metrics-history kernel kernel-spec]} state]
       {:kernel kernel
+       :kernel-spec kernel-spec
        :generations generations
        :mode mode
-       :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
-                       operators)
+       :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
+       :exotype-mode exotype-mode
+       :exotype-nominations (not-empty (:exotype-nominations state))
+        :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
+                        operators)
        :meta-states metas
        :gen-history (:genotypes history)
        :phe-history (:phenotypes history)
@@ -480,7 +552,11 @@
         generations (or generations default-generations)
         operators (resolve-operators opts genotype)
         mode (or mode default-mode)
-        pulses-enabled (not (false? pulses-enabled))
+        pulses-enabled (true? pulses-enabled)
+        exotype (exotype/resolve-exotype (:exotype opts))
+        exotype-mode (or (:exotype-mode opts) :inline)
+        exotype-rng (when exotype
+                      (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
         lesion (when lesion (merge {:tick (quot generations 2)
                                     :half :left
                                     :mode :zero}
@@ -522,6 +598,9 @@
                       state (if lesion-now?
                               (refresh-metrics (apply-lesion state lesion) true)
                               state)
+                      state (if exotype
+                              (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
+                              state)
                       state (advance-world state)
                       state (refresh-metrics state true)
                       next-tick (inc tick)]
@@ -532,6 +611,9 @@
         {:kernel kernel
          :generations generations
          :mode mode
+         :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
+         :exotype-mode exotype-mode
+         :exotype-nominations (not-empty (:exotype-nominations state))
          :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
                          operators)
          :meta-states metas

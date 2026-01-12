@@ -1,0 +1,1 @@
+{:label "mission-04-low-b", :seed 4242, :length 120, :generations 80, :kernel "spec-bb7a2c", :lock-kernel true, :render {:exotype? true}}

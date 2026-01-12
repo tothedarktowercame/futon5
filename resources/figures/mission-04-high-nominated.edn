@@ -1,0 +1,1 @@
+{:label "mission-04-high", :seed 4242, :length 120, :generations 80, :kernel "spec-f7e9cd", :lock-kernel true, :render {:exotype? true}}

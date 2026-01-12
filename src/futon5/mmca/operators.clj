@@ -3,7 +3,7 @@
   (:require [clojure.string :as str]
             [futon5.ca.core :as ca]))
 
-(def ^:dynamic *pulses-enabled* true)
+(def ^:dynamic *pulses-enabled* false)
 
 (defn- clamp [x lo hi]
   (max lo (min hi x)))

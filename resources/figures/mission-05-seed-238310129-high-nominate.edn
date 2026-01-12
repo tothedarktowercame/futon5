@@ -1,0 +1,1 @@
+{:label "mission-05-seed-238310129-high-nominate", :seed 238310129, :length 120, :generations 120, :kernel :mutating-template, :exotype {:bits "01010010", :tier :super}, :exotype-mode :nominate, :nomination {:tick 119, :kernel-id "spec-f7e9cd"}}

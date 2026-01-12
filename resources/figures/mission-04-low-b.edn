@@ -1,0 +1,1 @@
+{:label "mission-04-low-b", :seed 4242, :length 120, :generations 80, :kernel :mutating-template, :exotype {:bits "00101100", :tier :super}, :render {:exotype? true}}

@@ -1,0 +1,1 @@
+{:label "mission-01-low-local", :seed 42420, :length 80, :generations 80, :kernel :mutating-template, :exotype {:sigil "文", :bits "10010101", :tier :local}, :render {:exotype? true}}

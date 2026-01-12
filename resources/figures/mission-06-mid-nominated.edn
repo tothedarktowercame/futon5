@@ -1,0 +1,1 @@
+{:label "mission-06-mid", :seed 4242, :length 120, :generations 80, :kernel "spec-2193b0", :lock-kernel true, :exotype {:bits "10010111", :tier :super}, :render {:exotype? true}}

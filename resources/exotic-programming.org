@@ -1,0 +1,170 @@
+* Exotic Programming Tickets
+
+** Shared Logging Schema (EDN)
+- Purpose: All experiments log compatible EDN maps so results can be aggregated.
+- Required keys (v1):
+  - :schema/version (integer)
+  - :experiment/id (keyword)
+  - :run/id (integer)
+  - :seed (integer)
+  - :length (integer)
+  - :generations (integer)
+  - :kernel (keyword or spec id)
+  - :exotype {:sigil "..." :tier :local|:super} (optional)
+  - :score {:short N :xeno N :final N} (numbers)
+  - :summary (metrics/summarize-run output map)
+- Example entry:
+  #+BEGIN_SRC clojure
+  {:schema/version 1
+   :experiment/id :exoevolve
+   :run/id 12
+   :seed 4242001
+   :length 50
+   :generations 30
+   :kernel :mutating-template
+   :exotype {:sigil "SIGIL" :tier :local}
+   :score {:short 42.3 :xeno 51.0 :final 46.1}
+   :summary {:composite-score 42.3 :avg-entropy 0.63 :avg-change 0.21 ...}}
+  #+END_SRC
+
+** Mission 1: MetaCA as a controllable laboratory (domain calibration)
+- Question: Can the MetaCA domain be fully specified so later claims reduce to observable behavior here?
+- Experiment: Sweep a fixed set of sigil-derived exotypes (e.g. 10 random sigils, local tier) across many random genotypes; log phenotype traces, convergence time, entropy/change/autocorr over time.
+- Writing deliverable: Section 1: MetaCA as a test domain (definitions, observables, exclusions).
+- Acceptance signal: Every later experiment references only quantities introduced here.
+- Protocol (runnable):
+  - Output: /tmp/mission-01.edn (one EDN map per run, schema v1).
+  - Settings: length=50, generations=50, exotypes=10 sigils (local tier), genotypes per exotype=64.
+  - Command (bb, one-off script):
+    #+BEGIN_SRC clojure
+    bb -cp src:resources -e '
+    (require (quote [futon5.ca.core :as ca])
+             (quote [futon5.mmca.exotype :as exotype])
+             (quote [futon5.mmca.metrics :as metrics])
+             (quote [futon5.mmca.runtime :as mmca]))
+    (def out "/tmp/mission-01.edn")
+    (def rng (java.util.Random. 4242))
+    (def sigils (mapv :sigil (ca/sigil-entries)))
+    (def picks (vec (take 10 (shuffle sigils))))
+    (defn rng-int [^java.util.Random r n] (.nextInt r n))
+    (defn rng-sigil-string [^java.util.Random r length]
+      (apply str (repeatedly length #(nth sigils (rng-int r (count sigils)))))) 
+    (doseq [sigil picks
+            idx (range 64)]
+      (let [seed (rng-int rng Integer/MAX_VALUE)
+            genotype (rng-sigil-string rng 50)
+            result (mmca/run-mmca {:genotype genotype
+                                   :generations 50
+                                   :kernel :mutating-template
+                                   :operators []
+                                   :exotype (exotype/lift sigil)
+                                   :seed seed})
+            summary (metrics/summarize-run result)
+            entry {:schema/version 1
+                   :experiment/id :mission-01
+                   :run/id (+ (* 64 (.indexOf picks sigil)) idx 1)
+                   :seed seed
+                   :length 50
+                   :generations 50
+                   :kernel :mutating-template
+                   :exotype {:sigil sigil :tier :local}
+                   :score {:short (:composite-score summary)
+                           :xeno nil
+                           :final (:composite-score summary)}
+                   :summary summary}]
+        (spit out (str (pr-str entry) "\n") :append true)))'
+    #+END_SRC
+
+** Mission 2: Naive evolution collapses (baseline failure)
+- Question: What happens if we evolve genotypes under local evolution with no explicit exotype?
+- Experiment: Run MMCA with no :exotype, fixed kernel; track genotype diversity, phenotype convergence time, spatial entropy.
+- Writing deliverable: Section 2: Baseline: naive evolution in MetaCA.
+- Acceptance signal: Reader sees why evaluator design matters before exotypes are introduced.
+- Protocol (runnable):
+  - Output: /tmp/mission-02.edn (one EDN map per run, schema v1).
+  - Settings: length=50, generations=80, runs=128, kernel=:mutating-template, no exotype.
+  - Command (bb, one-off script):
+    #+BEGIN_SRC clojure
+    bb -cp src:resources -e '
+    (require (quote [futon5.ca.core :as ca])
+             (quote [futon5.mmca.metrics :as metrics])
+             (quote [futon5.mmca.runtime :as mmca]))
+    (def out "/tmp/mission-02.edn")
+    (def rng (java.util.Random. 4242))
+    (def sigils (mapv :sigil (ca/sigil-entries)))
+    (defn rng-int [^java.util.Random r n] (.nextInt r n))
+    (defn rng-sigil-string [^java.util.Random r length]
+      (apply str (repeatedly length #(nth sigils (rng-int r (count sigils)))))) 
+    (doseq [idx (range 128)]
+      (let [seed (rng-int rng Integer/MAX_VALUE)
+            genotype (rng-sigil-string rng 50)
+            result (mmca/run-mmca {:genotype genotype
+                                   :generations 80
+                                   :kernel :mutating-template
+                                   :operators []
+                                   :seed seed})
+            summary (metrics/summarize-run result)
+            entry {:schema/version 1
+                   :experiment/id :mission-02
+                   :run/id (inc idx)
+                   :seed seed
+                   :length 50
+                   :generations 80
+                   :kernel :mutating-template
+                   :score {:short (:composite-score summary)
+                           :xeno nil
+                           :final (:composite-score summary)}
+                   :summary summary}]
+        (spit out (str (pr-str entry) "\n") :append true)))'
+    #+END_SRC
+
+** Mission 3: Exotypes change evolutionary trajectories (evaluator sensitivity)
+- Question: Does changing the evaluator (exotype) qualitatively change genotype evolution under identical mutation rules?
+- Experiment: Compare local vs super exotypes for the same sigil across matched seeds; measure diversity, learning signal, phenotype dynamics.
+- Writing deliverable: Section 3: Exotypes as local evaluators.
+- Acceptance signal: "Exotypes are first-class computational objects" is empirically supported.
+
+** Mission 4: Exotypes can be evolved (and they fail)
+- Question: What happens if exotypes themselves are evolved without higher-level constraints?
+- Experiment: Evolve exotypes as sigil-derived tensor operators using short-horizon scoring; observe always-pass/always-fail/context hacks.
+- Writing deliverable: Section 4: Failure modes of evolving evaluators.
+- Acceptance signal: Failure modes are demonstrated with traces, not asserted.
+
+** Mission 5: Long-transient dynamics are fragile under evaluators
+- Question: Do evaluator choices destroy or preserve long-lived, propagating CA dynamics?
+- Experiment: Identify long-transient genotypes; run them under different exotypes; measure transient lifetime, perturbation propagation, interaction survival.
+- Writing deliverable: Section 5: Discoverability vs destruction of nontrivial dynamics.
+- Acceptance signal: Caution about over-constraint is empirically grounded.
+
+** Mission 6: Xenotypes prevent evaluator collapse
+- Question: Can a slow, coarse meta-evaluator prevent exotype degeneracy without prescribing outcomes?
+- Experiment: Run exotype evolution with xenotype guards (update every ~100 exotype evals); compare surviving exotype distributions vs Mission 4.
+- Writing deliverable: Section 6: Xenotypes: evaluating evaluators.
+- Acceptance signal: Xenotypes demonstrably change the surviving evaluator set.
+
+** Mission 7: Exotic programming vs direct optimization
+- Question: Does programming at the evaluator level yield behaviors unreachable by direct genotype optimization?
+- Experiment: Compare direct optimization for a proxy "interestingness" score vs evaluator evolution + xenotype guards; measure diversity, learning signal longevity, perturbation sensitivity.
+- Writing deliverable: Section 7: Exotic programming in MetaCA.
+- Acceptance signal: Paradigm shift is demonstrated with measurable outcomes.
+
+** Mission 8: Local vs recursive-local evaluators
+- Question: Does bounded recursive locality extend discoverability without collapsing into oracle behavior?
+- Experiment: Compare strict local exotypes vs recursively local exotypes at varying recursion depth; measure learning signal longevity, degeneracy rate, phenotype richness.
+- Writing deliverable: Section 8: Locality, recursion, and evaluator horizon.
+- Acceptance signal: Recursion depth treated as an engineering choice with measurable costs.
+
+** Mission 9: Synthesis
+- Question: What general lessons survive contact with the experiments?
+- Experiment: Meta-analysis only (aggregate results from Missions 2-8).
+- Writing deliverable: Section 9: Discussion and conclusions.
+- Acceptance signal: Every claim in the conclusion points back to a numbered experiment.
+
+** Supplementary Tickets
+*** Supplementary 1: Exotype evolution runner (exoevolve)
+- Purpose: Provide a short-horizon exotype selection loop used in Missions 4, 6, and 7.
+- Output: New runner (e.g. futon5.mmca.exoevolve) that evolves sigil-derived exotypes and logs outcomes.
+
+*** Supplementary 2: Long-transient finder
+- Purpose: Identify long-transient genotypes for Mission 5.
+- Output: Helper script that searches genotypes for long transients using existing metrics and persists the top candidates.

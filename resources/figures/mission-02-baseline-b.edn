@@ -1,0 +1,1 @@
+{:label "mission-02-baseline-b", :seed 2222, :length 80, :generations 80, :kernel :mutating-template, :exotype nil, :render {:exotype? true}}

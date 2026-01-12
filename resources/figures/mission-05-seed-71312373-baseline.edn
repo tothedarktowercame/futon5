@@ -1,0 +1,1 @@
+{:label "mission-05-seed-71312373-baseline", :seed 71312373, :length 120, :generations 120, :kernel "mutating-template", :lesion {:tick 60, :target :genotype, :half :left, :mode :zero}, :render {:exotype? true}}

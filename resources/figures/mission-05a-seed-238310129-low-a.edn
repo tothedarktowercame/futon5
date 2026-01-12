@@ -1,0 +1,1 @@
+{:label "low-a", :seed 238310129, :length 120, :generations 240, :kernel "spec-9d4574", :lock-kernel true, :lesion {:tick 120, :target :genotype, :half :left, :mode :zero}, :render {:exotype? true}}

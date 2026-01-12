@@ -1,0 +1,1 @@
+{:exotype-mode :nominate, :exotype {:bits "11110100", :tier :super}, :generations 80, :seed 4242, :nomination {:tick 79, :kernel-id "spec-9a10f0"}, :render {:exotype? true}, :label "mission-06-high", :length 120, :kernel :mutating-template}

@@ -1,0 +1,2435 @@
+#+STARTUP: inlineimages
+#+PROPERTY: org-image-actual-width 1200
+
+* Exotic Programming Notebook
+
+** Mission 1: MetaCA as a controllable laboratory
+
+- Goal: verify the domain is instrumentable and the observable quantities are stable enough to use in later claims.
+- Seeds: RNG = 4242 (sigil picks and run seeds).
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out "/tmp/mission-01.edn")
+(spit out "")
+(def rng (java.util.Random. 4242))
+(def sigil-entries (vec (ca/sigil-entries)))
+(def sigils (mapv :sigil sigil-entries))
+(def sigil-bits (into {} (map (juxt :sigil :bits) sigil-entries)))
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r length]
+  (apply str (repeatedly length #(nth sigils (rng-int r (count sigils))))))
+(def picks (let [arr (java.util.ArrayList. sigils)]
+             (java.util.Collections/shuffle arr rng)
+             (vec (take 10 arr))))
+
+(doseq [[sigil exo-idx] (map vector picks (range))]
+  (dotimes [idx 64]
+    (let [seed (rng-int rng Integer/MAX_VALUE)
+          genotype (rng-sigil-string rng 50)
+          result (mmca/run-mmca {:genotype genotype
+                                 :generations 50
+                                 :kernel :mutating-template
+                                 :operators []
+                                 :exotype (exotype/lift sigil)
+                                 :seed seed})
+          summary (metrics/summarize-run result)
+          entry {:schema/version 1
+                 :experiment/id :mission-01
+                 :run/id (+ (* exo-idx 64) idx 1)
+                 :seed seed
+                 :length 50
+                 :generations 50
+                 :kernel :mutating-template
+                 :exotype {:sigil sigil :tier :local :bits (sigil-bits sigil)}
+                 :score {:short (:composite-score summary)
+                         :xeno nil
+                         :final (:composite-score summary)}
+                 :summary summary}]
+      (spit out (str (pr-str entry) "\n") :append true))))'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-01.edn (640 runs)
+
+*** Analysis (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str])
+                           (quote [futon5.ca.core :as ca]))
+(def in "/tmp/mission-01.edn")
+(def out-table "/tmp/mission-01-table.txt")
+(def out-summary "/tmp/mission-01-summary.edn")
+(def out-overall "/tmp/mission-01-overall.edn")
+(def entries (->> (str/split-lines (slurp in))
+                  (remove str/blank?)
+                  (mapv edn/read-string)))
+(def sigil-entries (vec (ca/sigil-entries)))
+(def sigil-meta (into {} (map-indexed (fn [idx {:keys [sigil bits]}]
+                                       [sigil {:index idx :bits bits}])
+                                     sigil-entries)))
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+(def grouped (group-by #(get-in % [:exotype :sigil]) entries))
+(def summary
+  (->> grouped
+       (map (fn [[sigil runs]]
+              (let [metrics (map :summary runs)
+                    scores (map #(get-in % [:score :final]) runs)
+                    meta (get sigil-meta sigil {:index -1 :bits ""})]
+                (merge {:sigil sigil
+                        :mean-score (avg scores)
+                        :mean-entropy-n (avg (map :avg-entropy-n metrics))
+                        :mean-change (avg (map :avg-change metrics))
+                        :mean-autocorr (avg (map :temporal-autocorr metrics))
+                        :mean-unique (avg (map :avg-unique metrics))}
+                       meta))))
+       (sort-by :index)
+       vec))
+(def all-scores (map #(get-in % [:score :final]) entries))
+(def overall {:count (count all-scores)
+              :mean (avg all-scores)
+              :min (apply min all-scores)
+              :max (apply max all-scores)
+              :q10 (quantile all-scores 0.1)
+              :q50 (quantile all-scores 0.5)
+              :q90 (quantile all-scores 0.9)})
+(spit out-summary (pr-str summary))
+(spit out-overall (pr-str overall))
+(let [header (format "%-6s %-10s %-8s %-10s %-10s %-10s %-10s" "idx" "bits" "score" "entropy" "change" "autocorr" "unique")
+      rows (map (fn [{:keys [index bits mean-score mean-entropy-n mean-change mean-autocorr mean-unique]}]
+                  (format "%-6d %-10s %-8.3f %-10.3f %-10.3f %-10.3f %-10.3f"
+                          (long index) bits (double (or mean-score 0.0))
+                          (double (or mean-entropy-n 0.0))
+                          (double (or mean-change 0.0))
+                          (double (or mean-autocorr 0.0))
+                          (double (or mean-unique 0.0))))
+                summary)
+      table (str (str/join "\n" (cons header rows)) "\n")]
+  (spit out-table table)
+  (println table)
+  (println "Overall" overall))'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-01-table.txt
+- /tmp/mission-01-summary.edn
+- /tmp/mission-01-overall.edn
+
+*** Figures (generated)
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+import csv
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+figdir.mkdir(parents=True, exist_ok=True)
+
+scores = []
+with open('/tmp/mission-01-scores.csv', newline='') as f:
+    for row in csv.DictReader(f):
+        scores.append(float(row['score']))
+
+plt.figure(figsize=(7,4.2))
+plt.hist(scores, bins=20, color='#2f4b7c', edgecolor='white')
+plt.title('Mission 1: Composite score distribution')
+plt.xlabel('Composite score')
+plt.ylabel('Count')
+plt.tight_layout()
+plt.savefig(figdir / 'mission-01-score-hist.png', dpi=160)
+plt.close()
+
+labels, means = [], []
+with open('/tmp/mission-01-exotype-means.csv', newline='') as f:
+    for row in csv.DictReader(f):
+        labels.append(f\"{row['index']} {row['bits']}\")
+        means.append(float(row['mean_score']))
+
+plt.figure(figsize=(8.5,4.4))
+plt.bar(range(len(means)), means, color='#1f9e89')
+plt.title('Mission 1: Mean composite score per exotype (local tier)')
+plt.xlabel('Exotype (index bits)')
+plt.ylabel('Mean composite score')
+plt.xticks(range(len(labels)), labels, rotation=45, ha='right', fontsize=8)
+plt.tight_layout()
+plt.savefig(figdir / 'mission-01-exotype-means.png', dpi=160)
+plt.close()
+PY
+#+END_SRC
+
+#+CAPTION: Mission 1 score distribution.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-01-score-hist.png]]
+
+#+CAPTION: Mission 1 mean composite score per exotype (local tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-01-exotype-means.png]]
+
+*** Figure 1 (table): Per-exotype averages (local tier)
+#+BEGIN_EXAMPLE
+idx    bits       score    entropy    change     autocorr   unique
+24     00011000   23.230   0.580      0.131      0.869      0.382
+27     00011011   23.295   0.581      0.133      0.867      0.384
+31     00011111   23.478   0.575      0.133      0.867      0.378
+70     01000110   23.373   0.582      0.134      0.866      0.385
+109    01101101   34.159   0.575      0.335      0.665      0.375
+135    10000111   22.673   0.583      0.121      0.879      0.385
+149    10010101   21.547   0.540      0.084      0.916      0.352
+209    11010001   27.095   0.451      0.183      0.817      0.301
+214    11010110   27.581   0.432      0.198      0.802      0.294
+241    11110001   28.165   0.377      0.216      0.784      0.252
+#+END_EXAMPLE
+
+*** Figure 2: Overall score distribution (summary)
+#+BEGIN_EXAMPLE
+{:count 640,
+ :mean 25.45960107550963,
+ :min 17.364413118228082,
+ :max 41.77866113685078,
+ :q10 21.160259131284,
+ :q50 23.918032768416133,
+ :q90 32.22722917308757}
+#+END_EXAMPLE
+
+*** Notes
+- The run produced 640 log entries (10 exotypes x 64 genotypes), confirming the domain is instrumentable.
+- Per-exotype averages vary by ~12 points in composite score, showing evaluator choice already shifts aggregate behavior even in a calibration sweep.
+- Later missions can reference the same metrics fields (:avg-entropy-n, :avg-change, :temporal-autocorr, :avg-unique) without introducing new observables.
+
+*** Figure 3: MetaCA images (exotype triptychs)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir \"resources/figures\")
+(.mkdirs (io/file out-dir))
+(def length 80)
+(def generations 80)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn run-image!
+  [{:keys [label exotype bits tier seed include-exotype?]}]
+  (let [rng (java.util.Random. (long seed))
+        genotype (rng-sigil-string rng length)
+        phenotype (rng-phenotype-string rng length)
+        exo (when exotype (exotype/resolve-exotype {:sigil exotype :tier tier}))
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :seed (+ seed 1000)})
+        ppm-path (str out-dir \"/\" label \".ppm\")
+        meta-path (str out-dir \"/\" label \".edn\")]
+    (render/render-run->file! result ppm-path {:exotype? (boolean include-exotype?)})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:sigil exotype :bits bits :tier tier}
+                             :render {:exotype? (boolean include-exotype?)}}))))
+
+(defn sigil-from-bits [bits]
+  (ca/sigil-for bits))
+
+(def configs
+  [{:label \"mission-01-high-local\"
+    :bits \"01101101\"
+    :exotype (sigil-from-bits \"01101101\")
+    :tier :local
+    :seed 4242
+    :include-exotype? true}
+   {:label \"mission-01-low-local\"
+    :bits \"10010101\"
+    :exotype (sigil-from-bits \"10010101\")
+    :tier :local
+    :seed 42420
+    :include-exotype? true}
+   {:label \"mission-01-mid-local\"
+    :bits \"11010001\"
+    :exotype (sigil-from-bits \"11010001\")
+    :tier :local
+    :seed 9001
+    :include-exotype? true}
+   {:label \"mission-01-high-super\"
+    :bits \"01101101\"
+    :exotype (sigil-from-bits \"01101101\")
+    :tier :super
+    :seed 1337
+    :include-exotype? true}
+   {:label \"mission-02-baseline\"
+    :bits nil
+    :exotype nil
+    :tier nil
+    :seed 7777
+    :include-exotype? true}])
+
+(doseq [cfg configs]
+  (run-image! cfg))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in figdir.glob('mission-*.ppm'):
+    img = Image.open(ppm)
+    img.save(ppm.with_suffix('.png'))
+PY
+#+END_SRC
+
+#+CAPTION: Mission 1 high-scoring exotype (local tier) triptych.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-01-high-local.png]]
+
+#+CAPTION: Mission 1 low-scoring exotype (local tier) triptych.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-01-low-local.png]]
+
+#+CAPTION: Mission 1 mid-scoring exotype (local tier) triptych.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-01-mid-local.png]]
+
+#+CAPTION: Mission 1 high-scoring exotype (super tier) triptych.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-01-high-super.png]]
+
+** Mission 2: Naive evolution collapses (baseline failure)
+
+- Goal: quantify default attractors with no explicit exotype.
+- Seeds: RNG = 4242 (run seeds).
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out "/tmp/mission-02.edn")
+(spit out "")
+(def rng (java.util.Random. 4242))
+(def sigil-entries (vec (ca/sigil-entries)))
+(def sigils (mapv :sigil sigil-entries))
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r length]
+  (apply str (repeatedly length #(nth sigils (rng-int r (count sigils))))))
+
+(doseq [idx (range 128)]
+  (let [seed (rng-int rng Integer/MAX_VALUE)
+        genotype (rng-sigil-string rng 50)
+        result (mmca/run-mmca {:genotype genotype
+                               :generations 80
+                               :kernel :mutating-template
+                               :operators []
+                               :seed seed})
+        summary (metrics/summarize-run result)
+        entry {:schema/version 1
+               :experiment/id :mission-02
+               :run/id (inc idx)
+               :seed seed
+               :length 50
+               :generations 80
+               :kernel :mutating-template
+               :score {:short (:composite-score summary)
+                       :xeno nil
+                       :final (:composite-score summary)}
+               :summary summary}]
+    (spit out (str (pr-str entry) "\n") :append true)))'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-02.edn (128 runs)
+
+*** Analysis (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str]))
+(def in "/tmp/mission-02.edn")
+(def out-overall "/tmp/mission-02-overall.edn")
+(def entries (->> (str/split-lines (slurp in))
+                  (remove str/blank?)
+                  (mapv edn/read-string)))
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+(def scores (map #(get-in % [:score :final]) entries))
+(def stasis (keep #(get-in % [:summary :first-stasis-step]) entries))
+(def overall {:count (count scores)
+              :mean (avg scores)
+              :min (apply min scores)
+              :max (apply max scores)
+              :q10 (quantile scores 0.1)
+              :q50 (quantile scores 0.5)
+              :q90 (quantile scores 0.9)
+              :stasis-mean (avg stasis)
+              :stasis-n (count stasis)})
+(spit out-overall (pr-str overall))
+(println overall)'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-02-overall.edn
+
+*** Figures (generated)
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+import csv
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+figdir.mkdir(parents=True, exist_ok=True)
+
+scores, stasis = [], []
+with open('/tmp/mission-02-scores.csv', newline='') as f:
+    for row in csv.DictReader(f):
+        scores.append(float(row['score']))
+        if row['stasis_step']:
+            stasis.append(int(row['stasis_step']))
+
+plt.figure(figsize=(7,4.2))
+plt.hist(scores, bins=18, color='#665191', edgecolor='white')
+plt.title('Mission 2: Composite score distribution (baseline)')
+plt.xlabel('Composite score')
+plt.ylabel('Count')
+plt.tight_layout()
+plt.savefig(figdir / 'mission-02-score-hist.png', dpi=160)
+plt.close()
+
+if stasis:
+    plt.figure(figsize=(7,4.2))
+    plt.hist(stasis, bins=18, color='#a05195', edgecolor='white')
+    plt.title(f\"Mission 2: First stasis step (n={len(stasis)})\")
+    plt.xlabel('Generation')
+    plt.ylabel('Count')
+    plt.tight_layout()
+    plt.savefig(figdir / 'mission-02-stasis-hist.png', dpi=160)
+    plt.close()
+PY
+#+END_SRC
+
+#+CAPTION: Mission 2 composite score distribution (baseline).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-02-score-hist.png]]
+
+#+CAPTION: Mission 2 first-stasis step histogram.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-02-stasis-hist.png]]
+
+#+CAPTION: Mission 2 baseline triptych (no exotype).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-02-baseline.png]]
+
+#+CAPTION: Mission 2 baseline triptych (seed 1111).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-02-baseline-a.png]]
+
+#+CAPTION: Mission 2 baseline triptych (seed 2222).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-02-baseline-b.png]]
+
+#+CAPTION: Mission 2 baseline triptych (seed 3333).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-02-baseline-c.png]]
+
+*** Figure 1 (summary): Overall score distribution + stasis summary
+#+BEGIN_EXAMPLE
+{:count 128,
+ :mean 22.236775215064434,
+ :min 18.972824893856004,
+ :max 25.530451617682736,
+ :q10 20.401380912281102,
+ :q50 22.264683248943694,
+ :q90 23.806379592784417,
+ :stasis-mean 36.138297872340424,
+ :stasis-n 94}
+#+END_EXAMPLE
+
+*** Notes
+- 94/128 runs reached a fixed point within the 80-generation window (mean first stasis step ~36.1).
+- Composite scores concentrate in a narrow band compared to Mission 1, reinforcing the baseline collapse intuition.
+
+** Mission 3: Exotypes change evolutionary trajectories (local vs super)
+
+- Goal: compare local vs super exotypes under matched seeds (same genotype/phenotype per pair).
+- Seeds: RNG = 4242 (sigil picks and run seeds).
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out \"/tmp/mission-03.edn\")
+(spit out \"\")
+(def rng (java.util.Random. 4242))
+(def sigil-entries (vec (ca/sigil-entries)))
+(def sigils (mapv :sigil sigil-entries))
+(def sigil-bits (into {} (map (juxt :sigil :bits) sigil-entries)))
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r length]
+  (apply str (repeatedly length #(nth sigils (rng-int r (count sigils))))))
+(defn rng-phenotype-string [^java.util.Random r length]
+  (apply str (repeatedly length #(rng-int r 2))))
+
+(def picks (let [arr (java.util.ArrayList. sigils)]
+             (java.util.Collections/shuffle arr rng)
+             (vec (take 8 arr))))
+
+(def length 50)
+(def generations 60)
+
+(doseq [[sigil sig-idx] (map vector picks (range))]
+  (dotimes [run-idx 32]
+    (let [seed (rng-int rng Integer/MAX_VALUE)
+          seed-rng (java.util.Random. (long seed))
+          genotype (rng-sigil-string seed-rng length)
+          phenotype (rng-phenotype-string seed-rng length)
+          base-entry {:schema/version 1
+                      :experiment/id :mission-03
+                      :pair/id (+ (* sig-idx 1000) run-idx)
+                      :seed seed
+                      :length length
+                      :generations generations
+                      :kernel :mutating-template
+                      :exotype {:sigil sigil :bits (sigil-bits sigil)}}]
+      (doseq [tier [:local :super]]
+        (let [exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+              result (mmca/run-mmca {:genotype genotype
+                                     :phenotype phenotype
+                                     :generations generations
+                                     :kernel :mutating-template
+                                     :operators []
+                                     :exotype exo
+                                     :seed seed})
+              summary (metrics/summarize-run result)
+              entry (merge base-entry
+                           {:tier tier
+                            :score {:short (:composite-score summary)
+                                    :xeno nil
+                                    :final (:composite-score summary)}
+                            :summary summary})]
+          (spit out (str (pr-str entry) \"\\n\") :append true))))))'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-03.edn (512 runs)
+
+*** Analysis (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str]))
+(def in \"/tmp/mission-03.edn\")
+(def out-summary \"/tmp/mission-03-summary.edn\")
+(def out-delta \"/tmp/mission-03-deltas.csv\")
+(def out-scores \"/tmp/mission-03-scores.csv\")
+(def entries (->> (str/split-lines (slurp in))
+                  (remove str/blank?)
+                  (mapv edn/read-string)))
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+
+(def by-tier (group-by :tier entries))
+(def summary
+  {:local {:count (count (get by-tier :local))
+           :mean (avg (map #(get-in % [:score :final]) (get by-tier :local)))}
+   :super {:count (count (get by-tier :super))
+           :mean (avg (map #(get-in % [:score :final]) (get by-tier :super)))}})
+
+(def pair-groups (group-by :pair/id entries))
+(def deltas
+  (->> pair-groups
+       (keep (fn [[pair runs]]
+               (let [local (first (filter #(= :local (:tier %)) runs))
+                     super (first (filter #(= :super (:tier %)) runs))]
+                 (when (and local super)
+                   {:pair pair
+                    :sigil (get-in local [:exotype :sigil])
+                    :bits (get-in local [:exotype :bits])
+                    :local (get-in local [:score :final])
+                    :super (get-in super [:score :final])
+                    :delta (- (double (get-in super [:score :final]))
+                              (double (get-in local [:score :final])))}))))))
+
+(def by-sigil (group-by :sigil deltas))
+(def sigil-summary
+  (->> by-sigil
+       (map (fn [[sigil rows]]
+              {:sigil sigil
+               :bits (:bits (first rows))
+               :count (count rows)
+               :mean-delta (avg (map :delta rows))
+               :mean-local (avg (map :local rows))
+               :mean-super (avg (map :super rows))}))
+       (sort-by :mean-delta >)
+       vec))
+
+(spit out-summary (pr-str {:summary summary
+                           :sigils sigil-summary}))
+
+(def scores-csv
+  (->> entries
+       (map (fn [e]
+              (str (:tier e) \",\"
+                   (double (get-in e [:score :final])) \",\"
+                   (get-in e [:exotype :sigil]) \",\"
+                   (get-in e [:exotype :bits]))))
+       (cons \"tier,score,sigil,bits\")
+       (str/join \"\\n\")))
+(spit out-scores (str scores-csv \"\\n\"))
+
+(def delta-csv
+  (->> deltas
+       (map (fn [{:keys [sigil bits local super delta]}]
+              (str sigil \",\" bits \",\"
+                   (double local) \",\" (double super) \",\" (double delta))))
+       (cons \"sigil,bits,local,super,delta\")
+       (str/join \"\\n\")))
+(spit out-delta (str delta-csv \"\\n\"))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.string :as str]))
+(def rows (->> (str/split-lines (slurp \"/tmp/mission-03-deltas.csv\"))
+               (rest)
+               (remove str/blank?)))
+(def deltas (map (fn [line]
+                   (Double/parseDouble (last (str/split line #\",\"))))
+                 rows))
+(defn avg [xs] (/ (reduce + 0.0 xs) (double (count xs))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+(def summary {:count (count deltas)
+              :mean (avg deltas)
+              :q10 (quantile deltas 0.1)
+              :q50 (quantile deltas 0.5)
+              :q90 (quantile deltas 0.9)
+              :min (apply min deltas)
+              :max (apply max deltas)})
+(spit \"/tmp/mission-03-delta-summary.edn\" (pr-str summary))
+(println summary)'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-03-summary.edn
+- /tmp/mission-03-scores.csv
+- /tmp/mission-03-deltas.csv
+- /tmp/mission-03-delta-summary.edn
+
+*** Figures (generated)
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+import csv
+from pathlib import Path
+import matplotlib.pyplot as plt
+from statistics import mean
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+figdir.mkdir(parents=True, exist_ok=True)
+
+local_scores, super_scores = [], []
+with open('/tmp/mission-03-scores.csv', newline='') as f:
+    for row in csv.DictReader(f):
+        score = float(row['score'])
+        if row['tier'] == 'local':
+            local_scores.append(score)
+        else:
+            super_scores.append(score)
+
+plt.figure(figsize=(7,4.2))
+plt.hist(local_scores, bins=18, alpha=0.75, color='#2f4b7c', label='local')
+plt.hist(super_scores, bins=18, alpha=0.65, color='#1f9e89', label='super')
+plt.title('Mission 3: Score distribution (local vs super)')
+plt.xlabel('Composite score')
+plt.ylabel('Count')
+plt.legend()
+plt.tight_layout()
+plt.savefig(figdir / 'mission-03-score-hist.png', dpi=160)
+plt.close()
+
+all_deltas = []
+with open('/tmp/mission-03-deltas.csv', newline='') as f:
+    for row in csv.DictReader(f):
+        all_deltas.append(float(row['delta']))
+
+plt.figure(figsize=(7,4.2))
+plt.hist(all_deltas, bins=18, color='#ffa600', edgecolor='white')
+plt.title('Mission 3: Super - local score delta')
+plt.xlabel('Delta (super - local)')
+plt.ylabel('Count')
+plt.tight_layout()
+plt.savefig(figdir / 'mission-03-delta-hist.png', dpi=160)
+plt.close()
+
+by_bits = {}
+with open('/tmp/mission-03-deltas.csv', newline='') as f:
+    for row in csv.DictReader(f):
+        bits = row['bits']
+        by_bits.setdefault(bits, []).append(float(row['delta']))
+
+items = sorted(by_bits.items(), key=lambda x: mean(x[1]), reverse=True)
+labels = [b for b, _ in items]
+means = [mean(vals) for _, vals in items]
+
+plt.figure(figsize=(8.5,4.4))
+plt.bar(range(len(means)), means, color='#f95d6a')
+plt.title('Mission 3: Mean delta by bits (super - local)')
+plt.xlabel('Exotype bits')
+plt.ylabel('Mean delta')
+plt.xticks(range(len(labels)), labels, rotation=45, ha='right', fontsize=8)
+plt.tight_layout()
+plt.savefig(figdir / 'mission-03-delta-by-sigil.png', dpi=160)
+plt.close()
+PY
+#+END_SRC
+
+#+CAPTION: Mission 3 score distribution (local vs super).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-score-hist.png]]
+
+#+CAPTION: Mission 3 delta distribution (super - local).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-delta-hist.png]]
+
+#+CAPTION: Mission 3 mean delta by bits (super - local).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-delta-by-sigil.png]]
+
+*** Example triptychs (matched seed, same sigil)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir \"resources/figures\")
+(.mkdirs (io/file out-dir))
+(def length 80)
+(def generations 80)
+(def bits \"11010110\")
+(def sigil (ca/sigil-for bits))
+(def seed 5555)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn run-image! [label tier]
+  (let [rng (java.util.Random. (long seed))
+        genotype (rng-sigil-string rng length)
+        phenotype (rng-phenotype-string rng length)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :seed seed})
+        ppm-path (str out-dir \"/\" label \".ppm\")
+        meta-path (str out-dir \"/\" label \".edn\")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:sigil sigil :bits bits :tier tier}
+                             :render {:exotype? true}}))))
+
+(run-image! \"mission-03-local\" :local)
+(run-image! \"mission-03-super\" :super)'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in ['mission-03-local.ppm', 'mission-03-super.ppm']:
+    path = figdir / ppm
+    if path.exists():
+        img = Image.open(path)
+        img.save(path.with_suffix('.png'))
+PY
+#+END_SRC
+
+#+CAPTION: Mission 3 local exotype triptych (bits 11010110, seed 5555).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-local.png]]
+
+#+CAPTION: Mission 3 super exotype triptych (bits 11010110, seed 5555).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-super.png]]
+
+*** Seed 5555 deep dive (long horizon)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 80)
+(def generations 160)
+(def bits "11010110")
+(def sigil (ca/sigil-for bits))
+(def seed 5555)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn run-one! [label tier]
+  (let [rng (java.util.Random. (long seed))
+        genotype (rng-sigil-string rng length)
+        phenotype (rng-phenotype-string rng length)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :seed seed})
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:sigil sigil :bits bits :tier tier}
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))))
+
+(run-one! "mission-03-local-5555" :local)
+(run-one! "mission-03-super-5555" :super)'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in ['mission-03-local-5555.ppm', 'mission-03-super-5555.ppm']:
+    path = figdir / ppm
+    if path.exists():
+        img = Image.open(path)
+        img.save(path.with_suffix('.png'))
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-03-local-5555.edn
+- /tmp/mission-03-super-5555.edn
+- resources/figures/mission-03-local-5555.png
+- resources/figures/mission-03-super-5555.png
+
+#+CAPTION: Mission 3 local exotype triptych (seed 5555, generations 160).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-local-5555.png]]
+
+#+CAPTION: Mission 3 super exotype triptych (seed 5555, generations 160).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-super-5555.png]]
+
+*** Seed 5555 (generation 40 cut)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 80)
+(def generations 40)
+(def bits "11010110")
+(def sigil (ca/sigil-for bits))
+(def seed 5555)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn run-one! [label tier]
+  (let [rng (java.util.Random. (long seed))
+        genotype (rng-sigil-string rng length)
+        phenotype (rng-phenotype-string rng length)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :seed seed})
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:sigil sigil :bits bits :tier tier}
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))))
+
+(run-one! "mission-03-local-5555-g40" :local)
+(run-one! "mission-03-super-5555-g40" :super)'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in ['mission-03-local-5555-g40.ppm', 'mission-03-super-5555-g40.ppm']:
+    path = figdir / ppm
+    if path.exists():
+        img = Image.open(path)
+        img.save(path.with_suffix('.png'))
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-03-local-5555-g40.edn
+- /tmp/mission-03-super-5555-g40.edn
+- resources/figures/mission-03-local-5555-g40.png
+- resources/figures/mission-03-super-5555-g40.png
+
+#+CAPTION: Mission 3 local exotype triptych (seed 5555, generations 40).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-local-5555-g40.png]]
+
+#+CAPTION: Mission 3 super exotype triptych (seed 5555, generations 40).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-super-5555-g40.png]]
+
+*** Seed 5555 (nominated kernel, no mid-run changes)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 80)
+(def generations 40)
+(def bits "11010110")
+(def sigil (ca/sigil-for bits))
+(def seed 5555)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state []
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(defn run-nominate! [label]
+  (let [{:keys [genotype phenotype]} (start-state)
+        exo (exotype/resolve-exotype {:sigil sigil :tier :local})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :exotype-mode :nominate
+                               :seed seed})
+        nomination (last (:exotype-nominations result))
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (when-not nomination
+      (throw (ex-info "No kernel nomination recorded." {:label label})))
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:sigil sigil :bits bits :tier :local}
+                             :exotype-mode :nominate
+                             :nomination (select-keys nomination [:tick :kernel-id])
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))
+    nomination))
+
+(defn run-nominated! [label kernel]
+  (let [{:keys [genotype phenotype]} (start-state)
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel kernel
+                               :lock-kernel true
+                               :operators []
+                               :seed seed})
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel kernel
+                             :lock-kernel true
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))))
+
+(let [nomination (run-nominate! "mission-03-local-5555-nominate")
+      kernel (:kernel nomination)]
+  (run-nominated! "mission-03-local-5555-nominated" kernel))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in ['mission-03-local-5555-nominate.ppm', 'mission-03-local-5555-nominated.ppm']:
+    path = figdir / ppm
+    if path.exists():
+        img = Image.open(path)
+        img.save(path.with_suffix('.png'))
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-03-local-5555-nominate.edn
+- /tmp/mission-03-local-5555-nominated.edn
+- resources/figures/mission-03-local-5555-nominate.png
+- resources/figures/mission-03-local-5555-nominated.png
+
+#+CAPTION: Mission 3 local exotype, nomination run (seed 5555, generations 40, kernel unchanged).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-local-5555-nominate.png]]
+
+#+CAPTION: Mission 3 local exotype, nominated kernel rerun (seed 5555, generations 40, lock-kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-03-local-5555-nominated.png]]
+
+*** Notes
+- Overall mean scores: local 28.20 vs super 27.25 (n=256 each).
+- Mean delta (super - local) = -0.95 (q10 -9.30, q50 -0.60, q90 6.17).
+- Per-sigil effects are mixed, with some sigils favoring super and others penalized by it.
+
+** Mission 4: Exotypes can be evolved (and they fail)
+
+- Goal: evolve exotypes under short-horizon selection and observe collapse modes.
+- Baseline: 400 evaluations, population 32, update cadence 100, length 50, generations 30, tier both, seed 4242.
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 400 \
+  --length 50 \
+  --generations 30 \
+  --pop 32 \
+  --update-every 100 \
+  --tier both \
+  --seed 4242 \
+  --log /tmp/mission-04.edn
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-04.edn
+
+*** Analysis (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str])
+                           (quote [clojure.java.io :as io]))
+
+(def in "/tmp/mission-04.edn")
+(def entries (->> (str/split-lines (slurp in))
+                  (remove str/blank?)
+                  (mapv edn/read-string)))
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+
+(def scores (mapv #(get-in % [:score :final]) entries))
+(def stasis (keep #(get-in % [:summary :first-stasis-step]) entries))
+(def overall {:count (count scores)
+              :mean (avg scores)
+              :min (apply min scores)
+              :max (apply max scores)
+              :q10 (quantile scores 0.1)
+              :q50 (quantile scores 0.5)
+              :q90 (quantile scores 0.9)
+              :stasis-mean (avg stasis)
+              :stasis-q10 (quantile stasis 0.1)
+              :stasis-q50 (quantile stasis 0.5)
+              :stasis-q90 (quantile stasis 0.9)})
+
+(def by-exotype
+  (group-by (fn [entry]
+              (select-keys (:exotype entry) [:sigil :tier]))
+            entries))
+(def exotype-summary
+  (->> by-exotype
+       (map (fn [[exo runs]]
+              (let [finals (mapv #(get-in % [:score :final]) runs)
+                    st (keep #(get-in % [:summary :first-stasis-step]) runs)
+                    change (keep #(get-in % [:summary :avg-change]) runs)
+                    entropy (keep #(get-in % [:summary :avg-entropy-n]) runs)
+                    unique (keep #(get-in % [:summary :avg-unique]) runs)]
+                (merge exo
+                       {:runs (count runs)
+                        :mean-final (avg finals)
+                        :mean-stasis (avg st)
+                        :mean-change (avg change)
+                        :mean-entropy-n (avg entropy)
+                        :mean-unique (avg unique)}))))
+       (sort-by :mean-final >)
+       vec))
+
+(def window-size 100)
+(def windows (partition-all window-size entries))
+(def window-summary
+  (->> windows
+       (map-indexed (fn [idx runs]
+                      {:window (inc idx)
+                       :start-run (:run/id (first runs))
+                       :end-run (:run/id (last runs))
+                       :mean-final (avg (map #(get-in % [:score :final]) runs))
+                       :mean-stasis (avg (keep #(get-in % [:summary :first-stasis-step]) runs))
+                       :mean-change (avg (keep #(get-in % [:summary :avg-change]) runs))
+                       :mean-entropy-n (avg (keep #(get-in % [:summary :avg-entropy-n]) runs))
+                       :mean-unique (avg (keep #(get-in % [:summary :avg-unique]) runs))}))
+       vec))
+
+(spit "/tmp/mission-04-overall.edn" (pr-str overall))
+(spit "/tmp/mission-04-exotypes.edn" (pr-str exotype-summary))
+(spit "/tmp/mission-04-windows.edn" (pr-str window-summary))
+
+(with-open [w (io/writer "/tmp/mission-04-scores.csv")]
+  (.write w "run_id,final_score,short_score,stasis,entropy_n,change,unique\n")
+  (doseq [entry entries]
+    (let [summary (:summary entry)]
+      (.write w (format "%d,%.4f,%.4f,%s,%.4f,%.4f,%.4f\n"
+                        (long (:run/id entry))
+                        (double (or (get-in entry [:score :final]) 0.0))
+                        (double (or (get-in entry [:score :short]) 0.0))
+                        (if-let [st (:first-stasis-step summary)] (str st) "")
+                        (double (or (:avg-entropy-n summary) 0.0))
+                        (double (or (:avg-change summary) 0.0))
+                        (double (or (:avg-unique summary) 0.0)))))))
+
+(with-open [w (io/writer "/tmp/mission-04-windows.csv")]
+  (.write w "window,start_run,end_run,mean_final,mean_stasis,mean_change,mean_entropy_n,mean_unique\n")
+  (doseq [{:keys [window start-run end-run mean-final mean-stasis mean-change mean-entropy-n mean-unique]} window-summary]
+    (.write w (format "%d,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f\n"
+                      (long window)
+                      (long start-run)
+                      (long end-run)
+                      (double (or mean-final 0.0))
+                      (double (or mean-stasis 0.0))
+                      (double (or mean-change 0.0))
+                      (double (or mean-entropy-n 0.0))
+                      (double (or mean-unique 0.0))))))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+import csv
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+scores_path = Path('/tmp/mission-04-scores.csv')
+windows_path = Path('/tmp/mission-04-windows.csv')
+figdir = Path('/home/joe/code/futon5/resources/figures')
+figdir.mkdir(parents=True, exist_ok=True)
+
+run_ids = []
+finals = []
+with scores_path.open() as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        run_ids.append(int(row['run_id']))
+        finals.append(float(row['final_score']))
+
+plt.figure(figsize=(7,4))
+plt.hist(finals, bins=25, color='#4c72b0', edgecolor='white')
+plt.title('Mission 4: Final score distribution')
+plt.xlabel('final score')
+plt.ylabel('count')
+plt.tight_layout()
+plt.savefig(figdir / 'mission-04-score-hist.png', dpi=140)
+plt.close()
+
+plt.figure(figsize=(7,4))
+plt.plot(run_ids, finals, color='#dd8452', linewidth=1)
+plt.title('Mission 4: Final score per run')
+plt.xlabel('run id')
+plt.ylabel('final score')
+plt.tight_layout()
+plt.savefig(figdir / 'mission-04-score-trace.png', dpi=140)
+plt.close()
+
+windows = []
+mean_final = []
+mean_stasis = []
+mean_change = []
+mean_entropy = []
+mean_unique = []
+with windows_path.open() as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        windows.append(int(row['window']))
+        mean_final.append(float(row['mean_final']))
+        mean_stasis.append(float(row['mean_stasis']))
+        mean_change.append(float(row['mean_change']))
+        mean_entropy.append(float(row['mean_entropy_n']))
+        mean_unique.append(float(row['mean_unique']))
+
+plt.figure(figsize=(7,4))
+plt.plot(windows, mean_final, marker='o', label='final')
+plt.plot(windows, mean_entropy, marker='o', label='entropy-n')
+plt.plot(windows, mean_change, marker='o', label='change')
+plt.plot(windows, mean_unique, marker='o', label='unique')
+plt.title('Mission 4: Window means (per 100 runs)')
+plt.xlabel('window')
+plt.ylabel('mean value')
+plt.legend(frameon=False)
+plt.tight_layout()
+plt.savefig(figdir / 'mission-04-window-means.png', dpi=140)
+plt.close()
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-04-overall.edn
+- /tmp/mission-04-exotypes.edn
+- /tmp/mission-04-windows.edn
+- /tmp/mission-04-scores.csv
+- /tmp/mission-04-windows.csv
+- resources/figures/mission-04-score-hist.png
+- resources/figures/mission-04-score-trace.png
+- resources/figures/mission-04-window-means.png
+
+#+CAPTION: Mission 4 final score distribution.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-04-score-hist.png]]
+
+#+CAPTION: Mission 4 final score trace (per run).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-04-score-trace.png]]
+
+#+CAPTION: Mission 4 window means (per 100 runs).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-04-window-means.png]]
+
+*** Representative collapse modes (replays from selected exotypes)
+These replays fix the start state (seed 4242). We run each exotype in
+:nominate mode to pick a kernel without mid-run changes, then rerun with the
+nominated kernel locked.
+
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 120)
+(def generations 80)
+(def seed 4242)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state []
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(def cases
+  [{:label "mission-04-high" :bits "01010010" :tier :super}
+   {:label "mission-04-low-a" :bits "10100100" :tier :super}
+   {:label "mission-04-low-b" :bits "00101100" :tier :super}])
+
+(defn run-nominate! [label bits tier]
+  (let [{:keys [genotype phenotype]} (start-state)
+        sigil (ca/sigil-for bits)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :exotype-mode :nominate
+                               :seed seed})
+        nomination (last (:exotype-nominations result))
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label "-nominate.ppm")
+        meta-path (str out-dir "/" label "-nominate.edn")
+        run-path (str "/tmp/" label "-nominate.edn")]
+    (when-not nomination
+      (throw (ex-info "No kernel nomination recorded." {:label label})))
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:bits bits :tier tier}
+                             :exotype-mode :nominate
+                             :nomination (select-keys nomination [:tick :kernel-id])
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "nominate summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))
+    nomination))
+
+(defn run-nominated! [label bits tier kernel]
+  (let [{:keys [genotype phenotype]} (start-state)
+        sigil (ca/sigil-for bits)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel kernel
+                               :lock-kernel true
+                               :operators []
+                               :exotype exo
+                               :exotype-mode :nominate
+                               :seed seed})
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label "-nominated.ppm")
+        meta-path (str out-dir "/" label "-nominated.edn")
+        run-path (str "/tmp/" label "-nominated.edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel (ca/kernel-id kernel)
+                             :lock-kernel true
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "nominated summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))))
+
+(doseq [{:keys [label bits tier]} cases]
+  (let [nomination (run-nominate! label bits tier)
+        kernel (:kernel nomination)]
+    (run-nominated! label bits tier kernel)))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+ppm_files = [
+    'mission-04-high-nominate.ppm',
+    'mission-04-high-nominated.ppm',
+    'mission-04-low-a-nominate.ppm',
+    'mission-04-low-a-nominated.ppm',
+    'mission-04-low-b-nominate.ppm',
+    'mission-04-low-b-nominated.ppm',
+]
+for ppm in ppm_files:
+    path = figdir / ppm
+    if not path.exists():
+        continue
+    png = path.with_suffix('.png')
+    img = Image.open(path)
+    w, h = img.size
+    target = 1200
+    if w < target:
+        scale = target / float(w)
+        img = img.resize((target, int(round(h * scale))), resample=Image.NEAREST)
+    img.save(png)
+
+pairs = {
+    'mission-04-high': ('mission-04-high-nominate.png', 'mission-04-high-nominated.png'),
+    'mission-04-low-a': ('mission-04-low-a-nominate.png', 'mission-04-low-a-nominated.png'),
+    'mission-04-low-b': ('mission-04-low-b-nominate.png', 'mission-04-low-b-nominated.png'),
+}
+
+def combine(left_path, right_path, out_path, gap=8, bg=(255, 255, 255)):
+    left = Image.open(left_path)
+    right = Image.open(right_path)
+    height = max(left.height, right.height)
+    width = left.width + right.width + gap
+    canvas = Image.new('RGB', (width, height), bg)
+    canvas.paste(left, (0, 0))
+    canvas.paste(right, (left.width + gap, 0))
+    canvas.save(out_path)
+
+for base, (left_name, right_name) in pairs.items():
+    left = figdir / left_name
+    right = figdir / right_name
+    out = figdir / f'{base}-pair.png'
+    if left.exists() and right.exists():
+        combine(left, right, out)
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-04-high-nominate.edn
+- /tmp/mission-04-high-nominated.edn
+- /tmp/mission-04-low-a-nominate.edn
+- /tmp/mission-04-low-a-nominated.edn
+- /tmp/mission-04-low-b-nominate.edn
+- /tmp/mission-04-low-b-nominated.edn
+- resources/figures/mission-04-high-nominate.png
+- resources/figures/mission-04-high-nominated.png
+- resources/figures/mission-04-low-a-nominate.png
+- resources/figures/mission-04-low-a-nominated.png
+- resources/figures/mission-04-low-b-nominate.png
+- resources/figures/mission-04-low-b-nominated.png
+- resources/figures/mission-04-high-pair.png
+- resources/figures/mission-04-low-a-pair.png
+- resources/figures/mission-04-low-b-pair.png
+
+#+CAPTION: Mission 4 high-scoring exotype (left: nomination run, right: nominated kernel rerun; bits 01010010, super tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-04-high-pair.png]]
+
+#+CAPTION: Mission 4 low-scoring exotype A (left: nomination run, right: nominated kernel rerun; bits 10100100, super tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-04-low-a-pair.png]]
+
+#+CAPTION: Mission 4 low-scoring exotype B (left: nomination run, right: nominated kernel rerun; bits 00101100, super tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-04-low-b-pair.png]]
+
+#+CAPTION: Mission 4 nominate vs locked-kernel replay metrics (same start state).
+| case  | phase    | score | entropy-n | change | autocorr | stasis |
+|-------+----------+-------+-----------+--------+----------+--------|
+| high  | nominate | 25.28 | 0.55      | 0.39   | 0.87     |        |
+| high  | locked   | 27.03 | 0.47      | 0.45   | 0.84     |        |
+| low-a | nominate | 24.72 | 0.55      | 0.36   | 0.87     |        |
+| low-a | locked   | 8.09  | 0.06      | 0.07   | 0.96     | 15     |
+| low-b | nominate | 24.94 | 0.50      | 0.37   | 0.87     |        |
+| low-b | locked   | 10.47 | 0.11      | 0.16   | 0.94     |        |
+
+*** Notes
+- Final score: mean 34.21 (q10 27.03, q50 34.03, q90 40.83; n=400).
+- First-stasis-step: mean 20.88 (q10 13, q50 19, q90 28; n=400).
+- Window means rise modestly across updates: mean-final 33.31 → 34.82, with changes/entropy drifting upward.
+- Bottom-ranked exotypes (bits 10100100, 00101100, 01001101) show low entropy/change and early stasis under short-horizon scoring.
+- The high example's locked-kernel score rises, but entropy-n drops, matching the visual impression that the locked kernel is less rich despite a higher composite score.
+
+** Mission 5: Rule-110-like behaviour is fragile under evaluators
+
+- Goal: find long-transient genotypes and show how evaluator kernels erase or preserve them.
+- We avoid mid-run kernel changes: exotypes nominate a kernel, then we rerun with it locked.
+- Perturbation propagation is measured via a left-half lesion at tick 60.
+
+*** Select long-transient candidates (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out "/tmp/mission-05-candidates.edn")
+(spit out "")
+(def length 120)
+(def generations 120)
+(def sample-count 128)
+(def seed-rng (java.util.Random. 4242))
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(dotimes [idx sample-count]
+  (let [seed (rng-int seed-rng Integer/MAX_VALUE)
+        rng (java.util.Random. (long seed))
+        genotype (rng-sigil-string rng length)
+        phenotype (rng-phenotype-string rng length)
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []})
+        summary (metrics/summarize-run result)
+        entry {:schema/version 1
+               :experiment/id :mission-05-candidate
+               :run/id (inc idx)
+               :seed seed
+               :length length
+               :generations generations
+               :kernel :mutating-template
+               :summary summary}]
+    (spit out (str (pr-str entry) "\n") :append true)
+    (when (zero? (mod (inc idx) 16))
+      (println "candidate" (inc idx)))))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str]))
+
+(def in "/tmp/mission-05-candidates.edn")
+(def entries (->> (str/split-lines (slurp in))
+                  (remove str/blank?)
+                  (mapv edn/read-string)))
+(def generations (or (some-> entries first :generations) 120))
+(defn stasis-score [entry]
+  (let [st (get-in entry [:summary :first-stasis-step])]
+    (if (number? st) st (inc generations))))
+(def ranked (->> entries (sort-by stasis-score >) vec))
+(def picked (take 3 ranked))
+(spit "/tmp/mission-05-picked.edn" (pr-str picked))
+(println "picked" (map #(select-keys % [:seed :run/id]) picked))
+(println "stasis" (map #(get-in % [:summary :first-stasis-step]) picked))'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-05-candidates.edn
+- /tmp/mission-05-picked.edn
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [clojure.string :as str])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 120)
+(def generations 120)
+(def lesion {:tick 60 :target :genotype :half :left :mode :zero})
+
+(def seeds [238310129 1281562706 71312373])
+(def exotypes
+  [{:label "high" :bits "01010010" :tier :super}
+   {:label "low-a" :bits "10100100" :tier :super}
+   {:label "low-b" :bits "00101100" :tier :super}])
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state [seed]
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(defn record-metrics [rows label seed exo kernel-id result]
+  (let [summary (metrics/summarize-run result)
+        row {:label label
+             :seed seed
+             :exotype exo
+             :kernel-id kernel-id
+             :score (:composite-score summary)
+             :entropy-n (:avg-entropy-n summary)
+             :change (:avg-change summary)
+             :autocorr (:temporal-autocorr summary)
+             :stasis (:first-stasis-step summary)
+             :lesion-discrepancy (:lesion/half-discrepancy summary)}]
+    (conj rows row)))
+
+(def rows (atom []))
+
+(defn run-baseline! [seed]
+  (let [{:keys [genotype phenotype]} (start-state seed)
+        label (str "mission-05-seed-" seed "-baseline")
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :lesion lesion})
+        kernel-id (ca/kernel-id :mutating-template)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel kernel-id
+                             :lesion lesion
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (swap! rows record-metrics "baseline" seed nil kernel-id result)))
+
+(defn run-nominate! [seed exo]
+  (let [{:keys [genotype phenotype]} (start-state seed)
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :exotype-mode :nominate
+                               :seed seed})
+        nomination (last (:exotype-nominations result))
+        label (str "mission-05-seed-" seed "-" (:label exo) "-nominate")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (when-not nomination
+      (throw (ex-info "No kernel nomination recorded." {:label label})))
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype (select-keys exo [:bits :tier])
+                             :exotype-mode :nominate
+                             :nomination (select-keys nomination [:tick :kernel-id])}))
+    (spit run-path (pr-str result))
+    nomination))
+
+(defn run-locked! [seed exo kernel]
+  (let [{:keys [genotype phenotype]} (start-state seed)
+        label (str "mission-05-seed-" seed "-" (:label exo) "-locked")
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel kernel
+                               :lock-kernel true
+                               :operators []
+                               :exotype (exotype/resolve-exotype {:sigil (ca/sigil-for (:bits exo))
+                                                                 :tier (:tier exo)})
+                               :exotype-mode :nominate
+                               :seed seed
+                               :lesion lesion})
+        kernel-id (ca/kernel-id kernel)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        run-path (str "/tmp/" label ".edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel kernel-id
+                             :lock-kernel true
+                             :exotype (select-keys exo [:bits :tier])
+                             :lesion lesion
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (swap! rows record-metrics (:label exo) seed (select-keys exo [:bits :tier :label]) kernel-id result)))
+
+(doseq [seed seeds]
+  (run-baseline! seed)
+  (doseq [exo exotypes]
+    (let [sigil (ca/sigil-for (:bits exo))
+          exo-spec (exotype/resolve-exotype {:sigil sigil :tier (:tier exo)})
+          nomination (run-nominate! seed (assoc exo :sigil sigil))
+          kernel (:kernel nomination)]
+      (run-locked! seed (assoc exo :sigil sigil) kernel))))
+
+(spit "/tmp/mission-05-metrics.edn" (pr-str @rows))
+(with-open [w (io/writer "/tmp/mission-05-metrics.csv")]
+  (.write w "seed,label,kernel_id,score,entropy_n,change,autocorr,stasis,lesion_discrepancy\n")
+  (doseq [{:keys [seed label kernel-id score entropy-n change autocorr stasis lesion-discrepancy]} @rows]
+    (.write w (format "%d,%s,%s,%.4f,%.4f,%.4f,%.4f,%s,%s\n"
+                      (long seed)
+                      (str label)
+                      (str kernel-id)
+                      (double (or score 0.0))
+                      (double (or entropy-n 0.0))
+                      (double (or change 0.0))
+                      (double (or autocorr 0.0))
+                      (if (number? stasis) (str stasis) "")
+                      (if (number? lesion-discrepancy) (format "%.4f" (double lesion-discrepancy)) "")))))
+
+(println "Done, metrics rows" (count @rows))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in figdir.glob('mission-05-*.ppm'):
+    png = ppm.with_suffix('.png')
+    img = Image.open(ppm)
+    w, h = img.size
+    target = 1200
+    if w < target:
+        scale = target / float(w)
+        img = img.resize((target, int(round(h * scale))), resample=Image.NEAREST)
+    img.save(png)
+
+seed = 238310129
+baseline = figdir / f'mission-05-seed-{seed}-baseline.png'
+for exo in ['high', 'low-a', 'low-b']:
+    right = figdir / f'mission-05-seed-{seed}-{exo}-locked.png'
+    if not baseline.exists() or not right.exists():
+        continue
+    left = Image.open(baseline)
+    right_img = Image.open(right)
+    gap = 8
+    width = left.width + right_img.width + gap
+    height = max(left.height, right_img.height)
+    canvas = Image.new('RGB', (width, height), (255, 255, 255))
+    canvas.paste(left, (0, 0))
+    canvas.paste(right_img, (left.width + gap, 0))
+    out = figdir / f'mission-05-seed-{seed}-{exo}-pair.png'
+    canvas.save(out)
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-05-metrics.edn
+- /tmp/mission-05-metrics.csv
+- /tmp/mission-05-seed-*-baseline.edn
+- /tmp/mission-05-seed-*-*-locked.edn
+- resources/figures/mission-05-seed-*-baseline.png
+- resources/figures/mission-05-seed-*-*-locked.png
+- resources/figures/mission-05-seed-238310129-high-pair.png
+- resources/figures/mission-05-seed-238310129-low-a-pair.png
+- resources/figures/mission-05-seed-238310129-low-b-pair.png
+
+#+CAPTION: Mission 5 focus seed 238310129 baseline vs high exotype kernel (left: baseline, right: locked kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-05-seed-238310129-high-pair.png]]
+
+#+CAPTION: Mission 5 focus seed 238310129 baseline vs low-a exotype kernel (left: baseline, right: locked kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-05-seed-238310129-low-a-pair.png]]
+
+#+CAPTION: Mission 5 focus seed 238310129 baseline vs low-b exotype kernel (left: baseline, right: locked kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-05-seed-238310129-low-b-pair.png]]
+
+#+CAPTION: Mission 5 metrics (lesion is left-half genotype zeroed at tick 60).
+|       seed | label    | kernel            | score | entropy-n | change | autocorr | stasis | lesion |
+|------------+----------+-------------------+-------+-----------+--------+----------+--------+--------|
+|  238310129 | baseline | mutating-template | 20.13 |      0.37 |   0.28 |     0.90 |        |   0.67 |
+|  238310129 | high     | spec-f7e9cd       | 23.81 |      0.45 |   0.43 |     0.83 |        |   2.41 |
+|  238310129 | low-a    | spec-9d4574       |  9.68 |      0.10 |   0.15 |     0.96 |        |   0.08 |
+|  238310129 | low-b    | spec-139d93       |  9.40 |      0.10 |   0.15 |     0.96 |        |   0.34 |
+| 1281562706 | baseline | mutating-template | 23.46 |      0.54 |   0.34 |     0.85 |        |   1.70 |
+| 1281562706 | high     | spec-be05af       | 10.66 |      0.20 |   0.14 |     0.97 |        |   2.85 |
+| 1281562706 | low-a    | spec-9d4574       |  9.31 |      0.10 |   0.15 |     0.96 |        |   0.61 |
+| 1281562706 | low-b    | spec-9d4574       |  9.31 |      0.10 |   0.15 |     0.96 |        |   0.38 |
+|   71312373 | baseline | mutating-template | 18.77 |      0.42 |   0.30 |     0.88 |        |   4.18 |
+|   71312373 | high     | spec-f7e9cd       | 20.93 |      0.38 |   0.35 |     0.88 |        |   1.47 |
+|   71312373 | low-a    | spec-9d4574       |  9.43 |      0.10 |   0.15 |     0.96 |        |   0.49 |
+|   71312373 | low-b    | spec-5a9016       |  9.56 |      0.10 |   0.15 |     0.96 |        |   0.13 |
+
+*** Notes
+- All three seeds show no stasis within 120 steps under the baseline kernel.
+- Low-a/low-b kernels collapse entropy/change and reduce lesion propagation across seeds.
+- High kernel preserves richer dynamics for two seeds but degrades the second seed, showing evaluator fragility.
+
+** Mission 5a: Short cycle detection
+
+- Goal: detect short cycles explicitly, separating long transients from short-period attractors.
+- Definition: a short cycle is any period <= 8 that repeats for at least 6 cycles anywhere in the history.
+- We scan genotype and phenotype histories on longer runs (240 steps) with the same seeds.
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [clojure.edn :as edn])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def length 120)
+(def generations 240)
+(def lesion {:tick 120 :target :genotype :half :left :mode :zero})
+(def seeds [238310129 1281562706 71312373])
+(def labels ["baseline" "high" "low-a" "low-b"])
+(def max-period 8)
+(def min-cycles 6)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state [seed]
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(defn kernel-from-run [seed label]
+  (if (= label "baseline")
+    :mutating-template
+    (let [path (str "/tmp/mission-05-seed-" seed "-" label "-locked.edn")
+          result (edn/read-string (slurp path))]
+      (:kernel-spec result))))
+
+(defn detect-cycle-anywhere [history max-period min-cycles]
+  (let [history (vec history)
+        n (count history)
+        cycles min-cycles]
+    (some (fn [k]
+            (some (fn [start]
+                    (let [end (+ start (* k cycles))]
+                      (when (<= end n)
+                        (let [block (subvec history start (+ start k))
+                              ok? (every? true?
+                                          (for [i (range 1 cycles)]
+                                            (= block (subvec history (+ start (* i k)) (+ start (* (inc i) k))))))]
+                          (when ok? {:period k :start start :cycles cycles})))))
+                  (range 0 (inc (- n (* k cycles))))))
+          (range 1 (inc max-period)))))
+
+(def rows (atom []))
+
+(doseq [seed seeds]
+  (let [{:keys [genotype phenotype]} (start-state seed)]
+    (doseq [label labels]
+      (let [kernel (kernel-from-run seed label)
+            result (mmca/run-mmca {:genotype genotype
+                                   :phenotype phenotype
+                                   :generations generations
+                                   :kernel kernel
+                                   :lock-kernel (not= label "baseline")
+                                   :operators []
+                                   :lesion lesion})
+            gen-cycle (detect-cycle-anywhere (:gen-history result) max-period min-cycles)
+            phe-cycle (detect-cycle-anywhere (:phe-history result) max-period min-cycles)
+            entry {:seed seed
+                   :label label
+                   :kernel-id (ca/kernel-id kernel)
+                   :gen-cycle gen-cycle
+                   :phe-cycle phe-cycle}]
+        (swap! rows conj entry)))))
+
+(spit "/tmp/mission-05a-cycles.edn" (pr-str @rows))
+(with-open [w (io/writer "/tmp/mission-05a-cycles.csv")]
+  (.write w "seed,label,kernel_id,gen_cycle,phe_cycle\n")
+  (doseq [{:keys [seed label kernel-id gen-cycle phe-cycle]} @rows]
+    (.write w (format "%d,%s,%s,%s,%s\n"
+                      (long seed)
+                      (str label)
+                      (str kernel-id)
+                      (if gen-cycle (str (:period gen-cycle)) "")
+                      (if phe-cycle (str (:period phe-cycle)) "")))))
+
+(println "rows" (count @rows))
+(println @rows)'
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-05a-cycles.edn
+- /tmp/mission-05a-cycles.csv
+
+#+CAPTION: Mission 5a short-cycle detection (period@start index; blank means no short cycle).
+| seed | label | kernel | gen-cycle | phe-cycle |
+|------+-------+--------+-----------+-----------|
+| 238310129 | baseline | mutating-template |  | 1@208 |
+| 238310129 | high | spec-f7e9cd |  | 1@111 |
+| 238310129 | low-a | spec-9d4574 |  |  |
+| 238310129 | low-b | spec-139d93 |  | 1@61 |
+| 1281562706 | baseline | mutating-template |  |  |
+| 1281562706 | high | spec-be05af |  |  |
+| 1281562706 | low-a | spec-9d4574 |  |  |
+| 1281562706 | low-b | spec-9d4574 |  |  |
+| 71312373 | baseline | mutating-template |  |  |
+| 71312373 | high | spec-f7e9cd |  |  |
+| 71312373 | low-a | spec-9d4574 |  |  |
+| 71312373 | low-b | spec-5a9016 |  | 1@119 |
+
+*** Notes
+- No short genotype cycles detected within 240 steps for these runs.
+- Short phenotype cycles do appear in several runs (period-1 attractors), especially low-a/low-b kernels.
+
+*** CA run printouts (seed 238310129, 240 steps)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [clojure.edn :as edn])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 120)
+(def generations 240)
+(def lesion {:tick 120 :target :genotype :half :left :mode :zero})
+(def seed 238310129)
+(def labels ["baseline" "high" "low-a" "low-b"])
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state [seed]
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(defn kernel-from-run [seed label]
+  (if (= label "baseline")
+    :mutating-template
+    (let [path (str "/tmp/mission-05-seed-" seed "-" label "-locked.edn")
+          result (edn/read-string (slurp path))]
+      (:kernel-spec result))))
+
+(let [{:keys [genotype phenotype]} (start-state seed)]
+  (doseq [label labels]
+    (let [kernel (kernel-from-run seed label)
+          result (mmca/run-mmca {:genotype genotype
+                                 :phenotype phenotype
+                                 :generations generations
+                                 :kernel kernel
+                                 :lock-kernel (not= label "baseline")
+                                 :operators []
+                                 :lesion lesion})
+          ppm-path (str out-dir "/mission-05a-seed-" seed "-" label ".ppm")
+          meta-path (str out-dir "/mission-05a-seed-" seed "-" label ".edn")
+          run-path (str "/tmp/mission-05a-seed-" seed "-" label ".edn")]
+      (render/render-run->file! result ppm-path {:exotype? true})
+      (spit meta-path (pr-str {:label label
+                               :seed seed
+                               :length length
+                               :generations generations
+                               :kernel (ca/kernel-id kernel)
+                               :lock-kernel (not= label "baseline")
+                               :lesion lesion
+                               :render {:exotype? true}}))
+      (spit run-path (pr-str result)))))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in figdir.glob('mission-05a-seed-238310129-*.ppm'):
+    png = ppm.with_suffix('.png')
+    img = Image.open(ppm)
+    w, h = img.size
+    target = 1200
+    if w < target:
+        scale = target / float(w)
+        img = img.resize((target, int(round(h * scale))), resample=Image.NEAREST)
+    img.save(png)
+
+seed = 238310129
+baseline = figdir / f'mission-05a-seed-{seed}-baseline.png'
+for exo in ['high', 'low-a', 'low-b']:
+    right = figdir / f'mission-05a-seed-{seed}-{exo}.png'
+    if not baseline.exists() or not right.exists():
+        continue
+    left = Image.open(baseline)
+    right_img = Image.open(right)
+    gap = 8
+    width = left.width + right_img.width + gap
+    height = max(left.height, right_img.height)
+    canvas = Image.new('RGB', (width, height), (255, 255, 255))
+    canvas.paste(left, (0, 0))
+    canvas.paste(right_img, (left.width + gap, 0))
+    out = figdir / f'mission-05a-seed-{seed}-{exo}-pair.png'
+    canvas.save(out)
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-05a-seed-238310129-baseline.edn
+- /tmp/mission-05a-seed-238310129-high.edn
+- /tmp/mission-05a-seed-238310129-low-a.edn
+- /tmp/mission-05a-seed-238310129-low-b.edn
+- resources/figures/mission-05a-seed-238310129-baseline.png
+- resources/figures/mission-05a-seed-238310129-high.png
+- resources/figures/mission-05a-seed-238310129-low-a.png
+- resources/figures/mission-05a-seed-238310129-low-b.png
+- resources/figures/mission-05a-seed-238310129-high-pair.png
+- resources/figures/mission-05a-seed-238310129-low-a-pair.png
+- resources/figures/mission-05a-seed-238310129-low-b-pair.png
+
+#+CAPTION: Mission 5a seed 238310129 baseline vs high kernel (left: baseline, right: locked kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-05a-seed-238310129-high-pair.png]]
+
+#+CAPTION: Mission 5a seed 238310129 baseline vs low-a kernel (left: baseline, right: locked kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-05a-seed-238310129-low-a-pair.png]]
+
+#+CAPTION: Mission 5a seed 238310129 baseline vs low-b kernel (left: baseline, right: locked kernel).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-05a-seed-238310129-low-b-pair.png]]
+
+** Mission 6: Xenotypes prevent evaluator collapse
+
+- Goal: introduce a slow xenotype evaluator to reduce degeneracy while preserving open-ended dynamics.
+- Approach: blend short-horizon score with a xenotype score (50/50), updating population every 100 evaluations.
+
+*** Run (reproducible)
+#+BEGIN_SRC bash
+cat > /tmp/mission-06-xeno.edn <<'EOF'
+{}
+EOF
+
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 400 \
+  --length 50 \
+  --generations 30 \
+  --pop 32 \
+  --update-every 100 \
+  --tier both \
+  --seed 4242 \
+  --xeno-spec /tmp/mission-06-xeno.edn \
+  --xeno-weight 0.5 \
+  --log /tmp/mission-06.edn
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-06-xeno.edn
+- /tmp/mission-06.edn
+
+*** Analysis (reproducible)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str])
+                           (quote [clojure.java.io :as io]))
+
+(defn load-entries [path]
+  (->> (str/split-lines (slurp path))
+       (remove str/blank?)
+       (mapv edn/read-string)))
+
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+
+(defn collapse-stats [entries]
+  (let [dead-change 0.05
+        dead-entropy 0.2
+        confetti-change 0.45
+        confetti-entropy 0.8
+        summaries (map :summary entries)
+        dead? (fn [s] (and (<= (double (or (:avg-change s) 0.0)) dead-change)
+                           (<= (double (or (:avg-entropy-n s) 0.0)) dead-entropy)))
+        confetti? (fn [s] (and (>= (double (or (:avg-change s) 0.0)) confetti-change)
+                               (>= (double (or (:avg-entropy-n s) 0.0)) confetti-entropy)))
+        dead-count (count (filter dead? summaries))
+        confetti-count (count (filter confetti? summaries))
+        total (count summaries)]
+    {:dead-count dead-count
+     :dead-rate (if (pos? total) (/ dead-count (double total)) 0.0)
+     :confetti-count confetti-count
+     :confetti-rate (if (pos? total) (/ confetti-count (double total)) 0.0)}))
+
+(defn summarize [entries]
+  (let [scores (mapv #(get-in % [:score :final]) entries)
+        stasis (keep #(get-in % [:summary :first-stasis-step]) entries)
+        overall {:count (count scores)
+                 :mean (avg scores)
+                 :min (apply min scores)
+                 :max (apply max scores)
+                 :q10 (quantile scores 0.1)
+                 :q50 (quantile scores 0.5)
+                 :q90 (quantile scores 0.9)
+                 :stasis-mean (avg stasis)
+                 :stasis-q10 (when (seq stasis) (quantile stasis 0.1))
+                 :stasis-q50 (when (seq stasis) (quantile stasis 0.5))
+                 :stasis-q90 (when (seq stasis) (quantile stasis 0.9))}
+        collapse (collapse-stats entries)]
+    (merge overall collapse)))
+
+(defn summarize-windows [entries window-size]
+  (let [windows (partition-all window-size entries)]
+    (->> windows
+         (map-indexed (fn [idx runs]
+                        {:window (inc idx)
+                         :start-run (:run/id (first runs))
+                         :end-run (:run/id (last runs))
+                         :mean-final (avg (map #(get-in % [:score :final]) runs))
+                         :mean-entropy-n (avg (keep #(get-in % [:summary :avg-entropy-n]) runs))
+                         :mean-change (avg (keep #(get-in % [:summary :avg-change]) runs))
+                         :mean-unique (avg (keep #(get-in % [:summary :avg-unique]) runs))}))
+         vec)))
+
+(defn write-scores-csv [entries path]
+  (with-open [w (io/writer path)]
+    (.write w \"run_id,final_score,short_score,xeno_score,entropy_n,change,unique\n\")
+    (doseq [entry entries]
+      (let [summary (:summary entry)]
+        (.write w (format \"%d,%.4f,%.4f,%s,%.4f,%.4f,%.4f\n\"
+                          (long (:run/id entry))
+                          (double (or (get-in entry [:score :final]) 0.0))
+                          (double (or (get-in entry [:score :short]) 0.0))
+                          (if-let [x (get-in entry [:score :xeno])] (format \"%.4f\" (double x)) \"\")
+                          (double (or (:avg-entropy-n summary) 0.0))
+                          (double (or (:avg-change summary) 0.0))
+                          (double (or (:avg-unique summary) 0.0))))))))
+
+(def entries-4 (load-entries \"/tmp/mission-04.edn\"))
+(def entries-6 (load-entries \"/tmp/mission-06.edn\"))
+
+(def summary-4 (summarize entries-4))
+(def summary-6 (summarize entries-6))
+
+(def windows-4 (summarize-windows entries-4 100))
+(def windows-6 (summarize-windows entries-6 100))
+
+(spit \"/tmp/mission-06-overall.edn\" (pr-str summary-6))
+(spit \"/tmp/mission-06-overall-compare.edn\" (pr-str {:mission-04 summary-4 :mission-06 summary-6}))
+(spit \"/tmp/mission-06-windows.edn\" (pr-str windows-6))
+(spit \"/tmp/mission-06-windows-compare.edn\" (pr-str {:mission-04 windows-4 :mission-06 windows-6}))
+(write-scores-csv entries-6 \"/tmp/mission-06-scores.csv\")
+
+(println :mission-04 summary-4)
+(println :mission-06 summary-6)'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+import csv
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+figdir.mkdir(parents=True, exist_ok=True)
+
+scores4 = []
+with open('/tmp/mission-04-scores.csv') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        scores4.append(float(row['final_score']))
+
+scores6 = []
+with open('/tmp/mission-06-scores.csv') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        scores6.append(float(row['final_score']))
+
+plt.figure(figsize=(7,4))
+plt.hist(scores4, bins=25, alpha=0.6, label='Mission 4 (no xenotype)', color='#4c72b0', edgecolor='white')
+plt.hist(scores6, bins=25, alpha=0.6, label='Mission 6 (xenotype)', color='#dd8452', edgecolor='white')
+plt.title('Final score distribution (Mission 4 vs 6)')
+plt.xlabel('final score')
+plt.ylabel('count')
+plt.legend(frameon=False)
+plt.tight_layout()
+plt.savefig(figdir / 'mission-06-score-compare.png', dpi=140)
+plt.close()
+
+confetti4 = 44 / 400.0
+confetti6 = 21 / 400.0
+plt.figure(figsize=(5,4))
+plt.bar(['M4 confetti', 'M6 confetti'], [confetti4, confetti6], color=['#4c72b0', '#dd8452'])
+plt.ylabel('rate')
+plt.ylim(0, max(confetti4, confetti6) * 1.4)
+plt.title('Confetti rate (high entropy+change)')
+plt.tight_layout()
+plt.savefig(figdir / 'mission-06-confetti-rate.png', dpi=140)
+plt.close()
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-06-overall.edn
+- /tmp/mission-06-overall-compare.edn
+- /tmp/mission-06-windows.edn
+- /tmp/mission-06-windows-compare.edn
+- /tmp/mission-06-scores.csv
+- resources/figures/mission-06-score-compare.png
+- resources/figures/mission-06-confetti-rate.png
+
+#+CAPTION: Mission 6 final score distribution vs Mission 4 baseline.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-06-score-compare.png]]
+
+#+CAPTION: Confetti rate (high entropy+change) under xenotype scoring.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-06-confetti-rate.png]]
+
+*** CA printouts (xenotype-evolved exotypes)
+Replays share the same start state (seed 4242). Left panels use the nomination
+run (mutating-template, no mid-run changes). Right panels rerun the nominated
+kernel with lock-kernel.
+
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+(def length 120)
+(def generations 80)
+(def seed 4242)
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state []
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(def cases
+  [{:label "mission-06-high" :bits "11110100" :tier :super}
+   {:label "mission-06-mid" :bits "10010111" :tier :super}
+   {:label "mission-06-low-b" :bits "00101100" :tier :super}])
+
+(defn run-nominate! [label bits tier]
+  (let [{:keys [genotype phenotype]} (start-state)
+        sigil (ca/sigil-for bits)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel :mutating-template
+                               :operators []
+                               :exotype exo
+                               :exotype-mode :nominate
+                               :seed seed})
+        nomination (last (:exotype-nominations result))
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label "-nominate.ppm")
+        meta-path (str out-dir "/" label "-nominate.edn")
+        run-path (str "/tmp/" label "-nominate.edn")]
+    (when-not nomination
+      (throw (ex-info "No kernel nomination recorded." {:label label})))
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel :mutating-template
+                             :exotype {:bits bits :tier tier}
+                             :exotype-mode :nominate
+                             :nomination (select-keys nomination [:tick :kernel-id])
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "nominate summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))
+    nomination))
+
+(defn run-nominated! [label bits tier kernel]
+  (let [{:keys [genotype phenotype]} (start-state)
+        sigil (ca/sigil-for bits)
+        exo (exotype/resolve-exotype {:sigil sigil :tier tier})
+        result (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel kernel
+                               :lock-kernel true
+                               :operators []
+                               :exotype exo
+                               :exotype-mode :nominate
+                               :seed seed})
+        summary (metrics/summarize-run result)
+        ppm-path (str out-dir "/" label "-nominated.ppm")
+        meta-path (str out-dir "/" label "-nominated.edn")
+        run-path (str "/tmp/" label "-nominated.edn")]
+    (render/render-run->file! result ppm-path {:exotype? true})
+    (spit meta-path (pr-str {:label label
+                             :seed seed
+                             :length length
+                             :generations generations
+                             :kernel (ca/kernel-id kernel)
+                             :lock-kernel true
+                             :exotype {:bits bits :tier tier}
+                             :render {:exotype? true}}))
+    (spit run-path (pr-str result))
+    (println label "nominated summary" (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr :first-stasis-step]))))
+
+(doseq [{:keys [label bits tier]} cases]
+  (let [nomination (run-nominate! label bits tier)
+        kernel (:kernel nomination)]
+    (run-nominated! label bits tier kernel)))'
+#+END_SRC
+
+#+BEGIN_SRC bash
+python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+ppm_files = [
+    'mission-06-high-nominate.ppm',
+    'mission-06-high-nominated.ppm',
+    'mission-06-mid-nominate.ppm',
+    'mission-06-mid-nominated.ppm',
+    'mission-06-low-b-nominate.ppm',
+    'mission-06-low-b-nominated.ppm',
+]
+for ppm in ppm_files:
+    path = figdir / ppm
+    if not path.exists():
+        continue
+    png = path.with_suffix('.png')
+    img = Image.open(path)
+    w, h = img.size
+    target = 1200
+    if w < target:
+        scale = target / float(w)
+        img = img.resize((target, int(round(h * scale))), resample=Image.NEAREST)
+    img.save(png)
+
+pairs = {
+    'mission-06-high': ('mission-06-high-nominate.png', 'mission-06-high-nominated.png'),
+    'mission-06-mid': ('mission-06-mid-nominate.png', 'mission-06-mid-nominated.png'),
+    'mission-06-low-b': ('mission-06-low-b-nominate.png', 'mission-06-low-b-nominated.png'),
+}
+
+def combine(left_path, right_path, out_path, gap=8, bg=(255, 255, 255)):
+    left = Image.open(left_path)
+    right = Image.open(right_path)
+    height = max(left.height, right.height)
+    width = left.width + right.width + gap
+    canvas = Image.new('RGB', (width, height), bg)
+    canvas.paste(left, (0, 0))
+    canvas.paste(right, (left.width + gap, 0))
+    canvas.save(out_path)
+
+for base, (left_name, right_name) in pairs.items():
+    left = figdir / left_name
+    right = figdir / right_name
+    out = figdir / f'{base}-pair.png'
+    if left.exists() and right.exists():
+        combine(left, right, out)
+PY
+#+END_SRC
+
+Artifacts:
+- /tmp/mission-06-high-nominate.edn
+- /tmp/mission-06-high-nominated.edn
+- /tmp/mission-06-mid-nominate.edn
+- /tmp/mission-06-mid-nominated.edn
+- /tmp/mission-06-low-b-nominate.edn
+- /tmp/mission-06-low-b-nominated.edn
+- resources/figures/mission-06-high-pair.png
+- resources/figures/mission-06-mid-pair.png
+- resources/figures/mission-06-low-b-pair.png
+
+#+CAPTION: Mission 6 high exotype (left: nomination run, right: nominated kernel rerun; bits 11110100, super tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-06-high-pair.png]]
+
+#+CAPTION: Mission 6 mid exotype (left: nomination run, right: nominated kernel rerun; bits 10010111, super tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-06-mid-pair.png]]
+
+#+CAPTION: Mission 6 low exotype B (left: nomination run, right: nominated kernel rerun; bits 00101100, super tier).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-06-low-b-pair.png]]
+
+#+CAPTION: Mission 6 summary vs Mission 4 (final scores and collapse rates).
+| metric | mission-04 | mission-06 |
+|--------+------------+------------|
+| mean score | 34.21 | 40.66 |
+| q10 | 27.03 | 35.00 |
+| q50 | 34.03 | 41.45 |
+| q90 | 40.83 | 45.68 |
+| min | 17.59 | 21.22 |
+| max | 53.32 | 50.94 |
+| confetti-rate | 0.1100 | 0.0525 |
+| dead-rate | 0.0000 | 0.0000 |
+
+*** Notes
+- Xenotype blending shifts the score distribution upward and reduces confetti rate (0.11 -> 0.0525).
+- The population update cadence stays at 100 evaluations, matching the long-horizon requirement.
+- In the high and mid examples, the nomination runs show thriving vertical bands that are damped in the locked-kernel reruns, suggesting the xenotype currently trades spatially rich zones for bounded quasi-stability.
