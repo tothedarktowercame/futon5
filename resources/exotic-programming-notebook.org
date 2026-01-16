@@ -2439,10 +2439,21 @@ Artifacts:
 - Goal: make exotypes first-class programs by defining a compositional CT category and a manifest for the 256 super-sigils.
 - Approach: introduce a new category (`:futon5/exotype-program`) with labeled inputs/outputs, then map each sigil to a program template + params.
 
+*** Positioning: viability vs optimization
+- Goal-optimization (e.g., locking Rule 110) is trivial but misses the point: we want lifelike regimes, not a fixed target.
+- Exotic programming selects evaluator programs that keep evolution productive; xenotypes police viability, not target attainment.
+- The relevant question is whether evaluators preserve open-ended, discriminative dynamics across time and seeds.
+
 *** Category sketch
 - Objects: `:history`, `:context`, `:kernel-spec`, `:params`, `:rng`
 - Morphisms: `:sample-context`, `:gate-update`, `:contextual-mutate`, `:set-mix`, `:normalize`
-- Program shape: `[:kernel-spec :context :params :rng] -> :kernel-spec`
+- Context step: `[:history :rng] -> :context` (history = genotype + phenotype traces)
+- Kernel transformer: `[:kernel-spec :context :params :rng] -> :kernel-spec`
+- Semantics: stochastic/Kleisli (morphisms are probabilistic transformations conditioned on `:rng`)
+
+*** Composition conventions
+- Composition order is left-to-right in the manifest (the `:parts` list is the evaluation order).
+- This is explicit in `:composition-order :left-to-right` to avoid CT notation ambiguity.
 
 *** Generate manifest (reproducible)
 #+BEGIN_SRC bash
@@ -2455,4 +2466,339 @@ Artifacts:
 
 *** Notes
 - The manifest encodes the program template plus sigil-derived params for each super-sigil.
+- Word variation is currently by tier (local vs super); sigils vary params, not the morphism word.
 - Mapping back to `:futon5/meta-kernel` is deferred; this keeps the exotype-program category explicit and compositional.
+
+*** Example: super-sigil 11110100 (仪)
+#+BEGIN_SRC edn
+{:sigil "仪"
+ :bits "11110100"
+ :tier :super
+ :inputs {:kernel-transformer [:kernel-spec :context :params :rng]
+          :context-step [:history :rng]}
+ :program {:template :contextual-mutate+mix
+           :composition-order :left-to-right
+           :semantics :stochastic-kleisli
+           :diagram {:type :compose
+                     :data {:parts [{:data {:name :gate-update}}
+                                    {:data {:name :contextual-mutate}}
+                                    {:data {:name :set-mix}}
+                                    {:data {:name :normalize}}]}}
+           :context-step {:type :primitive
+                          :data {:name :sample-context}}}
+ :params {:rotation 3
+          :match-threshold 0.7777777777777778
+          :invert-on-phenotype? true
+          :update-prob 0.25
+          :mix-mode :xor-neighbor
+          :mix-shift 1}}
+#+END_SRC
+
+Interpretation:
+- Objects/morphisms: `:history` samples a `:context`, then the kernel transformer composes `:gate-update -> :contextual-mutate -> :set-mix -> :normalize`.
+- Compiled evaluator shape: `sample-context` selects a local (pred/self/next/out + phenotype bits), `gate-update` probabilistically mutates, `set-mix` applies super-tier mixing, and `normalize` clamps the spec.
+
+*** Protocol (draft)
+Regimes:
+- Regime A (direct optimization): evolve genotypes with a fixed proxy fitness (e.g., composite score).
+- Regime B (flat exotypes): evolve exotypes as 8-bit sigils (params only) under xenotype guard; genotypes evolve under those evaluators.
+- Regime C (program words + params): keep the 8-bit sigil as an address, but allow the program word to mutate via small rewrites, while params mutate as before.
+
+Allowed rewrites (word-level):
+- Insert/remove `gate-update` (respecting invariants).
+- Swap `set-mix` variants (or toggle on/off in super tier).
+- Move `normalize` within allowed invariants (must remain terminal for kernel validity).
+Rewrite operators can be deferred to a follow-on ticket if we want to run Regime C later.
+
+Lock modes (nomination -> locked rerun):
+- Lock-0 (kernel only): lock initial kernel-spec; rerun evaluator with fresh rng.
+- Lock-1 (kernel + rng seed): lock kernel and rng seed; rerun exactly.
+- Lock-2 (kernel + context schedule): lock kernel and sampled contexts; rerun with identical experience.
+Pick one lock mode per analysis and report it explicitly (generalization and nomination gap are lock-mode dependent).
+Pilot note: run all three lock modes in the pilot to compare sensitivity; choose one for the main sweep based on signal.
+
+Selection logic (xenotype as constraints + portfolio):
+- Step 1 (cull): discard exotypes that violate non-degeneracy thresholds (always-pass/fail, early stasis, confetti, short cycles).
+- Step 2 (rank): among survivors, rank by discriminative signal and nomination -> locked rerun stability.
+- Step 3 (portfolio): keep top-k per word class to preserve evaluator diversity.
+
+Measurements (xenotype duties mapped to failure modes):
+- Non-degeneracy: dead/confetti rates, early stasis, short-cycle detection.
+- Discriminative signal: score variance across genotypes/exotypes, diversity over time.
+- Open-ended dynamics: long transients, metastable bands, lesion recovery.
+- Generalization: nomination vs locked rerun gap across seeds (by lock mode).
+
+Structure-aware analysis (CT earns its keep):
+- Record the exotype program word (sequence of primitives) and invariants per evaluator.
+- Report collapse rates, generalization gaps, and discriminative variance conditioned on word class.
+
+Context-only baseline (guard against context hacks):
+- Randomize or mask genotype contributions and re-run the evaluator.
+- If discrimination remains strong, treat as a context/phenotype shortcut and cull/penalize at the xenotype layer.
+
+*** Pilot (A/B) plan
+Scope (small but representative):
+- Length 50, generations 30 (match Mission 4/6 defaults).
+- Runs 200, population 16, update cadence 100, seed 4242.
+- Regime A + B both use the same seeds and measurement hooks.
+
+Regime A (direct optimization, pilot):
+- Use the genotype optimizer (score by composite metric, mutate, select).
+- Example command (pilot-sized):
+#+BEGIN_SRC bash
+bb -cp src:resources -m futon5.mmca.genoevolve \
+  --runs 200 \
+  --length 50 \
+  --generations 30 \
+  --pop 16 \
+  --update-every 100 \
+  --mutation-rate 0.1 \
+  --seed 4242 \
+  --log /tmp/mission-07-a.edn
+#+END_SRC
+
+Regime B (flat exotypes, pilot):
+- Reuse the Mission 6 xenotype spec and exoevolve runner.
+- Example command (pilot-sized):
+#+BEGIN_SRC bash
+cat > /tmp/mission-07-xeno.edn <<'EOF'
+{}
+EOF
+
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 200 \
+  --length 50 \
+  --generations 30 \
+  --pop 16 \
+  --update-every 100 \
+  --tier both \
+  --seed 4242 \
+  --xeno-spec /tmp/mission-07-xeno.edn \
+  --xeno-weight 0.5 \
+  --log /tmp/mission-07-b.edn
+#+END_SRC
+
+Helper: lock-mode reruns (Lock-0/1/2, nomination mode)
+#+BEGIN_SRC clojure
+(require '[futon5.mmca.runtime :as mmca])
+
+(defn lock-mode-reruns
+  [{:keys [genotype phenotype exotype generations kernel seed]}]
+  (let [seed (long (or seed 4242))
+        base {:genotype genotype
+              :phenotype phenotype
+              :generations generations
+              :kernel kernel
+              :operators []
+              :exotype exotype
+              :exotype-mode :nominate}
+        nomination (mmca/run-mmca (assoc base :seed seed
+                                             :capture-exotype-contexts true))
+        ctxs (:exotype-contexts nomination)
+        lock0 (mmca/run-mmca (assoc base :seed (inc seed)))
+        lock1 (mmca/run-mmca (assoc base :seed seed))
+        lock2 (mmca/run-mmca (assoc base :seed seed
+                                         :exotype-contexts ctxs))]
+    {:nomination nomination
+     :lock0 lock0
+     :lock1 lock1
+     :lock2 lock2}))
+#+END_SRC
+
+Notes:
+- The lock-mode helper runs in `:exotype-mode :nominate` so the kernel stays fixed while the evaluator is exercised.
+- Lock-2 replays the exact context schedule via `:exotype-contexts`; use it to measure evaluator sensitivity to sampling noise.
+
+Lock-mode comparisons (pilot only):
+- For each regime, pick top-N exemplars (N=5) and run Lock-0/1/2 reruns side-by-side.
+- Lock-2 uses `:capture-exotype-contexts true` on nomination, then replays via `:exotype-contexts` on the rerun.
+
+Outputs:
+- EDN logs for A and B (e.g., /tmp/mission-07-a.edn, /tmp/mission-07-b.edn).
+- CA printouts for nomination + lock reruns, with lock-mode labels in filenames.
+
+*** Pilot quick look (A/B snapshots)
+- Regime A top scores: 45.93, 43.10.
+- Regime B top scores: 50.41, 49.59 (both sigil 兄, bits 11100100, super tier).
+- Regime B snapshots reseed genotype/phenotype from the run seed (exoevolve logs do not store them yet).
+
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.java.io :as io])
+                           (quote [clojure.string :as str])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.metrics :as metrics])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+
+(defn load-entries [path]
+  (->> (str/split-lines (slurp path))
+       (remove str/blank?)
+       (mapv edn/read-string)))
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state [seed length]
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(defn write-meta! [path m]
+  (spit path (pr-str m)))
+
+(defn run-image-a! [idx entry]
+  (let [label (format "mission-07-a-top%d" idx)
+        ppm-path (str out-dir "/" label ".ppm")
+        meta-path (str out-dir "/" label ".edn")
+        result (mmca/run-mmca {:genotype (:genotype entry)
+                               :phenotype (:phenotype entry)
+                               :generations (:generations entry)
+                               :kernel :mutating-template
+                               :operators []
+                               :seed (:seed entry)})
+        summary (metrics/summarize-run result)]
+    (render/render-run->file! result ppm-path)
+    (write-meta! meta-path {:label label
+                            :seed (:seed entry)
+                            :length (:length entry)
+                            :generations (:generations entry)
+                            :kernel :mutating-template
+                            :score (:composite (:score entry))
+                            :summary (select-keys summary [:composite-score :avg-entropy-n :avg-change :temporal-autocorr])})
+    {:label label :score (:composite (:score entry))}))
+
+(defn run-exotype-pair! [idx entry]
+  (let [label (format "mission-07-b-top%d" idx)
+        ppm-nom (str out-dir "/" label "-nominate.ppm")
+        ppm-lock (str out-dir "/" label "-locked.ppm")
+        meta-nom (str out-dir "/" label "-nominate.edn")
+        meta-lock (str out-dir "/" label "-locked.edn")
+        seed (:seed entry)
+        length (:length entry)
+        generations (:generations entry)
+        exo (exotype/resolve-exotype (:exotype entry))
+        {:keys [genotype phenotype]} (start-state seed length)
+        nominate (mmca/run-mmca {:genotype genotype
+                                 :phenotype phenotype
+                                 :generations generations
+                                 :kernel :mutating-template
+                                 :operators []
+                                 :exotype exo
+                                 :exotype-mode :nominate
+                                 :seed seed})
+        nomination (last (:exotype-nominations nominate))
+        kernel (:kernel nomination)
+        locked (mmca/run-mmca {:genotype genotype
+                               :phenotype phenotype
+                               :generations generations
+                               :kernel kernel
+                               :lock-kernel true
+                               :operators []
+                               :seed seed})]
+    (when-not nomination
+      (throw (ex-info "No kernel nomination recorded." {:label label})))
+    (render/render-run->file! nominate ppm-nom {:exotype? true})
+    (render/render-run->file! locked ppm-lock {:exotype? true})
+    (write-meta! meta-nom {:label label
+                           :seed seed
+                           :length length
+                           :generations generations
+                           :kernel :mutating-template
+                           :exotype (select-keys exo [:sigil :tier :params])
+                           :exotype-mode :nominate
+                           :nomination (select-keys nomination [:tick :kernel-id])
+                           :score (:final (:score entry))
+                           :render {:exotype? true}})
+    (write-meta! meta-lock {:label label
+                            :seed seed
+                            :length length
+                            :generations generations
+                            :kernel kernel
+                            :lock-kernel true
+                            :score (:final (:score entry))
+                            :render {:exotype? true}})
+    {:label label
+     :score (:final (:score entry))
+     :sigil (:sigil exo)
+     :bits (ca/bits-for (:sigil exo))
+     :tier (:tier exo)}))
+
+(def entries-a (load-entries "/tmp/mission-07-a.edn"))
+(def entries-b (load-entries "/tmp/mission-07-b.edn"))
+
+(def top-a (take 2 (sort-by (comp :composite :score) > entries-a)))
+(def top-b (take 2 (sort-by (comp :final :score) > entries-b)))
+
+(def a-summaries (mapv (fn [[idx entry]] (run-image-a! idx entry)) (map vector (range 1 3) top-a)))
+(def b-summaries (mapv (fn [[idx entry]] (run-exotype-pair! idx entry)) (map vector (range 1 3) top-b)))
+
+(println "Regime A top" a-summaries)
+(println "Regime B top" b-summaries)'
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+for ppm in figdir.glob('mission-07-*.ppm'):
+    img = Image.open(ppm)
+    img.save(ppm.with_suffix('.png'))
+PY
+#+END_SRC
+
+#+BEGIN_SRC bash
+MPLCONFIGDIR=/tmp/matplotlib python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+
+figdir = Path('/home/joe/code/futon5/resources/figures')
+min_width = 1200
+for path in figdir.glob('mission-07-*.png'):
+    img = Image.open(path)
+    if img.width >= min_width:
+        continue
+    scale = max(2, int((min_width + img.width - 1) // img.width))
+    new_size = (img.width * scale, img.height * scale)
+    img.resize(new_size, Image.NEAREST).save(path)
+PY
+#+END_SRC
+
+#+CAPTION: Mission 7A top genotype #1 (score 45.93).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-a-top1.png]]
+
+#+CAPTION: Mission 7A top genotype #2 (score 43.10).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-a-top2.png]]
+
+#+CAPTION: Mission 7B top exotype #1 (sigil 兄, bits 11100100, super) nomination run.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-nominate.png]]
+
+#+CAPTION: Mission 7B top exotype #1 locked kernel rerun.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-locked.png]]
+
+#+CAPTION: Mission 7B top exotype #2 (sigil 兄, bits 11100100, super) nomination run.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-nominate.png]]
+
+#+CAPTION: Mission 7B top exotype #2 locked kernel rerun.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-locked.png]]
+
+CT framing:
+- Exotypes are programs (morphisms in `:futon5/exotype-program`).
+- Xenotype evaluates families of exotype programs (meta-morphism / functor to score space).
+- AIF analogy: xenotype as model-of-self-in-niche, preserving viability without prescribing targets.

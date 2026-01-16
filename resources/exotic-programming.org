@@ -168,3 +168,7 @@
 *** Supplementary 2: Long-transient finder
 - Purpose: Identify long-transient genotypes for Mission 5.
 - Output: Helper script that searches genotypes for long transients using existing metrics and persists the top candidates.
+
+*** Supplementary 3: Exotype program word rewrites (Regime C)
+- Purpose: Define and implement word-level rewrite operators for exotype programs (insert/remove `gate-update`, swap/toggle `set-mix`, move `normalize` under invariants).
+- Output: Regime C mutation hook + logging of word classes so Mission 7 can compare A/B/C once enabled.

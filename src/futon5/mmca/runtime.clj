@@ -346,54 +346,66 @@
                      :genotype next-gen)
               (update-in [:history :genotypes] conj next-gen)))))))
 
+(defn- sample-exotype-context
+  [state ^java.util.Random rng]
+  (let [gen-history (get-in state [:history :genotypes])
+        phe-history (get-in state [:history :phenotypes])]
+    (exotype/sample-context gen-history phe-history rng)))
+
+(defn- resolve-exotype-context
+  [state ^java.util.Random rng tick]
+  (if (:exotype-context-replay? state)
+    [(get (:exotype-contexts state) tick) state]
+    (let [ctx (sample-exotype-context state rng)
+          state' (if (:exotype-context-capture? state)
+                   (update state :exotype-contexts conj ctx)
+                   state)]
+      [ctx state'])))
+
 (defn- update-kernel-by-exotype
-  [state exotype ^java.util.Random rng]
+  [state exotype ^java.util.Random rng tick]
   (if (or (nil? exotype) (:lock-kernel state))
     state
-    (let [gen-history (get-in state [:history :genotypes])
-          phe-history (get-in state [:history :phenotypes])
-          kernel (or (:kernel-spec state) (:kernel state))
+    (let [[ctx state'] (resolve-exotype-context state rng tick)
+          kernel (or (:kernel-spec state') (:kernel state'))
           kernel-spec (when kernel
                         (try
                           (ca/kernel-spec-for kernel)
-                          (catch Exception _ nil)))
-          ctx (exotype/sample-context gen-history phe-history rng)]
+                          (catch Exception _ nil)))]
       (if-let [next-kernel (and ctx
                                 kernel-spec
                                 (exotype/apply-exotype kernel-spec exotype ctx rng))]
-        (assoc state
+        (assoc state'
                :kernel next-kernel
                :kernel-spec next-kernel
                :kernel-fn (ca/kernel-fn next-kernel))
-        state))))
+        state'))))
 
 (defn- nominate-kernel-by-exotype
   [state exotype ^java.util.Random rng tick]
   (if (or (nil? exotype) (:lock-kernel state))
     state
-    (let [gen-history (get-in state [:history :genotypes])
-          phe-history (get-in state [:history :phenotypes])
-          kernel (or (:kernel-spec state) (:kernel state))
+    (let [[ctx state'] (resolve-exotype-context state rng tick)
+          kernel (or (:kernel-spec state') (:kernel state'))
           kernel-spec (when kernel
                         (try
                           (ca/kernel-spec-for kernel)
                           (catch Exception _ nil)))
-          ctx (exotype/sample-context gen-history phe-history rng)
           next-kernel (and ctx
                            kernel-spec
                            (exotype/apply-exotype kernel-spec exotype ctx rng))]
       (if next-kernel
-        (update state :exotype-nominations
+        (update state' :exotype-nominations
                 (fnil conj [])
                 {:tick tick
                  :kernel next-kernel
                  :kernel-id (ca/kernel-id next-kernel)})
-        state))))
+        state'))))
 
 (defn- apply-exotype-mode
   [state exotype rng tick exotype-mode]
   (case exotype-mode
-    :inline (update-kernel-by-exotype state exotype rng)
+    :inline (update-kernel-by-exotype state exotype rng tick)
     :nominate (nominate-kernel-by-exotype state exotype rng tick)
     state))
 
@@ -439,10 +451,17 @@
       (assoc :meta-states metas)))
 
 (defn- prepare-initial-state [{:keys [genotype phenotype kernel kernel-spec lock-kernel freeze-genotype
-                                      genotype-gate genotype-gate-signal]}]
+                                      genotype-gate genotype-gate-signal exotype-contexts
+                                      capture-exotype-contexts]}]
   (let [kernel* (or kernel-spec kernel default-kernel)
         kernel-spec (when (ca/kernel-spec? kernel*)
-                      (ca/normalize-kernel-spec kernel*))]
+                      (ca/normalize-kernel-spec kernel*))
+        replay? (seq exotype-contexts)
+        capture? (true? capture-exotype-contexts)
+        contexts (cond
+                   replay? (vec exotype-contexts)
+                   capture? []
+                   :else nil)]
     (-> {:generation 0
          :genotype genotype
          :phenotype phenotype
@@ -453,6 +472,9 @@
          :freeze-genotype (boolean freeze-genotype)
          :genotype-gate (boolean genotype-gate)
          :genotype-gate-signal (or genotype-gate-signal \1)
+         :exotype-contexts contexts
+         :exotype-context-replay? (boolean replay?)
+         :exotype-context-capture? (boolean capture?)
          :history {:genotypes [genotype]
                    :phenotypes (when phenotype [phenotype])}
          :metrics {}
@@ -472,6 +494,8 @@
   - :lesion (optional map with :tick, :target, :half, :mode)
   - :exotype (optional exotype spec or sigil)
   - :seed (optional RNG seed for exotype updates)
+  - :exotype-contexts (optional vector of contexts for lock-2 replay)
+  - :capture-exotype-contexts (optional, store sampled contexts for lock-2)
   - :exotype-mode (optional :inline or :nominate; default :inline)
 
   Returns a map containing genotype history, phenotype history, metrics, and
@@ -533,11 +557,12 @@
        :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
        :exotype-mode exotype-mode
        :exotype-nominations (not-empty (:exotype-nominations state))
+       :exotype-contexts (not-empty (:exotype-contexts state))
         :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
                         operators)
-       :meta-states metas
-       :gen-history (:genotypes history)
-       :phe-history (:phenotypes history)
+        :meta-states metas
+        :gen-history (:genotypes history)
+        :phe-history (:phenotypes history)
        :metrics-history metrics-history
        :proposals (not-empty proposals)
        :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))
@@ -614,6 +639,7 @@
          :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
          :exotype-mode exotype-mode
          :exotype-nominations (not-empty (:exotype-nominations state))
+         :exotype-contexts (not-empty (:exotype-contexts state))
          :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
                          operators)
          :meta-states metas

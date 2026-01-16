@@ -11,6 +11,57 @@ executable as data, not proofs.
 - Morphisms are operator names such as `:blend-hand` or `:genotype-gate`.
 - Diagrams are built with `primitive`, `compose`, and `tensor` forms.
 
+## Kernel rationale wiring
+
+Map the 36-bit local kernel into design-pattern roles:
+
+- IF = left sigil
+- THEN = current sigil
+- HOWEVER = right sigil
+- BECAUSE = phenotype context
+- NEXT STEPS = output sigil
+
+```clojure
+(require '[futon5.ct.dsl :as ct])
+
+(def kernel-step
+  (ct/primitive-diagram {:name :kernel-step
+                         :domain [:if :then :however :because]
+                         :codomain [:next-steps]}))
+
+;; Optional: contextualize a design-pattern into the IF/THEN/HOWEVER frame.
+(def frame-pattern
+  (ct/primitive-diagram {:name :frame
+                         :domain [:pattern]
+                         :codomain [:if :then :however]}))
+
+(def justify
+  (ct/primitive-diagram {:name :justify
+                         :domain [:pattern :rationale]
+                         :codomain [:because]}))
+
+(def pattern-to-next
+  (ct/compose-diagrams
+    (ct/tensor-diagrams frame-pattern justify)
+    kernel-step))
+```
+
+## Tensor ops ↔ design patterns
+
+Relate the tensor-function operators to design-pattern roles. These are
+intentional analogies; they keep the CT diagrams legible across domains.
+
+- BlendHand → Strategy/Policy Mixer (`:kernel ⊗ :kernel ⊗ :selector → :kernel`)
+- Genotype Gate → Guard/Filter (`:genotype ⊗ :genotype ⊗ :phenotype → :genotype`)
+- EntropyPulse → Temporal Switch / Phase Scheduler (`:kernel ⊗ :selector → :kernel`)
+- Uplift Operator → Factory/Observer (`:genotype ⊗ :phenotype ⊗ :operator-set → :operator-set`)
+- Exotype Kernel Context → Template Method / Test Harness
+  (`[:if :then :however :because] → :next-steps`)
+
+The CT `tensor` captures “fork/join” structure (parallel inputs), while
+`compose` captures pipeline updates. When describing new tensor ops, start
+with the pattern label, then the CT signature, then the operator name.
+
 ## BlendHand then evolve
 
 Blend two kernels into one and evolve the field.

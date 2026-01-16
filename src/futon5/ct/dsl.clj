@@ -118,6 +118,15 @@
                :deposit {:source :world :target :pheromone-field}
                :consume {:source :world :target :agent-state}}})
 
+(def design-pattern-category
+  {:name :futon5/design-pattern
+   :objects #{:if :then :however :because :next-steps :pattern :rationale}
+   :morphisms {:kernel-step {:source [:if :then :however :because]
+                             :target :next-steps}
+               :frame {:source :pattern :target [:if :then :however]}
+               :justify {:source [:pattern :rationale] :target :because}
+               :synthesize {:source [:if :then :however :because] :target :next-steps}}})
+
 (def metaca->cyber-ant-functor
   {:name :metaca->cyber-ant
    :source :futon5/metaca
@@ -157,6 +166,7 @@
   (register-category! aif-stage-category)
   (register-category! meta-kernel-category)
   (register-category! metaca-category)
+  (register-category! design-pattern-category)
   (register-category! cyber-ant-category)
   (register-functor! observation->kernel-functor)
   (register-functor! metaca->cyber-ant-functor)

@@ -33,6 +33,16 @@ bb -cp src:resources -m futon5.mmca.metaevolve \
   --report /tmp/mmca_meta_report_heavy.edn
 ```
 
+Meta-evolve now mutates kernel specs (blend/template/mutation/balance) instead of
+only swapping fixed kernel keywords; logs include a kernel summary line. Add
+`--kernel-context` to drive kernel mutation from local run heredity (ad-hoc
+template logic at the kernel level). Kernel specs now include a non-allele mix
+step plus coherence scoring to discourage pure confetti regimes. Pulses are
+disabled by default; add `--pulses` to enable them. Add `--quiet-kernel` to bias
+kernel specs toward metastability (no mix, lower mutation).
+Use `--feedback-every N` and `--report-every N` to stream progress to disk
+while long runs are in flight.
+
 Save top runs as images + PDF (requires ImageMagick `convert`):
 
 ```
@@ -42,6 +52,29 @@ bb -cp src:resources -m futon5.mmca.metaevolve \
   --aif-mutate --aif-mutate-min 45 \
   --save-top 5 --save-top-dir /tmp/mmca_top_runs \
   --save-top-pdf /tmp/mmca_top_runs.pdf
+```
+
+### Exotypes (Kernel Context)
+
+We treat kernel context as an exotype: a dynamic informational regime that
+shapes how kernels mutate rather than a static environment. In practice, the
+exotype is the local heredity signal (neighbor sigils + phenotype context) used
+when `--kernel-context` is enabled. The loop is triadic: exotypes condition how
+genotypes update, phenotypes expose mismatches, and selection rewards exotypes
+that induce more informative genotype structure (not just surface outcomes).
+
+### Xenotypes (Evaluator Population)
+
+Xenotypes evaluate exotypes over full MMCA runs, scoring edge-of-chaos behavior
+and penalizing degenerate regimes (stasis/confetti). They evolve on a slower
+cadence and only update after a batch of exotype evaluations.
+
+Run the xenotype outer loop (defaults to updating every 100 exotype runs):
+
+```
+bb -cp src:resources -m futon5.mmca.xenoevolve \
+  --runs 500 --length 50 --generations 50 \
+  --xeno-pop 12 --update-every 100 --tier both
 ```
 
 ### Render Single Runs
@@ -55,6 +88,30 @@ bb -cp src:resources -m futon5.mmca.render-cli \
 ```
 
 Use `convert /tmp/mmca.ppm /tmp/mmca.png` if you need PNG.
+Add `--render-exotype` to render a genotype/phenotype/exotype triptych.
+
+### Kernel Sampler
+
+Generate a visual sampler across all legacy kernels:
+
+```
+bb -cp src:resources -m futon5.mmca.kernel-sampler \
+  --seed 4242 --length 80 --phenotype-length 80 --generations 80 \
+  --out-dir /tmp/mmca_kernel_sampler \
+  --out-pdf /tmp/mmca_kernel_sampler.pdf \
+  --summary /tmp/mmca_kernel_sampler.edn
+```
+
+Sample specific kernels (5 each):
+
+```
+bb -cp src:resources -m futon5.mmca.kernel-sampler \
+  --kernels ad-hoc-template,collection-template,mutating-template \
+  --samples 5 --seed 4242 --length 80 --phenotype-length 80 --generations 80 \
+  --out-dir /tmp/mmca_kernel_sampler \
+  --out-pdf /tmp/mmca_kernel_sampler.pdf \
+  --summary /tmp/mmca_kernel_sampler.edn
+```
 
 ### LLM Relay (experimental)
 

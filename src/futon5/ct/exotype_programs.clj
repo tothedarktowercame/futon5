@@ -7,7 +7,7 @@
 (def exotype-program-category
   {:name :futon5/exotype-program
    :objects #{:history :context :kernel-spec :params :rng}
-   :morphisms {:sample-context {:source :history :target :context}
+   :morphisms {:sample-context {:source [:history :rng] :target :context}
                :gate-update {:source [:kernel-spec :context :params :rng]
                              :target :kernel-spec}
                :contextual-mutate {:source [:kernel-spec :context :params :rng]
@@ -16,6 +16,11 @@
                          :target :kernel-spec}
                :normalize {:source [:kernel-spec :context :params :rng]
                            :target :kernel-spec}}})
+
+(def sample-context
+  (ct/primitive-diagram {:name :sample-context
+                         :domain [:history :rng]
+                         :codomain [:context]}))
 
 (def gate-update
   (ct/primitive-diagram {:name :gate-update
@@ -43,11 +48,18 @@
 (def super-program
   (ct/compose-diagrams gate-update contextual-mutate set-mix normalize))
 
+(defn- diagram->edn* [diagram]
+  (let [diagram (or diagram {})]
+    (cond-> {:type (:type diagram)
+             :domain (:domain diagram)
+             :codomain (:codomain diagram)
+             :data (:data diagram)}
+      (seq (get-in diagram [:data :parts]))
+      (update-in [:data :parts] (fn [parts]
+                                  (mapv diagram->edn* parts))))))
+
 (defn diagram->edn [diagram]
-  {:type (:type diagram)
-   :domain (:domain diagram)
-   :codomain (:codomain diagram)
-   :data (:data diagram)})
+  (diagram->edn* diagram))
 
 (defn program-for-tier [tier]
   (case tier
@@ -63,14 +75,20 @@
      :bits (ca/bits-for (:sigil exo))
      :tier (:tier exo)
      :category (:name exotype-program-category)
-     :inputs [:kernel-spec :context :params :rng]
+     :inputs {:kernel-transformer [:kernel-spec :context :params :rng]
+              :context-step [:history :rng]}
      :outputs [:kernel-spec]
      :program {:template (if (= :super (:tier exo))
                            :contextual-mutate+mix
                            :contextual-mutate)
-               :diagram (diagram->edn diagram)}
+               :composition-order :left-to-right
+               :semantics :stochastic-kleisli
+               :diagram (diagram->edn diagram)
+               :context-step (diagram->edn sample-context)}
      :params (:params exo)
-     :invariants [:normalize :probabilistic-update]}))
+     :invariants [:normalize :probabilistic-update]
+     :word-variation :by-tier
+     :scope :kernel-transformer}))
 
 (defn manifest
   ([]
