@@ -230,6 +230,24 @@ Added two real CT templates in `resources/exotype-xenotype-lift.edn`:
 
 Expected: non-degenerate vision and `:valid? true`.
 
+** Demo run (lift proposal with evidence)
+
+#+begin_src clojure
+(require '[futon5.exotic.pattern-repl :as pr]
+         '[futon5.exotic.adapt :as adapt])
+
+(def result (pr/pattern-repl-handshake {:pattern-id "f5/p3"
+                                       :run-id "demo-ct-001"
+                                       :context {:note "mission-17 demo"}}))
+(def evidence (adapt/evidence {:artifact-id "demo-ct-001"
+                               :notes "pattern REPL handshake"}))
+(def lift (assoc (:lift-proposal result) :evidence evidence))
+
+{:pattern-id (:pattern-id result)
+ :vision-name (get-in result [:vision :name])
+ :lift-proposal lift}
+#+end_src
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh

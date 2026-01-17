@@ -15,6 +15,11 @@
   [evidence]
   (boolean evidence))
 
+(defn apply-component
+  "Apply a component mapping for a morphism id."
+  [^NatTrans nt morphism-id]
+  (get (:components nt) morphism-id))
+
 (defn commutativity-residual
   "Compute a placeholder residual for commutativity.
   Returns 0.0 when component is present, 1.0 otherwise."
@@ -32,8 +37,3 @@
                   (double (count by-morphism))))]
     {:by-morphism by-morphism
      :mean mean}))
-
-(defn apply-component
-  "Apply a component mapping for a morphism id."
-  [^NatTrans nt morphism-id]
-  (get (:components nt) morphism-id))
