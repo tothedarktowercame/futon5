@@ -321,6 +321,23 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 #+ATTR_ORG: :width 900
 [[file:mission-16-pilot2-a-exotic.png]]
 
+* Mission 9.5: Arrow discovery MVP
+
+** Pilot command
+
+#+begin_src sh
+bb -cp src:resources -m futon5.arrow.mine \
+  --contexts 20 \
+  --k 2 \
+  --tau 0.7 \
+  --out resources/arrow-pilot.edn
+#+end_src
+
+** Notes
+
+- MVP uses a tiny term grammar and three coarse regimes (:dead/:stable/:oscillating/:chaotic).
+- Output is a single EDN payload with discovered arrows and robustness.
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh

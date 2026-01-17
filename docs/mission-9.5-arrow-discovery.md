@@ -175,6 +175,15 @@ Start narrow:
 
 The arrow graph becomes an artifact that M12+ consumes. It's the empirical basis for the declared CT structure.
 
+## Integration Hook (CT Metrics)
+
+Arrow discovery provides empirical inputs for CT metrics:
+- arrow cost → provenance proxy
+- robustness τ → evidence grounding
+- composition residuals → functor preservation tests
+
+These outputs should be referenced in `docs/ct-metrics-report-plan.md` when calibrating real CT metrics.
+
 ---
 
 ## Logging Format
