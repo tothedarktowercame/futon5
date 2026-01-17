@@ -7,7 +7,8 @@
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.runtime :as mmca]
-            [futon5.mmca.xenotype :as xenotype]))
+            [futon5.mmca.xenotype :as xenotype]
+            [futon5.exotic.ratchet :as ratchet]))
 
 (def ^:private default-length 50)
 (def ^:private default-generations 30)
@@ -141,15 +142,19 @@
     (+ (* (- 1.0 w) s)
        (* w x))))
 
-(defn- score-xenotype [xeno-specs result]
+(defn- score-xenotype [xeno-specs result ratchet-context]
   (when (seq xeno-specs)
-    (let [scores (mapv (fn [spec] (:score (xenotype/score-run spec result))) xeno-specs)
+    (let [scores (mapv (fn [spec]
+                         (let [spec (cond-> spec
+                                      ratchet-context (assoc :ratchet ratchet-context))]
+                           (:score (xenotype/score-run spec result))))
+                       xeno-specs)
           mean (/ (reduce + 0.0 scores) (double (count scores)))]
       {:scores scores
        :mean mean})))
 
 (defn- evaluate-exotype
-  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth]
+  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context]
   (let [genotype (rng-sigil-string rng length)
         phenotype (rng-phenotype-string rng length)
         seed (rng-int rng Integer/MAX_VALUE)
@@ -163,7 +168,7 @@
                                :seed seed})
         summary (metrics/summarize-run result)
         short-score (double (or (:composite-score summary) 0.0))
-        xeno (score-xenotype xeno-specs result)
+        xeno (score-xenotype xeno-specs result ratchet-context)
         xeno-score (when xeno (* 100.0 (double (or (:mean xeno) 0.0))))
         final-score (blend-score short-score xeno-score xeno-weight)]
     {:result result
@@ -178,7 +183,7 @@
     :contextual-mutate+mix
     :contextual-mutate))
 
-(defn- log-entry [run-id exotype length generations eval context-depth]
+(defn- log-entry [run-id exotype length generations eval context-depth ratchet-context]
   {:schema/version 1
    :experiment/id :exoevolve
    :event :run
@@ -193,6 +198,7 @@
    :score {:short (:short-score eval)
            :xeno (get-in eval [:xeno :mean])
            :final (:final-score eval)}
+   :ratchet ratchet-context
    :summary (:summary eval)})
 
 (defn- append-log! [path entry]
@@ -275,19 +281,27 @@
     (loop [i 0
            window 0
            prev-window nil
+           ratchet-state (ratchet/init-state)
+           ratchet-context nil
            population (vec (repeatedly pop #(pick-exotype rng tier)))
            batch []]
       (if (= i runs)
         {:population population}
         (let [exotype (rand-nth population)
-              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth)
-              entry (log-entry (inc i) exotype length generations eval context-depth)
+              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context)
+              entry (log-entry (inc i) exotype length generations eval context-depth ratchet-context)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)
               stats (when update? (summarize-batch batch'))
               delta (when (and update? prev-window)
                       {:delta-mean (- (:mean stats) (:mean prev-window))
                        :delta-q50 (- (:q50 stats) (:q50 prev-window))})
+              ratchet-state' (if update?
+                               (ratchet/update-window ratchet-state stats)
+                               ratchet-state)
+              ratchet-context' (when (and update? prev-window)
+                                 {:prev-score (:mean prev-window)
+                                  :curr-score (:mean stats)})
               population' (if update?
                             (evolve-population rng population batch' tier)
                             population)
@@ -305,7 +319,7 @@
                                (double (or mean 0.0))
                                (double (or best 0.0))
                                (long (or count 0))))))
-          (recur (inc i) window' prev-window' population' batch''))))))
+          (recur (inc i) window' prev-window' ratchet-state' ratchet-context' population' batch''))))))
 
 (defn -main [& args]
   (let [{:keys [help unknown] :as opts} (parse-args args)]

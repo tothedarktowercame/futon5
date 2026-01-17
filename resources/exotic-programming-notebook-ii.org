@@ -35,4 +35,4 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 - Added `futon5.exotic.ratchet` for window tracking + delta scoring.
 - Exotic score now accepts an optional `:ratchet` block with `:prev-score`/`:curr-score`.
-- Next step: wire real window summaries into the ratchet state.
+- Exotype evolution now maintains a ratchet state and passes `:ratchet` into xenotype scoring after each window.
