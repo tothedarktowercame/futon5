@@ -1,0 +1,9 @@
+{:mode :exotic
+ :exotic {:pattern-id "f5/p3"
+          :vision {:name :exotic/vision-f5-p3
+                   :objects [:start :ct-foundation :plan-functor]}
+          :plan {:name :plan-functor-stub
+                 :source :exotic/vision-f5-p3
+                 :target :exotic/vision-f5-p3}
+          :adapt {:id "adapt-001"
+                  :evidence {:artifact-id "demo-evidence"}}}}
