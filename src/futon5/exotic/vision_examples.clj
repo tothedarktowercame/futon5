@@ -96,5 +96,6 @@
     {:id "adapt-001"
      :from :plan-functor
      :to :plan-functor
-     :evidence {:artifact "demo-evidence"}
-     :residuals {:commutativity 0.0}})))
+     :evidence (adapt/evidence {:artifact-id "demo-evidence"})
+     :nattrans adapt-transform
+     :morphisms [:m9 :m10 :m9+m10]})))
