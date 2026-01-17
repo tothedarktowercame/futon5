@@ -1,7 +1,8 @@
 (ns futon5.mmca.xenotype
   "Xenotypes: evaluators of exotypes over full run histories."
   (:require [futon5.ca.core :as ca]
-            [futon5.mmca.metrics :as metrics]))
+            [futon5.mmca.metrics :as metrics]
+            [futon5.exotic.scoring :as exotic]))
 
 (def ^:private default-spec
   {:weights {:edge 0.7 :diversity 0.3}
@@ -59,7 +60,9 @@
 (defn score-run
   "Score a run with a xenotype spec (0-1)."
   [xeno result]
-  (let [{:keys [weights targets penalties]} (normalize-spec xeno)
+  (let [exotic-score (when (or (:exotic xeno) (= :exotic (:mode xeno)))
+                       (exotic/exotic-score xeno result))
+        {:keys [weights targets penalties]} (normalize-spec xeno)
         summary (metrics/summarize-run result)
         {:keys [avg-entropy-n avg-change avg-unique temporal-autocorr phe-entropy phe-change]} summary
         [entropy-center entropy-width] (get targets :entropy)
@@ -85,12 +88,15 @@
         confetti (confetti-penalty summary penalties)
         dead (dead-penalty summary penalties)
         score (-> base (* stasis confetti dead) clamp-01)]
-    {:score score
-     :components {:edge edge-score
-                  :diversity diversity-score
-                  :stasis stasis
-                  :confetti confetti
-                  :dead dead}}))
+    (if (= :exotic (:mode xeno))
+      exotic-score
+      {:score score
+       :components {:edge edge-score
+                    :diversity diversity-score
+                    :stasis stasis
+                    :confetti confetti
+                    :dead dead}
+       :exotic exotic-score})))
 
 (defn- centered-score [x]
   (when (number? x)
