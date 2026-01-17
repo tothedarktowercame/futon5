@@ -29,3 +29,17 @@ For each surviving arrow, log:
 ## Notes
 - “Worse but different” is acceptable at this stage; we are mapping levers, not value.
 - Value ranking comes later once robustness stabilizes.
+
+## Nomination as a Related Feature
+Nomination (Mission 7) and arrows are both mechanisms for identifying reliable transitions, but they operate at different granularity:
+- **Nomination** picks a promising kernel/exotype state and reruns it under a locked context to check reproducibility.
+- **Arrows** discover repeatable regime shifts induced by interventions (operators) across contexts.
+
+### How nomination would change the learning loop
+If reintroduced, nomination would add a post-run validation stage:
+1) Run MMCA with the current exotype.
+2) Nominate a kernel or evaluator state (from the run trace).
+3) Re-run under a locked context (Lock-0/1/2) and log the comparison.
+4) Use the nomination gap as a secondary signal (diagnostic, not selection).
+
+This keeps nomination parallel to arrow discovery: both act as validation layers without altering core selection mechanics.
