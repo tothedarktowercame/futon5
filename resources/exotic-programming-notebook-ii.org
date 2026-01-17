@@ -1,0 +1,38 @@
+#+title: Exotic Programming Notebook II
+
+* Exotic mode demo
+
+** Command
+
+#+begin_src sh
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 5 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/exotic-mode-demo.log
+#+end_src
+
+** Notes
+
+- Run completed with exotic scoring enabled.
+- Log file: resources/exotic-mode-demo.log
+
+** Log check (last entry)
+
+#+begin_src edn
+{:event :run
+ :score {:short 34.6883051228524, :xeno 1.0, :final 100.0}
+ :program-template :contextual-mutate+mix
+ :run/id 5}
+#+end_src
+
+* Mission 13: Ratchet memory (stub)
+
+** Notes
+
+- Added `futon5.exotic.ratchet` for window tracking + delta scoring.
+- Exotic score now accepts an optional `:ratchet` block with `:prev-score`/`:curr-score`.
+- Next step: wire real window summaries into the ratchet state.
