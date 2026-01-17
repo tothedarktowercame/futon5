@@ -424,6 +424,13 @@ Question this arrow answers (tentative): how does switching to a specific super�
 
 Note: entries 3–4 are at the weak/medium boundary; keep for contrast.
 
+** Arrow questions (tentative)
+
+- `[:set-exotype "十" :super]`: How does switching to this super‑exotype dampen macro‑activity without immediate collapse?
+- `[:set-exotype "丁" :super]`: How does a super‑exotype push oscillating regimes into chaotic ones without large score shifts?
+- `[:set-param :rotation 1.0]`: How sensitive is the regime to small rotational tweaks in context alignment?
+- `[:set-exotype "二" :super]`: What minimal exotype switch yields a shallow but repeatable macro shift?
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh
