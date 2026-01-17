@@ -367,13 +367,15 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 ** Refine run snapshots (stable config)
 
-Baseline CA snapshot (composite score 26.88):
+- Rendered at length 120, generations 120 for readability.
+
+Baseline CA snapshot (composite score 20.39):
 
 #+CAPTION: Mission 17 refine baseline (seed 4242)
 #+ATTR_ORG: :width 900
 [[file:mission-17-refine-baseline.png]]
 
-Exotype CA snapshot (sigil 土, update-prob 0.25; composite score 29.78):
+Exotype CA snapshot (sigil 土, update-prob 0.25; composite score 21.58):
 
 #+CAPTION: Mission 17 refine exotype (seed 4242, sigil 土)
 #+ATTR_ORG: :width 900
