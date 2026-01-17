@@ -368,6 +368,7 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 ** Refine run snapshots (stable config)
 
 - Rendered at length 120, generations 120 for readability.
+- Early edge-of-chaos structure appears, but the runs destabilize later in the trajectory.
 
 Baseline CA snapshot (composite score 20.39):
 
