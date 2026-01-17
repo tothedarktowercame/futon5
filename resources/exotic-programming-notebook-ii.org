@@ -382,6 +382,23 @@ Exotype CA snapshot (sigil 土, update-prob 0.25; composite score 21.58):
 #+ATTR_ORG: :width 900
 [[file:mission-17-refine-exotic.png]]
 
+** Mission 17a variant (xeno-weight 0.2)
+
+- 50-run batch: `resources/mission-17a-refine-r50.log`
+- Selected best exotype with update-prob <= 0.5 (sigil 工, update-prob 0.5).
+
+Baseline CA snapshot (composite score 26.74):
+
+#+CAPTION: Mission 17a refine baseline (seed 4242)
+#+ATTR_ORG: :width 900
+[[file:mission-17a-refine-baseline.png]]
+
+Exotype CA snapshot (sigil 工, update-prob 0.5; composite score 24.78):
+
+#+CAPTION: Mission 17a refine exotype (seed 4242, sigil 工)
+#+ATTR_ORG: :width 900
+[[file:mission-17a-refine-exotic.png]]
+
 * Mission 9.5: Arrow discovery MVP
 
 ** Pilot command
