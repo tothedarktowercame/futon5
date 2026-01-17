@@ -297,6 +297,12 @@
               delta (when (and update? prev-window)
                       {:delta-mean (- (:mean stats) (:mean prev-window))
                        :delta-q50 (- (:q50 stats) (:q50 prev-window))})
+              population' (if update?
+                            (evolve-population rng population batch' tier)
+                            population)
+              batch'' (if update? [] batch')
+              window' (if update? (inc window) window)
+              prev-window' (if update? stats prev-window)
               ratchet-state' (if update?
                                (ratchet/update-window ratchet-state stats)
                                ratchet-state)
@@ -305,13 +311,7 @@
                                    {:prev-score (:mean prev-window)
                                     :curr-score (:mean stats)
                                     :curriculum {:threshold threshold
-                                                 :window window'}}))
-              population' (if update?
-                            (evolve-population rng population batch' tier)
-                            population)
-              batch'' (if update? [] batch')
-              window' (if update? (inc window) window)
-              prev-window' (if update? stats prev-window)]
+                                                 :window window'}}))]
           (when log
             (append-log! log entry))
           (when (and log update?)

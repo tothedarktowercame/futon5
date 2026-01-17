@@ -50,3 +50,90 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 - Added `futon5.exotic.contemplative` placeholders for provenance, worthiness, and inheritance checks.
 - Exotic scoring now accepts optional `:contemplative` inputs and reports a `:contemplative-score` when present.
+
+* Mission 16: Pilot A/B sanity checks
+
+** Pilot 1: Fixed seeds, minimal runs
+
+Compare baseline (no xeno) vs exotic xeno on identical seeds.
+
+#+begin_src sh
+# Baseline
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 10 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 5 \
+  --log resources/mission-16-pilot1-baseline.log
+
+# Exotic
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 10 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 5 \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/mission-16-pilot1-exotic.log
+#+end_src
+
+** Pilot 1b: Fixed seeds, 50 runs (ratchet visible)
+
+#+begin_src sh
+# Baseline
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 50 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 5 \
+  --log resources/mission-16-pilot1-baseline-r50.log
+
+# Exotic
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 50 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 5 \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/mission-16-pilot1-exotic-r50.log
+#+end_src
+
+** Pilot 1b notes
+
+- Baseline window means: ~34–43 range across windows.
+- Exotic window means: 90–100 range once ratchet context starts flowing.
+
+** Pilot 2: Two batches, rotated seeds
+
+#+begin_src sh
+# Batch A
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 20 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 1111 \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/mission-16-pilot2-a.log
+
+# Batch B
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 20 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 2222 \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/mission-16-pilot2-b.log
+#+end_src
