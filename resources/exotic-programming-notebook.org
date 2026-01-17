@@ -2444,6 +2444,11 @@ Artifacts:
 - Exotic programming selects evaluator programs that keep evolution productive; xenotypes police viability, not target attainment.
 - The relevant question is whether evaluators preserve open-ended, discriminative dynamics across time and seeds.
 
+*** Generalized Baldwin effects (interface view)
+- Exo ↔ Geno: exotypes shape kernel mutation/selection pressures, so short-horizon evaluation acts as a Baldwin-like scaffold for genotypes.
+- Xeno ↔ Exo: xenotypes shape evaluator evolution, so long-horizon viability acts as a Baldwin-like scaffold for exotypes.
+- Together this yields a coherent narrative: each layer supplies a “learned” bias that becomes selection pressure for the layer below, avoiding ad hoc tuning.
+
 *** Category sketch
 - Objects: `:history`, `:context`, `:kernel-spec`, `:params`, `:rng`
 - Morphisms: `:sample-context`, `:gate-update`, `:contextual-mutate`, `:set-mix`, `:normalize`

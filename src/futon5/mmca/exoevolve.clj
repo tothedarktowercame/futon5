@@ -173,9 +173,15 @@
      :final-score final-score
      :seed seed}))
 
+(defn- program-template [exotype]
+  (if (= :super (:tier exotype))
+    :contextual-mutate+mix
+    :contextual-mutate))
+
 (defn- log-entry [run-id exotype length generations eval context-depth]
   {:schema/version 1
    :experiment/id :exoevolve
+   :event :run
    :run/id run-id
    :seed (:seed eval)
    :length length
@@ -183,6 +189,7 @@
    :context-depth context-depth
    :kernel :mutating-template
    :exotype (select-keys exotype [:sigil :tier :params])
+   :program-template (program-template exotype)
    :score {:short (:short-score eval)
            :xeno (get-in eval [:xeno :mean])
            :final (:final-score eval)}
@@ -191,13 +198,48 @@
 (defn- append-log! [path entry]
   (spit path (str (pr-str entry) "\n") :append true))
 
+(defn- avg [xs]
+  (when (seq xs)
+    (/ (reduce + 0.0 xs) (double (count xs)))))
+
+(defn- collapse-stats [entries]
+  (let [dead-change 0.05
+        dead-entropy 0.2
+        confetti-change 0.45
+        confetti-entropy 0.8
+        summaries (map :summary entries)
+        dead? (fn [s] (and (<= (double (or (:avg-change s) 0.0)) dead-change)
+                           (<= (double (or (:avg-entropy-n s) 0.0)) dead-entropy)))
+        confetti? (fn [s] (and (>= (double (or (:avg-change s) 0.0)) confetti-change)
+                               (>= (double (or (:avg-entropy-n s) 0.0)) confetti-entropy)))
+        dead-count (count (filter dead? summaries))
+        confetti-count (count (filter confetti? summaries))
+        total (count summaries)]
+    {:dead-count dead-count
+     :dead-rate (if (pos? total) (/ dead-count (double total)) 0.0)
+     :confetti-count confetti-count
+     :confetti-rate (if (pos? total) (/ confetti-count (double total)) 0.0)}))
+
 (defn- summarize-batch [entries]
   (let [scores (mapv :score entries)
         finals (mapv :final scores)
-        mean (/ (reduce + 0.0 finals) (double (count finals)))]
-    {:count (count finals)
-     :mean mean
-     :best (apply max finals)}))
+        sorted (sort finals)
+        n (count finals)
+        idx (fn [q] (nth sorted (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))))]
+    (merge {:count (count finals)
+            :mean (avg finals)
+            :q50 (when (seq finals) (idx 0.5))
+            :q90 (when (seq finals) (idx 0.9))
+            :best (apply max finals)}
+           (collapse-stats entries))))
+
+(defn- window-log-entry [window stats delta]
+  {:schema/version 1
+   :experiment/id :exoevolve
+   :event :window
+   :window window
+   :stats stats
+   :delta delta})
 
 (defn- evolve-population
   [^java.util.Random rng population batch tier]
@@ -231,6 +273,8 @@
         rng (java.util.Random. (long (or seed 4242)))
         xeno-specs (load-xeno-specs xeno-spec)]
     (loop [i 0
+           window 0
+           prev-window nil
            population (vec (repeatedly pop #(pick-exotype rng tier)))
            batch []]
       (if (= i runs)
@@ -240,12 +284,20 @@
               entry (log-entry (inc i) exotype length generations eval context-depth)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)
+              stats (when update? (summarize-batch batch'))
+              delta (when (and update? prev-window)
+                      {:delta-mean (- (:mean stats) (:mean prev-window))
+                       :delta-q50 (- (:q50 stats) (:q50 prev-window))})
               population' (if update?
                             (evolve-population rng population batch' tier)
                             population)
-              batch'' (if update? [] batch')]
+              batch'' (if update? [] batch')
+              window' (if update? (inc window) window)
+              prev-window' (if update? stats prev-window)]
           (when log
             (append-log! log entry))
+          (when (and log update?)
+            (append-log! log (window-log-entry window' stats delta)))
           (when update?
             (let [{:keys [mean best count]} (summarize-batch batch')]
               (println (format "exo update @ %d | mean %.2f | best %.2f | n %d"
@@ -253,7 +305,7 @@
                                (double (or mean 0.0))
                                (double (or best 0.0))
                                (long (or count 0))))))
-          (recur (inc i) population' batch''))))))
+          (recur (inc i) window' prev-window' population' batch''))))))
 
 (defn -main [& args]
   (let [{:keys [help unknown] :as opts} (parse-args args)]

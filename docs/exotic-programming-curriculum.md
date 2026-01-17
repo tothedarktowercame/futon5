@@ -16,6 +16,7 @@
 - Windowed trend analysis + regression checks
 - CT word-class tags in evaluator logs
 - Baldwin framing note: exo↔geno and xeno↔exo as generalized Baldwin interfaces
+- Exotype→xenotype lift registry seeded from futon3a pattern catalog (sigils → CT templates)
 - Basecamp checklist with files + commands (see below)
 
 **Success criteria:**
@@ -29,8 +30,43 @@
 - `resources/exotic-programming-notebook.org` (windowed analysis blocks)
 - `src/futon5/mmca/exoevolve.clj` (window summaries + CT tags)
 - `bb -cp src:resources -m futon5.mmca.exoevolve --runs 200 ...` (pilot)
+- `resources/exotype-xenotype-lift.edn` (sigil → CT template registry)
+- `bb scripts/import_futon3a_patterns.clj --futon3a ../futon3a` (seed lift registry)
+
+**Primer decisions (resolve at Basecamp):**
+1) EXECUTION objects/morphisms: pick concrete semantics (e.g., MMCA state snapshots vs milestone completions).
+2) Law checking: runtime checks vs property tests vs construction discipline.
+3) Naturality strictness: boolean vs graded vs curriculum-tightened tolerance.
+4) VISION initialization: degenerate, template-driven, or inferred defaults.
+5) Window definition: evaluations vs generations vs wall-clock vs mission completions.
+6) Lineage storage: single source of truth (in-memory + snapshots vs full event log).
+7) Plan revision policy: which fields are immutable and what revisions cost.
+8) Baseline profile for M16: lock run profile (mutations, pop, budget, seeds) for A/B comparability.
 
 ---
+
+## Basecamp invariants (pre-M9)
+
+- VISION objects and morphisms are immutable once declared.
+- PLAN revisions must reference at least one EXECUTION evidence artifact.
+- Naturality residuals are logged, never hard-failed, prior to M14.
+- Primary window metrics dominate ratchet decisions until mission windows stabilize.
+- Template identity is recorded as part of lineage provenance.
+
+---
+
+**Decision log (Basecamp):**
+- EXECUTION semantics: hybrid (milestones as objects/morphisms, MMCA traces attached as evidence). This keeps CT interpretability while grounding in simulation, and aligns with the nonstarter adapter.
+- Window definition: dual windowing. Primary = fixed evaluations (e.g., 100 evals), secondary = mission-completion windows once mapping is stable. This allows quick ratchet tests and later interpretable checks.
+- Plan revision policy: immutable VISION, mutable PLAN. Plan changes are allowed with logged evidence (linking xenotype ↔ exotype learning). Failed plans should not be heavily penalized; give a weak positive for early failure that saves compute.
+- Law-checking strategy: construction discipline for runtime (safe constructors), property tests offline. Keep test harness logs as additional evaluation signals for regime quality.
+- Naturality strictness: graded + curriculum-tightened. Primary metric = mission-path edit distance, with evidence-vector distance as a soft penalty/bonus. Log commutativity residuals (PLAN(f∘g) vs PLAN(f)∘PLAN(g)) for future re-evaluation.
+- Lineage storage: tri-store model (facts = append-only event log as single source of truth; memes = derived lineage graph/summaries; notions = optional fuzzy index). Acknowledge MMCA storage optimization later; keep logic model consistent with nonstarter.
+- VISION initialization: template-driven. Seed CT templates from futon3a pattern catalog (sigils + metadata), then lift to xenotype templates; keep degenerate vision as fallback when no pattern matches. The lift spec lives in the basecamp registry.
+- Baseline profile (M16): semi-robust. Fix pop size/mutation/selection/budget; use fixed seed sets per batch (rotated across batches); run multiple batches (e.g., 3 x 5k evals) for A/B comparability with moderate variance.
+- Lift registry schema: full lift spec (Option 3). Use Lisp-style expressions for `:ct-template` and `:lift-rules`, and store evidence/version metadata per entry to support provenance and later automation.
+- Generated-pattern policy: dual-track. Drafts carry `:status :draft`, then promote with review/evidence. Use meaningful draft namespaces (e.g., `gen/<domain>/<slug>`), promote to stable IDs on acceptance.
+- Import cadence: live sync (Option 2). Treat futon1 as immutable/versioned source of truth; log pattern version IDs per run. Sync is bidirectional (drafts back to futon1 via tri-store).
 
 ## VISION Category (declared structure)
 
