@@ -365,6 +365,20 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 - Re-run Pilot 2 (seeds 1111/2222) with the stable config candidate.
 - Compare window means to baseline and confirm the regime shift persists without score blowout.
 
+** Refine run snapshots (stable config)
+
+Baseline CA snapshot (composite score 26.88):
+
+#+CAPTION: Mission 17 refine baseline (seed 4242)
+#+ATTR_ORG: :width 900
+[[file:mission-17-refine-baseline.png]]
+
+Exotype CA snapshot (sigil 土, update-prob 0.25; composite score 29.78):
+
+#+CAPTION: Mission 17 refine exotype (seed 4242, sigil 土)
+#+ATTR_ORG: :width 900
+[[file:mission-17-refine-exotic.png]]
+
 * Mission 9.5: Arrow discovery MVP
 
 ** Pilot command
