@@ -359,6 +359,23 @@ bb -cp src:resources -m futon5.arrow.mine \
 - medium: 5
 - weak: 2
 
+** Manual trace inspection (strongest delta)
+
+Witness term: `[:set-exotype "厂" :super]` (tau=1.0, delta≈0.49)
+
+Before (noop) composite score: 37.31  
+After (term) composite score: 23.02
+
+#+CAPTION: Arrow pilot before (noop)
+#+ATTR_ORG: :width 900
+[[file:arrow-best-before.png]]
+
+#+CAPTION: Arrow pilot after (set-exotype 厂, super)
+#+ATTR_ORG: :width 900
+[[file:arrow-best-after.png]]
+
+Question this arrow answers (tentative): how does switching to a specific super‑exotype alter macro‑structure while holding initial state fixed?
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh
