@@ -321,6 +321,12 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 #+ATTR_ORG: :width 900
 [[file:mission-16-pilot2-a-exotic.png]]
 
+* Mission 18: Usage pointers
+
+See:
+- `docs/README-exotic-programming.md` for quick commands.
+- `docs/exotic-programming-spec.md` for the current spec and M16–M17 notes.
+
 * Mission 17: Refinement (draft)
 
 ** What worked

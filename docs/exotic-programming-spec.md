@@ -2,6 +2,7 @@
 
 **Status:** First formal specification
 **Date:** 2026-01-17
+**Update:** 2026-01-17 (M16–M17 findings)
 **Context:** futon5 MMCA, Missions 7-8, xenotype interpretability
 
 ---
@@ -209,6 +210,27 @@ Tighten constraints as windows advance.
   (let [tightening (* 0.05 (quot window-idx 5))]
     (* base-threshold (- 1.0 tightening))))
 ```
+
+---
+
+## Implementation Status (M13–M17)
+
+- **Ratchet memory:** windowed scoring with delta-based updates is active in exotype evolution logs.
+- **Curriculum tightening:** thresholds are attached per window (currently a light schedule).
+- **Contemplative layer:** provenance and worthiness hooks are present but still stubs.
+- **Xenotype blending:** `--xeno-weight` blends xenotype score into the short score.
+
+### Observations
+
+- High xenotype weights (e.g. 1.0) dominate short scores and can mask regime dynamics.
+- Moderate weights (0.2–0.25) keep scores in a reasonable range and reveal regime shifts.
+- Several runs show early edge-of-chaos structure that later destabilizes.
+- A small subset (Mission 17a) shows a partially stable EoC band within the run window.
+
+### Practical Note
+
+Nomination (Mission 7) is currently treated as a **validation layer** rather than a core selection step.
+Arrow detection is run **post-hoc** on logged runs to avoid slowing simulation.
 
 ---
 
