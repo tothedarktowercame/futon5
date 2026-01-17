@@ -1,5 +1,8 @@
 * Exotic Programming Tickets
 
+** Future tickets
+- Add optional curriculum gating: flag (e.g., `--curriculum-gate`) to penalize or null ratchet deltas below the threshold; keep observational mode as default.
+
 ** Shared Logging Schema (EDN)
 - Purpose: All experiments log compatible EDN maps so results can be aggregated.
 - Required keys (v1):
