@@ -306,6 +306,11 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
   --log resources/mission-17-gated.log
 #+end_src
 
+** Notes
+
+- With the current placeholder exotic score, window means are identical in gated vs ungated runs.
+- Gated run logs show `:gate :blocked` when delta falls below threshold (e.g., window 3).
+
 ** Visual inspection set (from Pilot 2)
 
 #+CAPTION: Pilot2 A baseline (seed 1111)
