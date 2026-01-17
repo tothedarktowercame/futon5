@@ -321,6 +321,50 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 #+ATTR_ORG: :width 900
 [[file:mission-16-pilot2-a-exotic.png]]
 
+* Mission 17: Refinement (draft)
+
+** What worked
+
+- Ratchet state now flows into xenotype scoring (visible in logs and window means).
+- Exotype selection changes the regime (Pilot 2 shows cooler edge-of-chaos movement).
+- CT template handshake produces non-degenerate visions and valid categories.
+
+** What did not work (yet)
+
+- Xenotype scale dominates at `--xeno-weight 1.0` (window means jump to 90–100 vs baseline 34–43).
+- Hot vs mid vs cool exotypes are visually closer than intended (mid/cool both “magma”).
+- Phenotype layer still destabilizes quickly in hot regimes.
+
+** Parameter sensitivity (current evidence)
+
+- `update-prob 1.0` pushes into hot regimes.
+- `update-prob 0.25` and `0.5` are too similar without additional constraints.
+- `--xeno-weight 1.0` overwhelms short score; need lower weights for stable blending.
+
+** Stable config candidate (for rerun)
+
+- `--xeno-weight 0.25`
+- `--update-every 10`
+- Keep `--length 20 --generations 20` for comparability
+
+#+begin_src sh
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 50 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 10 \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 0.25 \
+  --log resources/mission-17-refine-r50.log
+#+end_src
+
+** Next validation
+
+- Re-run Pilot 2 (seeds 1111/2222) with the stable config candidate.
+- Compare window means to baseline and confirm the regime shift persists without score blowout.
+
 * Mission 9.5: Arrow discovery MVP
 
 ** Pilot command
