@@ -31,15 +31,19 @@
   "Create a vision skeleton from a CT template entry.
   Falls back to a degenerate vision when templates are missing."
   [pattern-id ct-entry]
-  (let [template (:ct-template ct-entry)]
-    (if (and (map? template) (seq (:objects template)))
-      (vision/declare-vision
-       {:name (keyword "exotic" (str "vision-" pattern-id))
-        :objects (set (:objects template))
-        :identities (or (:identities template) {})
-        :morphisms (or (:morphisms template) {})
-        :compose-table (or (:compose-table template) {})
-        :missions []})
+  (let [template (:ct-template ct-entry)
+        template-map (cond
+                       (and (seq? template) (= 'category (first template)))
+                       (second template)
+                       (map? template)
+                       template
+                       :else nil)
+        template-map (when (map? template-map)
+                       (assoc template-map
+                              :name (or (:name template-map)
+                                        (keyword "exotic" (str "vision-" pattern-id)))))]
+    (if (and (map? template-map) (seq (:objects template-map)))
+      (vision/build-vision-from-template template-map)
       (degenerate-vision pattern-id))))
 
 (defn vision->plan-functor-stub

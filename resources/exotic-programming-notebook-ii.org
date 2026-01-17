@@ -206,6 +206,30 @@ Exotype CA snapshot (sigil 术, update-prob 0.5; composite score 30.80):
 #+ATTR_ORG: :width 900
 [[file:mission-16-pilot2-b-exotic.png]]
 
+* Mission 17: CT template parsing (checkpoint)
+
+Added two real CT templates in `resources/exotype-xenotype-lift.edn`:
+- `f5/p3`
+- `f1/p3`
+
+** REPL handshake sanity check
+
+#+begin_src clojure
+(require '[futon5.exotic.pattern-repl :as pr]
+         '[futon5.exotic.vision :as vision]
+         '[futon5.exotic.category :as cat])
+
+(def result (pr/pattern-repl-handshake {:pattern-id "f5/p3" :run-id "demo-ct"}))
+(def vis (:vision result))
+
+{:vision-name (:name vis)
+ :objects (count (:objects vis))
+ :morphisms (count (:morphisms vis))
+ :valid? (cat/valid-category? (vision/vision->category vis))}
+#+end_src
+
+Expected: non-degenerate vision and `:valid? true`.
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh
