@@ -7,6 +7,31 @@
 
 ---
 
+## Basecamp (before M9)
+
+**Goal:** Establish shared tooling and framing so M9–M18 are testable and comparable.
+
+**Deliverables:**
+- Xenotype ratchet prototype (memory + curriculum hooks) wired into MMCA logs
+- Windowed trend analysis + regression checks
+- CT word-class tags in evaluator logs
+- Baldwin framing note: exo↔geno and xeno↔exo as generalized Baldwin interfaces
+- Basecamp checklist with files + commands (see below)
+
+**Success criteria:**
+- Windowed logs show drift metrics and deltas per window
+- CT tags are available for analysis (by evaluator word-class)
+- Clear narrative of Baldwin effects across interfaces
+
+**Ask:** 1-2 sessions
+
+**Checklist (files + commands):**
+- `resources/exotic-programming-notebook.org` (windowed analysis blocks)
+- `src/futon5/mmca/exoevolve.clj` (window summaries + CT tags)
+- `bb -cp src:resources -m futon5.mmca.exoevolve --runs 200 ...` (pilot)
+
+---
+
 ## VISION Category (declared structure)
 
 ```
@@ -120,7 +145,7 @@ Missions:
 
 ---
 
-## Mission 13: Ratchet Memory
+## Mission 13: Ratchet Memory (integrate early)
 
 **Goal:** Add windowed memory for delta-scoring.
 
@@ -142,7 +167,7 @@ Missions:
 
 ---
 
-## Mission 14: Ratchet Curriculum
+## Mission 14: Ratchet Curriculum (tightening schedule)
 
 **Goal:** Add tightening thresholds over time.
 
