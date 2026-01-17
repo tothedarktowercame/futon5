@@ -70,15 +70,23 @@
 (defn generate-candidates
   "Generate term candidates up to a max cost k."
   [{:keys [sigils]} k]
-  (let [atoms (concat
+  (let [atoms (vec (concat
                (map (fn [sigil] [:set-exotype sigil :local]) sigils)
                (map (fn [sigil] [:set-exotype sigil :super]) sigils)
                [[:set-param :update-prob -0.25]
                 [:set-param :update-prob 0.25]
                 [:set-param :match-threshold -0.1]
                 [:set-param :match-threshold 0.1]
+                [:set-param :mix-shift -1]
+                [:set-param :mix-shift 1]
+                [:set-param :rotation -1]
+                [:set-param :rotation 1]
                 [:set-tier :local]
-                [:set-tier :super]])]
-    (->> atoms
+                [:set-tier :super]]))
+        seqs (when (>= k 2)
+               (for [a (take 6 atoms)
+                     b (take 6 atoms)]
+                 [:seq a b]))]
+    (->> (concat atoms seqs)
          (filter #(<= (count-atoms %) k))
          vec)))

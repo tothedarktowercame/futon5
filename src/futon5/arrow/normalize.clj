@@ -27,4 +27,4 @@
 (defn regime-sig
   "Generate a stable hash for a descriptor."
   [descriptor]
-  (hash (select-keys descriptor [:word-class :macro-vec])))
+  (hash (select-keys descriptor [:word-class])))

@@ -327,17 +327,26 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 #+begin_src sh
 bb -cp src:resources -m futon5.arrow.mine \
-  --contexts 3 \
-  --k 1 \
-  --tau 0.7 \
+  --contexts 5 \
+  --k 2 \
+  --tau 0.6 \
   --out resources/arrow-pilot.edn
 #+end_src
 
 ** Notes
 
-- MVP uses a tiny term grammar and three coarse regimes (:dead/:stable/:oscillating/:chaotic).
+- MVP uses a tiny term grammar and coarse regimes (:dead/:stable/:oscillating/:chaotic).
 - Output is a single EDN payload with discovered arrows and robustness.
-- Pilot result (contexts=3, k=1): 0 arrows found; expand grammar or k if needed.
+- Pilot result (contexts=5, k=2, tau=0.6): 58 arrows found after coarse regime signature (word-class only).
+
+** Sample arrow
+
+#+begin_src clojure
+{:from {:regime :unknown, :sig :unknown}
+ :witness {:term [:set-exotype "一" :local], :cost 1}
+ :to {:word-class :oscillating, :sig -1301417310}
+ :robustness {:tau 1.0, :contexts 5}}
+#+end_src
 
 ** Pilot 2: Two batches, rotated seeds
 
