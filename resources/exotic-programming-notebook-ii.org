@@ -1,4 +1,6 @@
 #+title: Exotic Programming Notebook II
+#+STARTUP: inlineimages
+#+PROPERTY: org-image-actual-width 1200
 
 * Exotic mode demo
 
@@ -111,6 +113,98 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 - Baseline window means: ~34–43 range across windows.
 - Exotic window means: 90–100 range once ratchet context starts flowing.
+
+* Mission 16: CA snapshots (comparable scores)
+
+Baseline and exotype runs use the same initial genotype/phenotype and length=32, generations=64.
+Scores below are the standard composite scores from `metrics/summarize-run`.
+
+** Baseline run
+
+- Composite score: 28.83
+- Config: `resources/mission-16-baseline.edn`
+
+#+CAPTION: Mission 16 baseline snapshot (composite score 28.83)
+#+ATTR_ORG: :width 900
+[[file:mission-16-baseline.png]]
+
+** Exotype run (sigil 术, super)
+
+- Composite score: 27.14
+- Config: `resources/mission-16-exotic.edn`
+
+#+CAPTION: Mission 16 exotype snapshot (sigil 术, super; composite score 27.14)
+#+ATTR_ORG: :width 900
+[[file:mission-16-exotic.png]]
+
+* Mission 16: Hot vs cool exotypes (same init state)
+
+All runs share the same initial genotype/phenotype and generations=64.
+
+** Hot (sigil 丁, super, update-prob 1.0)
+
+- Composite score: 34.37
+- Config: `resources/mission-16-hot.edn`
+
+#+CAPTION: Mission 16 hot exotype (sigil 丁)
+#+ATTR_ORG: :width 900
+[[file:mission-16-hot.png]]
+
+** Mid (sigil 乙, super, update-prob 0.5)
+
+- Composite score: 26.44
+- Config: `resources/mission-16-mid.edn`
+
+#+CAPTION: Mission 16 mid exotype (sigil 乙)
+#+ATTR_ORG: :width 900
+[[file:mission-16-mid.png]]
+
+** Cool (sigil 一, super, update-prob 0.25)
+
+- Composite score: 26.41
+- Config: `resources/mission-16-cool.edn`
+
+#+CAPTION: Mission 16 cool exotype (sigil 一)
+#+ATTR_ORG: :width 900
+[[file:mission-16-cool.png]]
+
+* Mission 16: Pilot 2 (rotated seeds, 50 runs)
+
+Aggregate note: pilot2 shows some promise in moving from a hot regime towards a cooler edge-of-chaos regime.
+
+** Batch A (seed 1111)
+
+- Baseline log: `resources/mission-16-pilot2-baseline-a-r50.log`
+- Exotic log: `resources/mission-16-pilot2-exotic-a-r50.log`
+
+Baseline CA snapshot (composite score 26.91):
+
+#+CAPTION: Mission 16 pilot2 A baseline (seed 1111)
+#+ATTR_ORG: :width 900
+[[file:mission-16-pilot2-a-baseline.png]]
+
+Exotype CA snapshot (sigil 术, update-prob 0.5; composite score 32.81):
+
+#+CAPTION: Mission 16 pilot2 A exotype (seed 1111, sigil 术)
+#+ATTR_ORG: :width 900
+[[file:mission-16-pilot2-a-exotic.png]]
+
+** Batch B (seed 2222)
+
+- Baseline log: `resources/mission-16-pilot2-baseline-b-r50.log`
+- Exotic log: `resources/mission-16-pilot2-exotic-b-r50.log`
+
+Baseline CA snapshot (composite score 26.77):
+
+#+CAPTION: Mission 16 pilot2 B baseline (seed 2222)
+#+ATTR_ORG: :width 900
+[[file:mission-16-pilot2-b-baseline.png]]
+
+Exotype CA snapshot (sigil 术, update-prob 0.5; composite score 30.80):
+
+#+CAPTION: Mission 16 pilot2 B exotype (seed 2222, sigil 术)
+#+ATTR_ORG: :width 900
+[[file:mission-16-pilot2-b-exotic.png]]
 
 ** Pilot 2: Two batches, rotated seeds
 
