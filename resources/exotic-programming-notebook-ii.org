@@ -43,3 +43,10 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 - Added `futon5.exotic.curriculum/curriculum-threshold` with a simple tightening schedule.
 - `exoevolve` now attaches `:curriculum` metadata (threshold + window) into the ratchet context.
+
+* Mission 15: Contemplative layer (stub)
+
+** Notes
+
+- Added `futon5.exotic.contemplative` placeholders for provenance, worthiness, and inheritance checks.
+- Exotic scoring now accepts optional `:contemplative` inputs and reports a `:contemplative-score` when present.

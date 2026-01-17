@@ -1,5 +1,6 @@
 (ns futon5.exotic.scoring
-  "Exotic xenotype scoring stub for CT structures.")
+  "Exotic xenotype scoring stub for CT structures."
+  (:require [futon5.exotic.contemplative :as contemplative]))
 
 (defn- clamp-01 [x]
   (cond
@@ -15,6 +16,7 @@
   [xeno _result]
   (let [exotic (:exotic xeno)
         ratchet (:ratchet xeno)
+        contemplative-block (:contemplative xeno)
         vision? (boolean (:vision exotic))
         plan? (boolean (:plan exotic))
         adapt? (boolean (:adapt exotic))
@@ -28,15 +30,37 @@
                    (double (:prev-score ratchet))))
         delta-score (when (number? delta)
                       (clamp-01 (+ 0.5 (* 0.5 delta))))
-        score (if (number? delta-score)
+        provenance (when contemplative-block
+                     (contemplative/provenance-score (:history contemplative-block)))
+        worthiness (when contemplative-block
+                     (contemplative/worthiness-score (:score contemplative-block)
+                                                     (:method contemplative-block)))
+        inheritance (when contemplative-block
+                      (contemplative/inheritance-check (:descendants contemplative-block)))
+        contemplative-scores (remove nil? [provenance worthiness inheritance])
+        contemplative-score (when (seq contemplative-scores)
+                              (/ (reduce + 0.0 contemplative-scores)
+                                 (double (count contemplative-scores))))
+        score (cond
+                (and (number? delta-score) (number? contemplative-score))
+                (clamp-01 (/ (+ base delta-score contemplative-score) 3.0))
+                (number? delta-score)
                 (clamp-01 (/ (+ base delta-score) 2.0))
-                base)]
+                (number? contemplative-score)
+                (clamp-01 (/ (+ base contemplative-score) 2.0))
+                :else base)]
     {:score score
      :components (cond-> {:vision-clarity vision-clarity
                           :plan-fidelity plan-fidelity
                           :adapt-coherence adapt-coherence}
-                   (number? delta-score) (assoc :delta-score delta-score))
+                   (number? delta-score) (assoc :delta-score delta-score)
+                   (number? contemplative-score) (assoc :contemplative-score contemplative-score))
      :exotic (select-keys exotic [:pattern-id :vision :plan :adapt])
      :ratchet (when (number? delta-score)
                 {:delta delta
-                 :delta-score delta-score})}))
+                 :delta-score delta-score})
+     :contemplative (when (number? contemplative-score)
+                      {:provenance provenance
+                       :worthiness worthiness
+                       :inheritance inheritance
+                       :score contemplative-score})}))
