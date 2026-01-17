@@ -248,6 +248,29 @@ Expected: non-degenerate vision and `:valid? true`.
  :lift-proposal lift}
 #+end_src
 
+* Mission 17: Plan/adapt evidence wiring (checkpoint)
+
+** Adaptation log example
+
+#+begin_src clojure
+(require '[futon5.exotic.adapt :as adapt]
+         '[futon5.exotic.natural :as natural])
+
+(def nt (natural/->NatTrans :demo :plan :plan {:m9 :m9 :m10 :m10}))
+
+(adapt/log-adaptation
+ (adapt/adaptation
+  {:id "adapt-002"
+   :from :plan
+   :to :plan
+   :evidence (adapt/evidence {:artifact-id "demo-ct-002"
+                              :notes "residual demo"})
+   :nattrans nt
+   :morphisms [:m9 :m10]}))
+#+end_src
+
+Expected: `:residuals/by-morphism` present and `:commutativity-residual` <= 1.0.
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh

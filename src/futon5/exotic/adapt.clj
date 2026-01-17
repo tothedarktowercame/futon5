@@ -26,15 +26,21 @@
   {:artifact-id artifact-id
    :notes notes})
 
+(defn valid-evidence?
+  "Return true when evidence has an artifact-id."
+  [evidence]
+  (and (map? evidence) (some? (:artifact-id evidence))))
+
 (defn log-adaptation
   "Return an adaptation map, ensuring evidence is present."
   [adaptation]
-  (when-not (natural/justified? (:evidence adaptation))
+  (when-not (valid-evidence? (:evidence adaptation))
     (throw (ex-info "Adaptation missing evidence" {:adaptation adaptation})))
   (let [residuals (or (:residuals adaptation)
                       (when (and (:nattrans adaptation) (seq (:morphisms adaptation)))
                         (natural/residuals-for (:nattrans adaptation) (:morphisms adaptation))))]
     (assoc adaptation
            :residuals residuals
+           :residuals/by-morphism (:by-morphism residuals)
            :logged-at (System/currentTimeMillis)
            :commutativity-residual (commutativity-residual (assoc adaptation :residuals residuals)))))
