@@ -35,6 +35,7 @@
     "  --context-depth N      Recursive-local context depth (default 1)."
     "  --xeno-spec PATH       EDN xenotype spec or vector of specs (optional)."
     "  --xeno-weight W        Blend xenotype score into short score (0-1)."
+    "  --curriculum-gate      Clamp ratchet deltas below threshold (optional)."
     "  --log PATH             Append EDN log entries (optional)."
     "  --seed N               RNG seed."]))
 
@@ -85,6 +86,9 @@
 
           (= "--xeno-weight" flag)
           (recur (rest more) (assoc opts :xeno-weight (parse-double (first more))))
+
+          (= "--curriculum-gate" flag)
+          (recur more (assoc opts :curriculum-gate true))
 
           (= "--log" flag)
           (recur (rest more) (assoc opts :log (first more)))
@@ -268,7 +272,7 @@
     (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
 
 (defn evolve-exotypes
-  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log context-depth]}]
+  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log context-depth curriculum-gate]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -307,9 +311,12 @@
                                (ratchet/update-window ratchet-state stats)
                                ratchet-state)
               ratchet-context' (when (and update? prev-window)
-                                 (let [threshold (curriculum/curriculum-threshold window' nil)]
+                                 (let [threshold (curriculum/curriculum-threshold window' nil)
+                                       delta (- (double (:mean stats)) (double (:mean prev-window)))
+                                       gate? (and curriculum-gate (< delta threshold))]
                                    {:prev-score (:mean prev-window)
                                     :curr-score (:mean stats)
+                                    :gate (when gate? :blocked)
                                     :curriculum {:threshold threshold
                                                  :window window'}}))]
           (when log

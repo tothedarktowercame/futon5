@@ -28,8 +28,11 @@
                          (number? (:curr-score ratchet)))
                 (- (double (:curr-score ratchet))
                    (double (:prev-score ratchet))))
+        gated? (= :blocked (:gate ratchet))
         delta-score (when (number? delta)
-                      (clamp-01 (+ 0.5 (* 0.5 delta))))
+                      (if gated?
+                        0.0
+                        (clamp-01 (+ 0.5 (* 0.5 delta)))))
         provenance (when contemplative-block
                      (contemplative/provenance-score (:history contemplative-block)))
         worthiness (when contemplative-block
@@ -53,12 +56,14 @@
      :components (cond-> {:vision-clarity vision-clarity
                           :plan-fidelity plan-fidelity
                           :adapt-coherence adapt-coherence}
+                   gated? (assoc :gate :blocked)
                    (number? delta-score) (assoc :delta-score delta-score)
                    (number? contemplative-score) (assoc :contemplative-score contemplative-score))
      :exotic (select-keys exotic [:pattern-id :vision :plan :adapt])
      :ratchet (when (number? delta-score)
                 {:delta delta
-                 :delta-score delta-score})
+                 :delta-score delta-score
+                 :gate (when gated? :blocked)})
      :contemplative (when (number? contemplative-score)
                       {:provenance provenance
                        :worthiness worthiness

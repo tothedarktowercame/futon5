@@ -271,6 +271,51 @@ Expected: non-degenerate vision and `:valid? true`.
 
 Expected: `:residuals/by-morphism` present and `:commutativity-residual` <= 1.0.
 
+* Mission 17: Curriculum gating (optional)
+
+** CLI flag
+
+- Use `--curriculum-gate` with `exoevolve` to clamp ratchet deltas below the threshold.
+
+** Example (gated vs ungated)
+
+#+begin_src sh
+# Ungated
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 20 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 5 \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/mission-17-ungated.log
+
+# Gated
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 20 \
+  --length 20 \
+  --generations 20 \
+  --tier super \
+  --seed 4242 \
+  --update-every 5 \
+  --curriculum-gate \
+  --xeno-spec resources/exotic-xenotype-example.edn \
+  --xeno-weight 1.0 \
+  --log resources/mission-17-gated.log
+#+end_src
+
+** Visual inspection set (from Pilot 2)
+
+#+CAPTION: Pilot2 A baseline (seed 1111)
+#+ATTR_ORG: :width 900
+[[file:mission-16-pilot2-a-baseline.png]]
+
+#+CAPTION: Pilot2 A exotype (seed 1111, sigil 术)
+#+ATTR_ORG: :width 900
+[[file:mission-16-pilot2-a-exotic.png]]
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh
