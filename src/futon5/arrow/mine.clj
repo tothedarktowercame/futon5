@@ -27,7 +27,7 @@
     "  --k N            Max term cost (default 2)."
     "  --tau X          Robustness threshold (default 0.7)."
     "  --out PATH       Output EDN log (default resources/arrow-pilot.edn)."
-    "  --seed N         RNG seed (default 4242)."])))
+    "  --seed N         RNG seed (default 4242)."]))
 
 (defn- parse-int [s]
   (try (Long/parseLong s) (catch Exception _ nil)))
@@ -113,18 +113,24 @@
   (let [rng (java.util.Random. (long seed))
         base (run-config rng)
         sigils (mapv :sigil (ca/sigil-entries))
-        candidates (term/generate-candidates {:sigils (take 8 sigils)} k)
+        candidates (term/generate-candidates {:sigils (take 6 sigils)} k)
         seeds (vec (repeatedly contexts #(rng-int rng Integer/MAX_VALUE)))]
-    (keep (fn [term]
-            (when-let [test (test-arrow base term seeds tau)]
-              {:from {:regime :unknown
-                      :sig :unknown}
-               :witness {:term term
-                         :cost (term/cost term {})}
-               :to (:to test)
-               :robustness (:robustness test)
-               :evidence (:evidence test)}))
-          candidates)))
+    (loop [remaining candidates
+           arrows []]
+      (if (empty? remaining)
+        arrows
+        (let [term (first remaining)
+              test (test-arrow base term seeds tau)
+              arrows' (if test
+                        (conj arrows {:from {:regime :unknown
+                                             :sig :unknown}
+                                      :witness {:term term
+                                                :cost (term/cost term {})}
+                                      :to (:to test)
+                                      :robustness (:robustness test)
+                                      :evidence (:evidence test)})
+                        arrows)]
+          (recur (rest remaining) arrows'))))))
 
 (defn -main [& args]
   (let [{:keys [help unknown] :as opts} (parse-args args)]

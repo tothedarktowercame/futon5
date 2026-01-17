@@ -1,0 +1,1 @@
+{:event :arrow-pilot, :config {:contexts 3, :k 1, :tau 0.7, :seed 4242}, :count 0, :arrows []}

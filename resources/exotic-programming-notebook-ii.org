@@ -327,8 +327,8 @@ bb -cp src:resources -m futon5.mmca.exoevolve \
 
 #+begin_src sh
 bb -cp src:resources -m futon5.arrow.mine \
-  --contexts 20 \
-  --k 2 \
+  --contexts 3 \
+  --k 1 \
   --tau 0.7 \
   --out resources/arrow-pilot.edn
 #+end_src
@@ -337,6 +337,7 @@ bb -cp src:resources -m futon5.arrow.mine \
 
 - MVP uses a tiny term grammar and three coarse regimes (:dead/:stable/:oscillating/:chaotic).
 - Output is a single EDN payload with discovered arrows and robustness.
+- Pilot result (contexts=3, k=1): 0 arrows found; expand grammar or k if needed.
 
 ** Pilot 2: Two batches, rotated seeds
 
