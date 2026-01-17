@@ -376,6 +376,54 @@ After (term) composite score: 23.02
 
 Question this arrow answers (tentative): how does switching to a specific super‑exotype alter macro‑structure while holding initial state fixed?
 
+** Medium-arrow trace inspections (top 4 nontrivial by delta)
+
+1) term `[:set-exotype "十" :super]` (tau=1.0, delta≈0.227)
+- before: 35.32, after: 26.50
+
+#+CAPTION: Arrow medium 01 before (noop)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-01-before.png]]
+
+#+CAPTION: Arrow medium 01 after (set-exotype 十, super)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-01-after.png]]
+
+2) term `[:set-exotype "丁" :super]` (tau=0.8, delta≈0.124)
+- before: 38.08, after: 38.31
+
+#+CAPTION: Arrow medium 02 before (noop)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-02-before.png]]
+
+#+CAPTION: Arrow medium 02 after (set-exotype 丁, super)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-02-after.png]]
+
+3) term `[:set-param :rotation 1.0]` (tau=0.6, delta≈0.077)
+- before: 35.28, after: 34.59
+
+#+CAPTION: Arrow medium 03 before (noop)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-03-before.png]]
+
+#+CAPTION: Arrow medium 03 after (rotation +1)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-03-after.png]]
+
+4) term `[:set-exotype "二" :super]` (tau=0.6, delta≈0.052)
+- before: 34.90, after: 34.58
+
+#+CAPTION: Arrow medium 04 before (noop)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-04-before.png]]
+
+#+CAPTION: Arrow medium 04 after (set-exotype 二, super)
+#+ATTR_ORG: :width 900
+[[file:arrow-medium-04-after.png]]
+
+Note: entries 3–4 are at the weak/medium boundary; keep for contrast.
+
 ** Pilot 2: Two batches, rotated seeds
 
 #+begin_src sh
