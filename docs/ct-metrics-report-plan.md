@@ -18,6 +18,7 @@
 - Evidence attachment: artifacts linked to plan/adapt updates.
 - Deliverable: pipeline diagram + minimal log schema (EDN).
 - Add arrow graph inputs when available (discovered arrows → mission decomposition cues).
+  - Pilot note: Arrow MVP produced 58 arrows with coarse word-class normalization (k=2, tau=0.6).
 
 ## 4) Experimental Protocol
 - Head-to-head: CT-scored vs non-CT scorer, identical seeds/budgets.
