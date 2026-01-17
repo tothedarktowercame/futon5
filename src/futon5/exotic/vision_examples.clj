@@ -2,7 +2,9 @@
   "Small examples for validating VISION declarations."
   (:require [futon5.exotic.vision :as vision]
             [futon5.exotic.category :as cat]
-            [futon5.exotic.functor :as functor]))
+            [futon5.exotic.functor :as functor]
+            [futon5.exotic.natural :as natural]
+            [futon5.exotic.adapt :as adapt]))
 
 (def vision-missions
   [{:id :m9
@@ -77,3 +79,22 @@
    plan-functor
    (vision/vision->category vision-skeleton)
    execution-category))
+
+(def adapt-transform
+  (natural/->NatTrans
+   :adapt-plan
+   :plan-functor
+   :plan-functor
+   {:m9 :m9
+    :m10 :m10
+    :m9+m10 :m9+m10}))
+
+(defn log-adaptation-example
+  []
+  (adapt/log-adaptation
+   (adapt/adaptation
+    {:id "adapt-001"
+     :from :plan-functor
+     :to :plan-functor
+     :evidence {:artifact "demo-evidence"}
+     :residuals {:commutativity 0.0}})))

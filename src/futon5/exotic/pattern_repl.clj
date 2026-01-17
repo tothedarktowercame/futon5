@@ -88,3 +88,10 @@
      :plan-functor plan-functor
      :evidence evidence
      :lift-proposal lift-proposal}))
+
+(comment
+  ;; Example handshake:
+  (pattern-repl-handshake
+   {:pattern-id "f5/p3"
+    :run-id "demo-001"
+    :context {:note "stub run"}}))
