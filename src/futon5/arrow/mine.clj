@@ -14,6 +14,18 @@
 (def ^:private default-tau 0.7)
 (def ^:private default-contexts 20)
 
+(defn- avg [xs]
+  (when (seq xs)
+    (/ (reduce + 0.0 xs) (double (count xs)))))
+
+(defn- stddev [xs]
+  (let [xs (seq xs)]
+    (when xs
+      (let [mean (avg xs)]
+        (Math/sqrt
+         (/ (reduce + 0.0 (map (fn [x] (let [d (- (double x) mean)] (* d d))) xs))
+            (double (count xs))))))))
+
 (defn- usage []
   (str/join
    "\n"
@@ -27,6 +39,8 @@
     "  --k N            Max term cost (default 2)."
     "  --tau X          Robustness threshold (default 0.7)."
     "  --out PATH       Output EDN log (default resources/arrow-pilot.edn)."
+    "  --log-tests PATH Append per-term test summaries (optional)."
+    "  --min-delta X    Minimum effect size to accept arrow (default 0.0)."
     "  --seed N         RNG seed (default 4242)."]))
 
 (defn- parse-int [s]
@@ -55,6 +69,12 @@
 
           (= "--out" flag)
           (recur (rest more) (assoc opts :out (first more)))
+
+          (= "--log-tests" flag)
+          (recur (rest more) (assoc opts :log-tests (first more)))
+
+          (= "--min-delta" flag)
+          (recur (rest more) (assoc opts :min-delta (parse-double (first more))))
 
           (= "--seed" flag)
           (recur (rest more) (assoc opts :seed (parse-int (first more))))
@@ -90,9 +110,13 @@
   (let [descriptor (norm/normalize result)]
     (assoc descriptor :sig (norm/regime-sig descriptor))))
 
+(defn- delay-step [summary generations]
+  (let [step (:first-stasis-step summary)]
+    (double (or step generations))))
+
 (defn test-arrow
   "Test a term from a starting regime using a context set."
-  [base term contexts tau]
+  [base baseline-regimes term contexts generations]
   (let [regimes (mapv (fn [seed]
                         (normalize-regime (run-with-term base term seed)))
                       contexts)
@@ -100,35 +124,64 @@
         [top-sig top-count] (first (sort-by val > counts))
         total (count regimes)
         prob (if (pos? total) (/ top-count (double total)) 0.0)
-        top (first (filter #(= (:sig %) top-sig) regimes))]
-    (when (>= prob tau)
-      {:to top
-       :robustness {:tau prob
-                    :contexts total}
-       :evidence {:seed-set contexts
-                  :regimes (mapv :sig regimes)}})))
+        top (first (filter #(= (:sig %) top-sig) regimes))
+        baseline-macro (mapv :macro-vec baseline-regimes)
+        target-macro (mapv :macro-vec regimes)
+        mean-baseline (when (seq baseline-macro)
+                        (mapv avg (apply map vector baseline-macro)))
+        mean-target (when (seq target-macro)
+                      (mapv avg (apply map vector target-macro)))
+        delta (when (and mean-baseline mean-target)
+                (norm/macro-distance mean-baseline mean-target))
+        delays (mapv (fn [r]
+                       (delay-step (:summary r) generations))
+                     regimes)]
+    {:to top
+     :robustness {:tau prob
+                  :contexts total}
+     :effect {:delta delta
+              :delay-mean (avg delays)
+              :delay-std (stddev delays)}
+     :evidence {:seed-set contexts
+                :regime-sigs (mapv :sig regimes)
+                :word-classes (mapv :word-class regimes)}}))
 
 (defn mine-arrows
-  [{:keys [contexts k tau seed]}]
+  [{:keys [contexts k tau seed log-tests min-delta]}]
   (let [rng (java.util.Random. (long seed))
         base (run-config rng)
         sigils (mapv :sigil (ca/sigil-entries))
         candidates (term/generate-candidates {:sigils (take 6 sigils)} k)
-        seeds (vec (repeatedly contexts #(rng-int rng Integer/MAX_VALUE)))]
+        seeds (vec (repeatedly contexts #(rng-int rng Integer/MAX_VALUE)))
+        baseline-regimes (mapv (fn [seed]
+                                 (normalize-regime (run-with-term base [:noop] seed)))
+                               seeds)
+        from-sig (->> baseline-regimes (map :sig) frequencies (sort-by val >) ffirst)
+        from (first (filter #(= (:sig %) from-sig) baseline-regimes))
+        from-node {:regime (:word-class from)
+                   :sig (:sig from)}]
     (loop [remaining candidates
            arrows []]
       (if (empty? remaining)
         arrows
         (let [term (first remaining)
-              test (test-arrow base term seeds tau)
-              arrows' (if test
-                        (conj arrows {:from {:regime :unknown
-                                             :sig :unknown}
-                                      :witness {:term term
-                                                :cost (term/cost term {})}
-                                      :to (:to test)
-                                      :robustness (:robustness test)
-                                      :evidence (:evidence test)})
+              test (test-arrow base baseline-regimes term seeds default-generations)
+              entry {:from from-node
+                     :witness {:term (term/canonical-term term)
+                               :cost (term/cost term {})}
+                     :to (:to test)
+                     :robustness (:robustness test)
+                     :effect (:effect test)
+                     :evidence (:evidence test)}
+              delta (get-in test [:effect :delta])
+              accept? (and (>= (get-in test [:robustness :tau] 0.0) tau)
+                           (not= from-sig (get-in test [:to :sig]))
+                           (or (nil? min-delta)
+                               (and (number? delta) (>= delta (double min-delta)))))
+              _ (when log-tests
+                  (spit log-tests (str (pr-str entry) "\n") :append true))
+              arrows' (if accept?
+                        (conj arrows entry)
                         arrows)]
           (recur (rest remaining) arrows'))))))
 
@@ -150,9 +203,18 @@
             tau (or (:tau opts) default-tau)
             seed (or (:seed opts) 4242)
             out (or (:out opts) "resources/arrow-pilot.edn")
-            arrows (mine-arrows {:contexts contexts :k k :tau tau :seed seed})
+            log-tests (:log-tests opts)
+            min-delta (or (:min-delta opts) 0.0)
+            arrows (mine-arrows {:contexts contexts
+                                 :k k
+                                 :tau tau
+                                 :seed seed
+                                 :log-tests log-tests
+                                 :min-delta min-delta})
             payload {:event :arrow-pilot
-                     :config {:contexts contexts :k k :tau tau :seed seed}
+                     :config {:contexts contexts :k k :tau tau :seed seed
+                              :log-tests log-tests
+                              :min-delta min-delta}
                      :count (count arrows)
                      :arrows arrows}]
         (spit out (pr-str payload))

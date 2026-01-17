@@ -27,4 +27,24 @@
 (defn regime-sig
   "Generate a stable hash for a descriptor."
   [descriptor]
-  (hash (select-keys descriptor [:word-class])))
+  (let [bins (fn [x]
+               (cond
+                 (not (number? x)) 0
+                 (< x 0.33) 0
+                 (< x 0.66) 1
+                 :else 2))
+        macro (:macro-vec descriptor)
+        coarse (when (seq macro)
+                 (mapv bins macro))]
+    (hash {:word-class (:word-class descriptor)
+           :macro-bins coarse})))
+
+(defn macro-distance
+  "Euclidean distance between macro-vecs."
+  [a b]
+  (when (and (seq a) (seq b) (= (count a) (count b)))
+    (Math/sqrt
+     (reduce + 0.0 (map (fn [x y]
+                          (let [d (- (double x) (double y))]
+                            (* d d)))
+                        a b)))))

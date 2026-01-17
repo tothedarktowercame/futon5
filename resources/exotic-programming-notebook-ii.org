@@ -330,6 +330,8 @@ bb -cp src:resources -m futon5.arrow.mine \
   --contexts 5 \
   --k 2 \
   --tau 0.6 \
+  --min-delta 0.05 \
+  --log-tests resources/arrow-pilot-tests.edn \
   --out resources/arrow-pilot.edn
 #+end_src
 
@@ -337,16 +339,25 @@ bb -cp src:resources -m futon5.arrow.mine \
 
 - MVP uses a tiny term grammar and coarse regimes (:dead/:stable/:oscillating/:chaotic).
 - Output is a single EDN payload with discovered arrows and robustness.
-- Pilot result (contexts=5, k=2, tau=0.6): 58 arrows found after coarse regime signature (word-class only).
+- Pilot result (contexts=5, k=2, tau=0.6, min-delta=0.05): 7 arrows found with coarse bins + effect-size filter.
+- Null baseline (label shuffle on regime sigs): ~0.30 pass rate (still nontrivial; needs tightening).
+- No-op control: `[:noop]` yields τ=1.0 but small Δ (~0.024), rejected by min-delta.
 
 ** Sample arrow
 
 #+begin_src clojure
-{:from {:regime :unknown, :sig :unknown}
- :witness {:term [:set-exotype "一" :local], :cost 1}
- :to {:word-class :oscillating, :sig -1301417310}
- :robustness {:tau 1.0, :contexts 5}}
+{:from {:regime :oscillating, :sig 1677116182}
+ :witness {:term [:set-exotype "丁" :super], :cost 1}
+ :to {:word-class :chaotic, :sig 1709907411}
+ :robustness {:tau 0.8, :contexts 5}
+ :effect {:delta 0.1243}}
 #+end_src
+
+** Buckets (heuristic)
+
+- strong: 0
+- medium: 5
+- weak: 2
 
 ** Pilot 2: Two batches, rotated seeds
 

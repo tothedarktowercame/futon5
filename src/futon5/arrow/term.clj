@@ -50,6 +50,8 @@
     (vector? term)
     (let [[op & args] term]
       (case op
+        :noop state
+
         :set-exotype
         (let [[sigil tier] args]
           (assoc state :exotype (exotype/resolve-exotype {:sigil sigil
@@ -67,22 +69,41 @@
 
     :else state))
 
+(defn canonical-term
+  "Normalize a term into a stable representation."
+  [term]
+  (letfn [(round-num [x]
+            (if (number? x)
+              (double (/ (Math/round (* 100.0 (double x))) 100.0))
+              x))]
+    (cond
+      (and (vector? term) (= :seq (first term)))
+      (into [:seq] (map canonical-term (rest term)))
+
+      (vector? term)
+      (let [[op & args] term
+            args (map round-num args)]
+        (into [op] args))
+
+      :else term)))
+
 (defn generate-candidates
   "Generate term candidates up to a max cost k."
   [{:keys [sigils]} k]
   (let [atoms (vec (concat
-               (map (fn [sigil] [:set-exotype sigil :local]) sigils)
-               (map (fn [sigil] [:set-exotype sigil :super]) sigils)
-               [[:set-param :update-prob -0.25]
-                [:set-param :update-prob 0.25]
-                [:set-param :match-threshold -0.1]
-                [:set-param :match-threshold 0.1]
-                [:set-param :mix-shift -1]
-                [:set-param :mix-shift 1]
-                [:set-param :rotation -1]
-                [:set-param :rotation 1]
-                [:set-tier :local]
-                [:set-tier :super]]))
+                (map (fn [sigil] [:set-exotype sigil :local]) sigils)
+                (map (fn [sigil] [:set-exotype sigil :super]) sigils)
+                [[:set-param :update-prob -0.25]
+                 [:set-param :update-prob 0.25]
+                 [:set-param :match-threshold -0.1]
+                 [:set-param :match-threshold 0.1]
+                 [:set-param :mix-shift -1]
+                 [:set-param :mix-shift 1]
+                 [:set-param :rotation -1]
+                 [:set-param :rotation 1]
+                 [:set-tier :local]
+                 [:set-tier :super]
+                 [:noop]]))
         seqs (when (>= k 2)
                (for [a (take 6 atoms)
                      b (take 6 atoms)]
