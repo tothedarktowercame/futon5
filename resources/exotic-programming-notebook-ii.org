@@ -386,6 +386,7 @@ Exotype CA snapshot (sigil 土, update-prob 0.25; composite score 21.58):
 
 - 50-run batch: `resources/mission-17a-refine-r50.log`
 - Selected best exotype with update-prob <= 0.5 (sigil 工, update-prob 0.5).
+- Visuals show a partially stable edge-of-chaos band within the run window.
 
 Baseline CA snapshot (composite score 26.74):
 
