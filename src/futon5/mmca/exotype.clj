@@ -87,15 +87,18 @@
     (nth s idx)
     \0))
 
-(defn sample-context
-  "Pick a single local context from the run history."
-  [gen-history phe-history ^java.util.Random rng]
+(defn sample-context-at
+  "Sample a local context at a specific time/position."
+  [gen-history phe-history t x ^java.util.Random rng]
   (let [rows (count gen-history)
         cols (count (or (first gen-history) ""))]
-    (when (and (> rows 1) (pos? cols))
-      (let [t (rng-int rng (dec rows))
-            x (rng-int rng cols)
-            row (nth gen-history t)
+    (when (and (> rows 1)
+               (pos? cols)
+               (<= 0 t)
+               (< t (dec rows))
+               (<= 0 x)
+               (< x cols))
+      (let [row (nth gen-history t)
             next-row (nth gen-history (inc t))
             pred (sigil-at row (dec x))
             self (sigil-at row x)
@@ -110,7 +113,18 @@
                          (bit-at phe-next x))))]
         {:context-sigils [pred self next out]
          :phenotype-context phe
-         :rotation (rng-int rng 4)}))))
+         :rotation (if rng (rng-int rng 4) 0)
+         :coord {:t t :x x}}))))
+
+(defn sample-context
+  "Pick a single local context from the run history."
+  [gen-history phe-history ^java.util.Random rng]
+  (let [rows (count gen-history)
+        cols (count (or (first gen-history) ""))]
+    (when (and (> rows 1) (pos? cols))
+      (let [t (rng-int rng (dec rows))
+            x (rng-int rng cols)]
+        (sample-context-at gen-history phe-history t x rng)))))
 
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context."

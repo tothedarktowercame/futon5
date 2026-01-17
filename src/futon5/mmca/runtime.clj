@@ -346,35 +346,83 @@
                      :genotype next-gen)
               (update-in [:history :genotypes] conj next-gen)))))))
 
+(defn- rng-int [^java.util.Random rng n]
+  (.nextInt rng n))
+
+(defn- rng-sigil-string [^java.util.Random rng length]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly length #(nth sigils (rng-int rng (count sigils)))))))
+
+(defn- rng-phenotype-string [^java.util.Random rng length]
+  (apply str (repeatedly length #(rng-int rng 2))))
+
 (defn- sample-exotype-context
   [state ^java.util.Random rng]
-  (let [gen-history (get-in state [:history :genotypes])
+  (let [mode (or (:exotype-context-mode state) :history)
+        gen-history (get-in state [:history :genotypes])
         phe-history (get-in state [:history :phenotypes])]
-    (exotype/sample-context gen-history phe-history rng)))
+    (if (= mode :random)
+      (let [len (count (or (:genotype state) ""))
+            phe-len (count (or (:phenotype state) ""))]
+        (when (pos? len)
+          (let [g0 (rng-sigil-string rng len)
+                g1 (rng-sigil-string rng len)
+                p0 (when (pos? phe-len) (rng-phenotype-string rng phe-len))
+                p1 (when (pos? phe-len) (rng-phenotype-string rng phe-len))]
+            (exotype/sample-context [g0 g1] (when p0 [p0 p1]) rng))))
+      (exotype/sample-context gen-history phe-history rng))))
+
+(defn- sample-exotype-contexts
+  [state ^java.util.Random rng]
+  (let [depth (max 1 (int (or (:exotype-context-depth state) 1)))
+        mode (or (:exotype-context-mode state) :history)]
+    (if (= mode :random)
+      (vec (keep (fn [_] (sample-exotype-context state rng)) (range depth)))
+      (let [gen-history (get-in state [:history :genotypes])
+            phe-history (get-in state [:history :phenotypes])
+            rows (count gen-history)
+            cols (count (or (first gen-history) ""))]
+        (when (and (> rows 1) (pos? cols))
+          (let [t0 (rng-int rng (dec rows))
+                x0 (rng-int rng cols)]
+            (->> (range depth)
+                 (map (fn [i]
+                        (exotype/sample-context-at gen-history phe-history (+ t0 i) x0 rng)))
+                 (take-while some?)
+                 vec)))))))
 
 (defn- resolve-exotype-context
   [state ^java.util.Random rng tick]
   (if (:exotype-context-replay? state)
     [(get (:exotype-contexts state) tick) state]
-    (let [ctx (sample-exotype-context state rng)
+    (let [ctxs (sample-exotype-contexts state rng)
           state' (if (:exotype-context-capture? state)
-                   (update state :exotype-contexts conj ctx)
+                   (update state :exotype-contexts conj ctxs)
                    state)]
-      [ctx state'])))
+      [ctxs state'])))
+
+(defn- apply-exotype-chain
+  [kernel-spec exotype ctxs ^java.util.Random rng]
+  (reduce (fn [spec ctx]
+            (if (and spec ctx)
+              (exotype/apply-exotype spec exotype ctx rng)
+              spec))
+          kernel-spec
+          ctxs))
 
 (defn- update-kernel-by-exotype
   [state exotype ^java.util.Random rng tick]
   (if (or (nil? exotype) (:lock-kernel state))
     state
-    (let [[ctx state'] (resolve-exotype-context state rng tick)
+    (let [[ctxs state'] (resolve-exotype-context state rng tick)
           kernel (or (:kernel-spec state') (:kernel state'))
           kernel-spec (when kernel
                         (try
                           (ca/kernel-spec-for kernel)
                           (catch Exception _ nil)))]
-      (if-let [next-kernel (and ctx
-                                kernel-spec
-                                (exotype/apply-exotype kernel-spec exotype ctx rng))]
+      (if-let [next-kernel (and kernel-spec
+                                (seq ctxs)
+                                (apply-exotype-chain kernel-spec exotype ctxs rng))]
         (assoc state'
                :kernel next-kernel
                :kernel-spec next-kernel
@@ -385,15 +433,15 @@
   [state exotype ^java.util.Random rng tick]
   (if (or (nil? exotype) (:lock-kernel state))
     state
-    (let [[ctx state'] (resolve-exotype-context state rng tick)
+    (let [[ctxs state'] (resolve-exotype-context state rng tick)
           kernel (or (:kernel-spec state') (:kernel state'))
           kernel-spec (when kernel
                         (try
                           (ca/kernel-spec-for kernel)
                           (catch Exception _ nil)))
-          next-kernel (and ctx
-                           kernel-spec
-                           (exotype/apply-exotype kernel-spec exotype ctx rng))]
+          next-kernel (and kernel-spec
+                           (seq ctxs)
+                           (apply-exotype-chain kernel-spec exotype ctxs rng))]
       (if next-kernel
         (update state' :exotype-nominations
                 (fnil conj [])
@@ -452,7 +500,8 @@
 
 (defn- prepare-initial-state [{:keys [genotype phenotype kernel kernel-spec lock-kernel freeze-genotype
                                       genotype-gate genotype-gate-signal exotype-contexts
-                                      capture-exotype-contexts]}]
+                                      capture-exotype-contexts exotype-context-mode
+                                      exotype-context-depth]}]
   (let [kernel* (or kernel-spec kernel default-kernel)
         kernel-spec (when (ca/kernel-spec? kernel*)
                       (ca/normalize-kernel-spec kernel*))
@@ -475,6 +524,8 @@
          :exotype-contexts contexts
          :exotype-context-replay? (boolean replay?)
          :exotype-context-capture? (boolean capture?)
+         :exotype-context-mode (or exotype-context-mode :history)
+         :exotype-context-depth (max 1 (int (or exotype-context-depth 1)))
          :history {:genotypes [genotype]
                    :phenotypes (when phenotype [phenotype])}
          :metrics {}
@@ -496,6 +547,8 @@
   - :seed (optional RNG seed for exotype updates)
   - :exotype-contexts (optional vector of contexts for lock-2 replay)
   - :capture-exotype-contexts (optional, store sampled contexts for lock-2)
+  - :exotype-context-mode (optional :history or :random)
+  - :exotype-context-depth (optional recursion depth for context sampling)
   - :exotype-mode (optional :inline or :nominate; default :inline)
 
   Returns a map containing genotype history, phenotype history, metrics, and

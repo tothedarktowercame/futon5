@@ -30,6 +30,7 @@
     "  --pop N                Exotype population size (default 32)."
     "  --update-every N       Update cadence (default 100)."
     "  --tier KW              Exotype tier: local, super, or both (default both)."
+    "  --context-depth N      Recursive-local context depth (default 1)."
     "  --xeno-spec PATH       EDN xenotype spec or vector of specs (optional)."
     "  --xeno-weight W        Blend xenotype score into short score (0-1)."
     "  --log PATH             Append EDN log entries (optional)."
@@ -73,6 +74,9 @@
 
           (= "--tier" flag)
           (recur (rest more) (assoc opts :tier (some-> (first more) keyword)))
+
+          (= "--context-depth" flag)
+          (recur (rest more) (assoc opts :context-depth (parse-int (first more))))
 
           (= "--xeno-spec" flag)
           (recur (rest more) (assoc opts :xeno-spec (first more)))
@@ -145,7 +149,7 @@
        :mean mean})))
 
 (defn- evaluate-exotype
-  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight]
+  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth]
   (let [genotype (rng-sigil-string rng length)
         phenotype (rng-phenotype-string rng length)
         seed (rng-int rng Integer/MAX_VALUE)
@@ -155,6 +159,7 @@
                                :kernel :mutating-template
                                :operators []
                                :exotype exotype
+                               :exotype-context-depth context-depth
                                :seed seed})
         summary (metrics/summarize-run result)
         short-score (double (or (:composite-score summary) 0.0))
@@ -168,13 +173,14 @@
      :final-score final-score
      :seed seed}))
 
-(defn- log-entry [run-id exotype length generations eval]
+(defn- log-entry [run-id exotype length generations eval context-depth]
   {:schema/version 1
    :experiment/id :exoevolve
    :run/id run-id
    :seed (:seed eval)
    :length length
    :generations generations
+   :context-depth context-depth
    :kernel :mutating-template
    :exotype (select-keys exotype [:sigil :tier :params])
    :score {:short (:short-score eval)
@@ -213,13 +219,14 @@
     (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
 
 (defn evolve-exotypes
-  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log]}]
+  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log context-depth]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
         pop (or pop default-pop)
         update-every (or update-every default-update-every)
         tier (or tier :both)
+        context-depth (max 1 (int (or context-depth 1)))
         xeno-weight (double (or xeno-weight 0.0))
         rng (java.util.Random. (long (or seed 4242)))
         xeno-specs (load-xeno-specs xeno-spec)]
@@ -229,8 +236,8 @@
       (if (= i runs)
         {:population population}
         (let [exotype (rand-nth population)
-              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight)
-              entry (log-entry (inc i) exotype length generations eval)
+              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth)
+              entry (log-entry (inc i) exotype length generations eval context-depth)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)
               population' (if update?

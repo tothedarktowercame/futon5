@@ -2622,6 +2622,23 @@ Outputs:
 - Regime B top scores: 50.41, 49.59 (both sigil 兄, bits 11100100, super tier).
 - Regime B snapshots reseed genotype/phenotype from the run seed (exoevolve logs do not store them yet).
 
+*** Pilot summary (A vs B)
+| metric | Regime A | Regime B |
+|--------+----------+----------|
+| mean | 33.61 | 39.78 |
+| q10 | 28.32 | 28.64 |
+| q50 | 33.66 | 41.51 |
+| q90 | 38.57 | 46.62 |
+| max | 45.93 | 50.41 |
+| confetti-rate | 0.04 | 0.065 |
+| dead-rate | 0.00 | 0.00 |
+| stasis-mean | 23.67 | 20.82 |
+
+Pilot interpretation:
+- Regime B shifts the score distribution upward and reduces stasis time on average, but carries a modest confetti increase.
+- Lock-2 preserves nomination structure best, indicating evaluator context sampling is a real sensitivity axis.
+- Context-only baselines damp structured bands while keeping exotype stripes active, supporting a xenotype guardrail against context/phenotype shortcuts.
+
 #+BEGIN_SRC bash
 bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
                            (quote [clojure.java.io :as io])
@@ -2790,6 +2807,26 @@ PY
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-07-b-top1-locked.png]]
 
+#+CAPTION: Mission 7B top exotype #1 Lock-0 (kernel only, fresh rng).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-lock0.png]]
+
+#+CAPTION: Mission 7B top exotype #1 Lock-1 (kernel + rng seed).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-lock1.png]]
+
+#+CAPTION: Mission 7B top exotype #1 Lock-2 (kernel + context schedule).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-lock2.png]]
+
+*** Lock notes (top exotype #1)
+- Lock-0 is visibly noisier and shifts the exotype banding compared to the nomination run.
+- Lock-2 most closely preserves the nomination structure, which suggests context replay is the critical stabilizer.
+
+#+CAPTION: Mission 7B top exotype #1 lock comparison grid (nominate, lock-0, lock-1, lock-2).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-lock-grid.png]]
+
 #+CAPTION: Mission 7B top exotype #2 (sigil 兄, bits 11100100, super) nomination run.
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-07-b-top2-nominate.png]]
@@ -2798,7 +2835,395 @@ PY
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-07-b-top2-locked.png]]
 
+#+CAPTION: Mission 7B top exotype #2 Lock-0 (kernel only, fresh rng).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-lock0.png]]
+
+#+CAPTION: Mission 7B top exotype #2 Lock-1 (kernel + rng seed).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-lock1.png]]
+
+#+CAPTION: Mission 7B top exotype #2 Lock-2 (kernel + context schedule).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-lock2.png]]
+
+*** Lock notes (top exotype #2)
+- Lock-0/1/2 diverge in fine texture even with the same nominated kernel, indicating evaluator sampling noise matters.
+- Lock-2 is the most faithful replay of the nomination regime; it preserves the exotype banding best among the locks.
+
+#+CAPTION: Mission 7B top exotype #2 lock comparison grid (nominate, lock-0, lock-1, lock-2).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-lock-grid.png]]
+
+*** Context-only baseline (top exotype #1)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.java.io :as io])
+                           (quote [futon5.ca.core :as ca])
+                           (quote [futon5.mmca.exotype :as exotype])
+                           (quote [futon5.mmca.render :as render])
+                           (quote [futon5.mmca.runtime :as mmca]))
+
+(def out-dir "resources/figures")
+(.mkdirs (io/file out-dir))
+
+(defn rng-int [^java.util.Random r n] (.nextInt r n))
+(defn rng-sigil-string [^java.util.Random r len]
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str (repeatedly len #(nth sigils (rng-int r (count sigils)))))))
+(defn rng-phenotype-string [^java.util.Random r len]
+  (apply str (repeatedly len #(rng-int r 2))))
+
+(defn start-state [seed length]
+  (let [rng (java.util.Random. (long seed))]
+    {:genotype (rng-sigil-string rng length)
+     :phenotype (rng-phenotype-string rng length)}))
+
+(def label "mission-07-b-top1-context-only")
+(def bits "11100100")
+(def sigil (ca/sigil-for bits))
+(def seed 4242)
+(def length 50)
+(def generations 30)
+
+(let [{:keys [genotype phenotype]} (start-state seed length)
+      exo (exotype/resolve-exotype {:sigil sigil :tier :super})
+      result (mmca/run-mmca {:genotype genotype
+                             :phenotype phenotype
+                             :generations generations
+                             :kernel :mutating-template
+                             :operators []
+                             :exotype exo
+                             :exotype-mode :nominate
+                             :exotype-context-mode :random
+                             :seed seed})
+      ppm-path (str out-dir "/" label ".ppm")
+      meta-path (str out-dir "/" label ".edn")]
+  (render/render-run->file! result ppm-path {:exotype? true})
+  (spit meta-path (pr-str {:label label
+                           :seed seed
+                           :length length
+                           :generations generations
+                           :kernel :mutating-template
+                           :exotype {:sigil sigil :bits bits :tier :super}
+                           :exotype-mode :nominate
+                           :exotype-context-mode :random
+                           :render {:exotype? true}}))
+  (println "context-only baseline written" ppm-path))'
+#+END_SRC
+
+#+CAPTION: Mission 7B top exotype #1 with randomized context sampling (context-only baseline).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top1-context-only.png]]
+
+*** Context-only note
+- The randomized-context baseline dampens structured bands while leaving the exotype stripe active, suggesting part of the evaluator signal is coming from context/phenotype cues rather than genotype structure alone.
+- This supports keeping a context-only guardrail in the xenotype cull step to avoid evaluator shortcuts.
+
+#+CAPTION: Mission 7B top exotype #2 with randomized context sampling (context-only baseline).
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-07-b-top2-context-only.png]]
+
+*** Mission 7 conclusion (draft)
+- In the pilot, exotype-evolved evaluators shift the score distribution upward and shorten stasis relative to direct optimization, while exposing sensitivity to context sampling.
+- Lock-2 replay preserves the nomination structure most faithfully, indicating that evaluator context is a meaningful driver of the observed regimes.
+- Context-only baselines damp structured bands while leaving exotype stripes active, supporting a xenotype guardrail against evaluator shortcuts.
+- Next decision: whether to scale the A/B runs (e.g., 1–5k evaluations) to stabilize the distributional claims before writing the final section.
+
+*** Overnight run plan (batched + restartable)
+Run in batches so partial results are preserved. Each batch writes its own log; concatenation is safe because entries are line-delimited EDN.
+
+#+BEGIN_SRC bash
+set -euo pipefail
+
+cat > /tmp/mission-07-xeno.edn <<'EOF'
+{}
+EOF
+
+# Config
+batches=10
+runs_per_batch=500
+base_seed=4242
+
+for b in $(seq 1 $batches); do
+  seed=$((base_seed + b))
+  a_log=/tmp/mission-07-a-batch-${b}.edn
+  b_log=/tmp/mission-07-b-batch-${b}.edn
+
+  if [ ! -s "${a_log}" ]; then
+    bb -cp src:resources -m futon5.mmca.genoevolve \
+      --runs ${runs_per_batch} \
+      --length 50 \
+      --generations 30 \
+      --pop 32 \
+      --update-every 100 \
+      --mutation-rate 0.1 \
+      --seed ${seed} \
+      --log ${a_log}
+  fi
+
+  if [ ! -s "${b_log}" ]; then
+    bb -cp src:resources -m futon5.mmca.exoevolve \
+      --runs ${runs_per_batch} \
+      --length 50 \
+      --generations 30 \
+      --pop 32 \
+      --update-every 100 \
+      --tier both \
+      --seed ${seed} \
+      --xeno-spec /tmp/mission-07-xeno.edn \
+      --xeno-weight 0.5 \
+      --log ${b_log}
+  fi
+done
+
+# Merge logs after completion
+cat /tmp/mission-07-a-batch-*.edn > /tmp/mission-07-a-overnight.edn
+cat /tmp/mission-07-b-batch-*.edn > /tmp/mission-07-b-overnight.edn
+#+END_SRC
+
+# Sanity check (expected lines = batches * runs_per_batch)
+#+BEGIN_SRC bash
+wc -l /tmp/mission-07-a-batch-*.edn /tmp/mission-07-b-batch-*.edn | tail -n 4
+wc -l /tmp/mission-07-a-overnight.edn /tmp/mission-07-b-overnight.edn
+#+END_SRC
+
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str]))
+
+(defn load-entries [path]
+  (->> (str/split-lines (slurp path))
+       (remove str/blank?)
+       (mapv edn/read-string)))
+
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+
+(defn collapse-stats [entries]
+  (let [dead-change 0.05
+        dead-entropy 0.2
+        confetti-change 0.45
+        confetti-entropy 0.8
+        summaries (map :summary entries)
+        dead? (fn [s] (and (<= (double (or (:avg-change s) 0.0)) dead-change)
+                           (<= (double (or (:avg-entropy-n s) 0.0)) dead-entropy)))
+        confetti? (fn [s] (and (>= (double (or (:avg-change s) 0.0)) confetti-change)
+                               (>= (double (or (:avg-entropy-n s) 0.0)) confetti-entropy)))
+        dead-count (count (filter dead? summaries))
+        confetti-count (count (filter confetti? summaries))
+        total (count summaries)]
+    {:dead-count dead-count
+     :dead-rate (if (pos? total) (/ dead-count (double total)) 0.0)
+     :confetti-count confetti-count
+     :confetti-rate (if (pos? total) (/ confetti-count (double total)) 0.0)}))
+
+(defn summarize [entries score-path]
+  (let [scores (mapv #(get-in % score-path) entries)
+        stasis (keep #(get-in % [:summary :first-stasis-step]) entries)
+        overall {:count (count scores)
+                 :mean (avg scores)
+                 :min (apply min scores)
+                 :max (apply max scores)
+                 :q10 (quantile scores 0.1)
+                 :q50 (quantile scores 0.5)
+                 :q90 (quantile scores 0.9)
+                 :stasis-mean (avg stasis)}
+        collapse (collapse-stats entries)]
+    (merge overall collapse)))
+
+(def a (summarize (load-entries "/tmp/mission-07-a-overnight.edn") [:score :composite]))
+(def b (summarize (load-entries "/tmp/mission-07-b-overnight.edn") [:score :final]))
+
+(println "Overnight A" a)
+(println "Overnight B" b)'
+#+END_SRC
+
+*** Overnight summary (A vs B)
+| metric | Regime A | Regime B |
+|--------+----------+----------|
+| mean | 34.10 | 40.87 |
+| q10 | 29.57 | 34.48 |
+| q50 | 33.97 | 41.61 |
+| q90 | 38.80 | 46.38 |
+| max | 47.52 | 51.13 |
+| confetti-rate | 0.0514 | 0.0508 |
+| dead-rate | 0.00 | 0.00 |
+| stasis-mean | 26.35 | 23.64 |
+
+*** Overnight trend check (windowed)
+#+BEGIN_SRC bash
+bb -cp src:resources -e '(require (quote [clojure.edn :as edn])
+                           (quote [clojure.string :as str]))
+
+(defn load-entries [path]
+  (->> (str/split-lines (slurp path))
+       (remove str/blank?)
+       (mapv edn/read-string)))
+
+(defn avg [xs] (when (seq xs) (/ (reduce + 0.0 xs) (double (count xs)))))
+(defn quantile [xs q]
+  (let [xs (sort xs)
+        n (count xs)
+        idx (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))]
+    (nth xs idx)))
+
+(defn summarize-window [entries score-path idx]
+  (let [scores (mapv #(get-in % score-path) entries)]
+    {:window idx
+     :count (count scores)
+     :mean (avg scores)
+     :q50 (quantile scores 0.5)
+     :q90 (quantile scores 0.9)}))
+
+(defn windowed [entries score-path window-size]
+  (->> (partition-all window-size entries)
+       (map-indexed (fn [idx runs]
+                      (summarize-window runs score-path (inc idx))))
+       vec))
+
+(def a (load-entries "/tmp/mission-07-a-overnight.edn"))
+(def b (load-entries "/tmp/mission-07-b-overnight.edn"))
+
+(def a-windows (windowed a [:score :composite] 100))
+(def b-windows (windowed b [:score :final] 100))
+
+(println "A windows" a-windows)
+(println "B windows" b-windows)'
+#+END_SRC
+
+*** Assumption check (xenotype + CT layer)
+- The overnight runs show stationary distributions rather than upward drift, implying xenotype is currently evaluative, not curriculum-shaping.
+- The CT layer gives us a handle on program structure, but without a higher-order “ratchet” it doesn’t induce cumulative improvement.
+- Next step: design a xenotype ratchet (memoryful + curriculum) that scores *improvement over windows* and/or enforces staged constraints, then evaluate by word class using the CT manifest.
+
+*** Mission 7b (draft): Xenotype ratchet
+Goal: turn the xenotype from a static evaluator into a curriculum-shaping ratchet that rewards *improvement over time*.
+
+Core idea:
+- Track scores over windows (e.g., 100 evals).
+- Reward improvement between windows (delta‑score) rather than absolute score.
+- Stage constraints (e.g., raise min diversity or lower confetti tolerance) as windows advance.
+
+Protocol (pilot scale):
+- Same A/B setup as Mission 7, but add a ratchet xenotype with:
+  - window size = 100
+  - ratchet target = +Δmean and +Δq50 vs previous window
+  - penalty if confetti rate rises or diversity collapses
+  - curriculum schedule: tighten confetti/entropy thresholds every 5 windows
+- Measure:
+  - drift slope (mean/q50 over windows)
+  - stability of improvements across seeds
+  - word‑class outcomes (CT manifest) under ratchet vs baseline
+
+Acceptance signal:
+- Demonstrable upward trend over windows *and* reduced regression when the ratchet tightens.
+
 CT framing:
 - Exotypes are programs (morphisms in `:futon5/exotype-program`).
 - Xenotype evaluates families of exotype programs (meta-morphism / functor to score space).
 - AIF analogy: xenotype as model-of-self-in-niche, preserving viability without prescribing targets.
+
+** Mission 8 (draft): Local vs recursive-local evaluators
+- Goal: test whether bounded recursive locality extends discoverability without collapsing into oracle-like behavior.
+- Scale: match Mission 7 pilot (runs 200, pop 16, update cadence 100, length 50, generations 30).
+
+*** Protocol (pilot scale)
+Regimes:
+- Regime L (local): current exotype evaluator (single context sample).
+- Regime R (recursive-local): context sampling chained for depth d (e.g., d=2, d=3) via `:exotype-context-depth`.
+
+Implementation sketch:
+- Add a recursion depth option for context sampling (sample context, then sample from the implied next-gen history window).
+- Keep all other parameters identical to Regime L so we isolate the effect of recursive locality.
+
+Measurements:
+- Non-degeneracy: dead/confetti rates, short-cycle detection.
+- Discriminative signal: score variance across genotypes/exotypes.
+- Open-ended dynamics: long transients and metastable bands (visual + summary stats).
+- Stability: nomination vs locked rerun gap under Lock-2.
+
+Acceptance signal:
+- Recursive locality improves discoverability (higher score variance + richer bands) without a confetti spike.
+
+*** Run (pilot-sized)
+#+BEGIN_SRC bash
+# local (baseline)
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 200 \
+  --length 50 \
+  --generations 30 \
+  --pop 16 \
+  --update-every 100 \
+  --tier both \
+  --seed 4242 \
+  --log /tmp/mission-08-local.edn
+
+# recursive-local (depth 2)
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 200 \
+  --length 50 \
+  --generations 30 \
+  --pop 16 \
+  --update-every 100 \
+  --tier both \
+  --seed 4242 \
+  --context-depth 2 \
+  --log /tmp/mission-08-rec2.edn
+
+# recursive-local (depth 3)
+bb -cp src:resources -m futon5.mmca.exoevolve \
+  --runs 200 \
+  --length 50 \
+  --generations 30 \
+  --pop 16 \
+  --update-every 100 \
+  --tier both \
+  --seed 4242 \
+  --context-depth 3 \
+  --log /tmp/mission-08-rec3.edn
+#+END_SRC
+
+*** Pilot summary (local vs recursive-local)
+| metric | local | rec2 | rec3 |
+|--------+-------+------+------|
+| mean | 32.68 | 32.76 | 33.18 |
+| q10 | 27.03 | 24.86 | 27.04 |
+| q50 | 32.74 | 33.12 | 33.73 |
+| q90 | 39.28 | 39.73 | 38.86 |
+| max | 48.64 | 51.18 | 48.35 |
+| confetti-rate | 0.07 | 0.07 | 0.025 |
+| dead-rate | 0.00 | 0.00 | 0.00 |
+| stasis-mean | 20.40 | 17.85 | 18.94 |
+
+*** Mission 8 CA printouts (top exemplars)
+#+CAPTION: Mission 8 local top exotype (sigil 专, bits 01001110, super) nomination run.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-08-local-top1-nominate.png]]
+
+#+CAPTION: Mission 8 local top exotype locked kernel rerun.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-08-local-top1-locked.png]]
+
+#+CAPTION: Mission 8 rec2 top exotype (sigil 无, bits 01001011, super) nomination run.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-08-rec2-top1-nominate.png]]
+
+#+CAPTION: Mission 8 rec2 top exotype locked kernel rerun.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-08-rec2-top1-locked.png]]
+
+#+CAPTION: Mission 8 rec3 top exotype (sigil 尤, bits 01011100, local) nomination run.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-08-rec3-top1-nominate.png]]
+
+#+CAPTION: Mission 8 rec3 top exotype locked kernel rerun.
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-08-rec3-top1-locked.png]]
+
+*** Mission 8 note
+- Genotype/exotype bands are visually rich, but phenotype rows look comparatively flat in these exemplars.
+- This suggests phenotype stability may lag behind evaluator richness; recursive-locality may need stronger phenotype stabilization to translate into visible phenotype complexity.

@@ -153,6 +153,7 @@
 - Experiment: Compare strict local exotypes vs recursively local exotypes at varying recursion depth; measure learning signal longevity, degeneracy rate, phenotype richness.
 - Writing deliverable: Section 8: Locality, recursion, and evaluator horizon.
 - Acceptance signal: Recursion depth treated as an engineering choice with measurable costs.
+- Implementation note: add `:context-depth` support in exotype context sampling + CLI flag in `exoevolve` to enable the pilot.
 
 ** Mission 9: Synthesis
 - Question: What general lessons survive contact with the experiments?
