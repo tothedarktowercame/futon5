@@ -8,7 +8,8 @@
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.runtime :as mmca]
             [futon5.mmca.xenotype :as xenotype]
-            [futon5.exotic.ratchet :as ratchet]))
+            [futon5.exotic.ratchet :as ratchet]
+            [futon5.exotic.curriculum :as curriculum]))
 
 (def ^:private default-length 50)
 (def ^:private default-generations 30)
@@ -300,8 +301,11 @@
                                (ratchet/update-window ratchet-state stats)
                                ratchet-state)
               ratchet-context' (when (and update? prev-window)
-                                 {:prev-score (:mean prev-window)
-                                  :curr-score (:mean stats)})
+                                 (let [threshold (curriculum/curriculum-threshold window' nil)]
+                                   {:prev-score (:mean prev-window)
+                                    :curr-score (:mean stats)
+                                    :curriculum {:threshold threshold
+                                                 :window window'}}))
               population' (if update?
                             (evolve-population rng population batch' tier)
                             population)
