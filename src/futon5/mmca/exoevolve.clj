@@ -37,6 +37,7 @@
     "  --xeno-weight W        Blend xenotype score into short score (0-1)."
     "  --curriculum-gate      Clamp ratchet deltas below threshold (optional)."
     "  --log PATH             Append EDN log entries (optional)."
+    "  --tap                 Emit tap> events for runs/windows (optional)."
     "  --seed N               RNG seed."]))
 
 (defn- parse-int [s]
@@ -92,6 +93,9 @@
 
           (= "--log" flag)
           (recur (rest more) (assoc opts :log (first more)))
+
+          (= "--tap" flag)
+          (recur more (assoc opts :tap true))
 
           (= "--seed" flag)
           (recur (rest more) (assoc opts :seed (parse-int (first more))))
@@ -252,6 +256,16 @@
    :stats stats
    :delta delta})
 
+(defn- tap-run-entry [entry]
+  (select-keys entry
+               [:schema/version :experiment/id :event :run/id :seed
+                :length :generations :context-depth :kernel :exotype
+                :program-template :score :ratchet :summary]))
+
+(defn- tap-window-entry [entry]
+  (select-keys entry
+               [:schema/version :experiment/id :event :window :stats :delta]))
+
 (defn- evolve-population
   [^java.util.Random rng population batch tier]
   (let [by-exotype (group-by (fn [entry]
@@ -272,7 +286,7 @@
     (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
 
 (defn evolve-exotypes
-  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log context-depth curriculum-gate]}]
+  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log context-depth curriculum-gate tap]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -323,6 +337,10 @@
             (append-log! log entry))
           (when (and log update?)
             (append-log! log (window-log-entry window' stats delta)))
+          (when tap
+            (tap> (tap-run-entry entry)))
+          (when (and tap update?)
+            (tap> (tap-window-entry (window-log-entry window' stats delta))))
           (when update?
             (let [{:keys [mean best count]} (summarize-batch batch')]
               (println (format "exo update @ %d | mean %.2f | best %.2f | n %d"
