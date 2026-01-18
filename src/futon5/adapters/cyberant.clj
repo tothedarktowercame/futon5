@@ -1,0 +1,246 @@
+(ns futon5.adapters.cyberant
+  "Adapter: CT schemas / exotypes → AIF cyberant configs.
+
+   The goal is domain-general transfer of 'patterns of improvisation'.
+   Even sigils that seem trivial (一 = 00000000, 乐 = 11111111) may have
+   meaningful interpretations in the target domain - we just haven't
+   found them yet. Cf. I Ching: ䷀ (乾) and ䷁ (坤) are foundational,
+   not degenerate.
+
+   The adapter maps:
+   - Sigil → exotype params (existing, via futon5.mmca.exotype)
+   - Exotype params → CT interpretation (mode structure, transitions)
+   - CT interpretation → AIF policy config (cyberant terminals)"
+  (:require [futon5.mmca.exotype :as exotype]))
+
+;; =============================================================================
+;; Sigil → Exotype (already exists, re-expose)
+;; =============================================================================
+
+(defn sigil->exotype
+  "Lift a sigil to its exotype params."
+  [sigil]
+  (exotype/lift sigil))
+
+;; =============================================================================
+;; Exotype → CT Interpretation
+;; =============================================================================
+
+(defn- rotation->mode-bias
+  "Rotation (0-3) suggests which mode the exotype 'prefers'.
+   0 = gather-focused, 1 = return-focused, 2 = maintain-focused, 3 = adaptive."
+  [rotation]
+  (case (int rotation)
+    0 :outbound
+    1 :homebound
+    2 :maintain
+    3 :adaptive))
+
+(defn- threshold->constraint-strength
+  "Match threshold (0-1) suggests how strictly constraints are enforced.
+   Low = permissive (explore), High = strict (exploit)."
+  [threshold]
+  (cond
+    (< threshold 0.3) :permissive
+    (< threshold 0.7) :moderate
+    :else :strict))
+
+(defn- update-prob->transition-rate
+  "Update probability suggests how often mode transitions happen.
+   Low = stable, High = volatile."
+  [prob]
+  (cond
+    (< prob 0.3) :stable
+    (< prob 0.7) :moderate
+    :else :volatile))
+
+(defn- mix-mode->coordination
+  "Mix mode suggests how the exotype coordinates with neighbors/history."
+  [mode]
+  (case mode
+    :none :independent
+    :rotate-left :follow-gradient
+    :rotate-right :counter-gradient
+    :reverse :contrarian
+    :xor-neighbor :differentiate
+    :majority :conform
+    :swap-halves :oscillate
+    :scramble :randomize
+    :independent))
+
+(defn exotype->ct-interpretation
+  "Interpret exotype params as CT structure.
+
+   This is the key step: what does this pattern of params *mean*
+   as a morphism / mode structure / adaptation strategy?"
+  [{:keys [sigil tier params]}]
+  (let [{:keys [rotation match-threshold invert-on-phenotype?
+                update-prob mix-mode mix-shift]} params]
+    {:sigil sigil
+     :tier tier
+
+     ;; VISION: what modes does this exotype recognize?
+     :vision
+     {:mode-bias (rotation->mode-bias rotation)
+      :constraint-strength (threshold->constraint-strength match-threshold)
+      :phenotype-responsive? invert-on-phenotype?}
+
+     ;; PLAN: how does it intend to transition?
+     :plan
+     {:transition-rate (update-prob->transition-rate update-prob)
+      :coordination (mix-mode->coordination mix-mode)
+      :shift-phase mix-shift}
+
+     ;; ADAPT: when does it switch strategies?
+     :adapt
+     {:trigger-threshold match-threshold
+      :invert-on-context? invert-on-phenotype?
+      :volatility update-prob}}))
+
+;; =============================================================================
+;; CT Interpretation → Cyberant Config
+;; =============================================================================
+
+(defn- mode-bias->policy-priors
+  "Convert mode bias to AIF policy priors (C-prior weighting)."
+  [mode-bias]
+  (case mode-bias
+    :outbound   {:forage 0.6 :return 0.2 :hold 0.1 :pheromone 0.1}
+    :homebound  {:forage 0.2 :return 0.6 :hold 0.1 :pheromone 0.1}
+    :maintain   {:forage 0.2 :return 0.2 :hold 0.3 :pheromone 0.3}
+    :adaptive   {:forage 0.25 :return 0.25 :hold 0.25 :pheromone 0.25}
+    {:forage 0.25 :return 0.25 :hold 0.25 :pheromone 0.25}))
+
+(defn- constraint-strength->precision
+  "Convert constraint strength to observation precision (Pi-o)."
+  [strength]
+  (case strength
+    :permissive 0.3
+    :moderate 0.6
+    :strict 0.9
+    0.6))
+
+(defn- transition-rate->tau
+  "Convert transition rate to policy temperature (tau).
+   Stable = low tau (committed), volatile = high tau (exploratory)."
+  [rate]
+  (case rate
+    :stable 0.2
+    :moderate 0.5
+    :volatile 0.8
+    0.5))
+
+(defn- coordination->pattern-behavior
+  "Convert coordination mode to pattern-sense behavior."
+  [coord]
+  (case coord
+    :independent {:trail-follow 0.0 :gradient-use 0.0}
+    :follow-gradient {:trail-follow 0.7 :gradient-use 0.8}
+    :counter-gradient {:trail-follow -0.3 :gradient-use -0.5}
+    :contrarian {:trail-follow -0.5 :gradient-use -0.3}
+    :differentiate {:trail-follow 0.0 :gradient-use 0.0 :novelty-seek 0.8}
+    :conform {:trail-follow 0.8 :gradient-use 0.5}
+    :oscillate {:trail-follow 0.3 :gradient-use 0.3 :phase-shift true}
+    :randomize {:trail-follow 0.0 :gradient-use 0.0 :random-weight 0.5}
+    {:trail-follow 0.3 :gradient-use 0.3}))
+
+(defn ct-interpretation->cyberant-config
+  "Generate AIF cyberant config from CT interpretation."
+  [{:keys [sigil tier vision plan adapt] :as interp}]
+  {:species (keyword (str "cyber-" sigil))
+   :sigil sigil
+   :tier tier
+
+   ;; Policy structure
+   :policy-priors (mode-bias->policy-priors (:mode-bias vision))
+   :default-mode (case (:mode-bias vision)
+                   :outbound :outbound
+                   :homebound :homebound
+                   :maintain :maintain
+                   :adaptive :outbound)
+
+   ;; Precision / temperature
+   :precision {:Pi-o (constraint-strength->precision (:constraint-strength vision))
+               :tau (transition-rate->tau (:transition-rate plan))}
+
+   ;; Pattern behavior
+   :pattern-sense (coordination->pattern-behavior (:coordination plan))
+
+   ;; Adaptation triggers
+   :adapt-config {:threshold (:trigger-threshold adapt)
+                  :invert-on-context? (:invert-on-context? adapt)
+                  :volatility (:volatility adapt)}
+
+   ;; Phenotype responsiveness (hunger/cargo coupling)
+   :phenotype-coupling {:enabled? (:phenotype-responsive? vision)
+                        :hunger-weight (if (:phenotype-responsive? vision) 0.4 0.1)
+                        :cargo-weight (if (:phenotype-responsive? vision) 0.5 0.2)}
+
+   ;; CT provenance (for interpretability)
+   :ct-provenance interp})
+
+;; =============================================================================
+;; Full Pipeline
+;; =============================================================================
+
+(defn sigil->cyberant
+  "Full pipeline: sigil → exotype → CT interpretation → cyberant config."
+  [sigil]
+  (-> sigil
+      sigil->exotype
+      exotype->ct-interpretation
+      ct-interpretation->cyberant-config))
+
+(defn batch-convert
+  "Convert a collection of sigils to cyberant configs."
+  [sigils]
+  (mapv sigil->cyberant sigils))
+
+;; =============================================================================
+;; Special Cases: The "Degenerate" Sigils
+;; =============================================================================
+
+(defn interpret-foundational-sigils
+  "Special interpretations for sigils that seem 'trivial' but may be foundational.
+
+   一 (00000000) - 'The Receptive' / Pure Yin / ䷁ (坤)
+   → In ants: maximum receptivity to environment, no internal bias
+   → CT: identity morphism, pure observation without intervention
+
+   乐 (11111111) - 'The Creative' / Pure Yang / ䷀ (乾)
+   → In ants: maximum assertion, full internal drive
+   → CT: maximal morphism, intervention regardless of observation
+
+   These aren't kill-switch/no-op - they're limit cases that reveal
+   what the intermediate sigils are interpolating between."
+  []
+  {:foundational
+   [{:sigil "一"
+     :bits "00000000"
+     :iching {:hexagram "䷁" :name "坤" :meaning "The Receptive"}
+     :ct-interpretation "Identity morphism / pure observation"
+     :ant-interpretation "Maximum environmental receptivity, no internal bias"
+     :config (sigil->cyberant "一")}
+
+    {:sigil "乐"
+     :bits "11111111"
+     :iching {:hexagram "䷀" :name "乾" :meaning "The Creative"}
+     :ct-interpretation "Maximal morphism / pure intervention"
+     :ant-interpretation "Maximum assertion, full internal drive"
+     :config (sigil->cyberant "乐")}]
+
+   :interpolation-note
+   "All other sigils interpolate between these poles.
+    The 'meaning' of a sigil is its position in this space."})
+
+(comment
+  ;; Example usage
+  (sigil->cyberant "土")
+  ;; => {:species :cyber-土, :sigil "土", :tier :local, ...}
+
+  (interpret-foundational-sigils)
+  ;; => {:foundational [...], :interpolation-note "..."}
+
+  ;; Batch convert EoC candidates from M17
+  (batch-convert ["土" "工" "上" "下"])
+  )
