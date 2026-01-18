@@ -1,0 +1,43 @@
+#+title: Exotic Programming Notebook III
+#+STARTUP: inlineimages
+#+PROPERTY: org-image-actual-width 1200
+
+* Edge of Chaos (EoC) Hypotheses
+
+EoC = Edge of Chaos.
+
+** CA / Exotype hypotheses
+
+- EoC emerges when exotype rewrite pressure is strong enough to preserve diversity
+  but not so strong that it collapses into “magma” or static attractors.
+- EoC corresponds to exotypes that preserve multiple competing local motifs rather
+  than enforcing a single attractor (metastable interactions).
+- Phenotype coupling is a key dial: soft constraints (not hard resets) sustain EoC.
+- Certain sigil families may cluster near EoC (controlled mix + low rotation + mid thresholds).
+- Nomination gaps suggest EoC lives on a thin manifold; robustness across contexts
+  is part of exotype “goodness.”
+
+** CA / Exotype validation ideas
+
+- Sweep `update-prob` × `mix-mode` × `match-threshold` to map the EoC manifold.
+- Track stability across context schedules (lock-0/1/2) to quantify fragility.
+- Compare EoC candidates by robustness to perturbations vs degeneracy rates.
+
+* EoC ↔ Cyberants hypotheses
+
+- Both domains reward sustained adaptability: EoC in CA parallels “stable survival
+  + continued exploration” in ants.
+- EoC sigils may encode “controlled perturbation” that maps to exploration–
+  exploitation balance in ant policies.
+- Robust EoC exotypes should generalize across contexts; analogously, cyberants
+  should generalize across grid layouts and food distributions.
+- EoC-driving morphisms could become policy adjustment operators (mode shifts,
+  hunger/tau coupling), acting as regime shifters in ants.
+- Caveat: some EoC sigils may amplify churn without utility; cross-domain checks
+  should test correlation with survival/score improvements.
+
+** EoC ↔ Cyberants validation ideas
+
+- Pick a small EoC-exotype set and test against baseline AIF ants for survival.
+- Measure transfer: do EoC sigils improve score stability across varied maps?
+- Identify “busy but useless” cases where EoC ≠ ant utility.
