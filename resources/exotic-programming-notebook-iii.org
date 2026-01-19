@@ -91,6 +91,307 @@ EoC = Edge of Chaos.
 - Measure transfer: do EoC sigils improve score stability across varied maps?
 - Identify “busy but useless” cases where EoC ≠ ant utility.
 
+* Mission 0 — Self-Transfer: CT-Native EoC Discovery
+
+Goal: build MMCA-native xenotypes expressed in category theory that can
+reliably find, recognize, and produce Edge of Chaos effects from any
+starting configuration.
+
+** The foundational problem
+
+All other missions depend on transferring "good" patterns to external
+domains (ants, music, Q&A, math). But what makes a pattern "good"?
+
+Current answer: Joe inspects visually and knows EoC when he sees it.
+Computational proxies (entropy, diversity) approximate this, but they're
+only proxies.
+
+For exotic programming to be a *method* rather than an art, we need:
+1. Programmatic EoC recognition that matches human judgment
+2. CT-formalized selection that guides any configuration toward EoC
+
+** The self-transfer insight
+
+Instead of: exotypes → external domain (ants) → xenotype evaluation
+Do: exotypes → MMCA itself → CT-expressed xenotype evaluation
+
+The xenotype for MMCA *is* MMCA — the system evaluates itself.
+The CT formalism describes both the exotypes AND the evaluation criterion.
+
+** Two layers to develop
+
+*** Analysis layer: Recognizing EoC
+
+Current proxies:
+- Entropy (spatial, temporal)
+- Motif diversity
+- Lyapunov-like stability measures
+- Regime classification (collapse, chaos, EoC, static)
+
+What's missing:
+- CT characterization of EoC (what morphism structure does it have?)
+- Boundary detection (where exactly does EoC end and chaos begin?)
+- Robustness measure (how stable is this EoC across perturbations?)
+
+Hypothesis: EoC has a specific CT signature — perhaps it's where:
+- Identity and projection are in convex combination (泰 tensor)
+- Morphisms neither collapse nor diverge
+- The category has "interesting" but finite structure
+
+*** Program layer: Guiding to EoC
+
+Current approach: evolutionary search, hope to land in 泰 zone
+
+What's needed:
+- Active guidance: given current state, which direction leads to EoC?
+- Hexagram navigation: use 乾/坤/泰 structure to steer
+- Gradient signal: not just "is this EoC?" but "how far from EoC?"
+
+Analogy: PSR/PUR from P4NG (see ~/code/p4ng/main.tex), specialized to CT and MMCA
+
+- *PSR (Pattern Selection Record)*: "Which exotype/sigil do we select, and why now?"
+  Captures the reasoning for selection, not just the outcome.
+  In MMCA: "given this sigil set, we selected these exotypes because X"
+
+- *PUR (Pattern Use Record)*: "What happened when we applied it?"
+  Captures outcomes, evidence, and implications for future use.
+  In MMCA: "we applied these exotypes and EoC/not-EoC resulted"
+
+Together they form a learning loop. Crucially:
+
+*"Rule 110 all the time" produces EoC in the phenotype but is anti-EoC
+at the genotype level.* We want EoC across ALL levels — genotype,
+phenotype, exotype, xenotype. The PSR must capture WHY a selection was
+made, not just that it locally produces interesting dynamics.
+
+This means Mission 0 isn't just "find EoC" but "find EoC-producing
+*processes* that are themselves EoC-like" — creative selection, not
+static rules.
+
+** The fusion metaphor
+
+Nuclear fusion: confine plasma at right temperature/pressure → energy release
+EoC fusion: confine dynamics at right intervention/observation balance → emergence
+
+The 泰 zone is the "ignition point" — parameters where:
+- update-prob ∈ [0.3, 0.7]
+- match-threshold ∈ [0.3, 0.7]
+- The system sustains itself rather than collapsing or exploding
+
+If we can reliably reach and maintain this zone:
+- Any sigil set becomes potentially useful
+- EoC becomes reproducible, not accidental
+- The method generalizes to other domains
+
+** CT formalization of EoC (sketch)
+
+#+begin_src
+;; EoC as categorical structure
+(defn eoc-signature [category]
+  {:morphism-count    ; not too few (static), not too many (chaos)
+   :fixed-points      ; some but not all states are attractors
+   :composition-depth ; chains of morphisms exist but terminate
+   :symmetry-breaking ; structure emerges from uniformity
+   })
+
+;; 泰 tensor interpretation
+;; M = α|target⟩⟨target| + (1-α)I, where α ∈ (0.3, 0.7)
+;; Partial projection: some convergence, some preservation
+#+end_src
+
+** Validation approach
+
+1. *Calibration*: Collect Joe's EoC judgments on many runs
+2. *Feature extraction*: Compute all candidate metrics
+3. *Model fitting*: Find combination that predicts Joe's judgments
+4. *CT interpretation*: Express the winning model in CT terms
+5. *Guidance test*: Can the CT model steer toward EoC?
+
+Success criterion: System finds EoC as reliably as Joe does,
+and can explain *why* a configuration is/isn't EoC in CT terms.
+
+** Connection to other missions
+
+Mission 0 is foundational:
+- Mission A-F transfer patterns to external domains
+- But *which* patterns? The ones Mission 0 identifies as EoC
+- Without reliable EoC detection, we're transferring blindly
+
+The hexagram structure (泰 zone) is our current best theory.
+Mission 0 is about *proving* this theory computationally.
+
+** Implementation modes
+
+*** Easy mode: Long batches with ratchet
+
+- Run MMCA for extended generations with existing ratchet mechanism
+- Let selection pressure find EoC naturally
+- Validation: does the ratchet converge to 泰 zone?
+- Minimal new infrastructure needed
+
+*** Medium mode: Ant battles as xenotype
+
+- Periodically intersperse ant arena evaluation
+- Top-K exotypes fight in colony wars every N generations
+- Survival/stability metrics feed back to MMCA selection
+- May already have wiring for this (check MMCA hook plan above)
+- Question: what's the right evaluation frequency? Too often = slow,
+  too rare = weak selection pressure
+
+*** Hard mode: Evolutionary computing at xenotype level
+
+- Not just using xenotypes as occasional evaluation
+- *Evolving at the xenotype level itself*
+- What this might look like:
+  - Evolving the evaluation criteria (which metrics matter?)
+  - Evolving the ant arena (map layouts, food distributions)
+  - Evolving the transfer function (exotype → cyberant mapping)
+  - Meta-evolution: xenotypes that produce good xenotypes
+- This is "serious" because the search space explodes
+- But also where the real gains might be — finding evaluation
+  criteria we wouldn't have thought of
+
+*** Bootstrap mode: Hexagrams as xenotype for octagrams
+
+The inversion: I Ching doesn't compete with sigils — it *judges* them.
+
+#+begin_src
+Octagram (8-bit) → exotype → MMCA dynamics
+                                 ↓
+                    "Does this look like 泰? Or 否? Or 乾?"
+                                 ↓
+                    Hexagram-based fitness signal
+                                 ↓
+                    Guide octagram evolution
+#+end_src
+
+How it works:
+- Octagrams are the exotype layer (256 raw sigils, random mutations)
+- Hexagrams are the xenotype layer (64 semantic patterns that evaluate)
+- An octagram producing 泰-like dynamics gets boosted
+- An octagram producing 否-like dynamics gets penalized
+- Pure 乾 (collapse) or pure 坤 (frozen) gets filtered
+
+Why this helps:
+- Don't need all 64 hexagrams interpreted — just the diagnostic ones
+  (泰, 否, 乾, 坤, and a few key transition patterns)
+- Ancient framework as evaluation criterion for modern search
+- Tests whether hexagram structure captures something metrics miss
+
+**** The lift: sigils → exotypes → hexagrams
+
+Bootstrap phase uses hexagrams as fixed evaluators. Next step:
+learn to *lift* octagram dynamics to hexagram classifications.
+
+#+begin_src
+sigil (8-bit) → exotype params → MMCA dynamics → hexagram label
+     ↑                                               ↓
+     └─────────── learned mapping ←──────────────────┘
+#+end_src
+
+If we can reliably lift sigils to hexagrams, we've learned:
+- A compression: 256 sigils → 64 hexagram classes
+- Semantic meaning: each class has 乾/坤/泰 interpretation
+- Transfer structure: hexagram relationships predict sigil relationships
+
+This is the PSR/PUR loop for exotypes:
+- PSR: "We selected sigil X because it maps to hexagram Y"
+- PUR: "Sigil X produced dynamics Z, which matches hexagram Y (or not)"
+- Learning: refine the sigil→hexagram mapping based on evidence
+
+**** The 6×6 matrix structure
+
+The 36-bit exotype has natural structure:
+- LEFT (8 bits): spatial input from left neighbor
+- EGO (8 bits): self-state
+- RIGHT (8 bits): spatial input from right neighbor
+- NEXT (8 bits): temporal projection
+- PHENOTYPE (4 bits): 3 parents + 1 offspring
+
+This maps onto a 6×6 matrix:
+
+#+begin_src
+        1     2     3     4     5     6
+      ┌─────┬─────┬─────┬─────┬─────┬─────┐
+   1  │ EGO │  R  │  R  │  R  │  R  │  R  │
+      ├─────┼─────┼─────┼─────┼─────┼─────┤
+   2  │  L  │ EGO │  R  │  R  │  R  │  R  │
+      ├─────┼─────┼─────┼─────┼─────┼─────┤
+   3  │  L  │  L  │NEXT │ P₁  │ P₁  │ P₁  │
+      ├─────┼─────┼─────┼─────┼─────┼─────┤
+   4  │  L  │  L  │ P₁  │NEXT │ P₂  │ P₂  │
+      ├─────┼─────┼─────┼─────┼─────┼─────┤
+   5  │  L  │  L  │ P₁  │ P₂  │NEXT │ P₃  │
+      ├─────┼─────┼─────┼─────┼─────┼─────┤
+   6  │  L  │  L  │ P₁  │ P₂  │ P₃  │ OFF │
+      └─────┴─────┴─────┴─────┴─────┴─────┘
+
+Diagonal:     [EGO, EGO, NEXT, NEXT, NEXT, OFFSPRING]
+Below diag:   LEFT (spatial input from left)
+Above diag:   RIGHT (spatial input from right)
+Lower-right:  Phenotype parents (P₁, P₂, P₃)
+Corner (6,6): Offspring bit
+#+end_src
+
+The hexagram lift is then literally the diagonal:
+
+#+begin_src clojure
+(defn exotype->6x6 [left ego right next phenotype]
+  ;; Arrange 36 bits into 6×6 matrix with structure above
+  ...)
+
+(defn exotype-matrix->hexagram [M]
+  (let [diag (diagonal M)]  ; 6 values
+    (mapv #(if (yang? %) :yang :yin) diag)))
+#+end_src
+
+The diagonal captures:
+- Lines 1-2: EGO (self-state, identity) — lower trigram base
+- Lines 3-5: NEXT (temporal projection) — transition to upper trigram
+- Line 6: OFFSPRING (what emerges) — top line, outcome
+
+The off-diagonals (LEFT/RIGHT) provide spatial context that *conditions*
+the diagonal but doesn't appear directly in the hexagram. This matches
+the I Ching interpretation: the hexagram shows the state/trajectory,
+the spatial context is the "situation" that produced it.
+
+Compression ratio: 36 bits → 6 bits (exactly 6:1)
+Structure preserved: diagonal = self/time, off-diagonal = space
+
+** Implementation path (detailed)
+
+1. *Judgment collection*
+   - Joe labels 100+ MMCA runs as EoC / not-EoC / borderline
+   - Record all metrics for each run
+   - Build ground truth dataset
+
+2. *Metric analysis*
+   - Which metrics correlate with Joe's judgments?
+   - Are there metrics we're missing?
+   - What's the decision boundary?
+
+3. *CT interpretation*
+   - Express winning metrics in CT language
+   - Define EoC as categorical property
+   - Formalize the 泰 signature
+
+4. *Guidance mechanism*
+   - Given current state, compute "EoC gradient"
+   - Suggest parameter adjustments
+   - Test: does guidance improve EoC discovery rate?
+
+5. *Self-application*
+   - Use the EoC-finder to improve the EoC-finder
+   - Meta-level: what's the EoC of EoC-finding?
+
+** The prize
+
+If Mission 0 succeeds:
+- EoC becomes reproducible and explainable
+- Transfer to other domains has solid foundation
+- The method is teachable (not just "Joe's intuition")
+- Exotic programming becomes a science, not an art
+
 * Mission A — Cyberant Pattern Programs (Pilot)
 
 Goal: validate that pattern-programmed cyberants can be compiled, run, and
@@ -313,3 +614,726 @@ external evaluation signals for MMCA runs (cross-domain viability check).
 - Penalize exotypes that consistently fail survival gate.
 - Maintain a portfolio of xenotype-viable exotypes (top-K per regime).
 - Log xenotype audits alongside exotype lineage for later analysis.
+
+* Mission B — MMCA + Xenotype Discovery
+
+Goal: determine whether cross-domain selection pressure (ant arena) helps MMCA
+discover *better* EoC exotypes than internal metrics alone — and whether the
+CT interpretation layer produces *explainable* knowledge.
+
+** Core question
+
+Does xenotype evaluation find EoC exotypes that MMCA alone would miss?
+
+** Experimental design
+
+*** Arm A (MMCA-only)
+
+Run MMCA selection for N generations using only internal EoC metrics:
+- Entropy (spatial + temporal)
+- Motif diversity
+- Lyapunov-like stability measures
+- Robustness across context schedules
+
+*** Arm B (MMCA + xenotype)
+
+Same MMCA selection, but every K generations:
+1. Take top-M exotypes (by MMCA score) + random controls
+2. Run each through ant arena (15 runs: 3 maps × 5 seeds)
+3. Compute xenotype score vector (survival, stability, return-rate, robustness)
+4. Feed back: boost xenotype-viable exotypes, penalize failures
+
+** Success criteria
+
+*** Weak success
+Arm B finds exotypes that are *as good* in MMCA but *better* in ants.
+Interpretation: xenotype acts as tiebreaker among MMCA-equivalent candidates.
+
+*** Strong success
+Arm B finds exotypes that are *better in both domains*.
+Interpretation: cross-domain selection discovers things MMCA alone misses.
+
+*** Very strong success
+Arm B finds exotypes in a *different region of parameter space* — ones MMCA
+would never have explored using internal metrics alone.
+Interpretation: ant arena reveals structure in the EoC manifold that MMCA
+can't see. Xenotype isn't just a filter but a *search guide*.
+
+** The explainability question
+
+The parallel experiment (Codex, current):
+- Tournament A: CT-level stacks (hexagram compositions at semantic level)
+- Tournament B: compiled config merges (raw parameter blending)
+
+This tests: *does the CT layer add explainable structure?*
+
+Hypothesis: CT-level composition should produce:
+1. More interpretable combinations (we can say *why* they work)
+2. Better transfer to new domains (the semantic structure generalizes)
+3. Possibly lower raw performance (interpretation overhead)
+
+The xenotype test is the only way to know if (2) holds — raw MMCA metrics
+can't distinguish "works here" from "works anywhere."
+
+** Connection to 泰 finding
+
+The I Ching discovery showed: semantic structure (hexagram framework) predicts
+parameter zones (泰 ≈ EoC). This suggests the CT layer isn't just notation —
+it's capturing something real about intervention/observation balance.
+
+If xenotype selection + CT composition outperforms xenotype + raw params,
+that's evidence the semantic layer is doing useful work.
+
+** What we might learn
+
+1. Whether xenotype feedback improves EoC discovery (validates cross-domain)
+2. Whether CT interpretation adds value beyond parameter mapping
+3. Which hexagrams/patterns are "universal" (work across domains) vs "local"
+4. The shape of the EoC manifold as seen from multiple domains
+
+** Implementation notes
+
+- Reuse Mission A infrastructure (cyberant adapter, ant sim, metrics)
+- Add MMCA callback hook for xenotype evaluation
+- Log both arms with full lineage for post-hoc analysis
+- Consider factorial: (MMCA-only, MMCA+xeno) × (CT-stack, raw-params)
+
+* Mission C — Nonstarter Transfer (Speculative)
+
+Goal: test whether the 泰 pattern (and hexagram structure generally) predicts
+sustainable creative practice in the nonstarter/art market domain.
+
+** The three-domain transfer hypothesis
+
+If "patterns of improvisation" are real, the same structure should work across:
+
+| Concept      | MMCA              | Ants                 | Nonstarters          |
+|--------------+-------------------+----------------------+----------------------|
+| 乾 (yang)    | update-prob=1.0   | forage-only, starve  | overbid, burnout     |
+| 坤 (yin)     | update-prob=0.0   | passive trail-follow | underbid, stall      |
+| 泰 (balance) | EoC zone          | gather-return cycle  | bid/clear rhythm     |
+| Exotype      | sigil → params    | cyberant config      | practice regime      |
+| Xenotype     | ant arena         | other colony (war)   | market feedback      |
+
+** Nonstarter domain concepts
+
+*** Exotype (internal practice regime)
+- Bid rate: how often you propose/start new work
+- Clear rate: how often you finish/ship
+- Hold capacity: WIP limits, parallel projects
+- Precision: how much market signal you attend to
+
+*** Xenotype (external evaluation)
+- Market clears: do your bids get accepted? (commissions, grants, sales)
+- Survival: sustaining practice over time (not quitting)
+- Stability: consistent output without boom/bust cycles
+- GFE accumulation: genuine frontier expansion (new capabilities, reach)
+- Robustness: works across contexts (commissions, spec, grants, day-job)
+
+** The 泰 prediction
+
+Pure 乾 artist: starts everything, finishes nothing, burns out
+Pure 坤 artist: waits for permission, never ships, stalls out
+泰 artist: balanced bid/clear cycle, sustainable output, survives
+
+The 泰 zone in nonstarter terms:
+- bid-rate ∈ [0.3, 0.7] (not overbidding, not underbidding)
+- clear-rate ∈ [0.3, 0.7] (finishing enough to learn, not rushing)
+- market-attention ∈ [0.3, 0.7] (responsive but not reactive)
+
+** Hexagram interpretations for practice
+
+Some candidate mappings:
+
+- ䷊ 泰 (11): Dynamic balance — the sustainable practice regime
+- ䷋ 否 (12): Obstruction — when bid/clear cycle breaks down
+- ䷀ 乾 (1): Pure assertion — good for launches, bad for maintenance
+- ䷁ 坤 (2): Pure reception — good for learning phases, bad if stuck
+- ䷄ 需 (5): Waiting — strategic pause, not stall
+- ䷝ 離 (30): Clinging/Clarity — focused execution sprint
+
+** Testing approach
+
+Unlike MMCA and ants, we can't run controlled experiments on humans.
+But we can:
+
+1. Retrospective analysis: map past practice regimes to hexagrams,
+   check if 泰-like periods correlate with sustainable output
+
+2. Prospective tracking: use bid/clear logging (futon5a/track.clj)
+   to monitor practice regime, watch for 乾/坤 drift
+
+3. Intervention design: when stuck, consult hexagram for diagnosis
+   (am I too 乾? too 坤?) and prescribed shift
+
+4. Cross-check: do the same patterns that work in ant tournaments
+   predict good practice regimes? (indirect validation)
+
+** The meta-question
+
+If transfer works across all three domains, what does that mean?
+
+Hypothesis: the intervention/observation balance (yang/yin, creative/receptive)
+is a *universal* structure that applies wherever agents interact with
+environments. The I Ching encoded this 3000 years ago; we're rediscovering
+it through computational experiments.
+
+This would validate "exotic programming" as a genuine methodology:
+patterns discovered in one domain (CA) transfer to others (ants, art)
+through the CT interpretation layer.
+
+** Connection to job search
+
+The "sustainability meta-probe" (job search as nonstarter) is itself
+a test case:
+
+- Too 乾: spray applications everywhere, no focus, burnout
+- Too 坤: wait for perfect opportunity, never apply, stall
+- 泰: balanced search with clear criteria, sustainable pace
+
+GFE evaluation of job opportunities follows the same pattern:
+attend to market signal (offers, interviews) but don't be purely reactive.
+
+* Mission D — Music Domain Transfer
+
+Goal: extend the pattern transfer framework to music — both for *analyzing*
+existing music (aesthetic lens) and *creating* new music (composition tool).
+
+** Existing infrastructure (from AGENTS.md)
+
+FUTON5 already plans music integration:
+
+- Milestone B: Alda + Overtone integration
+- Section 4.1: "Let operators sound their transformations"
+- "Audible debugging" of pattern transforms
+- Link CA states to sound patterns (sonification)
+
+** Audio display for EoC
+
+Immediate goal: *hear* edge-of-chaos rather than just see it.
+
+Sonification mapping ideas:
+- Entropy → pitch range (low entropy = narrow, high = wide)
+- Motif diversity → harmonic complexity
+- Update frequency → rhythm density
+- Spatial clustering → stereo positioning
+- Regime transitions → timbral shifts
+
+This gives a direct perceptual channel for EoC detection. Some dynamics
+might be easier to hear than see (e.g., subtle phase relationships).
+
+** The four-domain table (updated)
+
+| Concept      | MMCA              | Ants                 | Nonstarters          | Music                |
+|--------------+-------------------+----------------------+----------------------+----------------------|
+| 乾 (yang)    | update-prob=1.0   | forage-only, starve  | overbid, burnout     | overplaying, no space|
+| 坤 (yin)     | update-prob=0.0   | passive trail-follow | underbid, stall      | underplaying, sparse |
+| 泰 (balance) | EoC zone          | gather-return cycle  | bid/clear rhythm     | call/response groove |
+| Exotype      | sigil → params    | cyberant config      | practice regime      | performance params   |
+| Xenotype     | ant arena         | other colony (war)   | market feedback      | listener/band response|
+
+** Aesthetic analysis: Neubauten vs Coleman
+
+Both are 泰-zone artists operating at edge-of-chaos, but in different parameter spaces:
+
+*** Einstürzende Neubauten
+- Industrial materials, extreme timbres
+- 乾 on *texture* (aggressive intervention on sound)
+- 泰 on *form* (structured chaos, not pure noise)
+- High update-prob on timbre, moderate on rhythm
+- Xenotype: audience endurance, mosh pit dynamics
+
+*** Ornette Coleman
+- Harmolodic freedom, melodic assertion
+- 泰 on *melody* (free but coherent)
+- High reception on *group dynamics* (listening-based improv)
+- Moderate update-prob, high match-threshold (melodic coherence)
+- Xenotype: band response, collective groove
+
+The hexagram lens reveals: *where* is each artist's 泰 zone? What parameters
+are they balancing? This is more precise than "they're both experimental."
+
+** Composition/improvisation tool
+
+Use hexagrams as:
+
+1. *Diagnostic*: "This section feels too 乾, needs more 坤"
+2. *Prescriptive*: "Try hexagram 57-xùn here: gentle persistence"
+3. *Structural*: "A = 乾 (attack), B = 坤 (sustain), C = 泰 (resolution)"
+4. *Mode selection*: Different hexagrams for different instruments/voices
+
+Example score annotation:
+#+begin_src
+[A section] ䷀ 乾 - full assertion, all instruments forte
+[B section] ䷁ 坤 - receptive, space, let decay happen
+[C section] ䷊ 泰 - call/response, drums+bass meet melody
+[Bridge]    ䷋ 否 - deliberate obstruction, tension builder
+#+end_src
+
+** Sonification protocol (sketch)
+
+#+begin_src clojure
+;; Map MMCA state → Alda/Overtone events
+(defn mmca->sound [grid metrics]
+  {:pitch    (scale-entropy (:entropy metrics) :minor)
+   :rhythm   (density->bpm (:update-rate metrics))
+   :timbre   (regime->instrument (:regime metrics))
+   :dynamics (diversity->velocity (:motif-count metrics))})
+
+;; Map hexagram → musical mode
+(defn hexagram->mode [hex]
+  (case (:number hex)
+    1  {:mode :lydian :tempo :fast :dynamics :fff}     ; 乾
+    2  {:mode :aeolian :tempo :slow :dynamics :pp}     ; 坤
+    11 {:mode :dorian :tempo :moderate :dynamics :mf}  ; 泰
+    ...))
+#+end_src
+
+** Implementation path
+
+1. *Audio display (quick win)*
+   - Wire MMCA metrics → Overtone/Alda
+   - Real-time sonification of CA runs
+   - Hear EoC vs collapse vs stasis
+
+2. *Hexagram → music mapping*
+   - Define musical interpretation for each hexagram
+   - Add @music-interpretation block to hexagram patterns
+   - Test: does 泰 hexagram produce 泰-sounding music?
+
+3. *Composition assistant*
+   - Input: desired structure (e.g., "泰 resolving to 坤")
+   - Output: suggested musical parameters
+   - Test against real compositions (Neubauten, Coleman, etc.)
+
+4. *Aesthetic analysis tool*
+   - Input: audio features (spectral, rhythmic, dynamic)
+   - Output: hexagram classification
+   - Validate: do experts agree with the analysis?
+
+** Xenotype for music
+
+What's the "ant war" equivalent for music?
+
+- Listener response (engagement, attention, emotional arc)
+- Band dynamics (does it groove? does it lock?)
+- Recording/performance survival (does it get played again?)
+- Cultural persistence (does it enter the repertoire?)
+
+These are harder to measure than ant survival, but not impossible:
+- Streaming data, skip rates
+- Concert recordings, audience response
+- Cover versions, citations
+- Expert evaluations
+
+** Connection to exotic programming thesis
+
+If the same 泰 structure that predicts EoC in MMCA also predicts:
+- Sustainable ant colonies
+- Sustainable creative practice
+- Compelling music
+
+...then "patterns of improvisation" is genuinely universal.
+
+Music is arguably the *original* domain for this kind of thinking.
+Jazz improvisers have always known about 泰 — they just called it
+"the pocket" or "the groove."
+
+** Playable arrangements (existing work)
+
+We already have infrastructure for generating physical instrument arrangements:
+
+*** resources/chicago.tex
+Chord chart for Chicago tuning (banjo) with:
+- Major, minor, Δ7 voicings
+- Fret positions and fingering shapes
+- Interval structure notation (1-3-5-1, etc.)
+
+*** resources/ii_v_circle.tex
+ii-V-I progressions in all 12 keys with:
+- Fret diagrams for each chord
+- Grip notation (interval structure)
+- Voice leading costs (finger movement distance)
+- Total cost per progression (optimization target)
+
+This is the "playable arrangements" concept: optimize for physical instrument
+constraints while preserving harmonic content.
+
+** Extending to ensembles
+
+The same principles should scale to:
+
+1. *String quartet*
+   - Four voices with range/crossing constraints
+   - Voice leading costs per part
+   - Physical playability (string crossings, positions)
+   - Hexagram-guided texture (乾 = tutti assertion, 坤 = solo + silence)
+
+2. *Jazz combo*
+   - Rhythm section + horns
+   - Comping patterns as 泰 (support without dominate)
+   - Solo sections as controlled 乾 (assertion with band 坤 response)
+
+3. *Improvisation group*
+   - Real-time hexagram cues
+   - Mode shifts as morphisms
+   - Collective 泰 as the goal state
+
+** The arrangement compiler (sketch)
+
+#+begin_src clojure
+(defn hexagram->arrangement
+  "Generate playable arrangement from hexagram + instrumentation"
+  [hex instruments]
+  (let [texture (hexagram->texture hex)           ; tutti/solo/call-response
+        dynamics (hexagram->dynamics hex)          ; fff/pp/mf
+        voice-leading (optimize-for-instruments    ; physical constraints
+                        (:voicing texture)
+                        instruments)]
+    {:score voice-leading
+     :parts (partition-by-instrument voice-leading instruments)
+     :cues (generate-conductor-cues hex)}))
+#+end_src
+
+** Integration with EoC sonification
+
+The arrangement compiler connects back to Mission D core:
+- MMCA run → hexagram sequence (based on regime)
+- Hexagram sequence → arrangement score
+- Arrangement score → playable parts
+
+This closes the loop: CA dynamics become performable music.
+
+** Voice leading optimizer (existing code)
+
+~futon5.ii-v-i~ (~src/futon5/ii_v_i.clj~, ~1200 lines) implements dynamic
+programming for optimal voice leading:
+
+*** Core algorithm
+- ~best-sequence~, ~best-triplet~, ~best-pair~ — DP over chord candidates
+- ~candidate-voicings~ — enumerate valid shapes for a chord
+- ~transition-cost~ — measure finger movement between shapes
+- ~fingering-cost~ — model physical playability (span, stretch, barre)
+
+*** Cost model
+- Span penalties (weighted by fret position)
+- Barre bonuses (same fret across strings = easier)
+- Anchor points (common tones reduce transition cost)
+- Per-finger deviation from ideal position
+
+*** Output
+- TikZ fret diagrams with fingerings and costs
+- Circle-of-fourths generation for all 12 keys
+- Total cost = sum of chord costs + transition costs
+
+*** Extension path
+
+This infrastructure generalizes to:
+
+1. *String quartet*: Replace chicago-shapes with string ranges/positions,
+   fingering-cost with bowing/position-change costs
+
+2. *Hexagram-guided voicing*: Add hexagram → voicing-preference map,
+   e.g., 乾 prefers wide voicings (assertion), 坤 prefers close (receptive)
+
+3. *EoC → arrangement*: Use MMCA regime to select hexagram → voicing style,
+   generate physically playable score that embodies the CA dynamics
+
+* Mission E — Collaborative Dynamics (Ensemble / Peeragogy)
+
+Goal: extend the pattern transfer framework to multi-agent collaboration —
+jazz ensembles, peer learning groups, any system where multiple agents
+improvise together.
+
+** The key distinction
+
+Mission D addresses *individual* instrument constraints (one player's
+physical playability). Mission E addresses *ensemble* dynamics — the
+relationships between collaborating agents.
+
+** The five-domain table (updated)
+
+| Concept      | MMCA              | Ants                 | Nonstarters          | Music (solo)         | Collaboration        |
+|--------------+-------------------+----------------------+----------------------+----------------------+----------------------|
+| 乾 (yang)    | update-prob=1.0   | forage-only          | overbid              | overplaying          | dominating           |
+| 坤 (yin)     | update-prob=0.0   | passive follow       | underbid             | underplaying         | passive/silent       |
+| 泰 (balance) | EoC zone          | gather-return        | bid/clear rhythm     | call/response        | mutual exchange      |
+| Exotype      | sigil → params    | cyberant config      | practice regime      | performance params   | collaboration style  |
+| Xenotype     | ant arena         | other colony         | market feedback      | listener response    | group learning       |
+
+** Jazz ensemble as paradigm case
+
+*** The Coleman Quartet (c. 1959-1961)
+
+Classic free jazz quartet as a 泰 system:
+
+- *Ornette Coleman* (alto): melodic 乾, asserting lines, initiating phrases
+- *Don Cherry* (pocket trumpet): responsive 乾, answering, complementing
+- *Charlie Haden* (bass): harmonic 坤, grounding, sustaining
+- *Ed Blackwell/Billy Higgins* (drums): rhythmic 泰, mediating, balancing
+
+The quartet works because the roles create dynamic equilibrium. Pure 乾
+(everyone soloing) = chaos. Pure 坤 (everyone waiting) = silence.
+泰 = the pocket.
+
+*** The Double Quartet ("Free Jazz", 1961)
+
+Two complete quartets playing simultaneously:
+- Left channel: Coleman, Cherry, Haden, Blackwell
+- Right channel: Eric Dolphy, Freddie Hubbard, Scott LaFaro, Billy Higgins
+
+This is *two 泰 zones interacting* — like two ant colonies, but cooperating.
+
+Analytical questions:
+- When are the two quartets in phase (collective 泰)?
+- When does one go 乾 while the other provides 坤 backdrop?
+- How do they avoid collision vs. create productive interference?
+- What's the xenotype? (Album sales? Critical reception? Influence?)
+
+** Peeragogy as general framework
+
+Jazz is one instance; the general case is *peer collaboration*:
+
+- Peer learning groups
+- Open source projects
+- Co-authorship
+- Jam sessions (musical or otherwise)
+- Any system where multiple agents improvise toward shared goals
+
+Peeragogy concepts (to be integrated from external work):
+- Roles and role-switching
+- Heartbeat (regular rhythms of engagement)
+- Carrying capacity (sustainable participation levels)
+- Scrapbook (collective memory)
+- Roadmap (shared direction without fixed destination)
+
+These map naturally to hexagram dynamics:
+- Role-switching = hexagram transitions
+- Heartbeat = 泰 rhythm maintenance
+- Carrying capacity = avoiding 乾 burnout
+- Scrapbook = 坤 receptive memory
+- Roadmap = collective VISION in FUTON terms
+
+** Hexagram analysis of collaboration patterns
+
+| Hexagram | Collaboration Pattern | Jazz Analog |
+|----------+-----------------------+-------------|
+| ䷀ 乾 | All asserting, no listening | Collective solo (chaos) |
+| ䷁ 坤 | All waiting, no initiative | Dead air |
+| ䷊ 泰 | Dynamic exchange | The pocket / groove |
+| ䷋ 否 | Blocked, no flow | Train wreck, lost form |
+| ䷄ 需 | Strategic waiting | Trading fours setup |
+| ䷌ 同人 | Fellowship, alignment | Tight unison passage |
+| ䷍ 大有 | Abundance, flourishing | Peak collective improv |
+
+** Xenotype for collaboration
+
+What's the "ant war" equivalent for human collaboration?
+
+- *Learning outcomes*: Did participants grow?
+- *Output quality*: Is the product good?
+- *Sustainability*: Can the group continue?
+- *Propagation*: Do ideas spread beyond the group?
+- *Satisfaction*: Do participants want to continue?
+
+These are harder to measure than ant survival but structurally similar:
+external evaluation of whether the collaboration "works."
+
+** Implementation sketch
+
+1. *Retrospective analysis*
+   - Annotate recordings/transcripts with hexagram labels
+   - Track transitions: who triggers 乾→泰, 泰→否, etc.
+   - Correlate with outcomes (learning, quality, satisfaction)
+
+2. *Real-time facilitation*
+   - Hexagram cues for group process
+   - "We're drifting 乾, need more 坤"
+   - Role-rotation prompts based on current pattern
+
+3. *Collaboration design*
+   - Structure sessions with hexagram arcs
+   - Plan 乾 openings, 泰 development, 坤 integration phases
+   - Match participant styles to needed roles
+
+** Connection to ant tournaments
+
+The Codex tournament (CT-stacks vs compiled configs) is structurally
+similar to ensemble dynamics:
+
+- CT-stack = role-differentiated ensemble (each hexagram = different voice)
+- Compiled config = blended ensemble (merged parameters, less distinct roles)
+
+If CT-stacks outperform compiled configs, that's evidence for the value
+of *distinct roles* in collaboration — supporting the Peeragogy insight
+that differentiated contributions outperform homogenized participation.
+
+** TODO: Import Peeragogy materials
+
+External work to integrate:
+- Peeragogy Handbook patterns
+- Role/antipattern analysis
+- Case studies from peer learning projects
+
+This would ground Mission E in existing collaborative practice research.
+
+* Mission F — Q&A Agents and Mathematical Discovery
+
+Goal: extend pattern transfer from AIF ants to Fulab agents to Q&A agents,
+realizing Turing's 1951 vision of machines that "converse with each other
+to sharpen their wits" — and ultimately building a mathematical discovery
+engine.
+
+** The transfer chain
+
+#+begin_src
+AIF Ants → Fulab Agents → Q&A Agents → Math Discovery
+   ↑            ↑              ↑              ↑
+ (done)    (similar arch)  (Turing '51)   (the prize)
+#+end_src
+
+*** Step 1: AIF Ants (validated)
+- Cyberant adapter translates exotypes → AIF configs
+- Xenotype evaluation via ant arena / colony wars
+- Early results: cyberants beat AIF baseline
+- 泰 zone predicts sustainable foraging behavior
+
+*** Step 2: Fulab Agents (next)
+- Fulab architecture closely resembles AIF
+- Same precision/policy/adaptation structure
+- Transfer should be straightforward
+- Xenotype: can agents solve Fulab challenges?
+
+*** Step 3: Q&A Agents (LEAPQA / SFI vision)
+- Stack Exchange as training ground (18M questions, 13M answered)
+- Agents gain fitness by asking and answering questions
+- TPG-like composition: teams of interlinked rules
+- IAD framework (Ostrom): hexagrams as institutional rules
+- Xenotype: reputation, problem-solving success
+
+*** Step 4: Mathematical Discovery
+- Q&A agents applied to mathematical domains
+- Kolmogorov calculus of problems: Q ⊢ A
+- Pólya heuristic as morphism: hard problem → easier problem
+- Discovery = finding new Q that yields new A
+- Xenotype: provable theorems, novel conjectures
+
+** Architectural correspondence
+
+| Component | AIF Ants | Fulab | Q&A Agents | Math Discovery |
+|-----------+----------+-------+------------+----------------|
+| State | position, cargo, hunger | task state | knowledge state | proof state |
+| Action | forage, return, hold | API calls | ask, answer, vote | conjecture, prove |
+| Observation | pheromone, food, walls | responses | other Q&A, votes | counterexamples |
+| Policy | foraging strategy | task selection | question strategy | search heuristics |
+| Precision | env vs internal weight | confidence | certainty weighting | rigor level |
+| Xenotype | survival, score | task success | reputation | theorems proved |
+
+** Hexagram interpretation for Q&A
+
+| Hexagram | Q&A Behavior |
+|----------+--------------|
+| ䷀ 乾 | Asserting answers without reading the question |
+| ䷁ 坤 | Reading without contributing |
+| ䷊ 泰 | Dialogic exchange: ask clarifying Qs, provide scaffolded As |
+| ䷋ 否 | Stuck: question unclear, answer unhelpful |
+| ䷄ 需 | Strategic waiting: let the question mature |
+| ䷌ 同人 | Agreement: converging on consensus answer |
+
+The 泰 zone for Q&A agents:
+- ask-rate ∈ [0.3, 0.7] (not just lurking, not just posting)
+- answer-confidence ∈ [0.3, 0.7] (not overclaiming, not too tentative)
+- context-attention ∈ [0.3, 0.7] (attending to discussion, not ignoring)
+
+** Turing's 1951 Vision
+
+From "Intelligent Machinery, A Heretical Theory":
+
+"What we want is a machine that can learn from experience...
+[machines] might still be made to rival [humans] in chess.
+This... could be done fairly easily by... letting them play
+against each other... with a mechanism for intercommunication.
+They could ... converse with each other to sharpen their wits."
+
+This is exactly the xenotype framework:
+- Agents play against each other (ant war, Q&A competition)
+- Intercommunication (shared knowledge base, Q&A threads)
+- Sharpening wits (evolution toward better patterns)
+
+** Kolmogorov connection
+
+The arrow work (M9.5/M9.6) directly supports this:
+- Terms as knowledge representations
+- Normalization as inference
+- Mining arrows from corpora (Stack Exchange → formal patterns)
+
+Q ⊢ A in Kolmogorov's sense: a well-posed question *proves* its answer.
+The agent's job: learn to pose well-posed questions.
+
+** Koans as curriculum
+
+"Stepping stones, starting from simplest possible tasks and growing in
+complexity" (Arthur & Polak, SFI 2004):
+
+1. Trivial koans: pattern matching, simple lookup
+2. Basic inference: one-step deduction
+3. Multi-step: chaining inferences
+4. Creative: generating new questions
+5. Discovery: questions that yield novel theorems
+
+Hexagram transitions map the curriculum:
+- 坤 (receptive learning) → 泰 (dialogic practice) → 乾 (creative contribution)
+
+** Implementation path
+
+1. *Fulab adapter* (immediate)
+   - Mirror cyberant adapter for Fulab architecture
+   - Validate transfer: do 泰-configured agents perform well?
+
+2. *Q&A simulation environment*
+   - Synthetic Stack Exchange with bot participants
+   - Reputation as xenotype fitness
+   - Simple koans as initial content
+
+3. *Knowledge extraction* (T1 from LEAPQA)
+   - Stack Exchange → formal representations
+   - Argument modeling, semantic structure
+   - Feed into agent knowledge bases
+
+4. *Heuristic reasoning* (T2 from LEAPQA)
+   - Agents reason over extracted knowledge
+   - Pólya-style problem transformation
+   - Generate questions that lead to answers
+
+5. *Mathematical domain*
+   - Apply to formal math Q&A (MathOverflow, Lean prover)
+   - Conjecture generation
+   - Proof search guided by hexagram heuristics
+
+** Risk and reward
+
+Risk: Each step in the transfer chain could fail.
+- Fulab might not transfer cleanly
+- Q&A dynamics might be fundamentally different
+- Mathematical discovery might require something we don't have
+
+Reward: If it works, we have:
+- A general methodology for agent design across domains
+- A path to Turing's vision of self-improving AI
+- Potential for genuine mathematical discovery
+- Validation that "patterns of improvisation" are universal
+
+** SFI pitch (updated)
+
+"In 2019 we proposed agent-based Q&A learning. The infrastructure didn't
+exist. Now it does:
+
+- MMCA provides evolutionary search over agent configurations
+- Cyberant adapter demonstrates AIF transfer (validated on ants)
+- Hexagram framework provides institutional rules (IAD equivalent)
+- Xenotype evaluation closes the learning loop
+- Arrow infrastructure supports Kolmogorov-style reasoning
+
+We request support to extend the transfer chain: ants → Fulab → Q&A → math.
+Each step is testable. If transfer fails, we learn where. If it succeeds,
+we approach Turing's 1951 vision."
