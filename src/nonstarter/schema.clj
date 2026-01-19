@@ -88,11 +88,29 @@
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
+   "-- Personal weeks: bids/clears for time allocation
+    CREATE TABLE IF NOT EXISTS personal_weeks (
+      week_id TEXT PRIMARY KEY,
+      bids TEXT,
+      clears TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Personal blocks: reconciled week summaries
+    CREATE TABLE IF NOT EXISTS personal_blocks (
+      id TEXT PRIMARY KEY,
+      week_id TEXT NOT NULL REFERENCES personal_weeks(week_id),
+      summary TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
    "-- Indexes for common queries
     CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status)"
    "CREATE INDEX IF NOT EXISTS idx_votes_proposal ON votes(proposal_id)"
    "CREATE INDEX IF NOT EXISTS idx_funding_proposal ON funding_events(proposal_id)"
    "CREATE INDEX IF NOT EXISTS idx_xenotypes_simulation ON xenotypes(simulation_id)"
+   "CREATE INDEX IF NOT EXISTS idx_personal_blocks_week ON personal_blocks(week_id)"
 
    "-- Initialize pool if empty
     INSERT OR IGNORE INTO pool (id, balance) VALUES (1, 0)"])
