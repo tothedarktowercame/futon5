@@ -198,6 +198,37 @@ clj -M -m ants.compare \
   --out /home/joe/code/futon5/resources/ants/mission-a-compare-50.edn
 #+end_src
 
+** Commands (tournament: 5x5, repeats per pairing)
+
+#+begin_src
+;; 5x5 round-robin with 20 repeats per pairing (500 runs total).
+clj -M -m ants.tournament \
+  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
+  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
+  --runs 20 --ticks 200 \
+  --out /home/joe/code/futon5/resources/ants/mission-a-tournament.edn
+#+end_src
+
+#+begin_src
+;; Stacked 5-on-5 (all hexes vs all sigils, repeats per run).
+clj -M -m ants.tournament \
+  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
+  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
+  --stacked \
+  --runs 50 --ticks 200 \
+  --out /home/joe/code/futon5/resources/ants/mission-a-stacked-50.edn
+#+end_src
+
+#+begin_src
+;; Stacked-CT 5-on-5 (module-level merge before compile).
+clj -M -m ants.tournament \
+  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
+  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
+  --stacked-ct \
+  --runs 50 --ticks 200 \
+  --out /home/joe/code/futon5/resources/ants/mission-a-stacked-ct-50.edn
+#+end_src
+
 ** Pilot note (first run)
 
 Observed in viz logs: cyberants are active and lead on score + hive reserves
@@ -219,6 +250,20 @@ Tick 200 | Scores Cyber 119.02 vs Sigil 135.15 | G_ema 2.959 | Hive Z:0.00 S:0.0
 Set used for the 50-run comparison:
 - Hexagrams: 44 (gou), 57 (xun), 52 (gen), 43 (guai), 11 (tai)
 - Sigils: 工 土 上 下 升
+
+** Stacked 5-on-5 results (hex vs sigil)
+
+Compiled stacking (merge after compile):
+- Mean score: Hex 133.26 vs Sigil 140.80
+- Win rate: Hex 3/10 vs Sigil 7/10
+
+CT stacking (merge at module level):
+- Mean score: Hex 135.00 vs Sigil 140.60
+- Win rate: Hex 21/50 vs Sigil 29/50
+
+Note: CT stacking materially improved hex win rate even though sigils still lead
+on mean score. This supports the idea that diagram-level composition carries
+useful signal.
 
 ** Next step
 
