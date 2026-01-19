@@ -2,6 +2,7 @@
   "Minimal pattern REPL handshake for Mission 9/10."
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [futon5.adapters.notions :as notions]
             [futon5.exotic.functor :as functor]
             [futon5.exotic.vision :as vision]))
 
@@ -17,6 +18,15 @@
   Returns the registry entry or nil."
   [registry pattern-id]
   (some #(when (= pattern-id (:pattern-id %)) %) (:patterns registry)))
+
+(defn- load-pattern-ct
+  "Try to load CT interpretation from futon3a flexiarg sources."
+  [pattern-id]
+  (when-let [pattern (notions/pattern-by-id pattern-id)]
+    (when-let [ct (:ct-interpretation pattern)]
+      {:pattern-id pattern-id
+       :ct-template ct
+       :source :flexiarg})))
 
 (defn- degenerate-vision [pattern-id]
   (vision/declare-vision
@@ -78,10 +88,12 @@
 (defn pattern-repl-handshake
   "End-to-end stub: pattern-id -> ct-template -> vision skeleton -> plan functor stub
   -> run -> evidence bundle -> lift proposal."
-  [{:keys [pattern-id run-id context registry-path]
-    :or {run-id "demo-run"}}]
+  [{:keys [pattern-id run-id context registry-path use-notions?]
+    :or {run-id "demo-run" use-notions? true}}]
   (let [registry (load-registry (or registry-path default-registry-path))
-        ct-entry (pattern->ct-template registry pattern-id)
+        ct-entry (or (pattern->ct-template registry pattern-id)
+                     (when use-notions?
+                       (load-pattern-ct pattern-id)))
         vision (ct-template->vision pattern-id ct-entry)
         plan-functor (vision->plan-functor-stub vision)
         evidence (run->evidence run-id context)

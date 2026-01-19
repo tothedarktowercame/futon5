@@ -90,3 +90,181 @@ EoC = Edge of Chaos.
 - Pick a small EoC-exotype set and test against baseline AIF ants for survival.
 - Measure transfer: do EoC sigils improve score stability across varied maps?
 - Identify “busy but useless” cases where EoC ≠ ant utility.
+
+* Mission A — Cyberant Pattern Programs (Pilot)
+
+Goal: validate that pattern-programmed cyberants can be compiled, run, and
+evaluated reproducibly, and that the module wiring (policy/precision/sense/adapt)
+matters.
+
+** Protocol
+
+1) Inputs
+- Pattern ids with @ant-interpretation blocks (hexagrams in ~futon3/library/iching~).
+- Optional base sigil for defaults.
+- Program map: ~{:policy ... :precision ... :pattern-sense ... :adapt ...}~.
+
+2) Compilation
+- Use ~futon5.adapters.cyberant/pattern-program->cyberant~ to build a composite
+  cyberant config.
+- Record provenance per module (pattern id + title + source path).
+
+3) Execution (ants sim)
+- Fixed scenario (grid size, food layout, pheromone decay).
+- Run length: 500 ticks (pilot), 10 seeds.
+- Compare against baseline AIF ants and a "single-pattern" cyberant.
+
+4) Evaluation
+- Survival time (mean + variance).
+- Food returned per tick.
+- Pheromone efficiency (food per pheromone unit).
+- Stability: variance of hunger/cargo over time.
+- Qualitative: snapshot traces for a few seeds.
+
+5) Logging + artifacts
+- Save compiled cyberant EDN for each run.
+- Save run summary table (CSV/EDN) with metrics and seed.
+- Save one trace snapshot per condition (for visual inspection).
+
+** Pilot matrix (first pass)
+
+- Program A (EoC-driven):
+  :policy iching/hexagram-44-gou
+  :precision iching/hexagram-52-gen
+  :pattern-sense iching/hexagram-57-xun
+  :adapt iching/hexagram-43-guai
+
+- Program B (cooling / restraint):
+  :policy iching/hexagram-05-xu
+  :precision iching/hexagram-52-gen
+  :pattern-sense iching/hexagram-57-xun
+  :adapt iching/hexagram-12-pi
+
+- Baseline: AIF ants + single-pattern cyberant (choose one hexagram).
+
+** Expected signal
+
+- Program A should be more exploratory (higher movement, higher pheromone use).
+- Program B should be more stable (lower variance, slower decay).
+- If both beat baseline in survival, pattern-program wiring is validated.
+
+** Commands (pilot run + viz)
+
+#+begin_src
+;; Generate composite cyberant configs (Program A + B).
+clj -M -m futon5.adapters.cyberant-cli \
+  --program '{:policy "iching/hexagram-44-gou" :precision "iching/hexagram-52-gen" :pattern-sense "iching/hexagram-57-xun" :adapt "iching/hexagram-43-guai"}' \
+  --out resources/ants/mission-a-program-a.edn
+
+clj -M -m futon5.adapters.cyberant-cli \
+  --program '{:policy "iching/hexagram-05-xu" :precision "iching/hexagram-52-gen" :pattern-sense "iching/hexagram-57-xun" :adapt "iching/hexagram-12-pi"}' \
+  --out resources/ants/mission-a-program-b.edn
+
+;; Generate a single-pattern cyberant baseline.
+clj -M -m futon5.adapters.cyberant-cli \
+  --pattern iching/hexagram-57-xun \
+  --out resources/ants/mission-a-baseline.edn
+#+end_src
+
+#+begin_src
+;; Visualize a run (from futon2).
+clj -M -m ants.visual --config /home/joe/code/futon5/resources/ants/mission-a-program-a.edn
+#+end_src
+
+** Commands (50-run comparison: hexagrams vs sigils)
+
+#+begin_src
+;; Build a small hexagram set.
+clj -M -m futon5.adapters.cyberant-cli \
+  --pattern iching/hexagram-44-gou \
+  --pattern iching/hexagram-57-xun \
+  --pattern iching/hexagram-52-gen \
+  --pattern iching/hexagram-43-guai \
+  --pattern iching/hexagram-11-tai \
+  --out resources/ants/mission-a-hex-list.edn
+
+;; Build a sigil set.
+clj -M -m futon5.adapters.cyberant-cli \
+  --sigil 工 --sigil 土 --sigil 上 --sigil 下 --sigil 升 \
+  --out resources/ants/mission-a-sigil-list.edn
+#+end_src
+
+#+begin_src
+;; Run 50 comparisons (from futon2).
+clj -M -m ants.compare \
+  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
+  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
+  --runs 50 --ticks 200 \
+  --out /home/joe/code/futon5/resources/ants/mission-a-compare-50.edn
+#+end_src
+
+** Pilot note (first run)
+
+Observed in viz logs: cyberants are active and lead on score + hive reserves
+around tick 195–200.
+
+#+begin_src
+Tick 195 | Scores Cyber 150.24 vs AIF 138.79 | Hive Z:17.49 A:6.04 | Pop Z:06 A:06 | ...
+Tick 200 | Scores Cyber 153.04 vs AIF 139.49 | Hive Z:16.84 A:3.29 | Pop Z:06 A:06 | ...
+#+end_src
+
+** Pilot note (sigil vs hexagram)
+
+In a sigil vs hexagram run, sigils outperformed the hexagram cyberants.
+
+#+begin_src
+Tick 200 | Scores Cyber 119.02 vs Sigil 135.15 | G_ema 2.959 | Hive Z:0.00 S:0.00 | Pop Z:06 S:06 | ...
+#+end_src
+
+Set used for the 50-run comparison:
+- Hexagrams: 44 (gou), 57 (xun), 52 (gen), 43 (guai), 11 (tai)
+- Sigils: 工 土 上 下 升
+
+** Next step
+
+Use cyberant regimes as a xenotype: treat ant survival + stability metrics as
+external evaluation signals for MMCA runs (cross-domain viability check).
+
+** Xenotype sketch (ants → MMCA)
+
+- Fixed horizon: T=200 ticks per run.
+- Survival rate: fraction of runs where the queen survives to T.
+- Early failure: time-to-queen-starvation (only when queen dies before T).
+- Sustained return: food returned per tick (mean + variance).
+- Stability: hunger + reserve variance (avoid brittle spikes).
+- Exploration balance: pheromone efficiency + movement diversity.
+- Robustness: variance across seeds/maps.
+
+** Big-picture snapshot (where we are now)
+
+- Exotypes (sigils) are operational and stable.
+- Xenotypes now have a concrete instantiation via cyberant regimes.
+- End-to-end pipeline works: patterns → cyberants → ant sim → metrics.
+- Early evidence: sigil-based cyberants are ahead of hexagrams on the current set.
+- Next integration task: plug ant xenotype scores into MMCA as a slow evaluator
+  (every N exotype gens), using fixed-horizon metrics.
+
+** MMCA hook plan (ant xenotype)
+
+1) Trigger point
+- Run ant xenotype every N exotype generations (e.g., N=100).
+- Input: top-K exotypes (by current MMCA score) + a few random controls.
+
+2) Adapter
+- Map exotype → cyberant config (sigil-based by default).
+- Optionally allow hexagram mapping as a comparison arm.
+
+3) Battery
+- Fixed horizon T=200 ticks.
+- 3 maps × 5 seeds (15 runs per exotype).
+- Record survival rate + early failure time + stability metrics.
+
+4) Scoring
+- Produce a xenotype score vector (not scalar) per exotype:
+  {:survival-rate .. :early-fail-mean .. :return-rate .. :stability .. :robustness ..}
+- Collapse to a conservative scalar only for culling (e.g., survival-rate gate).
+
+5) Integration
+- Penalize exotypes that consistently fail survival gate.
+- Maintain a portfolio of xenotype-viable exotypes (top-K per regime).
+- Log xenotype audits alongside exotype lineage for later analysis.

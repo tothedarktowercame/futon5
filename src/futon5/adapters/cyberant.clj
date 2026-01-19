@@ -11,7 +11,8 @@
    - Sigil → exotype params (existing, via futon5.mmca.exotype)
    - Exotype params → CT interpretation (mode structure, transitions)
    - CT interpretation → AIF policy config (cyberant terminals)"
-  (:require [futon5.mmca.exotype :as exotype]))
+  (:require [futon5.adapters.notions :as notions]
+            [futon5.mmca.exotype :as exotype]))
 
 ;; =============================================================================
 ;; Sigil → Exotype (already exists, re-expose)
@@ -191,10 +192,165 @@
       exotype->ct-interpretation
       ct-interpretation->cyberant-config))
 
+(defn- base-config
+  "Create a default cyberant config when no sigil or exotype is available."
+  [sigil]
+  {:species (keyword (str "cyber-" (or sigil "pattern")))
+   :sigil sigil
+   :tier :pattern
+   :policy-priors (mode-bias->policy-priors :adaptive)
+   :default-mode :outbound
+   :precision {:Pi-o 0.6 :tau 0.5}
+   :pattern-sense (coordination->pattern-behavior :independent)
+   :adapt-config {}
+   :phenotype-coupling {:enabled? false :hunger-weight 0.1 :cargo-weight 0.2}})
+
+(defn- apply-ant-interpretation
+  "Overlay an ant-interpretation block onto a cyberant config."
+  [config ant]
+  (let [policy (:policy ant)
+        precision (:precision ant)
+        pattern-sense (:pattern-sense ant)
+        adapt-trigger (:adapt-trigger ant)
+        policy-priors (or (:policy-priors policy)
+                          (when-let [bias (:mode-bias policy)]
+                            (mode-bias->policy-priors bias)))]
+    (cond-> config
+      policy-priors (assoc :policy-priors policy-priors)
+      (:mode-bias policy) (assoc :default-mode (:mode-bias policy))
+      (number? (:Pi-o precision)) (assoc-in [:precision :Pi-o] (:Pi-o precision))
+      (number? (:tau precision)) (assoc-in [:precision :tau] (:tau precision))
+      (map? pattern-sense) (assoc :pattern-sense pattern-sense)
+      (seq adapt-trigger) (update :adapt-config merge
+                                  {:trigger (:condition adapt-trigger)
+                                   :switch-to (:switch-to adapt-trigger)
+                                   :interpretation (:interpretation adapt-trigger)})
+      (:failure-mode ant) (assoc-in [:ant-provenance :failure-mode] (:failure-mode ant))
+      true (assoc :ant-provenance ant))))
+
+(defn- module-policy
+  "Extract policy settings from an ant-interpretation block."
+  [ant]
+  (let [policy (:policy ant)
+        policy-priors (or (:policy-priors policy)
+                          (when-let [bias (:mode-bias policy)]
+                            (mode-bias->policy-priors bias)))]
+    (cond-> {}
+      policy-priors (assoc :policy-priors policy-priors)
+      (:mode-bias policy) (assoc :default-mode (:mode-bias policy)))))
+
+(defn- module-precision
+  "Extract precision settings from an ant-interpretation block."
+  [ant]
+  (let [precision (:precision ant)]
+    (cond-> {}
+      (number? (:Pi-o precision)) (assoc-in [:precision :Pi-o] (:Pi-o precision))
+      (number? (:tau precision)) (assoc-in [:precision :tau] (:tau precision)))))
+
+(defn- module-pattern-sense
+  "Extract pattern-sense settings from an ant-interpretation block."
+  [ant]
+  (let [pattern-sense (:pattern-sense ant)]
+    (if (map? pattern-sense)
+      {:pattern-sense pattern-sense}
+      {})))
+
+(defn- module-adapt
+  "Extract adapt settings from an ant-interpretation block."
+  [ant]
+  (let [adapt-trigger (:adapt-trigger ant)]
+    (if (seq adapt-trigger)
+      {:adapt-config {:trigger (:condition adapt-trigger)
+                      :switch-to (:switch-to adapt-trigger)
+                      :interpretation (:interpretation adapt-trigger)}}
+      {})))
+
+(defn- module-from-pattern
+  "Build a module contribution from a pattern id."
+  [pattern-id module-key]
+  (let [pattern (notions/pattern-by-id pattern-id)
+        ant (:ant-interpretation pattern)
+        sigil (get-in pattern [:mmca-interpretation :sigil-encoding :sigil])
+        derived (when sigil (sigil->cyberant sigil))
+        module (case module-key
+                 :policy (or (module-policy ant)
+                             (select-keys derived [:policy-priors :default-mode]))
+                 :precision (or (module-precision ant)
+                                (select-keys derived [:precision]))
+                 :pattern-sense (or (module-pattern-sense ant)
+                                    (select-keys derived [:pattern-sense]))
+                 :adapt (or (module-adapt ant)
+                            (select-keys derived [:adapt-config]))
+                 {})]
+    {:pattern-id pattern-id
+     :pattern-title (:title pattern)
+     :pattern-source (:path pattern)
+     :module module-key
+     :contribution module
+     :ant-interpretation ant
+     :ct-interpretation (:ct-interpretation pattern)}))
+
+(defn pattern-id->cyberant
+  "Build a cyberant config from a flexiarg pattern id.
+   Uses ant-interpretation when present and mmca sigil if available."
+  [pattern-id]
+  (when-let [pattern (notions/pattern-by-id pattern-id)]
+    (let [sigil (get-in pattern [:mmca-interpretation :sigil-encoding :sigil])
+          base (if sigil
+                 (sigil->cyberant sigil)
+                 (base-config nil))
+          ant (:ant-interpretation pattern)
+          ct (:ct-interpretation pattern)]
+      (cond-> base
+        ant (apply-ant-interpretation ant)
+        ct (assoc-in [:ct-provenance :pattern-ct] ct)
+        true (assoc :pattern-id pattern-id
+                    :pattern-title (:title pattern)
+                    :pattern-source (:path pattern))))))
+
+(defn pattern-program->cyberant
+  "Compose a cyberant config from module-specific pattern ids.
+
+   Example:
+   {:policy \"iching/hexagram-44-gou\"
+    :precision \"iching/hexagram-52-gen\"
+    :pattern-sense \"iching/hexagram-57-xun\"
+    :adapt \"iching/hexagram-43-guai\"}
+  "
+  [module->pattern-id & {:keys [base-sigil] :or {base-sigil nil}}]
+  (let [base (if base-sigil
+               (sigil->cyberant base-sigil)
+               (base-config base-sigil))
+        modules (->> module->pattern-id
+                     (map (fn [[module-key pattern-id]]
+                            [module-key (module-from-pattern pattern-id module-key)]))
+                     (into {}))
+        merged (reduce
+                (fn [cfg [_ {:keys [contribution]}]]
+                  (merge cfg contribution))
+                base
+                modules)
+        provenance (into {}
+                         (map (fn [[k v]]
+                                [k (select-keys v [:pattern-id :pattern-title :pattern-source])])
+                              modules))]
+    (-> merged
+        (assoc :pattern-program module->pattern-id)
+        (assoc :pattern-modules provenance)
+        (assoc :pattern-module-details modules))))
+
 (defn batch-convert
   "Convert a collection of sigils to cyberant configs."
   [sigils]
   (mapv sigil->cyberant sigils))
+
+(defn batch-patterns
+  "Convert a collection of pattern ids to cyberant configs."
+  [pattern-ids]
+  (->> pattern-ids
+       (mapv pattern-id->cyberant)
+       (remove nil?)
+       vec))
 
 ;; =============================================================================
 ;; Special Cases: The "Degenerate" Sigils
@@ -238,9 +394,22 @@
   (sigil->cyberant "土")
   ;; => {:species :cyber-土, :sigil "土", :tier :local, ...}
 
+  ;; Flexiarg-driven patterns (uses @ant-interpretation when present)
+  (pattern-id->cyberant "iching/hexagram-44-gou")
+
   (interpret-foundational-sigils)
   ;; => {:foundational [...], :interpolation-note "..."}
 
   ;; Batch convert EoC candidates from M17
   (batch-convert ["土" "工" "上" "下"])
+
+  ;; Batch convert pattern ids
+  (batch-patterns ["iching/hexagram-44-gou" "iching/hexagram-11-tai"])
+
+  ;; Compose a module-based program
+  (pattern-program->cyberant
+   {:policy "iching/hexagram-44-gou"
+    :precision "iching/hexagram-52-gen"
+    :pattern-sense "iching/hexagram-57-xun"
+    :adapt "iching/hexagram-43-guai"})
   )
