@@ -2231,3 +2231,23 @@ Summary (derived from the log):
 
 Takeaway: ratchet deltas no longer saturate; scores are spread across the 0–1 range and
 weighted deltas sit in a balanced band around zero.
+
+*** Ratchet evidence persistence (iiching)
+
+We now persist ratchet evidence into iiching flexiargs under a dedicated
+`@exotype-ratchet` section so syncs don’t wipe it.
+
+Updater script (dry-run supported):
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/update_iiching_ratchet_evidence.clj \
+  --logs /tmp/ratchet-sanity-long-20260121-223825.edn \
+  --manifest futon5/resources/exotype-program-manifest.edn \
+  --iiching-root futon3/library/iiching \
+  --min-delta 0.3 \
+  --max-best 10 --max-recent 10
+#+end_src
+
+Notes:
+- The updater inserts/updates the `@exotype-ratchet` section **before** `@exotype-program`.
+- This keeps ratchet evidence safe from `iiching_sync_exotype.clj` (which rewrites from `@exotype-program` down).
