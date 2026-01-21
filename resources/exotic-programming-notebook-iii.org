@@ -2251,3 +2251,27 @@ bb -cp futon5/src:futon5/resources futon5/scripts/update_iiching_ratchet_evidenc
 Notes:
 - The updater inserts/updates the `@exotype-ratchet` section **before** `@exotype-program`.
 - This keeps ratchet evidence safe from `iiching_sync_exotype.clj` (which rewrites from `@exotype-program` down).
+
+*** Ratchet sanity test (gated)
+
+Longer run with curriculum gate enabled to confirm blocking behavior.
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --runs 300 \
+  --update-every 20 \
+  --curriculum-gate \
+  --log /tmp/ratchet-sanity-gated-20260121-230352.edn
+#+end_src
+
+Summary:
+
+- windows: 15
+- runs: 300
+- delta-score stats: min 0.260, max 0.935, mean 0.554 (n=13)
+- delta-weighted stats: min -0.481, max 0.869, mean 0.108 (n=13)
+- delta-mean-n stats: min -0.495, max 1.000, mean 0.119 (n=13)
+- delta-q50-n stats: min -0.460, max 0.736, mean 0.091 (n=13)
+- gates: {:blocked 6, nil 7}
+
+Takeaway: curriculum gating is active (~46% of ratchet contexts blocked) with normalized deltas.
