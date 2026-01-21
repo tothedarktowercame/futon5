@@ -1,7 +1,6 @@
 (ns futon5.mmca.exoevolve
   "Short-horizon exotype evolution loop."
   (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
@@ -41,6 +40,8 @@
     "  --xeno-weight W        Blend xenotype score into short score (0-1)."
     "  --hexagram-weight W    Blend hexagram fitness into score (0-1)."
     "  --score-mode MODE      legacy, triad, or shift (default legacy)."
+    "  --update-prob P        Override exotype update-prob (optional)."
+    "  --match-threshold P    Override exotype match-threshold (optional)."
     "  --envelope-center P    Entropy envelope center (0-1, default 0.6)."
     "  --envelope-width P     Entropy envelope width (0-1, default 0.25)."
     "  --envelope-change-center P  Change envelope center (0-1, default 0.2)."
@@ -105,6 +106,12 @@
 
           (= "--score-mode" flag)
           (recur (rest more) (assoc opts :score-mode (some-> (first more) keyword)))
+
+          (= "--update-prob" flag)
+          (recur (rest more) (assoc opts :update-prob (parse-double (first more))))
+
+          (= "--match-threshold" flag)
+          (recur (rest more) (assoc opts :match-threshold (parse-double (first more))))
 
           (= "--envelope-center" flag)
           (recur (rest more) (assoc opts :envelope-center (parse-double (first more))))
@@ -220,9 +227,17 @@
         exo-score (double (or hex-score 0.0))]
     (/ (+ gen-score phe-score exo-score) 3.0)))
 
+(defn- apply-exotype-overrides
+  [exotype {:keys [update-prob match-threshold]}]
+  (let [params (cond-> (:params exotype)
+                 (some? update-prob) (assoc :update-prob update-prob)
+                 (some? match-threshold) (assoc :match-threshold match-threshold))]
+    (assoc exotype :params params)))
+
 (defn- evaluate-exotype
-  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts]
-  (let [genotype (rng-sigil-string rng length)
+  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts exotype-overrides]
+  (let [exotype (apply-exotype-overrides exotype exotype-overrides)
+        genotype (rng-sigil-string rng length)
         phenotype (rng-phenotype-string rng length)
         seed (rng-int rng Integer/MAX_VALUE)
         result (mmca/run-mmca {:genotype genotype
@@ -287,7 +302,8 @@
                 :score hex-score
                 :predicted predicted}
      :final-score final-score
-     :seed seed}))
+     :seed seed
+     :exotype exotype}))
 
 (defn- program-template [exotype]
   (if (= :super (:tier exotype))
@@ -327,6 +343,17 @@
   (when (seq xs)
     (/ (reduce + 0.0 xs) (double (count xs)))))
 
+(defn- stddev
+  [xs]
+  (when (seq xs)
+    (let [m (avg xs)
+          var (/ (reduce + 0.0 (map (fn [x]
+                                      (let [d (- (double x) (double m))]
+                                        (* d d)))
+                                    xs))
+                 (double (count xs)))]
+      (Math/sqrt var))))
+
 (defn- collapse-stats [entries]
   (let [dead-change 0.05
         dead-entropy 0.2
@@ -353,6 +380,7 @@
         idx (fn [q] (nth sorted (int (Math/floor (* (max 0.0 (min 1.0 q)) (dec n))))))]
     (merge {:count (count finals)
             :mean (avg finals)
+            :stddev (stddev finals)
             :q50 (when (seq finals) (idx 0.5))
             :q90 (when (seq finals) (idx 0.9))
             :best (apply max finals)}
@@ -399,7 +427,7 @@
   [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log
            context-depth curriculum-gate tap hexagram-weight hexagram-log score-mode
            envelope-center envelope-width envelope-change-center envelope-change-width
-           envelope-change]}]
+           envelope-change update-prob match-threshold]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -430,8 +458,10 @@
       (if (= i runs)
         {:population population}
         (let [exotype (rand-nth population)
-              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts)
-              entry (log-entry (inc i) exotype length generations eval context-depth ratchet-context)
+              exotype-overrides {:update-prob update-prob
+                                 :match-threshold match-threshold}
+              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts exotype-overrides)
+              entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)
               stats (when update? (summarize-batch batch'))
@@ -448,14 +478,11 @@
                                (ratchet/update-window ratchet-state stats)
                                ratchet-state)
               ratchet-context' (when (and update? prev-window)
-                                 (let [threshold (curriculum/curriculum-threshold window' nil)
-                                       delta (- (double (:mean stats)) (double (:mean prev-window)))
-                                       gate? (and curriculum-gate (< delta threshold))]
-                                   {:prev-score (:mean prev-window)
-                                    :curr-score (:mean stats)
-                                    :gate (when gate? :blocked)
-                                    :curriculum {:threshold threshold
-                                                 :window window'}}))]
+                                 (let [threshold (curriculum/curriculum-threshold window' nil)]
+                                   (ratchet/ratchet-context prev-window stats
+                                                            {:threshold threshold
+                                                             :window window'
+                                                             :gate? curriculum-gate})))]
           (when log
             (append-log! log entry))
           (when (and log update?)

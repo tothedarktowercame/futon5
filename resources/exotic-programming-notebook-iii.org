@@ -150,13 +150,14 @@ What's needed:
 
 Analogy: PSR/PUR from P4NG (see ~/code/p4ng/main.tex), specialized to CT and MMCA
 
-- *PSR (Pattern Selection Record)*: "Which exotype/sigil do we select, and why now?"
-  Captures the reasoning for selection, not just the outcome.
-  In MMCA: "given this sigil set, we selected these exotypes because X"
+- *PSR (Pattern Selection Record)*: "Which pattern do we select, and why now?"
+  Captures the current intention, the chosen pattern, and the reasons (not just the outcome).
+  In MMCA: "given this sigil set + state, we selected these exotypes because X"
+  We can also note alternatives considered (the other wiring/hex options).
 
-- *PUR (Pattern Use Record)*: "What happened when we applied it?"
-  Captures outcomes, evidence, and implications for future use.
-  In MMCA: "we applied these exotypes and EoC/not-EoC resulted"
+- *PUR (Pattern Use Record)*: "How did it go when we applied it?"
+  Captures outcomes + evidence, plus what it implies for future use.
+  In MMCA: "we applied these exotypes, observed Y dynamics, and should adjust Z"
 
 Together they form a learning loop. Crucially:
 
@@ -169,7 +170,8 @@ This means Mission 0 isn't just "find EoC" but "find EoC-producing
 *processes* that are themselves EoC-like" — creative selection, not
 static rules.
 
-** Scoring ensemble (current)
+** Approach 1
+*** Scoring ensemble (current)
 
 We now have multiple, complementary scoring signals:
 
@@ -178,7 +180,7 @@ We now have multiple, complementary scoring signals:
 - Sonify (MIDI) as a qualitative audit trail for edge-of-chaos texture.
 - Ants domain transfer: cross-domain survival/score signal (validated in pilot).
 
-** Batch hypotheses (out-of-the-box)
+*** Batch hypotheses (out-of-the-box)
 
 - Baseline (no xenotype): hexagram distribution drifts toward :qian/:kun extremes or broad :neutral mix.
 - Hexagram xenotype enabled: distribution shifts toward :tai over generations (泰 zone enrichment).
@@ -186,14 +188,15 @@ We now have multiple, complementary scoring signals:
 - Ants xenotype (periodic): boosts exotypes that generalize across MMCA and ants, potentially shifting away from pure 泰.
 - HIT labels (post hoc): expected to correlate most with 泰 and mid-range persistence/coherence; differences highlight missing metrics.
 
-** Batch runner (current)
+*** Batch runner (current)
 
 - Modest run: `bash futon5/scripts/mission_0_batch.sh modest`
 - Overnight run: `bash futon5/scripts/mission_0_batch.sh overnight`
 - Logs: `/tmp/mission-0/mission-0-*.edn`
 - Hex summary CSV: `/tmp/mission-0/mission-0-*-hex.csv`
 
-** Mission 0 modest run — snapshots
+*** Trace
+**** Mission 0 modest run — snapshots
 
 Rendered from the modest run log; these are replays based on the seed and
 length/generations, so they are illustrative rather than exact replays.
@@ -220,7 +223,7 @@ Mid scores:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-0-modest-mid-03.png]]
 
-** PSR/PUR examples (hexagram lift, short run)
+**** PSR/PUR examples (hexagram lift, short run)
 
 From a quick exoevolve smoke test (length=20, generations=20) with
 hexagram logging enabled:
@@ -231,7 +234,7 @@ hexagram logging enabled:
 | 双    | 0.25        | 0.666...        | neutral   | qian   |
 | 布    | 0.25        | 0.222...        | kun       | qian   |
 
-** The fusion metaphor
+**** The fusion metaphor
 
 Nuclear fusion: confine plasma at right temperature/pressure → energy release
 EoC fusion: confine dynamics at right intervention/observation balance → emergence
@@ -246,7 +249,7 @@ If we can reliably reach and maintain this zone:
 - EoC becomes reproducible, not accidental
 - The method generalizes to other domains
 
-** Mission 0 modest50 — snapshots (lower hex weight)
+**** Mission 0 modest50 — snapshots (lower hex weight)
 
 Top scores:
 #+CAPTION: Mission 0 modest50 top-01 (seed 1904743760)
@@ -270,7 +273,7 @@ Mid scores:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-0-modest50-mid-03-seed-1170173680.png]]
 
-** Mission 0 envelope sweep — selected examples
+**** Mission 0 envelope sweep — selected examples
 
 Best max regime (legacy, e0.55 w0.25 c0.20 cw0.15):
 #+CAPTION: Mission 0 env legacy best (seed 717169343)
@@ -282,7 +285,7 @@ Strong regime (shift, e0.60 w0.25 c0.20 cw0.15):
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-0-env-shift-strong-01-seed-512076119.png]]
 
-** Mission 17a rescoring (ensemble calibration)
+**** Mission 17a rescoring (ensemble calibration)
 
 Re-score the Mission 17a refine batch with the ensemble. This replay is
 deterministic but not identical to the original exoevolve runs because
@@ -334,7 +337,53 @@ Exact Mission 17a renders (baseline + exotic):
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-exotic-exact.png]]
 
-** Mission 17a compare set (20 seeds, baseline vs exotic)
+**** Mission 17a p×t sweep (gate+rank)
+
+Sweep update-prob × match-threshold for sigil 工, scoring with gate+rank.
+
+#+begin_src sh
+bb -cp futon5/src:futon5/resources futon5/scripts/sweep_pt.clj
+#+end_src
+
+Output: /tmp/mission-17a-sweep-1768964125056.csv
+
+Top configs by mean rank (pass rate shown):
+
+| update-prob | match-threshold | pass-rate | mean-rank |
+|-------------+-----------------+-----------+-----------|
+| 0.60        | 0.80            | 1.00      | 10.855    |
+| 1.00        | 0.00            | 1.00      | 8.933     |
+| 0.30        | 0.90            | 0.80      | 7.299     |
+| 0.40        | 0.00            | 1.00      | 6.331     |
+| 0.30        | 0.20            | 1.00      | 6.208     |
+
+Visual check for the top config (u=0.60, m=0.80):
+
+#+CAPTION: Mission 17a p×t sweep (u=0.60 m=0.80) baseline (seed 238310129)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-pt-u0.60-m0.80-01-seed-238310129-baseline.png]]
+
+#+CAPTION: Mission 17a p×t sweep (u=0.60 m=0.80) exotic (seed 238310129)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-pt-u0.60-m0.80-01-seed-238310129-exotic.png]]
+
+#+CAPTION: Mission 17a p×t sweep (u=0.60 m=0.80) baseline (seed 1281562706)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-pt-u0.60-m0.80-02-seed-1281562706-baseline.png]]
+
+#+CAPTION: Mission 17a p×t sweep (u=0.60 m=0.80) exotic (seed 1281562706)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-pt-u0.60-m0.80-02-seed-1281562706-exotic.png]]
+
+#+CAPTION: Mission 17a p×t sweep (u=0.60 m=0.80) baseline (seed 71312373)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-pt-u0.60-m0.80-03-seed-71312373-baseline.png]]
+
+#+CAPTION: Mission 17a p×t sweep (u=0.60 m=0.80) exotic (seed 71312373)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-pt-u0.60-m0.80-03-seed-71312373-exotic.png]]
+
+**** Mission 17a compare set (20 seeds, baseline vs exotic)
 
 Generate the paired runs, images, and score table:
 
@@ -379,7 +428,7 @@ Per-seed labels vs scorer picks:
 | 1326762308 | exotic | exotic better, envelope+triad ok | exotic | exotic | exotic | tie | baseline |
 | 955468957 | exotic | good run, envelope+filament ok | baseline | exotic | baseline | exotic | exotic |
 
-*** Mission 17a compare 01 (seed 238310129)
+***** Mission 17a compare 01 (seed 238310129)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -397,7 +446,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-01-seed-238310129-exotic.png]]
 
-*** Mission 17a compare 02 (seed 1281562706)
+***** Mission 17a compare 02 (seed 1281562706)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -415,7 +464,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-02-seed-1281562706-exotic.png]]
 
-*** Mission 17a compare 03 (seed 71312373)
+***** Mission 17a compare 03 (seed 71312373)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -433,7 +482,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-03-seed-71312373-exotic.png]]
 
-*** Mission 17a compare 04 (seed 779818750)
+***** Mission 17a compare 04 (seed 779818750)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -451,7 +500,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-04-seed-779818750-exotic.png]]
 
-*** Mission 17a compare 05 (seed 935777844)
+***** Mission 17a compare 05 (seed 935777844)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -469,7 +518,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-05-seed-935777844-exotic.png]]
 
-*** Mission 17a compare 06 (seed 1269303645)
+***** Mission 17a compare 06 (seed 1269303645)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -487,7 +536,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-06-seed-1269303645-exotic.png]]
 
-*** Mission 17a compare 07 (seed 254506022)
+***** Mission 17a compare 07 (seed 254506022)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -505,7 +554,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-07-seed-254506022-exotic.png]]
 
-*** Mission 17a compare 08 (seed 1168679221)
+***** Mission 17a compare 08 (seed 1168679221)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -523,7 +572,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-08-seed-1168679221-exotic.png]]
 
-*** Mission 17a compare 09 (seed 352362012)
+***** Mission 17a compare 09 (seed 352362012)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -541,7 +590,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-09-seed-352362012-exotic.png]]
 
-*** Mission 17a compare 10 (seed 201709760)
+***** Mission 17a compare 10 (seed 201709760)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -559,7 +608,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-10-seed-201709760-exotic.png]]
 
-*** Mission 17a compare 11 (seed 1925365880)
+***** Mission 17a compare 11 (seed 1925365880)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -577,7 +626,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-11-seed-1925365880-exotic.png]]
 
-*** Mission 17a compare 12 (seed 1336461018)
+***** Mission 17a compare 12 (seed 1336461018)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -595,7 +644,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-12-seed-1336461018-exotic.png]]
 
-*** Mission 17a compare 13 (seed 691296833)
+***** Mission 17a compare 13 (seed 691296833)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -613,7 +662,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-13-seed-691296833-exotic.png]]
 
-*** Mission 17a compare 14 (seed 387850036)
+***** Mission 17a compare 14 (seed 387850036)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -631,7 +680,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-14-seed-387850036-exotic.png]]
 
-*** Mission 17a compare 15 (seed 1661386826)
+***** Mission 17a compare 15 (seed 1661386826)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -649,7 +698,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-15-seed-1661386826-exotic.png]]
 
-*** Mission 17a compare 16 (seed 1564354771)
+***** Mission 17a compare 16 (seed 1564354771)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -667,7 +716,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-16-seed-1564354771-exotic.png]]
 
-*** Mission 17a compare 17 (seed 795854410)
+***** Mission 17a compare 17 (seed 795854410)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -685,7 +734,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-17-seed-795854410-exotic.png]]
 
-*** Mission 17a compare 18 (seed 1469545341)
+***** Mission 17a compare 18 (seed 1469545341)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -703,7 +752,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-18-seed-1469545341-exotic.png]]
 
-*** Mission 17a compare 19 (seed 1326762308)
+***** Mission 17a compare 19 (seed 1326762308)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -721,7 +770,7 @@ Per-seed labels vs scorer picks:
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-19-seed-1326762308-exotic.png]]
 
-*** Mission 17a compare 20 (seed 955468957)
+***** Mission 17a compare 20 (seed 955468957)
 
 | metric | baseline | exotic |
 |--------+----------+--------|
@@ -738,6 +787,252 @@ Per-seed labels vs scorer picks:
 #+CAPTION: Mission 17a compare 20 (seed 955468957) exotic
 #+ATTR_ORG: :width 1200
 [[file:figures/mission-17a-compare-20-seed-955468957-exotic.png]]
+
+*** Approach 1 summary (status + failure mode)
+
+Approach 1 used a hand-crafted ensemble (short/envelope/triad/shift/filament),
+static sweep priors, and limited HIT labels. It was good for initial calibration
+but did not generalize. Observed issues:
+
+- Scorers disagree on high-confidence examples; consensus did not align with EoC.
+- Parameter sweep produced population-level gains but not seed-level reliability.
+- Hexagram lift drifted toward collapse rather than broad coverage.
+- Phenotype vs genotype quality diverged; scores often ignored phenotype decay.
+- Static weights/priors were not adaptive to regime shifts.
+
+Conclusion: Approach 1 is useful for instrumentation, but insufficient as a
+standalone xenotype.
+
+
+** Approach 2
+*** Approach 2 checklist (wiring-diagram xenotype synthesis)
+
+Goal: synthesize xenotypes as wiring diagrams that compose scorers and gates.
+
+- Component library :: Implemented in `futon5/resources/xenotype-generator-components.edn` with typed ports for scorers/combinators/gates. `rank-fusion` expects precomputed ranks (lower is better).
+- Wiring schema + validator :: Implemented in `futon5/src/futon5/xenotype/wiring.clj` (type and constraint validation).
+- Interpreter :: Implemented in `futon5/src/futon5/xenotype/interpret.clj` (diagram execution over summaries/frames).
+- Template-guided synthesis :: Implemented via `futon5/resources/xenotype-templates.edn` and `futon5/scripts/synthesize_xenotype.clj`.
+- Mutation operators :: Implemented in `futon5/scripts/synthesize_xenotype.clj` (swap/ablate/rewire with `--mutation-mix`).
+- Calibration expansion via HIT :: Implemented via `futon5/scripts/mission_0_prepare_hit.clj` + `futon5.mmca.judge-cli`.
+- A/B validation :: Implemented via `futon5/scripts/cyber_mmca_wiring_ab_validate.clj` (wiring A/B on fresh seeds with ensemble scoring + HIT-ready outputs).
+- PSR/PUR logging :: Implemented in `futon5/scripts/cyber_mmca_wiring_ab_validate.clj` via `--psr-pur` (per-diagram PSR/PUR records per run).
+
+*** Approach 2 prep work
+
+**** Evaluation wiring example (avoid freeze/magma)
+
+Goal: quick validation of the evaluation-diagram pipeline using window-series
+regime flags (freeze/magma).
+
+#+CAPTION: Xenotype Evaluation Example (dot)
+#+ATTR_ORG: :width 1200
+[[file:xenotype-evaluation-example.png]]
+
+#+CAPTION: Xenotype Evaluation Example (Mermaid)
+#+ATTR_ORG: :width 1200
+[[file:flowct.png]]
+
+
+#+CAPTION: Xenotype Evaluation Example Run
+#+ATTR_ORG: :width 1200
+[[file:xenotype-evaluation-example-run.png]]
+
+- Diagram :: `futon5/resources/xenotype-evaluation-example.edn`
+- Diagram (PNG) :: as above
+- Sample run render (diptych when phenotype is absent) :: as above
+- Components :: `futon5/resources/xenotype-evaluation-components.edn`
+- Command ::
+  bb -cp futon5/src:futon5/resources futon5/scripts/evaluate_xenotype_wiring.clj \
+    --inputs /tmp/cyber-mmca-hit-inputs.txt \
+    --diagram futon5/resources/xenotype-evaluation-example.edn \
+    --components futon5/resources/xenotype-evaluation-components.edn \
+    --W 10 --S 10 \
+    --out /tmp/xenotype-eval-example.edn
+- Render diagram ::
+  dot -Tpng futon5/resources/xenotype-evaluation-example.dot \
+    -o futon5/resources/xenotype-evaluation-example.png
+- Render sample run ::
+  bb -cp futon5/src:futon5/resources -m futon5.mmca.render-cli \
+    --input /tmp/cyber-mmca-hit/cyber-mmca-hit-null-01-seed-4242.edn \
+    --out /tmp/xenotype-eval-example-run.ppm --render-exotype
+  convert /tmp/xenotype-eval-example-run.ppm \
+    futon5/resources/xenotype-evaluation-example-run.png
+- Summary (cyber-mmca HIT inputs) :: n=16 avg-score=1.000 min=1.000 max=1.000
+
+***** Mermaid code for the example
+Run with =aa-exec --profile=chrome -- mmdc -i ~/flowct.mm -o ./flowct.png=
+
+  #+BEGIN_SRC mermaid
+  flowchart LR
+    n0["series-regime-flag<br/>regime=:freeze"] -->|flags| n1["series-ratio"]
+    n2["series-regime-flag<br/>regime=:magma"] -->|flags| n3["series-ratio"]
+    v0(("value: 1.0")) -->|score| n4["weighted-sum<br/>weights [1 -1 -1]"]
+    n1 -->|score| n4
+    n3 -->|score| n4
+    n4 -->|score| n5["normalize"]
+  #+END_SRC
+
+**** Generator wiring example (from Cyber-MMCA run)
+
+Goal: capture the generator wiring diagram referenced by the example run above.
+
+#+CAPTION: Xenotype Generator Example
+#+ATTR_ORG: :width 1200
+[[file:xenotype-generator-example.png]]
+
+- Run EDN :: `/tmp/cyber-mmca-hit/cyber-mmca-hit-wiring-13-seed-4242.edn`
+- Sample run triptych :: [[file:xenotype-generator-example-run.png]]
+- Wiring path/index :: `/tmp/xenotype-synth-1768992680987.edn` (index 0)
+- Diagram (EDN) :: `futon5/resources/xenotype-generator-example.edn`
+- Diagram (PNG) :: `futon5/resources/xenotype-generator-example.png`
+- Render diagram ::
+  dot -Tpng futon5/resources/xenotype-generator-example.dot \
+    -o futon5/resources/xenotype-generator-example.png
+- Note :: EDN for index 0 contains a duplicated edge from `:s2` → `:c0`. The
+  diagram renders a single edge for readability.
+- Mermaid ::
+  #+BEGIN_SRC mermaid
+  flowchart LR
+    s0["short"]:::unused
+    s1["filament"]:::unused
+    s2["triad"] -->|score| c0["disagreement"]
+    c0 -->|sigma| g0["threshold-gate"]
+    v0(("threshold: 2.0")) -->|score| g0
+    classDef unused fill:#f2f2f2,stroke:#999,stroke-dasharray: 3 3;
+  #+END_SRC
+
+  
+*** Approach 2 pending work
+
+**** Interpreter demo run
+
+**** HIT pipeline refresh
+
+
+*** Approach 2 one-off parameter test (u=0.60, m=0.80)
+
+Goal: quick check for better-than-modest behavior using sweep-best params.
+
+#+begin_src sh
+timestamp=$(date +%Y%m%d-%H%M%S)
+log_path="/tmp/mission-0/mission-0-oneoff-u0.60-m0.80-${timestamp}.edn"
+csv_path="/tmp/mission-0/mission-0-oneoff-u0.60-m0.80-${timestamp}-hex.csv"
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --runs 50 \
+  --update-every 25 \
+  --length 50 \
+  --generations 60 \
+  --hexagram-weight 0.0 \
+  --score-mode triad \
+  --update-prob 0.6 \
+  --match-threshold 0.8 \
+  --log "$log_path"
+bb -cp futon5/src:futon5/resources -m futon5.mmca.hex-batch \
+  --log "$log_path" \
+  --update-every 25 \
+  --out "$csv_path"
+#+end_src
+
+Latest run:
+- Log: /tmp/mission-0/mission-0-oneoff-u0.60-m0.80-20260121-113104.edn
+- Hex summary: /tmp/mission-0/mission-0-oneoff-u0.60-m0.80-20260121-113104-hex.csv
+
+Top scores:
+#+CAPTION: Mission 0 one-off u0.60 m0.80 top-01 (seed 1773707285)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-oneoff-u0.60-m0.80-top-01-seed-1773707285.png]]
+#+CAPTION: Mission 0 one-off u0.60 m0.80 top-02 (seed 1361833817)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-oneoff-u0.60-m0.80-top-02-seed-1361833817.png]]
+#+CAPTION: Mission 0 one-off u0.60 m0.80 top-03 (seed 1170173680)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-oneoff-u0.60-m0.80-top-03-seed-1170173680.png]]
+
+Mid scores:
+#+CAPTION: Mission 0 one-off u0.60 m0.80 mid-01 (seed 1949784973)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-oneoff-u0.60-m0.80-mid-01-seed-1949784973.png]]
+#+CAPTION: Mission 0 one-off u0.60 m0.80 mid-02 (seed 197376710)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-oneoff-u0.60-m0.80-mid-02-seed-197376710.png]]
+#+CAPTION: Mission 0 one-off u0.60 m0.80 mid-03 (seed 512076119)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-oneoff-u0.60-m0.80-mid-03-seed-512076119.png]]
+
+*** Regime typology (from notebooks II / III / IIIa)
+
+Fixed-seed A/B (baseline vs exotype) :: Mission 16 pilot 1/1b; same seed/genotype/phenotype, compare baseline vs exotic with identical init state.
+Rotated-seed A/B :: Mission 16 pilot 2; repeat fixed-seed comparisons across multiple seeds (1111/2222) for robustness.
+Hot/Mid/Cool exotype sweep :: Mission 16 hot/mid/cool; same init state, vary update-prob (hot=1.0, mid=0.5, cool=0.25).
+Mission 17a refine baseline/exotic :: Fixed 4242 baseline and 工 exotic with long horizon (120 generations) for “known good” EoC.
+Short-horizon exoevolve :: Mission 0 modest/overnight; evolving exotypes on randomized genotypes with short horizons.
+Envelope sweep regime :: Mission 0 envelope sweep; regime selection via envelope-only scoring (legacy/shift).
+Mission 1 calibration sweep :: Notebook I; instrumentability run (10 exotypes × 64 genotypes) to map baseline score ranges and variability.
+Mission 1 exotype triptychs :: Notebook I; render triptychs for multiple exotypes to observe regime diversity.
+Fixed genotype, no exotype :: Control regime for classic 1D CA behavior (fixed genotype/phenotype).
+Hex classifier terminal-metrics :: Notebook IIIa; windowed macro features for regime labels (pressure/selectivity/structure).
+Cyber-MMCA stride sweep :: Scripted stride sweeps to map macro feature stability across window sizes.
+Terminal stress test :: Notebook IIIa suggested; drive extreme update-prob/match-threshold to validate macro features.
+Phenotype-only vs genotype-only :: Notebook IIIa suggested; isolate state evolution vs control actions via freeze/gate.
+
+*** Regime compare harness (fixed seed, triptych)
+
+Use a fixed seed, length, and generations across a regime list. This renders
+triptych outputs (geno/pheno/exo) for direct visual comparison.
+
+#+begin_src sh
+bb -cp futon5/src:futon5/resources futon5/scripts/regime_compare.clj \
+  --regimes futon5/resources/regimes-typology.edn \
+  --seed 4242 \
+  --length 50 \
+  --generations 60 \
+  --label regime-compare
+#+end_src
+
+*** Regime mix batch (ensemble voting + HIT inputs)
+
+Run a small mixed-regime batch, score each run with the ensemble, and emit
+a HIT inputs list.
+
+#+begin_src sh
+bb -cp futon5/src:futon5/resources futon5/scripts/mission_0_regime_mix.clj \
+  --runs 20
+#+end_src
+
+Latest run:
+- Log: /tmp/mission-0-regime-mix-1768996419713.edn
+- Scores: /tmp/mission-0-regime-mix-1768996419713-scores.csv
+- HIT inputs: /tmp/mission-0-regime-mix-1768996419713-inputs.txt
+- Run files: /tmp/mission-0-regime-mix-1768996419713
+
+HIT agreement (23 labels; exact / ordinal / Spearman vs labels):
+
+| scorer   | exact | ordinal | spearman |
+|----------+-------+---------+----------|
+| short    | 0.348 | 0.522   | -0.024   |
+| envelope | 0.391 | 0.522   | -0.305   |
+| triad    | 0.348 | 0.565   | 0.168    |
+| shift    | 0.435 | 0.565   | 0.081    |
+| filament | 0.217 | 0.478   | -0.214   |
+
+Note: agreement is weak overall and some scorers are anti-correlated with the
+labels (negative Spearman). This mixed-regime set reinforces that a static
+ensemble does not align with HIT labels, and motivates wiring-diagram synthesis.
+
+*** Cyber-MMCA HIT (chef's choice)
+
+Controller agreement (EoC rate; n=4 per controller):
+
+| controller | n | eoc | borderline | not-eoc | eoc-rate |
+|------------+---+-----+------------+---------+----------|
+| null       | 4 | 2   | 0          | 2       | 0.500    |
+| hex        | 4 | 3   | 1          | 0       | 0.750    |
+| sigil      | 4 | 2   | 2          | 0       | 0.500    |
+| wiring     | 4 | 4   | 0          | 0       | 1.000    |
+
+Note: wiring led the set on EoC rate in this batch. This is a small sample,
+but it supports the wiring-diagram direction as a candidate controller.
 
 
 * Mission 0a — Transfer to Fulab AIF Agents
@@ -1912,3 +2207,27 @@ exist. Now it does:
 We request support to extend the transfer chain: ants → Fulab → Q&A → math.
 Each step is testable. If transfer fails, we learn where. If it succeeds,
 we approach Turing's 1951 vision."
+
+*** Ratchet sanity test (post-normalization)
+
+Ran a longer sanity test after normalizing ratchet deltas (stddev scale, mean+q50 weights).
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --runs 200 \
+  --update-every 20 \
+  --log /tmp/ratchet-sanity-long-20260121-223825.edn
+#+end_src
+
+Summary (derived from the log):
+
+- windows: 10
+- runs: 200
+- delta-score stats: min 0.159, max 0.900, mean 0.496 (n=8)
+- delta-weighted stats: min -0.682, max 0.800, mean -0.008 (n=8)
+- delta-mean-n stats: min -0.857, max 0.758, mean 0.013 (n=8)
+- delta-q50-n stats: min -0.905, max 0.862, mean -0.039 (n=8)
+- gates: {nil 8}
+
+Takeaway: ratchet deltas no longer saturate; scores are spread across the 0–1 range and
+weighted deltas sit in a balanced band around zero.

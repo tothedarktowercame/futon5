@@ -24,15 +24,16 @@
         plan-fidelity (if plan? 1.0 0.0)
         adapt-coherence (if adapt? 1.0 0.0)
         base (/ (+ vision-clarity plan-fidelity adapt-coherence) 3.0)
-        delta (when (and (number? (:prev-score ratchet))
-                         (number? (:curr-score ratchet)))
-                (- (double (:curr-score ratchet))
-                   (double (:prev-score ratchet))))
         gated? (= :blocked (:gate ratchet))
-        delta-score (when (number? delta)
+        delta-score (when (number? (:delta-score ratchet))
                       (if gated?
                         0.0
-                        (clamp-01 (+ 0.5 (* 0.5 delta)))))
+                        (clamp-01 (double (:delta-score ratchet)))))
+        delta (or (:delta-weighted ratchet)
+                  (when (and (number? (:prev-score ratchet))
+                             (number? (:curr-score ratchet)))
+                    (- (double (:curr-score ratchet))
+                       (double (:prev-score ratchet)))))
         provenance (when contemplative-block
                      (contemplative/provenance-score (:history contemplative-block)))
         worthiness (when contemplative-block
