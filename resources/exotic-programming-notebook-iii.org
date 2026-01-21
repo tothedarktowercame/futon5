@@ -91,6 +91,7 @@ EoC = Edge of Chaos.
 - Measure transfer: do EoC sigils improve score stability across varied maps?
 - Identify “busy but useless” cases where EoC ≠ ant utility.
 
+
 * Mission 0 — Self-Transfer: CT-Native EoC Discovery
 
 Goal: build MMCA-native xenotypes expressed in category theory that can
@@ -168,6 +169,68 @@ This means Mission 0 isn't just "find EoC" but "find EoC-producing
 *processes* that are themselves EoC-like" — creative selection, not
 static rules.
 
+** Scoring ensemble (current)
+
+We now have multiple, complementary scoring signals:
+
+- Hexagram dynamics (MMCA-native): signature → class/fitness (乾/坤/泰/否).
+- Filamentary structure: skeleton length, endpoints/branchpoints, components, cycles, persistence.
+- Sonify (MIDI) as a qualitative audit trail for edge-of-chaos texture.
+- Ants domain transfer: cross-domain survival/score signal (validated in pilot).
+
+** Batch hypotheses (out-of-the-box)
+
+- Baseline (no xenotype): hexagram distribution drifts toward :qian/:kun extremes or broad :neutral mix.
+- Hexagram xenotype enabled: distribution shifts toward :tai over generations (泰 zone enrichment).
+- Filament score (offline): higher filament coherence should correlate with 泰 or mid-alpha signatures.
+- Ants xenotype (periodic): boosts exotypes that generalize across MMCA and ants, potentially shifting away from pure 泰.
+- HIT labels (post hoc): expected to correlate most with 泰 and mid-range persistence/coherence; differences highlight missing metrics.
+
+** Batch runner (current)
+
+- Modest run: `bash futon5/scripts/mission_0_batch.sh modest`
+- Overnight run: `bash futon5/scripts/mission_0_batch.sh overnight`
+- Logs: `/tmp/mission-0/mission-0-*.edn`
+- Hex summary CSV: `/tmp/mission-0/mission-0-*-hex.csv`
+
+** Mission 0 modest run — snapshots
+
+Rendered from the modest run log; these are replays based on the seed and
+length/generations, so they are illustrative rather than exact replays.
+
+Top scores:
+#+CAPTION: Mission 0 modest top-01
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest-top-01.png]]
+#+CAPTION: Mission 0 modest top-02
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest-top-02.png]]
+#+CAPTION: Mission 0 modest top-03
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest-top-03.png]]
+
+Mid scores:
+#+CAPTION: Mission 0 modest mid-01
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest-mid-01.png]]
+#+CAPTION: Mission 0 modest mid-02
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest-mid-02.png]]
+#+CAPTION: Mission 0 modest mid-03
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest-mid-03.png]]
+
+** PSR/PUR examples (hexagram lift, short run)
+
+From a quick exoevolve smoke test (length=20, generations=20) with
+hexagram logging enabled:
+
+| sigil | update-prob | match-threshold | predicted | actual |
+|-------+-------------+-----------------+-----------+--------|
+| 击    | 0.25        | 0.777...        | neutral   | qian   |
+| 双    | 0.25        | 0.666...        | neutral   | qian   |
+| 布    | 0.25        | 0.222...        | kun       | qian   |
+
 ** The fusion metaphor
 
 Nuclear fusion: confine plasma at right temperature/pressure → energy release
@@ -182,6 +245,518 @@ If we can reliably reach and maintain this zone:
 - Any sigil set becomes potentially useful
 - EoC becomes reproducible, not accidental
 - The method generalizes to other domains
+
+** Mission 0 modest50 — snapshots (lower hex weight)
+
+Top scores:
+#+CAPTION: Mission 0 modest50 top-01 (seed 1904743760)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest50-top-01-seed-1904743760.png]]
+#+CAPTION: Mission 0 modest50 top-02 (seed 798589132)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest50-top-02-seed-798589132.png]]
+#+CAPTION: Mission 0 modest50 top-03 (seed 340326814)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest50-top-03-seed-340326814.png]]
+
+Mid scores:
+#+CAPTION: Mission 0 modest50 mid-01 (seed 491194582)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest50-mid-01-seed-491194582.png]]
+#+CAPTION: Mission 0 modest50 mid-02 (seed 461543806)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest50-mid-02-seed-461543806.png]]
+#+CAPTION: Mission 0 modest50 mid-03 (seed 1170173680)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-modest50-mid-03-seed-1170173680.png]]
+
+** Mission 0 envelope sweep — selected examples
+
+Best max regime (legacy, e0.55 w0.25 c0.20 cw0.15):
+#+CAPTION: Mission 0 env legacy best (seed 717169343)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-env-legacy-best-01-seed-717169343.png]]
+
+Strong regime (shift, e0.60 w0.25 c0.20 cw0.15):
+#+CAPTION: Mission 0 env shift strong (seed 512076119)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-0-env-shift-strong-01-seed-512076119.png]]
+
+** Mission 17a rescoring (ensemble calibration)
+
+Re-score the Mission 17a refine batch with the ensemble. This replay is
+deterministic but not identical to the original exoevolve runs because
+genotype/phenotype are regenerated from the run seed.
+
+#+begin_src sh
+bb -cp futon5/src:futon5/resources futon5/scripts/mission_17a_rescore.clj \
+  --log futon5/resources/mission-17a-refine-r50.log \
+  --replay
+#+end_src
+
+Top runs per scorer (Mission 17a rescored, replayed):
+
+| scorer    | seed       | sigil | score |
+|-----------+------------+-------+-------|
+| short     | 1562931140 | 勿    | 50.53 |
+| short     | 1230197355 | 五    | 48.80 |
+| short     | 444490664  | 大    | 48.29 |
+| short     | 1307309852 | 午    | 46.97 |
+| short     | 509142636  | 工    | 46.05 |
+| envelope  | 1089438044 | 大    | 46.39 |
+| envelope  | 734565569  | 勿    | 46.39 |
+| envelope  | 760408121  | 工    | 46.30 |
+| envelope  | 1816669683 | 勿    | 46.26 |
+| envelope  | 2032195920 | 申    | 46.05 |
+| triad     | 125778858  | 八    | 33.64 |
+| triad     | 333416744  | 勿    | 33.36 |
+| triad     | 1318315811 | 心    | 33.26 |
+| triad     | 1562228631 | 八    | 32.92 |
+| triad     | 475815430  | 口    | 32.53 |
+| shift     | 166355620  | 术    | 27.69 |
+| shift     | 333416744  | 勿    | 27.48 |
+| shift     | 125778858  | 八    | 27.30 |
+| shift     | 762754851  | 力    | 27.29 |
+| shift     | 444490664  | 大    | 27.23 |
+| filament  | 780531081  | 勿    | 0.53  |
+| filament  | 1503925722 | 未    | 0.48  |
+| filament  | 444490664  | 大    | 0.46  |
+| filament  | 2014138470 | 工    | 0.45  |
+| filament  | 1857293612 | 大    | 0.45  |
+
+Exact Mission 17a renders (baseline + exotic):
+
+#+CAPTION: Mission 17a refine baseline (seed 4242, exact history)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-baseline-exact.png]]
+
+#+CAPTION: Mission 17a refine exotic (sigil 工, seed 4242, exact config)
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-exotic-exact.png]]
+
+** Mission 17a compare set (20 seeds, baseline vs exotic)
+
+Generate the paired runs, images, and score table:
+
+#+begin_src sh
+bb -cp futon5/src:futon5/resources futon5/scripts/mission_17a_compare.clj \
+  --n 20 \
+  --seed 4242
+#+end_src
+
+Judgments + scorer agreement:
+
+| scorer | correct | total |
+|--------+---------+-------|
+| short | 3 | 20 |
+| envelope | 7 | 20 |
+| triad | 5 | 20 |
+| shift | 8 | 20 |
+| filament | 12 | 20 |
+
+Per-seed labels vs scorer picks:
+
+| seed | label | note | short | envelope | triad | shift | filament |
+|------+-------+------+-------+----------+-------+-------+----------|
+| 238310129 | exotic | envelope better judge | baseline | exotic | baseline | tie | exotic |
+| 1281562706 | tie | hard to judge, approx equal | baseline | baseline | baseline | exotic | tie |
+| 71312373 | exotic | envelope better judge | baseline | exotic | baseline | exotic | exotic |
+| 779818750 | tie | bad run, scores should be low | exotic | baseline | exotic | exotic | tie |
+| 935777844 | exotic | envelope better judge | exotic | baseline | exotic | exotic | exotic |
+| 1269303645 | tie | approximately equal | exotic | exotic | exotic | baseline | tie |
+| 254506022 | exotic | none got it right | baseline | baseline | baseline | baseline | tie |
+| 1168679221 | exotic | close call, exotic slightly better | baseline | baseline | tie | tie | tie |
+| 352362012 | exotic | best run seen, scorers miss | baseline | tie | baseline | exotic | exotic |
+| 201709760 | exotic | envelope gets it | tie | exotic | tie | baseline | tie |
+| 1925365880 | baseline | baseline slightly better, close | exotic | exotic | tie | baseline | baseline |
+| 1336461018 | tie | very close | exotic | exotic | exotic | exotic | exotic |
+| 691296833 | tie | close | baseline | tie | baseline | tie | exotic |
+| 387850036 | tie | close | exotic | baseline | exotic | exotic | tie |
+| 1661386826 | tie | close and bad | exotic | baseline | tie | baseline | tie |
+| 1564354771 | tie | close | baseline | baseline | baseline | tie | exotic |
+| 795854410 | tie | close and not great | exotic | baseline | tie | tie | baseline |
+| 1469545341 | exotic | exotic better, envelope+triad correct | exotic | exotic | exotic | baseline | exotic |
+| 1326762308 | exotic | exotic better, envelope+triad ok | exotic | exotic | exotic | tie | baseline |
+| 955468957 | exotic | good run, envelope+filament ok | baseline | exotic | baseline | exotic | exotic |
+
+*** Mission 17a compare 01 (seed 238310129)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.44 | 22.42 |
+| envelope | 25.16 | 34.06 |
+| triad | 27.33 | 25.87 |
+| shift | 22.83 | 23.31 |
+| filament | 0.250 | 0.277 |
+
+#+CAPTION: Mission 17a compare 01 (seed 238310129) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-01-seed-238310129-baseline.png]]
+
+#+CAPTION: Mission 17a compare 01 (seed 238310129) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-01-seed-238310129-exotic.png]]
+
+*** Mission 17a compare 02 (seed 1281562706)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 25.11 | 22.58 |
+| envelope | 43.97 | 40.09 |
+| triad | 27.91 | 26.29 |
+| shift | 22.56 | 23.31 |
+| filament | 0.302 | 0.318 |
+
+#+CAPTION: Mission 17a compare 02 (seed 1281562706) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-02-seed-1281562706-baseline.png]]
+
+#+CAPTION: Mission 17a compare 02 (seed 1281562706) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-02-seed-1281562706-exotic.png]]
+
+*** Mission 17a compare 03 (seed 71312373)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.37 | 22.91 |
+| envelope | 28.04 | 39.65 |
+| triad | 27.20 | 26.16 |
+| shift | 22.79 | 23.63 |
+| filament | 0.248 | 0.271 |
+
+#+CAPTION: Mission 17a compare 03 (seed 71312373) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-03-seed-71312373-baseline.png]]
+
+#+CAPTION: Mission 17a compare 03 (seed 71312373) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-03-seed-71312373-exotic.png]]
+
+*** Mission 17a compare 04 (seed 779818750)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 19.74 | 20.60 |
+| envelope | 50.31 | 43.13 |
+| triad | 24.16 | 24.96 |
+| shift | 20.63 | 21.50 |
+| filament | 0.263 | 0.261 |
+
+#+CAPTION: Mission 17a compare 04 (seed 779818750) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-04-seed-779818750-baseline.png]]
+
+#+CAPTION: Mission 17a compare 04 (seed 779818750) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-04-seed-779818750-exotic.png]]
+
+*** Mission 17a compare 05 (seed 935777844)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 21.36 | 24.47 |
+| envelope | 38.74 | 31.75 |
+| triad | 25.25 | 27.50 |
+| shift | 22.19 | 23.15 |
+| filament | 0.228 | 0.284 |
+
+#+CAPTION: Mission 17a compare 05 (seed 935777844) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-05-seed-935777844-baseline.png]]
+
+#+CAPTION: Mission 17a compare 05 (seed 935777844) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-05-seed-935777844-exotic.png]]
+
+*** Mission 17a compare 06 (seed 1269303645)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.99 | 26.99 |
+| envelope | 24.64 | 30.73 |
+| triad | 27.59 | 28.93 |
+| shift | 22.89 | 21.86 |
+| filament | 0.267 | 0.265 |
+
+#+CAPTION: Mission 17a compare 06 (seed 1269303645) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-06-seed-1269303645-baseline.png]]
+
+#+CAPTION: Mission 17a compare 06 (seed 1269303645) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-06-seed-1269303645-exotic.png]]
+
+*** Mission 17a compare 07 (seed 254506022)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.76 | 22.51 |
+| envelope | 49.22 | 38.63 |
+| triad | 27.73 | 26.44 |
+| shift | 23.21 | 22.54 |
+| filament | 0.283 | 0.275 |
+
+#+CAPTION: Mission 17a compare 07 (seed 254506022) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-07-seed-254506022-baseline.png]]
+
+#+CAPTION: Mission 17a compare 07 (seed 254506022) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-07-seed-254506022-exotic.png]]
+
+*** Mission 17a compare 08 (seed 1168679221)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.26 | 23.33 |
+| envelope | 58.41 | 55.65 |
+| triad | 27.20 | 26.71 |
+| shift | 23.14 | 23.18 |
+| filament | 0.291 | 0.282 |
+
+#+CAPTION: Mission 17a compare 08 (seed 1168679221) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-08-seed-1168679221-baseline.png]]
+
+#+CAPTION: Mission 17a compare 08 (seed 1168679221) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-08-seed-1168679221-exotic.png]]
+
+*** Mission 17a compare 09 (seed 352362012)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 31.87 | 28.66 |
+| envelope | 45.86 | 45.58 |
+| triad | 31.56 | 29.83 |
+| shift | 20.96 | 21.48 |
+| filament | 0.267 | 0.355 |
+
+#+CAPTION: Mission 17a compare 09 (seed 352362012) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-09-seed-352362012-baseline.png]]
+
+#+CAPTION: Mission 17a compare 09 (seed 352362012) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-09-seed-352362012-exotic.png]]
+
+*** Mission 17a compare 10 (seed 201709760)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 27.83 | 28.18 |
+| envelope | 33.63 | 39.98 |
+| triad | 29.55 | 29.56 |
+| shift | 22.00 | 21.31 |
+| filament | 0.283 | 0.288 |
+
+#+CAPTION: Mission 17a compare 10 (seed 201709760) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-10-seed-201709760-baseline.png]]
+
+#+CAPTION: Mission 17a compare 10 (seed 201709760) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-10-seed-201709760-exotic.png]]
+
+*** Mission 17a compare 11 (seed 1925365880)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 23.86 | 24.54 |
+| envelope | 39.58 | 47.65 |
+| triad | 27.09 | 27.19 |
+| shift | 23.44 | 22.79 |
+| filament | 0.288 | 0.253 |
+
+#+CAPTION: Mission 17a compare 11 (seed 1925365880) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-11-seed-1925365880-baseline.png]]
+
+#+CAPTION: Mission 17a compare 11 (seed 1925365880) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-11-seed-1925365880-exotic.png]]
+
+*** Mission 17a compare 12 (seed 1336461018)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.34 | 25.32 |
+| envelope | 30.71 | 31.47 |
+| triad | 27.11 | 27.65 |
+| shift | 22.68 | 23.47 |
+| filament | 0.279 | 0.325 |
+
+#+CAPTION: Mission 17a compare 12 (seed 1336461018) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-12-seed-1336461018-baseline.png]]
+
+#+CAPTION: Mission 17a compare 12 (seed 1336461018) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-12-seed-1336461018-exotic.png]]
+
+*** Mission 17a compare 13 (seed 691296833)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.28 | 23.20 |
+| envelope | 41.56 | 41.10 |
+| triad | 27.24 | 26.74 |
+| shift | 21.97 | 22.02 |
+| filament | 0.321 | 0.374 |
+
+#+CAPTION: Mission 17a compare 13 (seed 691296833) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-13-seed-691296833-baseline.png]]
+
+#+CAPTION: Mission 17a compare 13 (seed 691296833) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-13-seed-691296833-exotic.png]]
+
+*** Mission 17a compare 14 (seed 387850036)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 19.10 | 20.44 |
+| envelope | 69.18 | 53.46 |
+| triad | 23.83 | 24.71 |
+| shift | 18.94 | 21.06 |
+| filament | 0.337 | 0.328 |
+
+#+CAPTION: Mission 17a compare 14 (seed 387850036) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-14-seed-387850036-baseline.png]]
+
+#+CAPTION: Mission 17a compare 14 (seed 387850036) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-14-seed-387850036-exotic.png]]
+
+*** Mission 17a compare 15 (seed 1661386826)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 27.61 | 28.64 |
+| envelope | 38.51 | 32.52 |
+| triad | 29.06 | 28.71 |
+| shift | 22.05 | 21.50 |
+| filament | 0.331 | 0.331 |
+
+#+CAPTION: Mission 17a compare 15 (seed 1661386826) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-15-seed-1661386826-baseline.png]]
+
+#+CAPTION: Mission 17a compare 15 (seed 1661386826) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-15-seed-1661386826-exotic.png]]
+
+*** Mission 17a compare 16 (seed 1564354771)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.63 | 23.79 |
+| envelope | 25.17 | 18.05 |
+| triad | 27.47 | 26.71 |
+| shift | 22.47 | 22.68 |
+| filament | 0.233 | 0.257 |
+
+#+CAPTION: Mission 17a compare 16 (seed 1564354771) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-16-seed-1564354771-baseline.png]]
+
+#+CAPTION: Mission 17a compare 16 (seed 1564354771) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-16-seed-1564354771-exotic.png]]
+
+*** Mission 17a compare 17 (seed 795854410)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 27.16 | 28.51 |
+| envelope | 46.71 | 45.87 |
+| triad | 29.49 | 29.70 |
+| shift | 22.46 | 22.19 |
+| filament | 0.361 | 0.318 |
+
+#+CAPTION: Mission 17a compare 17 (seed 795854410) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-17-seed-795854410-baseline.png]]
+
+#+CAPTION: Mission 17a compare 17 (seed 795854410) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-17-seed-795854410-exotic.png]]
+
+*** Mission 17a compare 18 (seed 1469545341)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 25.84 | 29.47 |
+| envelope | 35.53 | 49.82 |
+| triad | 28.46 | 30.13 |
+| shift | 22.36 | 21.81 |
+| filament | 0.236 | 0.285 |
+
+#+CAPTION: Mission 17a compare 18 (seed 1469545341) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-18-seed-1469545341-baseline.png]]
+
+#+CAPTION: Mission 17a compare 18 (seed 1469545341) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-18-seed-1469545341-exotic.png]]
+
+*** Mission 17a compare 19 (seed 1326762308)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 24.33 | 26.36 |
+| envelope | 38.72 | 46.53 |
+| triad | 27.44 | 28.37 |
+| shift | 23.17 | 22.90 |
+| filament | 0.366 | 0.330 |
+
+#+CAPTION: Mission 17a compare 19 (seed 1326762308) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-19-seed-1326762308-baseline.png]]
+
+#+CAPTION: Mission 17a compare 19 (seed 1326762308) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-19-seed-1326762308-exotic.png]]
+
+*** Mission 17a compare 20 (seed 955468957)
+
+| metric | baseline | exotic |
+|--------+----------+--------|
+| short | 32.49 | 28.06 |
+| envelope | 40.20 | 42.28 |
+| triad | 32.06 | 29.14 |
+| shift | 20.74 | 22.23 |
+| filament | 0.274 | 0.340 |
+
+#+CAPTION: Mission 17a compare 20 (seed 955468957) baseline
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-20-seed-955468957-baseline.png]]
+
+#+CAPTION: Mission 17a compare 20 (seed 955468957) exotic
+#+ATTR_ORG: :width 1200
+[[file:figures/mission-17a-compare-20-seed-955468957-exotic.png]]
+
+
+* Mission 0a — Transfer to Fulab AIF Agents
+
+We have early evidence of reasonable-looking transfer to AIF ants. If that is
+real, the next transfer target should be futon3/fulab agents because their
+brains already use AIF dynamics inspired by the ants.
+
+** Hypothesis
+
+If the same exotype/hexagram signals that transfer to AIF ants also transfer to
+fulab agents at a similar quality level, we get a direct upgrade in fulab agent
+behavior and a direct input into Mission F.
+
+** Validation idea
+
+- Reuse the AIF-ant transfer setup on a small fulab agent set.
+- Compare baseline vs transfer-enabled behavior on the same tasks.
+- Record whether the transfer "feels" as strong as the ant case.
 
 ** CT formalization of EoC (sketch)
 
