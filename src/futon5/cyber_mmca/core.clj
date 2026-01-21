@@ -124,11 +124,13 @@
   - :W, :S
   - :kernel, :length
   - :sigil, :sigil-count
+  - :phenotype, :phenotype-length
   - :genotype-gate, :genotype-gate-signal
   - :freeze-genotype
   - :exotype-mode
   - :operators (default [])"
   [{:keys [controller seed windows W S kernel length sigil sigil-count
+           phenotype phenotype-length
            genotype-gate genotype-gate-signal freeze-genotype exotype-mode
            operators]}]
   (let [rng (when seed (java.util.Random. (long seed)))
@@ -141,12 +143,15 @@
         genotype (if rng
                    (rng-sigil-string rng length)
                    (ca/random-sigil-string length))
+        phenotype (or phenotype
+                      (when phenotype-length
+                        (ca/random-phenotype-string phenotype-length)))
         base-exotype (exotype/resolve-exotype {:sigil sigil :tier :super})
         sigils (when (= controller :sigil)
                  (sigils-for-count (or sigil-count 16)))]
     (loop [idx 0
            state {:genotype genotype
-                  :phenotype nil
+                  :phenotype phenotype
                   :kernel kernel
                   :exotype base-exotype
                   :metrics-history []
@@ -197,6 +202,109 @@
                       :delta-update delta-update
                       :delta-match delta-match
                       :applied? applied?
+                      :genotype-gate (boolean genotype-gate)
+                      :freeze-genotype (boolean freeze-genotype)
+                      :exotype-mode (or exotype-mode :inline)}]
+          (recur (inc idx)
+                 {:genotype (or (last (:gen-history result)) (:genotype state))
+                  :phenotype (or (last (:phe-history result)) (:phenotype state))
+                  :kernel (or (:kernel result) (:kernel state))
+                  :exotype exotype'
+                  :metrics-history metrics-history
+                  :gen-history gen-history
+                 :phe-history phe-history}
+                 (conj windows-out record)))))))
+
+(defn run-stress-controller
+  "Run a controller with optional stress overrides on exotype params.
+
+  opts keys in addition to run-controller:
+  - :stress-windows (set or seq of window indexes)
+  - :stress-params (map merged into exotype :params during stress windows)"
+  [{:keys [controller seed windows W S kernel length sigil sigil-count
+           phenotype phenotype-length
+           genotype-gate genotype-gate-signal freeze-genotype exotype-mode
+           operators stress-windows stress-params]}]
+  (let [rng (when seed (java.util.Random. (long seed)))
+        length (max 1 (int (or length 32)))
+        kernel (or kernel :mutating-template)
+        sigil (or sigil ca/default-sigil)
+        windows (max 1 (int (or windows 10)))
+        W (max 1 (int (or W 10)))
+        S (max 1 (int (or S W)))
+        stress-windows (set (or stress-windows []))
+        stress-params (or stress-params {})
+        genotype (if rng
+                   (rng-sigil-string rng length)
+                   (ca/random-sigil-string length))
+        phenotype (or phenotype
+                      (when phenotype-length
+                        (ca/random-phenotype-string phenotype-length)))
+        base-exotype (exotype/resolve-exotype {:sigil sigil :tier :super})
+        sigils (when (= controller :sigil)
+                 (sigils-for-count (or sigil-count 16)))]
+    (loop [idx 0
+           state {:genotype genotype
+                  :phenotype phenotype
+                  :kernel kernel
+                  :exotype base-exotype
+                  :metrics-history []
+                  :gen-history []
+                  :phe-history []}
+           windows-out []]
+      (if (>= idx windows)
+        windows-out
+        (let [result (runtime/run-mmca {:genotype (:genotype state)
+                                        :phenotype (:phenotype state)
+                                        :generations W
+                                        :kernel (:kernel state)
+                                        :lock-kernel false
+                                        :operators (or operators [])
+                                        :genotype-gate (boolean genotype-gate)
+                                        :genotype-gate-signal (or genotype-gate-signal \1)
+                                        :freeze-genotype (boolean freeze-genotype)
+                                        :exotype (:exotype state)
+                                        :exotype-mode (or exotype-mode :inline)
+                                        :seed (when seed (+ seed idx))})
+              metrics-history (into (:metrics-history state) (:metrics-history result))
+              gen-history (into (:gen-history state) (:gen-history result))
+              phe-history (into (:phe-history state) (:phe-history result))
+              window (window-features metrics-history gen-history phe-history W S)
+              stress? (contains? stress-windows idx)
+              {:keys [actions chosen-sigil]} (cond
+                                               stress? {:actions [:stress]}
+                                               (= controller :null) {:actions [:hold]}
+                                               (= controller :sigil)
+                                               (let [{:keys [sigil actions]} (choose-actions-sigil sigils window)]
+                                                 {:actions actions :chosen-sigil sigil})
+                                               :else {:actions (choose-actions-hex window)})
+              params-before (get-in state [:exotype :params])
+              params-before (if stress?
+                              (merge params-before stress-params)
+                              params-before)
+              {:keys [params delta-update delta-match applied?]} (apply-actions params-before actions)
+              params (if stress? params-before params)
+              exotype' (assoc (:exotype state) :params params)
+              record {:controller controller
+                      :seed seed
+                      :window idx
+                      :w-start (:w-start window)
+                      :w-end (:w-end window)
+                      :regime (:regime window)
+                      :pressure (:pressure window)
+                      :selectivity (:selectivity window)
+                      :structure (:structure window)
+                      :activity (:activity window)
+                      :actions actions
+                      :sigil chosen-sigil
+                      :update-prob (:update-prob params)
+                      :match-threshold (:match-threshold params)
+                      :delta-update delta-update
+                      :delta-match delta-match
+                      :applied? applied?
+                      :stress? stress?
+                      :stress-update (:update-prob stress-params)
+                      :stress-match (:match-threshold stress-params)
                       :genotype-gate (boolean genotype-gate)
                       :freeze-genotype (boolean freeze-genotype)
                       :exotype-mode (or exotype-mode :inline)}]
