@@ -2275,3 +2275,15 @@ Summary:
 - gates: {:blocked 6, nil 7}
 
 Takeaway: curriculum gating is active (~46% of ratchet contexts blocked) with normalized deltas.
+
+Read path ("pull off shelf"):
+
+- exoevolve can now read `@exotype-ratchet` / `@exotype-lift` from iiching and attach
+  it to each run entry as `:ratchet-library` (no scoring bonus).
+- Enable with:
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --iiching-root ../futon3/library/iiching \
+  --iiching-manifest futon5/resources/exotype-program-manifest.edn
+#+end_src

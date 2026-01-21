@@ -16,6 +16,7 @@
     "  --logs CSV            Comma-separated exoevolve log paths."
     "  --iiching-root PATH   iiching library root (default futon3/library/iiching)."
     "  --manifest PATH       Exotype manifest (default futon5/resources/exotype-program-manifest.edn)."
+    "  --lift PATH           Lift registry for CT templates (default futon5/resources/exotype-xenotype-lift.edn)."
     "  --min-delta X         Minimum weighted delta (default 0.3)."
     "  --max-best N          Keep best N evidence entries (default 10)."
     "  --max-recent N        Keep most recent N entries (default 10)."
@@ -51,6 +52,9 @@
 
           (= "--manifest" flag)
           (recur (rest more) (assoc opts :manifest (first more)))
+
+          (= "--lift" flag)
+          (recur (rest more) (assoc opts :lift (first more)))
 
           (= "--min-delta" flag)
           (recur (rest more) (assoc opts :min-delta (parse-double (first more))))
@@ -99,8 +103,17 @@
   [root idx]
   (str (io/file root (str "exotype-" (pad3 idx) ".flexiarg"))))
 
+(defn- lift-index
+  [lift]
+  (reduce (fn [m {:keys [sigil ct-template]}]
+            (if (and sigil ct-template)
+              (assoc m sigil ct-template)
+              m))
+          {}
+          (:patterns lift)))
+
 (defn- evidence-from-run
-  [log-path row]
+  [log-path row ct-template]
   (let [ratchet (:ratchet row)
         exotype (:exotype row)
         delta-weighted (:delta-weighted ratchet)
@@ -121,19 +134,24 @@
        :delta-q50-n (:delta-q50-n ratchet)
        :scale (:scale ratchet)
        :threshold (get-in ratchet [:curriculum :threshold])
+       :ct-template ct-template
+       :ct-source (when ct-template :lift-registry)
        :final-score score
        :exotype (select-keys exotype [:sigil :tier :params])
        :gate gate
        :at (now)})))
 
 (defn- select-evidence
-  [logs min-delta]
+  [logs min-delta lift]
   (let [min-delta (double (or min-delta 0.3))]
     (->> logs
          (mapcat (fn [path]
                    (->> (read-edn-lines path)
                         (filter #(= (:event %) :run))
-                        (keep #(evidence-from-run path %)))))
+                        (keep (fn [row]
+                                (let [sigil (get-in row [:exotype :sigil])
+                                      ct-template (get lift sigil)]
+                                  (evidence-from-run path row ct-template)))))))
          (filter #(and (number? (:delta-weighted %))
                        (> (:delta-weighted %) min-delta)))
          vec)))
@@ -224,7 +242,7 @@
   (spit path (str/join "\n" lines) :append false))
 
 (defn -main [& args]
-  (let [{:keys [help unknown logs iiching-root manifest min-delta max-best max-recent dry-run]} (parse-args args)]
+  (let [{:keys [help unknown logs iiching-root manifest lift min-delta max-best max-recent dry-run]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown) (println (usage)))
@@ -233,8 +251,11 @@
                                            (println (usage)))
       :else
       (let [iiching-root (or iiching-root "futon3/library/iiching")
+            lift-path (or lift "futon5/resources/exotype-xenotype-lift.edn")
+            lift-index (when lift-path
+                         (lift-index (edn/read-string (slurp lift-path))))
             idx-map (manifest->index manifest)
-            evidence (select-evidence logs min-delta)
+            evidence (select-evidence logs min-delta lift-index)
             grouped (group-by (fn [e]
                                 (let [sigil (get-in e [:exotype :sigil])
                                       tier (get-in e [:exotype :tier])]

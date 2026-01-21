@@ -1,6 +1,7 @@
 (ns futon5.mmca.exoevolve
   "Short-horizon exotype evolution loop."
   (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
@@ -12,7 +13,8 @@
             [futon5.hexagram.metrics :as hex-metrics]
             [futon5.hexagram.logging :as hex-log]
             [futon5.exotic.ratchet :as ratchet]
-            [futon5.exotic.curriculum :as curriculum]))
+            [futon5.exotic.curriculum :as curriculum]
+            [futon5.exotic.ratchet-library :as ratchet-lib]))
 
 (def ^:private default-length 50)
 (def ^:private default-generations 30)
@@ -48,6 +50,8 @@
     "  --envelope-change-width P   Change envelope width (0-1, default 0.15)."
     "  --envelope-change      Include avg-change in envelope score (default true)."
     "  --hexagram-log PATH    Append PSR/PUR entries to EDN log (optional)."
+    "  --iiching-root PATH    iiching library root (optional)."
+    "  --iiching-manifest PATH Exotype manifest for iiching lookup (optional)."
     "  --curriculum-gate      Clamp ratchet deltas below threshold (optional)."
     "  --log PATH             Append EDN log entries (optional)."
     "  --tap                 Emit tap> events for runs/windows (optional)."
@@ -130,6 +134,12 @@
 
           (= "--hexagram-log" flag)
           (recur (rest more) (assoc opts :hexagram-log (first more)))
+
+          (= "--iiching-root" flag)
+          (recur (rest more) (assoc opts :iiching-root (first more)))
+
+          (= "--iiching-manifest" flag)
+          (recur (rest more) (assoc opts :iiching-manifest (first more)))
 
           (= "--curriculum-gate" flag)
           (recur more (assoc opts :curriculum-gate true))
@@ -310,7 +320,7 @@
     :contextual-mutate+mix
     :contextual-mutate))
 
-(defn- log-entry [run-id exotype length generations eval context-depth ratchet-context]
+(defn- log-entry [run-id exotype length generations eval context-depth ratchet-context ratchet-library]
   {:schema/version 1
    :experiment/id :exoevolve
    :event :run
@@ -331,6 +341,7 @@
            :envelope (:envelope-score eval)
            :final (:final-score eval)}
    :ratchet ratchet-context
+   :ratchet-library ratchet-library
    :hexagram (select-keys (:hexagram eval) [:class :predicted])
    :summary (:summary eval)
    :shift (:shift eval)
@@ -423,11 +434,18 @@
                                   #(mutate-exotype rng (rand-nth survivors) tier)))]
     (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
 
+(defn- default-iiching-root []
+  (let [candidates ["../futon3/library/iiching" "futon3/library/iiching"]]
+    (some (fn [path]
+            (when (.exists (io/file path)) path))
+          candidates)))
+
 (defn evolve-exotypes
   [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log
            context-depth curriculum-gate tap hexagram-weight hexagram-log score-mode
            envelope-center envelope-width envelope-change-center envelope-change-width
-           envelope-change update-prob match-threshold]}]
+           envelope-change update-prob match-threshold
+           iiching-root iiching-manifest]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -447,7 +465,11 @@
         rng (java.util.Random. (long (or seed 4242)))
         xeno-specs (load-xeno-specs xeno-spec)
         hex-opts {:hexagram-weight (double (or hexagram-weight 0.0))
-                  :hexagram-log hexagram-log}]
+                  :hexagram-log hexagram-log}
+        iiching-root (or iiching-root (default-iiching-root))
+        iiching-manifest (or iiching-manifest "futon5/resources/exotype-program-manifest.edn")
+        library-opts {:iiching-root iiching-root
+                      :manifest iiching-manifest}]
     (loop [i 0
            window 0
            prev-window nil
@@ -458,10 +480,12 @@
       (if (= i runs)
         {:population population}
         (let [exotype (rand-nth population)
+              ratchet-library (when iiching-root
+                                (ratchet-lib/evidence-for library-opts (:sigil exotype) (:tier exotype)))
               exotype-overrides {:update-prob update-prob
                                  :match-threshold match-threshold}
               eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts exotype-overrides)
-              entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context)
+              entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context ratchet-library)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)
               stats (when update? (summarize-batch batch'))
