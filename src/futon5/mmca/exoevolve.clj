@@ -6,8 +6,12 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
+            [futon5.mmca.register-shift :as register-shift]
+            [futon5.mmca.trigram :as trigram]
             [futon5.mmca.runtime :as mmca]
             [futon5.mmca.xenotype :as xenotype]
+            [futon5.hexagram.metrics :as hex-metrics]
+            [futon5.hexagram.logging :as hex-log]
             [futon5.exotic.ratchet :as ratchet]
             [futon5.exotic.curriculum :as curriculum]))
 
@@ -35,6 +39,14 @@
     "  --context-depth N      Recursive-local context depth (default 1)."
     "  --xeno-spec PATH       EDN xenotype spec or vector of specs (optional)."
     "  --xeno-weight W        Blend xenotype score into short score (0-1)."
+    "  --hexagram-weight W    Blend hexagram fitness into score (0-1)."
+    "  --score-mode MODE      legacy, triad, or shift (default legacy)."
+    "  --envelope-center P    Entropy envelope center (0-1, default 0.6)."
+    "  --envelope-width P     Entropy envelope width (0-1, default 0.25)."
+    "  --envelope-change-center P  Change envelope center (0-1, default 0.2)."
+    "  --envelope-change-width P   Change envelope width (0-1, default 0.15)."
+    "  --envelope-change      Include avg-change in envelope score (default true)."
+    "  --hexagram-log PATH    Append PSR/PUR entries to EDN log (optional)."
     "  --curriculum-gate      Clamp ratchet deltas below threshold (optional)."
     "  --log PATH             Append EDN log entries (optional)."
     "  --tap                 Emit tap> events for runs/windows (optional)."
@@ -87,6 +99,30 @@
 
           (= "--xeno-weight" flag)
           (recur (rest more) (assoc opts :xeno-weight (parse-double (first more))))
+
+          (= "--hexagram-weight" flag)
+          (recur (rest more) (assoc opts :hexagram-weight (parse-double (first more))))
+
+          (= "--score-mode" flag)
+          (recur (rest more) (assoc opts :score-mode (some-> (first more) keyword)))
+
+          (= "--envelope-center" flag)
+          (recur (rest more) (assoc opts :envelope-center (parse-double (first more))))
+
+          (= "--envelope-width" flag)
+          (recur (rest more) (assoc opts :envelope-width (parse-double (first more))))
+
+          (= "--envelope-change-center" flag)
+          (recur (rest more) (assoc opts :envelope-change-center (parse-double (first more))))
+
+          (= "--envelope-change-width" flag)
+          (recur (rest more) (assoc opts :envelope-change-width (parse-double (first more))))
+
+          (= "--envelope-change" flag)
+          (recur more (assoc opts :envelope-change true))
+
+          (= "--hexagram-log" flag)
+          (recur (rest more) (assoc opts :hexagram-log (first more)))
 
           (= "--curriculum-gate" flag)
           (recur more (assoc opts :curriculum-gate true))
@@ -162,8 +198,30 @@
       {:scores scores
        :mean mean})))
 
+(defn- band-score [x center width]
+  (let [x (double (or x 0.0))
+        center (double (or center 0.0))
+        width (double (or width 1.0))]
+    (if (pos? width)
+      (max 0.0 (- 1.0 (/ (Math/abs (- x center)) width)))
+      0.0)))
+
+(defn- envelope-score
+  [summary {:keys [entropy-center entropy-width change-center change-width include-change?]}]
+  (let [entropy (band-score (:avg-entropy-n summary) entropy-center entropy-width)
+        change (band-score (:avg-change summary) change-center change-width)
+        parts (if include-change? [entropy change] [entropy])
+        avg (if (seq parts) (/ (reduce + 0.0 parts) (double (count parts))) 0.0)]
+    (* 100.0 avg)))
+
+(defn- triad-score [summary hex-score]
+  (let [gen-score (double (or (:gen-composite-score summary) (:composite-score summary) 0.0))
+        phe-score (double (or (:phe-composite-score summary) (:composite-score summary) 0.0))
+        exo-score (double (or hex-score 0.0))]
+    (/ (+ gen-score phe-score exo-score) 3.0)))
+
 (defn- evaluate-exotype
-  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context]
+  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts]
   (let [genotype (rng-sigil-string rng length)
         phenotype (rng-phenotype-string rng length)
         seed (rng-int rng Integer/MAX_VALUE)
@@ -177,13 +235,57 @@
                                :seed seed})
         summary (metrics/summarize-run result)
         short-score (double (or (:composite-score summary) 0.0))
+        shift (register-shift/register-shift-summary result)
+        shift-score (double (or (:shift/composite shift) 0.0))
+        trigram (trigram/score-early-late (:phe-history result))
+        trigram-score (double (or (:score trigram) 0.0))
+        envelope (envelope-score summary envelope-opts)
         xeno (score-xenotype xeno-specs result ratchet-context)
         xeno-score (when xeno (* 100.0 (double (or (:mean xeno) 0.0))))
-        final-score (blend-score short-score xeno-score xeno-weight)]
+        hex-transition (hex-metrics/run->transition-matrix result)
+        hex-signature (hex-metrics/transition-matrix->signature hex-transition)
+        hex-class (hex-metrics/signature->hexagram-class hex-signature)
+        hex-score (* 100.0 (hex-metrics/hexagram-fitness hex-class))
+        base-score (cond
+                     (= score-mode :triad) (triad-score summary hex-score)
+                     (= score-mode :shift) shift-score
+                     :else short-score)
+        xeno-blend (blend-score base-score xeno-score xeno-weight)
+        final-score (if (or (= score-mode :triad) (= score-mode :shift))
+                      xeno-blend
+                      (blend-score xeno-blend hex-score (:hexagram-weight hex-opts)))
+        predicted (hex-metrics/params->hexagram-class (:params exotype))]
+    (when (seq (:hexagram-log hex-opts))
+      (hex-log/append-entry!
+       (:hexagram-log hex-opts)
+       (hex-log/psr-entry {:sigil (:sigil exotype)
+                           :exotype-params (:params exotype)
+                           :predicted-hexagram predicted
+                           :reason "params-heuristic"
+                           :generation generations
+                           :seed seed}))
+      (hex-log/append-entry!
+       (:hexagram-log hex-opts)
+       (hex-log/pur-entry {:sigil (:sigil exotype)
+                           :actual-dynamics (hex-metrics/run->metrics result)
+                           :actual-hexagram hex-class
+                           :match? (= predicted hex-class)
+                           :generation generations
+                           :seed seed})))
     {:result result
      :summary summary
      :short-score short-score
+     :triad-score (when (= score-mode :triad) (triad-score summary hex-score))
+     :shift shift
+     :shift-score (when (= score-mode :shift) shift-score)
+     :trigram trigram
+     :trigram-score trigram-score
+     :envelope-score envelope
      :xeno xeno
+     :hexagram {:class hex-class
+                :signature hex-signature
+                :score hex-score
+                :predicted predicted}
      :final-score final-score
      :seed seed}))
 
@@ -206,9 +308,17 @@
    :program-template (program-template exotype)
    :score {:short (:short-score eval)
            :xeno (get-in eval [:xeno :mean])
+           :hex (get-in eval [:hexagram :score])
+           :triad (:triad-score eval)
+           :shift (:shift-score eval)
+           :trigram (:trigram-score eval)
+           :envelope (:envelope-score eval)
            :final (:final-score eval)}
    :ratchet ratchet-context
-   :summary (:summary eval)})
+   :hexagram (select-keys (:hexagram eval) [:class :predicted])
+   :summary (:summary eval)
+   :shift (:shift eval)
+   :trigram (:trigram eval)})
 
 (defn- append-log! [path entry]
   (spit path (str (pr-str entry) "\n") :append true))
@@ -286,7 +396,10 @@
     (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
 
 (defn evolve-exotypes
-  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log context-depth curriculum-gate tap]}]
+  [{:keys [runs length generations pop update-every tier seed xeno-spec xeno-weight log
+           context-depth curriculum-gate tap hexagram-weight hexagram-log score-mode
+           envelope-center envelope-width envelope-change-center envelope-change-width
+           envelope-change]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -295,8 +408,18 @@
         tier (or tier :both)
         context-depth (max 1 (int (or context-depth 1)))
         xeno-weight (double (or xeno-weight 0.0))
+        score-mode (or score-mode :legacy)
+        envelope-opts {:entropy-center (or envelope-center 0.6)
+                       :entropy-width (or envelope-width 0.25)
+                       :change-center (or envelope-change-center 0.2)
+                       :change-width (or envelope-change-width 0.15)
+                       :include-change? (if (contains? #{true false} envelope-change)
+                                          envelope-change
+                                          true)}
         rng (java.util.Random. (long (or seed 4242)))
-        xeno-specs (load-xeno-specs xeno-spec)]
+        xeno-specs (load-xeno-specs xeno-spec)
+        hex-opts {:hexagram-weight (double (or hexagram-weight 0.0))
+                  :hexagram-log hexagram-log}]
     (loop [i 0
            window 0
            prev-window nil
@@ -307,7 +430,7 @@
       (if (= i runs)
         {:population population}
         (let [exotype (rand-nth population)
-              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context)
+              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts)
               entry (log-entry (inc i) exotype length generations eval context-depth ratchet-context)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)

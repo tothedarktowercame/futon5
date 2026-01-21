@@ -77,10 +77,13 @@
         changes (keep (fn [[a b]] (hamming-rate a b)) pairs)
         entropies (map shannon-entropy phe-history)
         lengths (map count phe-history)
-        max-entropies (map (fn [len] (when (pos? len) 1.0)) lengths)
+        max-entropies (map (fn [len]
+                             (when (pos? len)
+                               (/ (Math/log len) (Math/log 2.0))))
+                           lengths)
         entropy-norms (map (fn [entropy max-e]
                              (when (and entropy max-e (pos? max-e))
-                               (/ entropy max-e)))
+                               (/ (double entropy) (double max-e))))
                            entropies max-entropies)]
     {:phe-entropy (avg entropies)
      :phe-change (avg changes)
@@ -287,3 +290,206 @@
              {:lesion/half (:half lesion)
               :lesion/left left-summary
               :lesion/right right-summary}))))
+
+(defn- clamp01 [x]
+  (cond
+    (nil? x) 0.0
+    (< x 0.0) 0.0
+    (> x 1.0) 1.0
+    :else (double x)))
+
+(defn- unique-ratio [{:keys [unique-sigils length]}]
+  (when (and unique-sigils length (pos? length))
+    (/ (double unique-sigils) (double length))))
+
+(defn- macro-action-step
+  "Infer a coarse macro-action set from per-tick metrics.
+  Draft heuristic: change-rate drives pressure, diversity drives selectivity,
+  temporal autocorr and change-rate hint at structure-preserve/disrupt."
+  [{:keys [change-rate temporal-autocorr] :as metrics}]
+  (let [pressure (clamp01 change-rate)
+        diversity (clamp01 (unique-ratio metrics))
+        selectivity (clamp01 (- 1.0 (or diversity 0.0)))
+        structure-preserve? (and (number? temporal-autocorr)
+                                 (>= temporal-autocorr 0.6)
+                                 (or (nil? change-rate) (< change-rate 0.25)))
+        pressure-tag (cond
+                       (>= pressure 0.5) :pressure-up
+                       (< pressure 0.2) :pressure-down)
+        selectivity-tag (cond
+                          (>= selectivity 0.6) :selectivity-up
+                          (< selectivity 0.4) :selectivity-down)
+        structure-tag (if structure-preserve?
+                        :structure-preserve
+                        :structure-disrupt)]
+    (vec (remove nil? [pressure-tag selectivity-tag structure-tag]))))
+
+(defn macro-trace
+  "Return a per-tick vector of macro-action sets."
+  [metrics-history]
+  (->> (remove nil? metrics-history)
+       (mapv macro-action-step)))
+
+(declare classify-regime)
+
+(defn- entropy-n
+  [{:keys [entropy length]}]
+  (let [len (or length 0)
+        max-entropy (when (pos? len)
+                      (/ (Math/log len) (Math/log 2.0)))]
+    (when (and (number? entropy) (number? max-entropy) (pos? max-entropy))
+      (/ (double entropy) (double max-entropy)))))
+
+(defn- avg-or-nil [xs]
+  (when (seq xs)
+    (avg xs)))
+
+(defn- nan? [x]
+  (and (number? x) (Double/isNaN (double x))))
+
+(defn- ensure-normalized!
+  [k v]
+  (when (number? v)
+    (when (or (nan? v) (< v 0.0) (> v 1.0))
+      (throw (ex-info "Windowed metric violates normalization contract."
+                      {:metric k :value v})))))
+
+(defn- normalize-window
+  [k v]
+  (when (number? v)
+    (let [v (double v)]
+      (ensure-normalized! k v)
+      v)))
+
+(defn- temporal-autocorr-window [series]
+  (let [pairs (partition 2 1 series)
+        temporal (keep (fn [[a b]]
+                         (when-let [rate (hamming-rate a b)]
+                           (- 1.0 rate)))
+                       pairs)]
+    (avg-or-nil temporal)))
+
+(defn- window-summary-from-metrics [entries]
+  (let [changes (keep :change-rate entries)
+        uniques (keep unique-ratio entries)
+        entropies (keep entropy-n entries)
+        temporal (keep :temporal-autocorr entries)]
+    {:avg-change (avg-or-nil changes)
+     :avg-unique (avg-or-nil uniques)
+     :avg-entropy-n (avg-or-nil entropies)
+     :temporal-autocorr (avg-or-nil temporal)}))
+
+(defn- window-summary-from-gen-history [series]
+  (let [changes (keep (fn [[a b]] (hamming-rate a b)) (partition 2 1 series))
+        uniques (keep (fn [s]
+                        (when (seq s)
+                          (/ (double (count (frequencies s)))
+                             (double (count s)))))
+                      series)
+        entropies (keep shannon-entropy series)
+        lengths (map count series)
+        max-entropies (map (fn [len] (when (pos? len) 1.0)) lengths)
+        entropy-norms (map (fn [entropy max-e]
+                             (when (and entropy max-e (pos? max-e))
+                               (/ entropy max-e)))
+                           entropies max-entropies)]
+    {:avg-change (avg-or-nil changes)
+     :avg-unique (avg-or-nil uniques)
+     :avg-entropy-n (avg-or-nil entropy-norms)
+     :temporal-autocorr (temporal-autocorr-window series)}))
+
+(defn windowed-macro-features
+  "Return a sequence of per-window macro features.
+
+  Accepts either a run map (with :metrics-history and/or :gen-history) or a
+  raw metrics-history sequence. opts expects {:W N :S N} for window/stride."
+  [history {:keys [W S] :or {W 10 S 5}}]
+  (let [metrics-history (cond
+                          (map? history) (:metrics-history history)
+                          (sequential? history) history
+                          :else nil)
+        gen-history (when (map? history) (:gen-history history))
+        metric-count (count (or metrics-history []))
+        gen-count (count (or gen-history []))
+        base-count (if (seq metrics-history) metric-count gen-count)
+        n (max 0 (int base-count))
+        w (max 1 (int W))
+        s (max 1 (int S))]
+    (loop [start 0
+           acc []]
+      (if (>= start n)
+        acc
+        (let [end (min n (+ start w))
+              metric-window (when (and metrics-history (< start metric-count))
+                              (subvec (vec metrics-history) start (min metric-count end)))
+              gen-window (when (and gen-history (< start gen-count))
+                           (subvec (vec gen-history) start (min gen-count end)))
+              summary (cond
+                        (seq metric-window) (window-summary-from-metrics metric-window)
+                        (seq gen-window) (window-summary-from-gen-history gen-window)
+                        :else {})
+              pressure (normalize-window :pressure (:avg-change summary))
+              selectivity (when-let [unique (:avg-unique summary)]
+                            (normalize-window :selectivity (- 1.0 unique)))
+              structure (normalize-window :structure (:temporal-autocorr summary))
+              activity (normalize-window :activity (:avg-change summary))
+              regime (when (or pressure selectivity structure)
+                       (classify-regime summary {:temporal-autocorr (:temporal-autocorr summary)}))]
+          (recur (+ start s)
+                 (conj acc {:w-start start
+                            :w-end (dec end)
+                            :pressure pressure
+                            :selectivity selectivity
+                            :structure structure
+                            :activity activity
+                            :regime regime})))))))
+
+(defn- classify-regime
+  "Draft regime classifier based on summary metrics."
+  [{:keys [avg-change avg-entropy-n]} {:keys [temporal-autocorr]}]
+  (let [activity (when (number? avg-change) avg-change)
+        structure (when (number? temporal-autocorr) temporal-autocorr)
+        eps-low 0.1
+        eps-high 0.7
+        eps-struct 0.4
+        eps-static 0.35]
+    (cond
+      (and activity (< activity eps-low))
+      :freeze
+
+      (and activity (> activity eps-high)
+           structure (< structure eps-struct))
+      :magma
+
+      (and structure (>= structure 0.8)
+           activity (>= activity eps-low) (< activity eps-static))
+      :static
+
+      (and (number? avg-change) (>= avg-change 0.55)
+           (number? temporal-autocorr) (< temporal-autocorr 0.35))
+      :chaos
+
+      (and (number? avg-entropy-n) (>= avg-entropy-n 0.85)
+           (number? avg-change) (>= avg-change 0.45))
+      :magma
+
+      :else
+      :eoc)))
+
+(defn episode-summary
+  "Return a canonical summary map for a run result."
+  [{:keys [metrics-history gen-history phe-history] :as result}]
+  (let [summary (summarize-run {:metrics-history metrics-history
+                                :gen-history gen-history
+                                :phe-history phe-history
+                                :lesion (:lesion result)})
+        autocorr (select-keys summary [:spatial-autocorr :temporal-autocorr])
+        regime (classify-regime summary autocorr)
+        pressure-avg (clamp01 (:avg-change summary))
+        selectivity-avg (clamp01 (- 1.0 (or (:avg-unique summary) 0.0)))
+        metastability (clamp01 (:coherence summary))]
+    {:regime regime
+     :macro-trace (macro-trace metrics-history)
+     :pressure-avg pressure-avg
+     :selectivity-avg selectivity-avg
+     :metastability metastability}))

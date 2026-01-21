@@ -1,0 +1,158 @@
+#+TITLE: Exotic Programming Notebook IIIa
+#+AUTHOR: Joseph Corneli
+#+DATE: 2026-01-15
+#+FILETAGS: :futon5:exotic:mmca:
+#+STARTUP: overview
+
+* Context
+
+We revisited the hexagram classifier because it had collapsed to mostly
+:qian/:kun. The original approach classified a transition-matrix signature
+(alpha/gap/rank) derived from gen-history (and in tests, phenotype windows).
+That pipeline was not obviously aligned with the "terminal" control signals
+we actually care about.
+
+The MetaCA terminal vocabulary (docs/metaca-terminal-vocabulary.md) emphasizes
+macro-actions and normalized metrics (pressure/selectivity/structure) derived
+from operator effects and per-tick metrics, not just state transitions.
+Therefore, the hex classifier should operate on these terminal-level signals
+instead of the transition matrix. The transition-matrix idea may still be
+useful later as a complementary lens (e.g., for regime detection or stability
+checks), but it should not be the primary driver for hex classes.
+
+* Changes Implemented
+
+1) Reoriented the hex pipeline to terminal signals.
+   - windowed-metrics -> per-window pressure/selectivity/structure (+ entropy)
+   - features -> class (simple thresholds)
+   - classes -> hist, dominance margin, stability, transitions
+
+2) New runner that reads mission_17a compare logs and writes a combined CSV
+   with per-window rows and per-run summaries.
+
+Scripts:
+- scripts/mission_17a_hex_compare_v0.clj
+- scripts/hex_classifier_sanity.clj (synthetic grid sanity check)
+- scripts/hex_feature_scan.clj (feature scan over windows and selectors)
+
+* Rationale
+
+The terminal vocabulary frames how control is exercised:
+- pressure tracks change-rate
+- selectivity tracks uniqueness / gating
+- structure tracks autocorrelation and persistence
+
+These are closer to operator effects and the macro-actions we intend to
+represent. The prior transition-matrix classifier may still be valuable for
+capturing long-run stability signatures, but it did not supply a usable or
+interpretable signal for hex classification across runs.
+
+* Results Snapshot
+
+The terminal-metrics pipeline produces a more varied class distribution.
+Example output from the mission_17a run is written to:
+
+/tmp/mission-17a-hex-compare-v0.csv
+
+Counts (window rows): neutral 704, tai 102, pi 30, qian 4
+Counts (summary rows): neutral 117, tai 3
+
+This is not the final word on validity, but it is non-degenerate and provides
+signal diversity across windows.
+
+* Open Questions
+
+- Should the feature->class thresholds be quantile-based?
+- Should macro-action traces directly inform class selection?
+- Should transition-matrix signatures be retained as a secondary signal?
+
+* Next Steps
+
+- Add a small report that summarizes per-seed dominance margin and stability.
+- Experiment with quantile bins for pressure/selectivity/structure.
+- Validate that phenotype vs genotype windows produce distinct signatures.
+
+* Legacy Reference
+
+Old transition-matrix classifier (kept for reference):
+- src/futon5/hexagram/metrics.clj
+  - run->transition-matrix
+  - transition-matrix->signature (alpha/gap/rank)
+  - signature->hexagram-class
+
+* Summary Outputs (v0)
+
+Per-seed dominance summary:
+- /tmp/mission-17a-hex-compare-v0-summary.csv
+
+Quantile reclassify (0.2/0.8):
+- /tmp/mission-17a-hex-compare-v0-quantile.csv
+
+Notes:
+- Quantile thresholds are printed when the reclassifier runs.
+
+* Label Correlation (v0)
+
+Correlation run:
+- script: scripts/mission_17a_hex_label_correlation.clj
+- output: /tmp/mission-17a-hex-compare-v0-label-corr.csv
+
+Group-level result (exo minus baseline):
+- Exotic-labeled seeds show lower tai fraction and shorter tai streaks across
+  W=10/30/60, with slightly higher dominance margin for exotic.
+- Baseline-labeled seeds show near-zero tai differences and slightly lower
+  dominance margin for exotic at W=10.
+- Tie-labeled seeds show lower tai fraction/streak for exotic, with mixed
+  dominance margins.
+
+Interpretation: the terminal-metrics hex classifier does not currently show a
+positive tai enrichment for "exotic better" labels.
+
+* Follow-on Experiments (v0/v1)
+
+1) Label-aware quantile reclassify
+- script: scripts/mission_17a_hex_quantile_reclassify.clj (with --labels)
+- output: /tmp/mission-17a-hex-compare-v0-quantile.csv
+- note: thresholds computed per label group (baseline/exotic/tie) with a global fallback.
+
+2) Macro-trace classifier (v1)
+- script: scripts/mission_17a_hex_compare_v1.clj
+- output: /tmp/mission-17a-hex-compare-v1.csv
+- result: all windows classified neutral with current macro-action thresholds.
+
+3) Per-seed compact report
+- output: /tmp/mission-17a-hex-compare-v0-per-seed.csv
+- fields: seed, label, variant, window_size, tai_fraction, tai_max_streak,
+  dominant, dominance_margin, hist.
+
+* Take-aways (current)
+
+- The transition-matrix classifier was misaligned with terminal control signals; it can be a secondary lens but should not drive hex labels alone.
+- Terminal-metrics v0 produces non-degenerate class diversity, but tai enrichment does not correlate with "exotic better" labels in this dataset.
+- Label-aware quantile thresholds do not reverse the lack of tai enrichment; they mainly rebalance class proportions.
+- Macro-trace v1 currently collapses to neutral, implying its thresholds or feature mapping need revision before use.
+- The most informative outputs right now are the per-seed summaries and label correlation CSVs; they support auditing without overfitting.
+
+Possible next steps:
+
+  1. Fixed‑seed A/B with controlled perturbations
+     Keep the same seed/genotype/phenotype and only flip one control (e.g., :genotype-gate
+     on/off, or :exotype-mode :inline vs :nominate). This isolates terminal signal
+     sensitivity to a single intervention.
+
+  2. Window‑stride experiments
+     Run the same seeds with different strides (W=10, S=1 vs S=5) to see if tai/pi signals
+     are sensitive to window overlap rather than dynamics.
+
+  3. “Terminal stress test” runs
+     Deliberately trigger high pressure/selectivity/structure regimes by forcing operator
+     pulses or setting extreme update‑prob/match‑threshold values; this can validate that the
+     terminal‑metrics mapping actually traverses the intended feature space.
+
+  4. Phenotype‑only vs genotype‑only evolution
+     Run with :freeze-genotype and compare to :genotype-gate; this should cleanly separate
+     state evolution from control actions.
+
+  5. Macro‑trace sanity runs
+     Pick one or two runs and log raw macro‑trace counts per window; if macro‑trace never
+     produces tags, the issue is in macro‑trace extraction, not the classifier.
