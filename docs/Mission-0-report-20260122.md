@@ -257,6 +257,14 @@ Important gaps:
 
 ---
 
+## Note on CT Candidate Scoring (Option B)
+
+CA dynamics are *not* influenced by a CT template alone. To score CT
+choices with CA, we must bind each CT candidate to an **exotype
+override** (e.g., update‑prob, match‑threshold). That is why the CT
+candidate harness uses **Option B**: the CT choice is evaluated through
+its associated exotype parameters, so the CA run actually differs.
+
 ## Closing
 
 We have real evidence that EoC exists and is controllable (Mission 17a, Mission 5). We also have the beginnings of a CT‑native interpretation stack. What’s missing is **alignment between metrics and human judgment**, **generation regimes that preserve phenotype EoC**, and **a robust reproducibility pipeline**. If we fix those, the ratchet + evidence loop can finally become a mechanism that improves run‑to‑run on average.
