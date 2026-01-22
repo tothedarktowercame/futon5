@@ -54,6 +54,8 @@
     "  --iiching-manifest PATH Exotype manifest for iiching lookup (optional)."
     "  --curriculum-gate      Clamp ratchet deltas below threshold (optional)."
     "  --log PATH             Append EDN log entries (optional)."
+    "  --heartbeat N          Print/log progress every N runs (optional)."
+    "  --on-error MODE        fail or continue (default fail)."
     "  --tap                 Emit tap> events for runs/windows (optional)."
     "  --seed N               RNG seed."]))
 
@@ -63,7 +65,7 @@
     (catch Exception _
       nil)))
 
-(defn- parse-double [s]
+(defn- parse-double* [s]
   (try
     (Double/parseDouble s)
     (catch Exception _
@@ -103,31 +105,31 @@
           (recur (rest more) (assoc opts :xeno-spec (first more)))
 
           (= "--xeno-weight" flag)
-          (recur (rest more) (assoc opts :xeno-weight (parse-double (first more))))
+          (recur (rest more) (assoc opts :xeno-weight (parse-double* (first more))))
 
           (= "--hexagram-weight" flag)
-          (recur (rest more) (assoc opts :hexagram-weight (parse-double (first more))))
+          (recur (rest more) (assoc opts :hexagram-weight (parse-double* (first more))))
 
           (= "--score-mode" flag)
           (recur (rest more) (assoc opts :score-mode (some-> (first more) keyword)))
 
           (= "--update-prob" flag)
-          (recur (rest more) (assoc opts :update-prob (parse-double (first more))))
+          (recur (rest more) (assoc opts :update-prob (parse-double* (first more))))
 
           (= "--match-threshold" flag)
-          (recur (rest more) (assoc opts :match-threshold (parse-double (first more))))
+          (recur (rest more) (assoc opts :match-threshold (parse-double* (first more))))
 
           (= "--envelope-center" flag)
-          (recur (rest more) (assoc opts :envelope-center (parse-double (first more))))
+          (recur (rest more) (assoc opts :envelope-center (parse-double* (first more))))
 
           (= "--envelope-width" flag)
-          (recur (rest more) (assoc opts :envelope-width (parse-double (first more))))
+          (recur (rest more) (assoc opts :envelope-width (parse-double* (first more))))
 
           (= "--envelope-change-center" flag)
-          (recur (rest more) (assoc opts :envelope-change-center (parse-double (first more))))
+          (recur (rest more) (assoc opts :envelope-change-center (parse-double* (first more))))
 
           (= "--envelope-change-width" flag)
-          (recur (rest more) (assoc opts :envelope-change-width (parse-double (first more))))
+          (recur (rest more) (assoc opts :envelope-change-width (parse-double* (first more))))
 
           (= "--envelope-change" flag)
           (recur more (assoc opts :envelope-change true))
@@ -147,6 +149,12 @@
           (= "--log" flag)
           (recur (rest more) (assoc opts :log (first more)))
 
+          (= "--heartbeat" flag)
+          (recur (rest more) (assoc opts :heartbeat (parse-int (first more))))
+
+          (= "--on-error" flag)
+          (recur (rest more) (assoc opts :on-error (some-> (first more) keyword)))
+
           (= "--tap" flag)
           (recur more (assoc opts :tap true))
 
@@ -159,6 +167,10 @@
 
 (defn- rng-int [^java.util.Random rng n]
   (.nextInt rng n))
+
+(defn- rng-nth [^java.util.Random rng coll]
+  (when (seq coll)
+    (nth coll (rng-int rng (count coll)))))
 
 (defn- rng-sigil-string [^java.util.Random rng length]
   (let [sigils (mapv :sigil (ca/sigil-entries))]
@@ -433,7 +445,7 @@
         ranked (sort-by :fitness > scored)
         survivors (vec (take (max 1 (quot (count ranked) 2)) ranked))
         offspring (vec (repeatedly (- (count ranked) (count survivors))
-                                  #(mutate-exotype rng (rand-nth survivors) tier)))]
+                                  #(mutate-exotype rng (rng-nth rng survivors) tier)))]
     (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
 
 (defn- default-iiching-root []
@@ -447,7 +459,7 @@
            context-depth curriculum-gate tap hexagram-weight hexagram-log score-mode
            envelope-center envelope-width envelope-change-center envelope-change-width
            envelope-change update-prob match-threshold
-           iiching-root iiching-manifest]}]
+           iiching-root iiching-manifest heartbeat on-error]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -471,60 +483,126 @@
         iiching-root (or iiching-root (default-iiching-root))
         iiching-manifest (or iiching-manifest "futon5/resources/exotype-program-manifest.edn")
         library-opts {:iiching-root iiching-root
-                      :manifest iiching-manifest}]
+                      :manifest iiching-manifest}
+        on-error (or on-error :fail)
+        heartbeat (when (and heartbeat (pos? heartbeat)) heartbeat)
+        run-meta {:schema/version 1
+                  :experiment/id :exoevolve
+                  :event :meta
+                  :seed (long (or seed 4242))
+                  :opts {:runs runs
+                         :length length
+                         :generations generations
+                         :pop pop
+                         :update-every update-every
+                         :tier tier
+                         :context-depth context-depth
+                         :xeno-spec xeno-spec
+                         :xeno-weight xeno-weight
+                         :score-mode score-mode
+                         :hexagram-weight (:hexagram-weight hex-opts)
+                         :hexagram-log hexagram-log
+                         :envelope envelope-opts
+                         :update-prob update-prob
+                         :match-threshold match-threshold
+                         :curriculum-gate (boolean curriculum-gate)
+                         :iiching-root iiching-root
+                         :iiching-manifest iiching-manifest
+                         :heartbeat heartbeat
+                         :on-error on-error}}]
+    (when log
+      (append-log! log run-meta))
     (loop [i 0
            window 0
            prev-window nil
            ratchet-state (ratchet/init-state)
            ratchet-context nil
            population (vec (repeatedly pop #(pick-exotype rng tier)))
-           batch []]
+           batch []
+           errors 0]
       (if (= i runs)
-        {:population population}
-        (let [exotype (rand-nth population)
+        (do
+          (when log
+            (append-log! log {:schema/version 1
+                              :experiment/id :exoevolve
+                              :event :done
+                              :runs runs
+                              :windows window
+                              :errors errors}))
+          {:population population})
+        (let [exotype (rng-nth rng population)
               ratchet-library (when iiching-root
                                 (ratchet-lib/evidence-for library-opts (:sigil exotype) (:tier exotype)))
               exotype-overrides {:update-prob update-prob
-                                 :match-threshold match-threshold}
-              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides)
-              entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context ratchet-library)
-              batch' (conj batch entry)
-              update? (>= (count batch') update-every)
-              stats (when update? (summarize-batch batch'))
-              delta (when (and update? prev-window)
-                      {:delta-mean (- (:mean stats) (:mean prev-window))
-                       :delta-q50 (- (:q50 stats) (:q50 prev-window))})
-              population' (if update?
-                            (evolve-population rng population batch' tier)
-                            population)
-              batch'' (if update? [] batch')
-              window' (if update? (inc window) window)
-              prev-window' (if update? stats prev-window)
-              ratchet-state' (if update?
-                               (ratchet/update-window ratchet-state stats)
-                               ratchet-state)
-              ratchet-context' (when (and update? prev-window)
-                                 (let [threshold (curriculum/curriculum-threshold window' nil)]
-                                   (ratchet/ratchet-context prev-window stats
-                                                            {:threshold threshold
-                                                             :window window'
-                                                             :gate? curriculum-gate})))]
-          (when log
-            (append-log! log entry))
-          (when (and log update?)
-            (append-log! log (window-log-entry window' stats delta)))
-          (when tap
-            (tap> (tap-run-entry entry)))
-          (when (and tap update?)
-            (tap> (tap-window-entry (window-log-entry window' stats delta))))
-          (when update?
-            (let [{:keys [mean best count]} (summarize-batch batch')]
-              (println (format "exo update @ %d | mean %.2f | best %.2f | n %d"
-                               (inc i)
-                               (double (or mean 0.0))
-                               (double (or best 0.0))
-                               (long (or count 0))))))
-          (recur (inc i) window' prev-window' ratchet-state' ratchet-context' population' batch''))))))
+                                 :match-threshold match-threshold}]
+          (try
+            (let [eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides)
+                  entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context ratchet-library)
+                  batch' (conj batch entry)
+                  update? (>= (count batch') update-every)
+                  stats (when update? (summarize-batch batch'))
+                  delta (when (and update? prev-window)
+                          {:delta-mean (- (:mean stats) (:mean prev-window))
+                           :delta-q50 (- (:q50 stats) (:q50 prev-window))})
+                  population' (if update?
+                                (evolve-population rng population batch' tier)
+                                population)
+                  batch'' (if update? [] batch')
+                  window' (if update? (inc window) window)
+                  prev-window' (if update? stats prev-window)
+                  ratchet-state' (if update?
+                                   (ratchet/update-window ratchet-state stats)
+                                   ratchet-state)
+                  ratchet-context' (when (and update? prev-window)
+                                     (let [threshold (curriculum/curriculum-threshold window' nil)]
+                                       (ratchet/ratchet-context prev-window stats
+                                                                {:threshold threshold
+                                                                 :window window'
+                                                                 :gate? curriculum-gate})))]
+              (when log
+                (append-log! log entry))
+              (when (and log update?)
+                (append-log! log (window-log-entry window' stats delta)))
+              (when (and log heartbeat (zero? (mod (inc i) heartbeat)))
+                (append-log! log {:schema/version 1
+                                  :experiment/id :exoevolve
+                                  :event :checkpoint
+                                  :run/id (inc i)
+                                  :window window'
+                                  :errors errors}))
+              (when tap
+                (tap> (tap-run-entry entry)))
+              (when (and tap update?)
+                (tap> (tap-window-entry (window-log-entry window' stats delta))))
+              (when update?
+                (let [{:keys [mean best count]} (summarize-batch batch')]
+                  (println (format "exo update @ %d | mean %.2f | best %.2f | n %d"
+                                   (inc i)
+                                   (double (or mean 0.0))
+                                   (double (or best 0.0))
+                                   (long (or count 0))))))
+              (when (and heartbeat (zero? (mod (inc i) heartbeat)))
+                (println (format "exo heartbeat @ %d | window %d | errors %d"
+                                 (inc i) window' errors)))
+              (recur (inc i) window' prev-window' ratchet-state' ratchet-context' population' batch'' errors))
+            (catch Exception e
+              (let [entry {:schema/version 1
+                           :experiment/id :exoevolve
+                           :event :error
+                           :run/id (inc i)
+                           :exotype (select-keys exotype [:sigil :tier :params])
+                           :error {:class (str (class e))
+                                   :message (.getMessage e)}}]
+                (when log
+                  (append-log! log entry))
+                (when tap
+                  (tap> entry))
+                (if (= on-error :continue)
+                  (do
+                    (println (format "exo error @ %d | %s"
+                                     (inc i) (.getMessage e)))
+                    (recur (inc i) window prev-window ratchet-state ratchet-context population batch (inc errors)))
+                  (throw e))))))))))
 
 (defn -main [& args]
   (let [{:keys [help unknown] :as opts} (parse-args args)]
