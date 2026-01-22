@@ -30,7 +30,7 @@
 (defn- section-indices
   [lines]
   (keep-indexed (fn [idx line]
-                  (when (re-find #"^@\\S+" line)
+                  (when (re-find #"^@[^ \t]+" line)
                     [idx line]))
                 lines))
 

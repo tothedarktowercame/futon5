@@ -2,7 +2,7 @@
 
 Cyber-MMCA is a minimal controller framework for MMCA experiments. It mirrors
 cyberants: a fixed observation ABI feeds a small action vocabulary that can be
-swapped between controllers (null/hex/sigil). The goal is to show end-to-end
+swapped between controllers (null/hex/sigil/wiring). The goal is to show end-to-end
 control loops without requiring an EoC oracle.
 
 ## Observation ABI (per window)
@@ -42,6 +42,21 @@ All scripts require `futon5/resources` on the classpath because they load
   - `bb -cp futon5/src:futon5/resources futon5/scripts/cyber_mmca_state_isolation.clj`
 - Macro-trace sanity report:
   - `bb -cp futon5/src:futon5/resources futon5/scripts/cyber_mmca_macro_trace_report.clj`
+- Prepare HIT inputs (full EDN runs + inputs list):
+  - `bb -cp futon5/src:futon5/resources futon5/scripts/cyber_mmca_prepare_hit.clj`
+
+## Wiring controller
+
+The wiring controller evaluates a xenotype wiring diagram over the window
+summary and maps the diagram output to macro-actions. Provide a diagram
+directly or via a synthesized candidate file:
+
+```
+bb -cp futon5/src:futon5/resources futon5/scripts/cyber_mmca_stress_test.clj \
+  --controllers wiring \
+  --wiring-path /tmp/xenotype-synth-123.edn \
+  --wiring-index 0
+```
 
 ## Outputs
 

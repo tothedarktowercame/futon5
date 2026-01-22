@@ -1,9 +1,12 @@
 (ns futon5.cyber-mmca.core
-  (:require [clojure.string :as str]
+  (:require [clojure.edn :as edn]
+            [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
-            [futon5.mmca.runtime :as runtime]))
+            [futon5.mmca.runtime :as runtime]
+            [futon5.xenotype.interpret :as interpret]
+            [futon5.xenotype.wiring :as wiring]))
 
 (defn- clamp [x lo hi]
   (max lo (min hi x)))
@@ -29,6 +32,79 @@
 
 (defn- ok-regime? [regime]
   (and regime (not (#{:freeze :magma} regime))))
+
+(defn- safe-kernel
+  [candidate fallback]
+  (try
+    (when candidate
+      (ca/kernel-fn candidate)
+      candidate)
+    (catch Exception _ fallback)))
+
+(defn- read-edn-file
+  [path]
+  (when path
+    (edn/read-string (slurp path))))
+
+(defn- pick-candidate
+  [candidates idx]
+  (let [idx (int (or idx 0))
+        max-idx (max 0 (dec (count candidates)))
+        idx (int (clamp idx 0 max-idx))]
+    (nth candidates idx)))
+
+(defn- resolve-wiring-diagram
+  [{:keys [wiring-diagram wiring-path wiring-index]}]
+  (cond
+    (map? wiring-diagram) wiring-diagram
+    (and wiring-path (seq wiring-path))
+    (let [data (read-edn-file wiring-path)]
+      (cond
+        (and (map? data) (:nodes data)) data
+        (and (map? data) (:diagram data)) (:diagram data)
+        (and (map? data) (:candidates data)) (pick-candidate (:candidates data) wiring-index)
+        :else data))
+    :else (wiring/example-diagram)))
+
+(defn- validate-wiring-diagram
+  [diagram]
+  (let [lib (wiring/load-components)
+        validation (wiring/validate-diagram lib diagram)]
+    (when-not (:ok? validation)
+      (throw (ex-info "Invalid wiring diagram." {:errors (:errors validation)})))
+    diagram))
+
+(defn- normalize-wiring-score
+  [score]
+  (when (number? score)
+    (let [score (double score)
+          scaled (cond
+                   (<= score 1.0) score
+                   (> score 1.0) (/ score 100.0)
+                   :else score)]
+      (clamp scaled 0.0 1.0))))
+
+(defn- choose-actions-wiring
+  [diagram window {:keys [actions] :or {actions [:pressure-up :selectivity-up :selectivity-down :pressure-down]}}]
+  (let [context {:summary (:summary window)}
+        {:keys [output]} (interpret/evaluate-diagram diagram context)
+        pass? (:pass? output)
+        score (normalize-wiring-score (:score output))
+        action-list (vec (or actions [:hold]))
+        action (cond
+                 (and (boolean? pass?) (= (count action-list) 2))
+                 (if pass? (first action-list) (second action-list))
+
+                 (and (number? score) (pos? (count action-list)))
+                 (let [idx (min (dec (count action-list))
+                                (int (Math/floor (* score (count action-list)))))]
+                   (nth action-list idx))
+
+                 :else
+                 :hold)]
+    {:actions [(or action :hold)]
+     :wiring-pass pass?
+     :wiring-score score}))
 
 (defn choose-actions-hex
   [{:keys [regime pressure selectivity structure]}]
@@ -118,18 +194,20 @@
   "Run a controller over multiple windows and return per-window records.
 
   opts:
-  - :controller (:null, :hex, :sigil)
+  - :controller (:null, :hex, :sigil, :wiring)
   - :seed
   - :windows
   - :W, :S
   - :kernel, :length
   - :sigil, :sigil-count
+  - :wiring-diagram, :wiring-path, :wiring-index, :wiring-actions
   - :phenotype, :phenotype-length
   - :genotype-gate, :genotype-gate-signal
   - :freeze-genotype
   - :exotype-mode
   - :operators (default [])"
   [{:keys [controller seed windows W S kernel length sigil sigil-count
+           wiring-diagram wiring-path wiring-index wiring-actions
            phenotype phenotype-length
            genotype-gate genotype-gate-signal freeze-genotype exotype-mode
            operators]}]
@@ -148,11 +226,19 @@
                         (ca/random-phenotype-string phenotype-length)))
         base-exotype (exotype/resolve-exotype {:sigil sigil :tier :super})
         sigils (when (= controller :sigil)
-                 (sigils-for-count (or sigil-count 16)))]
+                 (sigils-for-count (or sigil-count 16)))
+        wiring-diagram (when (= controller :wiring)
+                         (-> (resolve-wiring-diagram {:wiring-diagram wiring-diagram
+                                                      :wiring-path wiring-path
+                                                      :wiring-index wiring-index})
+                             (validate-wiring-diagram)))
+        wiring-actions (or wiring-actions
+                           [:pressure-up :selectivity-up :selectivity-down :pressure-down])]
     (loop [idx 0
            state {:genotype genotype
                   :phenotype phenotype
                   :kernel kernel
+                  :kernel-fn nil
                   :exotype base-exotype
                   :metrics-history []
                   :gen-history []
@@ -164,6 +250,7 @@
                                         :phenotype (:phenotype state)
                                         :generations W
                                         :kernel (:kernel state)
+                                        :kernel-fn (:kernel-fn state)
                                         :lock-kernel false
                                         :operators (or operators [])
                                         :genotype-gate (boolean genotype-gate)
@@ -176,12 +263,15 @@
               gen-history (into (:gen-history state) (:gen-history result))
               phe-history (into (:phe-history state) (:phe-history result))
               window (window-features metrics-history gen-history phe-history W S)
-              {:keys [actions chosen-sigil]} (cond
-                                               (= controller :null) {:actions [:hold]}
-                                               (= controller :sigil)
-                                               (let [{:keys [sigil actions]} (choose-actions-sigil sigils window)]
-                                                 {:actions actions :chosen-sigil sigil})
-                                               :else {:actions (choose-actions-hex window)})
+              {:keys [actions chosen-sigil wiring-score wiring-pass]} (cond
+                                                                        (= controller :null) {:actions [:hold]}
+                                                                        (= controller :sigil)
+                                                                        (let [{:keys [sigil actions]} (choose-actions-sigil sigils window)]
+                                                                          {:actions actions :chosen-sigil sigil})
+                                                                        (= controller :wiring)
+                                                                        (choose-actions-wiring wiring-diagram window
+                                                                                               {:actions wiring-actions})
+                                                                        :else {:actions (choose-actions-hex window)})
               params-before (get-in state [:exotype :params])
               {:keys [params delta-update delta-match applied?]} (apply-actions params-before actions)
               exotype' (assoc (:exotype state) :params params)
@@ -197,6 +287,8 @@
                       :activity (:activity window)
                       :actions actions
                       :sigil chosen-sigil
+                      :wiring-score wiring-score
+                      :wiring-pass wiring-pass
                       :update-prob (:update-prob params)
                       :match-threshold (:match-threshold params)
                       :delta-update delta-update
@@ -208,7 +300,8 @@
           (recur (inc idx)
                  {:genotype (or (last (:gen-history result)) (:genotype state))
                   :phenotype (or (last (:phe-history result)) (:phenotype state))
-                  :kernel (or (:kernel result) (:kernel state))
+                  :kernel (safe-kernel (:kernel result) (:kernel state))
+                  :kernel-fn (or (:kernel-fn result) (:kernel-fn state))
                   :exotype exotype'
                   :metrics-history metrics-history
                   :gen-history gen-history
@@ -222,6 +315,7 @@
   - :stress-windows (set or seq of window indexes)
   - :stress-params (map merged into exotype :params during stress windows)"
   [{:keys [controller seed windows W S kernel length sigil sigil-count
+           wiring-diagram wiring-path wiring-index wiring-actions
            phenotype phenotype-length
            genotype-gate genotype-gate-signal freeze-genotype exotype-mode
            operators stress-windows stress-params]}]
@@ -242,11 +336,19 @@
                         (ca/random-phenotype-string phenotype-length)))
         base-exotype (exotype/resolve-exotype {:sigil sigil :tier :super})
         sigils (when (= controller :sigil)
-                 (sigils-for-count (or sigil-count 16)))]
+                 (sigils-for-count (or sigil-count 16)))
+        wiring-diagram (when (= controller :wiring)
+                         (-> (resolve-wiring-diagram {:wiring-diagram wiring-diagram
+                                                      :wiring-path wiring-path
+                                                      :wiring-index wiring-index})
+                             (validate-wiring-diagram)))
+        wiring-actions (or wiring-actions
+                           [:pressure-up :selectivity-up :selectivity-down :pressure-down])]
     (loop [idx 0
            state {:genotype genotype
                   :phenotype phenotype
                   :kernel kernel
+                  :kernel-fn nil
                   :exotype base-exotype
                   :metrics-history []
                   :gen-history []
@@ -258,6 +360,7 @@
                                         :phenotype (:phenotype state)
                                         :generations W
                                         :kernel (:kernel state)
+                                        :kernel-fn (:kernel-fn state)
                                         :lock-kernel false
                                         :operators (or operators [])
                                         :genotype-gate (boolean genotype-gate)
@@ -271,13 +374,16 @@
               phe-history (into (:phe-history state) (:phe-history result))
               window (window-features metrics-history gen-history phe-history W S)
               stress? (contains? stress-windows idx)
-              {:keys [actions chosen-sigil]} (cond
-                                               stress? {:actions [:stress]}
-                                               (= controller :null) {:actions [:hold]}
-                                               (= controller :sigil)
-                                               (let [{:keys [sigil actions]} (choose-actions-sigil sigils window)]
-                                                 {:actions actions :chosen-sigil sigil})
-                                               :else {:actions (choose-actions-hex window)})
+              {:keys [actions chosen-sigil wiring-score wiring-pass]} (cond
+                                                                        stress? {:actions [:stress]}
+                                                                        (= controller :null) {:actions [:hold]}
+                                                                        (= controller :sigil)
+                                                                        (let [{:keys [sigil actions]} (choose-actions-sigil sigils window)]
+                                                                          {:actions actions :chosen-sigil sigil})
+                                                                        (= controller :wiring)
+                                                                        (choose-actions-wiring wiring-diagram window
+                                                                                               {:actions wiring-actions})
+                                                                        :else {:actions (choose-actions-hex window)})
               params-before (get-in state [:exotype :params])
               params-before (if stress?
                               (merge params-before stress-params)
@@ -297,6 +403,8 @@
                       :activity (:activity window)
                       :actions actions
                       :sigil chosen-sigil
+                      :wiring-score wiring-score
+                      :wiring-pass wiring-pass
                       :update-prob (:update-prob params)
                       :match-threshold (:match-threshold params)
                       :delta-update delta-update
@@ -311,7 +419,8 @@
           (recur (inc idx)
                  {:genotype (or (last (:gen-history result)) (:genotype state))
                   :phenotype (or (last (:phe-history result)) (:phenotype state))
-                  :kernel (or (:kernel result) (:kernel state))
+                  :kernel (safe-kernel (:kernel result) (:kernel state))
+                  :kernel-fn (or (:kernel-fn result) (:kernel-fn state))
                   :exotype exotype'
                   :metrics-history metrics-history
                   :gen-history gen-history

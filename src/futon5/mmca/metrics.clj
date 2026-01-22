@@ -1,6 +1,8 @@
 (ns futon5.mmca.metrics
   "Metric helpers for MMCA runs."
-  (:require [futon5.ca.core :as ca]))
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [futon5.ca.core :as ca]))
 
 (defn avg [xs]
   (when (seq xs)
@@ -332,6 +334,42 @@
 
 (declare classify-regime)
 
+(def ^:private default-regime-thresholds
+  {:activity-low 0.1
+   :activity-high 0.7
+   :struct-low 0.4
+   :static-struct 0.8
+   :static-activity 0.35
+   :chaos-change 0.55
+   :chaos-autocorr 0.35
+   :magma-entropy 0.85
+   :magma-change 0.45})
+
+(def ^:dynamic *regime-thresholds-path*
+  "futon5/resources/regime-thresholds.edn")
+
+(defonce ^:private regime-thresholds-cache (atom nil))
+
+(defn- load-regime-thresholds []
+  (let [path *regime-thresholds-path*]
+    (when (and path (.exists (io/file path)))
+      (edn/read-string (slurp path)))))
+
+(defn regime-thresholds
+  "Return regime thresholds, merging defaults with any on-disk overrides."
+  []
+  (or @regime-thresholds-cache
+      (let [loaded (load-regime-thresholds)
+            merged (merge default-regime-thresholds (or loaded {}))]
+        (reset! regime-thresholds-cache merged)
+        merged)))
+
+(defn reload-regime-thresholds!
+  "Reload regime thresholds from disk."
+  []
+  (reset! regime-thresholds-cache
+          (merge default-regime-thresholds (or (load-regime-thresholds) {}))))
+
 (defn- entropy-n
   [{:keys [entropy length]}]
   (let [len (or length 0)
@@ -438,6 +476,7 @@
           (recur (+ start s)
                  (conj acc {:w-start start
                             :w-end (dec end)
+                            :summary summary
                             :pressure pressure
                             :selectivity selectivity
                             :structure structure
@@ -447,30 +486,29 @@
 (defn- classify-regime
   "Draft regime classifier based on summary metrics."
   [{:keys [avg-change avg-entropy-n]} {:keys [temporal-autocorr]}]
-  (let [activity (when (number? avg-change) avg-change)
-        structure (when (number? temporal-autocorr) temporal-autocorr)
-        eps-low 0.1
-        eps-high 0.7
-        eps-struct 0.4
-        eps-static 0.35]
+  (let [{:keys [activity-low activity-high struct-low static-struct static-activity
+                chaos-change chaos-autocorr magma-entropy magma-change]}
+        (regime-thresholds)
+        activity (when (number? avg-change) avg-change)
+        structure (when (number? temporal-autocorr) temporal-autocorr)]
     (cond
-      (and activity (< activity eps-low))
+      (and activity (< activity activity-low))
       :freeze
 
-      (and activity (> activity eps-high)
-           structure (< structure eps-struct))
+      (and activity (> activity activity-high)
+           structure (< structure struct-low))
       :magma
 
-      (and structure (>= structure 0.8)
-           activity (>= activity eps-low) (< activity eps-static))
+      (and structure (>= structure static-struct)
+           activity (>= activity activity-low) (< activity static-activity))
       :static
 
-      (and (number? avg-change) (>= avg-change 0.55)
-           (number? temporal-autocorr) (< temporal-autocorr 0.35))
+      (and (number? avg-change) (>= avg-change chaos-change)
+           (number? temporal-autocorr) (< temporal-autocorr chaos-autocorr))
       :chaos
 
-      (and (number? avg-entropy-n) (>= avg-entropy-n 0.85)
-           (number? avg-change) (>= avg-change 0.45))
+      (and (number? avg-entropy-n) (>= avg-entropy-n magma-entropy)
+           (number? avg-change) (>= avg-change magma-change))
       :magma
 
       :else

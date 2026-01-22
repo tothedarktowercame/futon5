@@ -204,11 +204,13 @@
     (+ (* (- 1.0 w) s)
        (* w x))))
 
-(defn- score-xenotype [xeno-specs result ratchet-context]
+(defn- score-xenotype [xeno-specs result ratchet-context ratchet-library]
   (when (seq xeno-specs)
     (let [scores (mapv (fn [spec]
                          (let [spec (cond-> spec
-                                      ratchet-context (assoc :ratchet ratchet-context))]
+                                      ratchet-context (assoc :ratchet ratchet-context)
+                                      ratchet-library (assoc :ratchet-library ratchet-library
+                                                             :ct-template (:ct-template ratchet-library)))]
                            (:score (xenotype/score-run spec result))))
                        xeno-specs)
           mean (/ (reduce + 0.0 scores) (double (count scores)))]
@@ -245,7 +247,7 @@
     (assoc exotype :params params)))
 
 (defn- evaluate-exotype
-  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts exotype-overrides]
+  [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides]
   (let [exotype (apply-exotype-overrides exotype exotype-overrides)
         genotype (rng-sigil-string rng length)
         phenotype (rng-phenotype-string rng length)
@@ -265,7 +267,7 @@
         trigram (trigram/score-early-late (:phe-history result))
         trigram-score (double (or (:score trigram) 0.0))
         envelope (envelope-score summary envelope-opts)
-        xeno (score-xenotype xeno-specs result ratchet-context)
+        xeno (score-xenotype xeno-specs result ratchet-context ratchet-library)
         xeno-score (when xeno (* 100.0 (double (or (:mean xeno) 0.0))))
         hex-transition (hex-metrics/run->transition-matrix result)
         hex-signature (hex-metrics/transition-matrix->signature hex-transition)
@@ -484,7 +486,7 @@
                                 (ratchet-lib/evidence-for library-opts (:sigil exotype) (:tier exotype)))
               exotype-overrides {:update-prob update-prob
                                  :match-threshold match-threshold}
-              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context hex-opts score-mode envelope-opts exotype-overrides)
+              eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides)
               entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context ratchet-library)
               batch' (conj batch entry)
               update? (>= (count batch') update-every)

@@ -1,5 +1,6 @@
 (ns cyber-mmca-stride-sweep
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.cyber-mmca.core :as core]))
@@ -14,14 +15,19 @@
     ""
     "Options:"
     "  --seeds LIST        Comma-separated seeds (default 4242,1111,2222,3333)."
-    "  --controllers LIST  Comma-separated controllers (null,hex,sigil)."
+    "  --controllers LIST  Comma-separated controllers (null,hex,sigil,wiring)."
     "  --Ws LIST           Comma-separated W values (default 10,20,30)."
     "  --Ss LIST           Comma-separated S values (default 1,5,10)."
     "  --windows N         Number of control windows (default 12)."
     "  --length N          Genotype length (default 32)."
+    "  --phenotype-length N Phenotype length (default = length)."
+    "  --no-phenotype      Disable phenotype generation."
     "  --kernel KW         Kernel keyword (default :mutating-template)."
     "  --sigil STR         Base exotype sigil (default ca/default-sigil)."
     "  --sigil-count N     Control sigil count (default 16)."
+    "  --wiring-path PATH  Wiring diagram EDN path (optional)."
+    "  --wiring-index N    Wiring candidate index when EDN has :candidates (default 0)."
+    "  --wiring-actions EDN Action vector for wiring controller (default [:pressure-up :selectivity-up :selectivity-down :pressure-down])."
     "  --out PATH          Output CSV (default /tmp/cyber-mmca-stride-sweep.csv)."
     "  --help              Show this message."]))
 
@@ -46,6 +52,9 @@
        (map keyword)
        (remove nil?)
        vec))
+
+(defn- parse-edn [s]
+  (try (edn/read-string s) (catch Exception _ nil)))
 
 (defn- parse-args [args]
   (loop [args args
@@ -74,6 +83,12 @@
           (= "--length" flag)
           (recur (rest more) (assoc opts :length (parse-int (first more))))
 
+          (= "--phenotype-length" flag)
+          (recur (rest more) (assoc opts :phenotype-length (parse-int (first more))))
+
+          (= "--no-phenotype" flag)
+          (recur more (assoc opts :no-phenotype true))
+
           (= "--kernel" flag)
           (recur (rest more) (assoc opts :kernel (keyword (first more))))
 
@@ -82,6 +97,15 @@
 
           (= "--sigil-count" flag)
           (recur (rest more) (assoc opts :sigil-count (parse-int (first more))))
+
+          (= "--wiring-path" flag)
+          (recur (rest more) (assoc opts :wiring-path (first more)))
+
+          (= "--wiring-index" flag)
+          (recur (rest more) (assoc opts :wiring-index (parse-int (first more))))
+
+          (= "--wiring-actions" flag)
+          (recur (rest more) (assoc opts :wiring-actions (parse-edn (first more))))
 
           (= "--out" flag)
           (recur (rest more) (assoc opts :out (first more)))
@@ -105,8 +129,8 @@
              (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn -main [& args]
-  (let [{:keys [help unknown seeds controllers Ws Ss windows length kernel sigil
-                sigil-count out]} (parse-args args)]
+  (let [{:keys [help unknown seeds controllers Ws Ss windows length phenotype-length no-phenotype kernel sigil
+                sigil-count wiring-path wiring-index wiring-actions out]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown)
@@ -118,11 +142,18 @@
             controllers (seq (or controllers [:null :hex :sigil]))
             Ws (seq (or Ws [10 20 30]))
             Ss (seq (or Ss [1 5 10]))
+            length (max 1 (int (or length 32)))
+            phenotype-length (when-not no-phenotype
+                               (or (when (number? phenotype-length) phenotype-length) length))
             base-opts {:windows (max 1 (int (or windows 12)))
-                       :length (max 1 (int (or length 32)))
+                       :length length
+                       :phenotype-length phenotype-length
                        :kernel (or kernel :mutating-template)
                        :sigil (or sigil ca/default-sigil)
-                       :sigil-count (max 4 (int (or sigil-count 16)))}
+                       :sigil-count (max 4 (int (or sigil-count 16)))
+                       :wiring-path wiring-path
+                       :wiring-index (or wiring-index 0)
+                       :wiring-actions wiring-actions}
             rows (for [W Ws
                        S Ss
                        controller controllers

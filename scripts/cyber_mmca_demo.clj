@@ -96,6 +96,14 @@
                          p))]
     (reduce apply-action params actions)))
 
+(defn- safe-kernel
+  [candidate fallback]
+  (try
+    (when candidate
+      (ca/kernel-fn candidate)
+      candidate)
+    (catch Exception _ fallback)))
+
 (defn- pick-actions [{:keys [regime structure]}]
   (cond
     (= regime :freeze) [:pressure-up]
@@ -137,6 +145,7 @@
                genotype genotype
                phenotype phenotype
                kernel kernel
+               kernel-fn nil
                exotype base-exotype
                metrics-history []
                gen-history []
@@ -154,6 +163,7 @@
                                             :phenotype phenotype
                                             :generations W
                                             :kernel kernel
+                                            :kernel-fn kernel-fn
                                             :lock-kernel false
                                             :exotype exotype
                                             :exotype-mode :inline
@@ -184,10 +194,11 @@
                        :actions (str/join "+" (map name actions))
                        :update-prob (:update-prob params-after)
                        :match-threshold (:match-threshold params-after)
-                       :kernel (name (or (:kernel result) kernel))}
+                       :kernel (name (safe-kernel (:kernel result) kernel))}
                   last-gen (last (:gen-history result))
                   last-phe (last (:phe-history result))
-                  kernel' (or (:kernel result) kernel)]
+                  kernel' (safe-kernel (:kernel result) kernel)
+                  kernel-fn' (or (:kernel-fn result) kernel-fn)]
               (println (format "W%02d | %s | P=%s S=%s T=%s | %s | u=%.2f m=%.2f"
                                idx
                                (or (:regime window) :unknown)
@@ -201,6 +212,7 @@
                      (or last-gen genotype)
                      (or last-phe phenotype)
                      kernel'
+                     kernel-fn'
                      exotype'
                      metrics-history'
                      gen-history'

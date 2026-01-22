@@ -1,5 +1,6 @@
 (ns cyber-mmca-stress-test
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.cyber-mmca.core :as core]))
@@ -14,14 +15,19 @@
     ""
     "Options:"
     "  --seeds LIST        Comma-separated seeds (default 4242,1111,2222,3333)."
-    "  --controllers LIST  Comma-separated controllers (null,hex,sigil)."
+    "  --controllers LIST  Comma-separated controllers (null,hex,sigil,wiring)."
     "  --windows N         Number of control windows (default 12)."
     "  --W N               Window length in generations (default 10)."
     "  --S N               Window stride (default 10)."
     "  --length N          Genotype length (default 32)."
+    "  --phenotype-length N Phenotype length (default = length)."
+    "  --no-phenotype      Disable phenotype generation."
     "  --kernel KW         Kernel keyword (default :mutating-template)."
     "  --sigil STR         Base exotype sigil (default ca/default-sigil)."
     "  --sigil-count N     Control sigil count (default 16)."
+    "  --wiring-path PATH  Wiring diagram EDN path (optional)."
+    "  --wiring-index N    Wiring candidate index when EDN has :candidates (default 0)."
+    "  --wiring-actions EDN Action vector for wiring controller (default [:pressure-up :selectivity-up :selectivity-down :pressure-down])."
     "  --stress-window N   Window index to stress (default 2)."
     "  --stress-update V   Override update-prob during stress (default 1.0)."
     "  --stress-match V    Override match-threshold during stress (default 0.0)."
@@ -33,6 +39,9 @@
 
 (defn- parse-double* [s]
   (try (Double/parseDouble s) (catch Exception _ nil)))
+
+(defn- parse-edn [s]
+  (try (edn/read-string s) (catch Exception _ nil)))
 
 (defn- parse-seeds [s]
   (->> (str/split (or s "") #",")
@@ -77,6 +86,12 @@
           (= "--length" flag)
           (recur (rest more) (assoc opts :length (parse-int (first more))))
 
+          (= "--phenotype-length" flag)
+          (recur (rest more) (assoc opts :phenotype-length (parse-int (first more))))
+
+          (= "--no-phenotype" flag)
+          (recur more (assoc opts :no-phenotype true))
+
           (= "--kernel" flag)
           (recur (rest more) (assoc opts :kernel (keyword (first more))))
 
@@ -85,6 +100,15 @@
 
           (= "--sigil-count" flag)
           (recur (rest more) (assoc opts :sigil-count (parse-int (first more))))
+
+          (= "--wiring-path" flag)
+          (recur (rest more) (assoc opts :wiring-path (first more)))
+
+          (= "--wiring-index" flag)
+          (recur (rest more) (assoc opts :wiring-index (parse-int (first more))))
+
+          (= "--wiring-actions" flag)
+          (recur (rest more) (assoc opts :wiring-actions (parse-edn (first more))))
 
           (= "--stress-window" flag)
           (recur (rest more) (assoc opts :stress-window (parse-int (first more))))
@@ -117,8 +141,9 @@
                       {:hint "Use: bb -cp futon5/src:futon5/resources ..."})))))
 
 (defn -main [& args]
-  (let [{:keys [help unknown seeds controllers windows W S length kernel sigil
-                sigil-count out stress-window stress-update stress-match]} (parse-args args)]
+  (let [{:keys [help unknown seeds controllers windows W S length phenotype-length no-phenotype kernel sigil
+                sigil-count wiring-path wiring-index wiring-actions out
+                stress-window stress-update stress-match]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown)
@@ -128,13 +153,20 @@
       (let [_ (ensure-resources!)
             seeds (seq (or seeds [4242 1111 2222 3333]))
             controllers (seq (or controllers [:null :hex :sigil]))
+            length (max 1 (int (or length 32)))
+            phenotype-length (when-not no-phenotype
+                               (or (when (number? phenotype-length) phenotype-length) length))
             base-opts {:windows (max 1 (int (or windows 12)))
                        :W (max 1 (int (or W 10)))
                        :S (max 1 (int (or S 10)))
-                       :length (max 1 (int (or length 32)))
+                       :length length
+                       :phenotype-length phenotype-length
                        :kernel (or kernel :mutating-template)
                        :sigil (or sigil ca/default-sigil)
-                       :sigil-count (max 4 (int (or sigil-count 16)))}
+                       :sigil-count (max 4 (int (or sigil-count 16)))
+                       :wiring-path wiring-path
+                       :wiring-index (or wiring-index 0)
+                       :wiring-actions wiring-actions}
             stress-window (or stress-window 2)
             stress-params {:update-prob (or stress-update 1.0)
                            :match-threshold (or stress-match 0.0)}

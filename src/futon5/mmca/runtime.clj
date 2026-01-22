@@ -498,7 +498,7 @@
       (select-keys [:generation :genotype :phenotype :history :metrics :metrics-history :kernel :kernel-spec :kernel-fn])
       (assoc :meta-states metas)))
 
-(defn- prepare-initial-state [{:keys [genotype phenotype kernel kernel-spec lock-kernel freeze-genotype
+(defn- prepare-initial-state [{:keys [genotype phenotype kernel kernel-spec kernel-fn lock-kernel freeze-genotype
                                       genotype-gate genotype-gate-signal exotype-contexts
                                       capture-exotype-contexts exotype-context-mode
                                       exotype-context-depth]}]
@@ -514,9 +514,9 @@
     (-> {:generation 0
          :genotype genotype
          :phenotype phenotype
-         :kernel kernel*
-         :kernel-spec kernel-spec
-         :kernel-fn (ca/kernel-fn kernel*)
+         :kernel (if kernel-fn :custom kernel*)
+         :kernel-spec (when-not kernel-fn kernel-spec)
+         :kernel-fn (or kernel-fn (ca/kernel-fn kernel*))
          :lock-kernel (boolean lock-kernel)
          :freeze-genotype (boolean freeze-genotype)
          :genotype-gate (boolean genotype-gate)
@@ -605,6 +605,7 @@
           {:keys [history metrics-history kernel kernel-spec]} state]
       {:kernel kernel
        :kernel-spec kernel-spec
+       :kernel-fn (:kernel-fn state)
        :generations generations
        :mode mode
        :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
@@ -687,6 +688,7 @@
       (let [{:keys [state metas proposals operators]} result
             {:keys [history metrics-history kernel]} state]
         {:kernel kernel
+         :kernel-fn (:kernel-fn state)
          :generations generations
          :mode mode
          :exotype (when exotype (select-keys exotype [:sigil :tier :params]))

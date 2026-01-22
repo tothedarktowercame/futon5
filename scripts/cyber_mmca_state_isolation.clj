@@ -1,5 +1,6 @@
 (ns cyber-mmca-state-isolation
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.cyber-mmca.core :as core]))
@@ -14,7 +15,7 @@
     ""
     "Options:"
     "  --seeds LIST        Comma-separated seeds (default 4242,1111,2222,3333)."
-    "  --controllers LIST  Comma-separated controllers (null,hex,sigil)."
+    "  --controllers LIST  Comma-separated controllers (null,hex,sigil,wiring)."
     "  --windows N         Number of control windows (default 12)."
     "  --W N               Window length in generations (default 10)."
     "  --S N               Window stride (default 10)."
@@ -23,6 +24,9 @@
     "  --kernel KW         Kernel keyword (default :mutating-template)."
     "  --sigil STR         Base exotype sigil (default ca/default-sigil)."
     "  --sigil-count N     Control sigil count (default 16)."
+    "  --wiring-path PATH  Wiring diagram EDN path (optional)."
+    "  --wiring-index N    Wiring candidate index when EDN has :candidates (default 0)."
+    "  --wiring-actions EDN Action vector for wiring controller (default [:pressure-up :selectivity-up :selectivity-down :pressure-down])."
     "  --out PATH          Output CSV (default /tmp/cyber-mmca-state-isolation.csv)."
     "  --help              Show this message."]))
 
@@ -44,6 +48,9 @@
        (map keyword)
        (remove nil?)
        vec))
+
+(defn- parse-edn [s]
+  (try (edn/read-string s) (catch Exception _ nil)))
 
 (defn- parse-args [args]
   (loop [args args
@@ -84,6 +91,15 @@
           (= "--sigil-count" flag)
           (recur (rest more) (assoc opts :sigil-count (parse-int (first more))))
 
+          (= "--wiring-path" flag)
+          (recur (rest more) (assoc opts :wiring-path (first more)))
+
+          (= "--wiring-index" flag)
+          (recur (rest more) (assoc opts :wiring-index (parse-int (first more))))
+
+          (= "--wiring-actions" flag)
+          (recur (rest more) (assoc opts :wiring-actions (parse-edn (first more))))
+
           (= "--out" flag)
           (recur (rest more) (assoc opts :out (first more)))
 
@@ -107,7 +123,7 @@
 
 (defn -main [& args]
   (let [{:keys [help unknown seeds controllers windows W S length phenotype-length
-                kernel sigil sigil-count out]} (parse-args args)]
+                kernel sigil sigil-count wiring-path wiring-index wiring-actions out]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown)
@@ -124,7 +140,10 @@
                        :phenotype-length (max 1 (int (or phenotype-length 32)))
                        :kernel (or kernel :mutating-template)
                        :sigil (or sigil ca/default-sigil)
-                       :sigil-count (max 4 (int (or sigil-count 16)))}
+                       :sigil-count (max 4 (int (or sigil-count 16)))
+                       :wiring-path wiring-path
+                       :wiring-index (or wiring-index 0)
+                       :wiring-actions wiring-actions}
             variants [{:mode "genotype" :freeze-genotype false :phenotype-length nil}
                       {:mode "phenotype" :freeze-genotype true}]
             rows (for [{:keys [mode] :as variant} variants

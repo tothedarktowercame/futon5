@@ -803,7 +803,6 @@ but did not generalize. Observed issues:
 Conclusion: Approach 1 is useful for instrumentation, but insufficient as a
 standalone xenotype.
 
-
 ** Approach 2
 *** Approach 2 checklist (wiring-diagram xenotype synthesis)
 
@@ -901,14 +900,6 @@ Goal: capture the generator wiring diagram referenced by the example run above.
     v0(("threshold: 2.0")) -->|score| g0
     classDef unused fill:#f2f2f2,stroke:#999,stroke-dasharray: 3 3;
   #+END_SRC
-
-  
-*** Approach 2 pending work
-
-**** Interpreter demo run
-
-**** HIT pipeline refresh
-
 
 *** Approach 2 one-off parameter test (u=0.60, m=0.80)
 
@@ -1033,6 +1024,190 @@ Controller agreement (EoC rate; n=4 per controller):
 
 Note: wiring led the set on EoC rate in this batch. This is a small sample,
 but it supports the wiring-diagram direction as a candidate controller.
+
+*** Approach 2 attempt: overnight run with ratchet
+
+**** Ratchet sanity test (post-normalization)
+
+Ran a longer sanity test after normalizing ratchet deltas (stddev scale, mean+q50 weights).
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --runs 200 \
+  --update-every 20 \
+  --log /tmp/ratchet-sanity-long-20260121-223825.edn
+#+end_src
+
+Summary (derived from the log):
+
+- windows: 10
+- runs: 200
+- delta-score stats: min 0.159, max 0.900, mean 0.496 (n=8)
+- delta-weighted stats: min -0.682, max 0.800, mean -0.008 (n=8)
+- delta-mean-n stats: min -0.857, max 0.758, mean 0.013 (n=8)
+- delta-q50-n stats: min -0.905, max 0.862, mean -0.039 (n=8)
+- gates: {nil 8}
+
+Takeaway: ratchet deltas no longer saturate; scores are spread across the 0–1 range and
+weighted deltas sit in a balanced band around zero.
+
+**** Ratchet evidence persistence (iiching)
+
+We now persist ratchet evidence into iiching flexiargs under a dedicated
+`@exotype-ratchet` section so syncs don’t wipe it.
+
+Updater script (dry-run supported):
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/update_iiching_ratchet_evidence.clj \
+  --logs /tmp/ratchet-sanity-long-20260121-223825.edn \
+  --manifest futon5/resources/exotype-program-manifest.edn \
+  --iiching-root futon3/library/iiching \
+  --min-delta 0.3 \
+  --max-best 10 --max-recent 10
+#+end_src
+
+Notes:
+- The updater inserts/updates the `@exotype-ratchet` section **before** `@exotype-program`.
+- This keeps ratchet evidence safe from `iiching_sync_exotype.clj` (which rewrites from `@exotype-program` down).
+
+**** Ratchet sanity test (gated)
+
+Longer run with curriculum gate enabled to confirm blocking behavior.
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --runs 300 \
+  --update-every 20 \
+  --curriculum-gate \
+  --log /tmp/ratchet-sanity-gated-20260121-230352.edn
+#+end_src
+
+Summary:
+
+- windows: 15
+- runs: 300
+- delta-score stats: min 0.260, max 0.935, mean 0.554 (n=13)
+- delta-weighted stats: min -0.481, max 0.869, mean 0.108 (n=13)
+- delta-mean-n stats: min -0.495, max 1.000, mean 0.119 (n=13)
+- delta-q50-n stats: min -0.460, max 0.736, mean 0.091 (n=13)
+- gates: {:blocked 6, nil 7}
+
+Takeaway: curriculum gating is active (~46% of ratchet contexts blocked) with normalized deltas.
+
+Read path ("pull off shelf"):
+
+- exoevolve can now read `@exotype-ratchet` / `@exotype-lift` from iiching and attach
+  it to each run entry as `:ratchet-library` (no scoring bonus).
+- Enable with:
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
+  --iiching-root ../futon3/library/iiching \
+  --iiching-manifest futon5/resources/exotype-program-manifest.edn
+#+end_src
+
+**** Ratchet overnight (partial) sample renders
+
+Partial overnight run (stopped early; 159 runs logged):
+
+- Log :: `/tmp/ratchet-overnight-20260122-001000.edn`
+- Summary :: mean score ≈ 30.90, best ≈ 44.29
+
+Replay top + mid (recreates full histories for rendering):
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/mission_0_prepare_hit.clj \
+  --log /tmp/ratchet-overnight-20260122-001000.edn \
+  --out-dir /tmp/ratchet-overnight-001000-replay \
+  --inputs /tmp/ratchet-overnight-001000-inputs.txt \
+  --top-k 1 --mid-k 1 --rand-k 0 --seed 4242 \
+  --label ratchet-overnight-001000
+#+end_src
+
+Replay lowest-score run:
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources /tmp/replay_low_001000.clj
+#+end_src
+
+Sanitize EDN (strip #object tags) so render-cli can read it:
+
+#+begin_src bash
+bb /tmp/sanitize_run_edn.clj \
+  /tmp/ratchet-overnight-001000-replay/ratchet-overnight-001000-01-seed-1561688838.edn \
+  /tmp/ratchet-overnight-001000-replay/ratchet-overnight-001000-01-seed-1561688838.clean.edn
+#+end_src
+
+Render triptychs:
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources -m futon5.mmca.render-cli \
+  --input /tmp/ratchet-overnight-001000-replay/ratchet-overnight-001000-01-seed-1561688838.clean.edn \
+  --out /tmp/ratchet-overnight-001000-best.ppm --render-exotype
+convert /tmp/ratchet-overnight-001000-best.ppm \
+  futon5/resources/figures/ratchet-overnight-001000-best.png
+mogrify -scale 250 futon5/resources/figures/ratchet-overnight-001000-best.png
+
+bb -cp futon5/src:futon5/resources -m futon5.mmca.render-cli \
+  --input /tmp/ratchet-overnight-001000-replay/ratchet-overnight-001000-02-seed-1764995132.clean.edn \
+  --out /tmp/ratchet-overnight-001000-mid.ppm --render-exotype
+convert /tmp/ratchet-overnight-001000-mid.ppm \
+  futon5/resources/figures/ratchet-overnight-001000-mid.png
+mogrify -scale 250 futon5/resources/figures/ratchet-overnight-001000-mid.png
+
+bb -cp futon5/src:futon5/resources -m futon5.mmca.render-cli \
+  --input /tmp/ratchet-overnight-001000-replay/ratchet-overnight-001000-low.clean.edn \
+  --out /tmp/ratchet-overnight-001000-low.ppm --render-exotype
+convert /tmp/ratchet-overnight-001000-low.ppm \
+  futon5/resources/figures/ratchet-overnight-001000-low.png
+mogrify -scale 250 futon5/resources/figures/ratchet-overnight-001000-low.png
+#+end_src
+
+#+CAPTION: Ratchet overnight (partial) — best (seed 1561688838, sigil 支, score 44.29)
+#+ATTR_ORG: :width 2200
+[[file:figures/ratchet-overnight-001000-best.png]]
+
+#+CAPTION: Ratchet overnight (partial) — mid (seed 1764995132, sigil 布, score 31.14)
+#+ATTR_ORG: :width 2200
+[[file:figures/ratchet-overnight-001000-mid.png]]
+
+#+CAPTION: Ratchet overnight (partial) — low (seed 110509904, sigil 帅, score 18.41)
+#+ATTR_ORG: :width 2200
+[[file:figures/ratchet-overnight-001000-low.png]]
+
+Note on missing CT templates:
+- `futon3/library/iiching/exotype-197.flexiarg` was created by ratchet evidence.
+- Its `@exotype-lift` is empty because the lift registry has no entry for sigil "厉".
+  (No pattern-id → no ct-template to attach yet.)
+
+**** Ratchet overnight (partial) — top by envelope
+
+Select top-3 by envelope score from `/tmp/ratchet-overnight-20260122-001000.edn`,
+replay, sanitize, and render triptychs:
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources /tmp/replay_top_envelope_001000.clj
+bb /tmp/sanitize_run_edn_batch.clj
+bb -cp futon5/src:futon5/resources -m futon5.mmca.render-cli \
+  --input /tmp/ratchet-overnight-001000-envelope/ratchet-overnight-001000-envelope-01-seed-586802386.clean.edn \
+  --out /tmp/ratchet-overnight-001000-envelope-01.ppm --render-exotype
+convert /tmp/ratchet-overnight-001000-envelope-01.ppm \
+  futon5/resources/figures/ratchet-overnight-001000-envelope-01.png
+mogrify -scale 300 futon5/resources/figures/ratchet-overnight-001000-envelope-01.png
+#+end_src
+
+#+CAPTION: Envelope top‑1 (seed 586802386, sigil 犬, envelope 86.42, score 22.35)
+#+ATTR_ORG: :width 2200
+[[file:figures/ratchet-overnight-001000-envelope-01.png]]
+
+#+CAPTION: Envelope top‑2 (seed 1906091064, sigil 尤, envelope 71.93, score 22.92)
+#+ATTR_ORG: :width 2200
+[[file:figures/ratchet-overnight-001000-envelope-02.png]]
+
+#+CAPTION: Envelope top‑3 (seed 1281295915, sigil 土, envelope 56.50, score 24.69)
+#+ATTR_ORG: :width 2200
+[[file:figures/ratchet-overnight-001000-envelope-03.png]]
 
 
 * Mission 0a — Transfer to Fulab AIF Agents
@@ -1262,230 +1437,8 @@ If Mission 0 succeeds:
 - The method is teachable (not just "Joe's intuition")
 - Exotic programming becomes a science, not an art
 
-* Mission A — Cyberant Pattern Programs (Pilot)
 
-Goal: validate that pattern-programmed cyberants can be compiled, run, and
-evaluated reproducibly, and that the module wiring (policy/precision/sense/adapt)
-matters.
-
-** Protocol
-
-1) Inputs
-- Pattern ids with @ant-interpretation blocks (hexagrams in ~futon3/library/iching~).
-- Optional base sigil for defaults.
-- Program map: ~{:policy ... :precision ... :pattern-sense ... :adapt ...}~.
-
-2) Compilation
-- Use ~futon5.adapters.cyberant/pattern-program->cyberant~ to build a composite
-  cyberant config.
-- Record provenance per module (pattern id + title + source path).
-
-3) Execution (ants sim)
-- Fixed scenario (grid size, food layout, pheromone decay).
-- Run length: 500 ticks (pilot), 10 seeds.
-- Compare against baseline AIF ants and a "single-pattern" cyberant.
-
-4) Evaluation
-- Survival time (mean + variance).
-- Food returned per tick.
-- Pheromone efficiency (food per pheromone unit).
-- Stability: variance of hunger/cargo over time.
-- Qualitative: snapshot traces for a few seeds.
-
-5) Logging + artifacts
-- Save compiled cyberant EDN for each run.
-- Save run summary table (CSV/EDN) with metrics and seed.
-- Save one trace snapshot per condition (for visual inspection).
-
-** Pilot matrix (first pass)
-
-- Program A (EoC-driven):
-  :policy iching/hexagram-44-gou
-  :precision iching/hexagram-52-gen
-  :pattern-sense iching/hexagram-57-xun
-  :adapt iching/hexagram-43-guai
-
-- Program B (cooling / restraint):
-  :policy iching/hexagram-05-xu
-  :precision iching/hexagram-52-gen
-  :pattern-sense iching/hexagram-57-xun
-  :adapt iching/hexagram-12-pi
-
-- Baseline: AIF ants + single-pattern cyberant (choose one hexagram).
-
-** Expected signal
-
-- Program A should be more exploratory (higher movement, higher pheromone use).
-- Program B should be more stable (lower variance, slower decay).
-- If both beat baseline in survival, pattern-program wiring is validated.
-
-** Commands (pilot run + viz)
-
-#+begin_src
-;; Generate composite cyberant configs (Program A + B).
-clj -M -m futon5.adapters.cyberant-cli \
-  --program '{:policy "iching/hexagram-44-gou" :precision "iching/hexagram-52-gen" :pattern-sense "iching/hexagram-57-xun" :adapt "iching/hexagram-43-guai"}' \
-  --out resources/ants/mission-a-program-a.edn
-
-clj -M -m futon5.adapters.cyberant-cli \
-  --program '{:policy "iching/hexagram-05-xu" :precision "iching/hexagram-52-gen" :pattern-sense "iching/hexagram-57-xun" :adapt "iching/hexagram-12-pi"}' \
-  --out resources/ants/mission-a-program-b.edn
-
-;; Generate a single-pattern cyberant baseline.
-clj -M -m futon5.adapters.cyberant-cli \
-  --pattern iching/hexagram-57-xun \
-  --out resources/ants/mission-a-baseline.edn
-#+end_src
-
-#+begin_src
-;; Visualize a run (from futon2).
-clj -M -m ants.visual --config /home/joe/code/futon5/resources/ants/mission-a-program-a.edn
-#+end_src
-
-** Commands (50-run comparison: hexagrams vs sigils)
-
-#+begin_src
-;; Build a small hexagram set.
-clj -M -m futon5.adapters.cyberant-cli \
-  --pattern iching/hexagram-44-gou \
-  --pattern iching/hexagram-57-xun \
-  --pattern iching/hexagram-52-gen \
-  --pattern iching/hexagram-43-guai \
-  --pattern iching/hexagram-11-tai \
-  --out resources/ants/mission-a-hex-list.edn
-
-;; Build a sigil set.
-clj -M -m futon5.adapters.cyberant-cli \
-  --sigil 工 --sigil 土 --sigil 上 --sigil 下 --sigil 升 \
-  --out resources/ants/mission-a-sigil-list.edn
-#+end_src
-
-#+begin_src
-;; Run 50 comparisons (from futon2).
-clj -M -m ants.compare \
-  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
-  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
-  --runs 50 --ticks 200 \
-  --out /home/joe/code/futon5/resources/ants/mission-a-compare-50.edn
-#+end_src
-
-** Commands (tournament: 5x5, repeats per pairing)
-
-#+begin_src
-;; 5x5 round-robin with 20 repeats per pairing (500 runs total).
-clj -M -m ants.tournament \
-  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
-  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
-  --runs 20 --ticks 200 \
-  --out /home/joe/code/futon5/resources/ants/mission-a-tournament.edn
-#+end_src
-
-#+begin_src
-;; Stacked 5-on-5 (all hexes vs all sigils, repeats per run).
-clj -M -m ants.tournament \
-  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
-  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
-  --stacked \
-  --runs 50 --ticks 200 \
-  --out /home/joe/code/futon5/resources/ants/mission-a-stacked-50.edn
-#+end_src
-
-#+begin_src
-;; Stacked-CT 5-on-5 (module-level merge before compile).
-clj -M -m ants.tournament \
-  --hex /home/joe/code/futon5/resources/ants/mission-a-hex-list.edn \
-  --sigil /home/joe/code/futon5/resources/ants/mission-a-sigil-list.edn \
-  --stacked-ct \
-  --runs 50 --ticks 200 \
-  --out /home/joe/code/futon5/resources/ants/mission-a-stacked-ct-50.edn
-#+end_src
-
-** Pilot note (first run)
-
-Observed in viz logs: cyberants are active and lead on score + hive reserves
-around tick 195–200.
-
-#+begin_src
-Tick 195 | Scores Cyber 150.24 vs AIF 138.79 | Hive Z:17.49 A:6.04 | Pop Z:06 A:06 | ...
-Tick 200 | Scores Cyber 153.04 vs AIF 139.49 | Hive Z:16.84 A:3.29 | Pop Z:06 A:06 | ...
-#+end_src
-
-** Pilot note (sigil vs hexagram)
-
-In a sigil vs hexagram run, sigils outperformed the hexagram cyberants.
-
-#+begin_src
-Tick 200 | Scores Cyber 119.02 vs Sigil 135.15 | G_ema 2.959 | Hive Z:0.00 S:0.00 | Pop Z:06 S:06 | ...
-#+end_src
-
-Set used for the 50-run comparison:
-- Hexagrams: 44 (gou), 57 (xun), 52 (gen), 43 (guai), 11 (tai)
-- Sigils: 工 土 上 下 升
-
-** Stacked 5-on-5 results (hex vs sigil)
-
-Compiled stacking (merge after compile):
-- Mean score: Hex 133.26 vs Sigil 140.80
-- Win rate: Hex 3/10 vs Sigil 7/10
-
-CT stacking (merge at module level):
-- Mean score: Hex 135.00 vs Sigil 140.60
-- Win rate: Hex 21/50 vs Sigil 29/50
-
-Note: CT stacking materially improved hex win rate even though sigils still lead
-on mean score. This supports the idea that diagram-level composition carries
-useful signal.
-
-** Next step
-
-Use cyberant regimes as a xenotype: treat ant survival + stability metrics as
-external evaluation signals for MMCA runs (cross-domain viability check).
-
-** Xenotype sketch (ants → MMCA)
-
-- Fixed horizon: T=200 ticks per run.
-- Survival rate: fraction of runs where the queen survives to T.
-- Early failure: time-to-queen-starvation (only when queen dies before T).
-- Sustained return: food returned per tick (mean + variance).
-- Stability: hunger + reserve variance (avoid brittle spikes).
-- Exploration balance: pheromone efficiency + movement diversity.
-- Robustness: variance across seeds/maps.
-
-** Big-picture snapshot (where we are now)
-
-- Exotypes (sigils) are operational and stable.
-- Xenotypes now have a concrete instantiation via cyberant regimes.
-- End-to-end pipeline works: patterns → cyberants → ant sim → metrics.
-- Early evidence: sigil-based cyberants are ahead of hexagrams on the current set.
-- Next integration task: plug ant xenotype scores into MMCA as a slow evaluator
-  (every N exotype gens), using fixed-horizon metrics.
-
-** MMCA hook plan (ant xenotype)
-
-1) Trigger point
-- Run ant xenotype every N exotype generations (e.g., N=100).
-- Input: top-K exotypes (by current MMCA score) + a few random controls.
-
-2) Adapter
-- Map exotype → cyberant config (sigil-based by default).
-- Optionally allow hexagram mapping as a comparison arm.
-
-3) Battery
-- Fixed horizon T=200 ticks.
-- 3 maps × 5 seeds (15 runs per exotype).
-- Record survival rate + early failure time + stability metrics.
-
-4) Scoring
-- Produce a xenotype score vector (not scalar) per exotype:
-  {:survival-rate .. :early-fail-mean .. :return-rate .. :stability .. :robustness ..}
-- Collapse to a conservative scalar only for culling (e.g., survival-rate gate).
-
-5) Integration
-- Penalize exotypes that consistently fail survival gate.
-- Maintain a portfolio of xenotype-viable exotypes (top-K per regime).
-- Log xenotype audits alongside exotype lineage for later analysis.
-
-* Mission B — MMCA + Xenotype Discovery
+* Mission 0b — MMCA + Xenotype Discovery
 
 Goal: determine whether cross-domain selection pressure (ant arena) helps MMCA
 discover *better* EoC exotypes than internal metrics alone — and whether the
@@ -1568,722 +1521,3 @@ that's evidence the semantic layer is doing useful work.
 - Log both arms with full lineage for post-hoc analysis
 - Consider factorial: (MMCA-only, MMCA+xeno) × (CT-stack, raw-params)
 
-* Mission C — Nonstarter Transfer (Speculative)
-
-Goal: test whether the 泰 pattern (and hexagram structure generally) predicts
-sustainable creative practice in the nonstarter/art market domain.
-
-** The three-domain transfer hypothesis
-
-If "patterns of improvisation" are real, the same structure should work across:
-
-| Concept      | MMCA              | Ants                 | Nonstarters          |
-|--------------+-------------------+----------------------+----------------------|
-| 乾 (yang)    | update-prob=1.0   | forage-only, starve  | overbid, burnout     |
-| 坤 (yin)     | update-prob=0.0   | passive trail-follow | underbid, stall      |
-| 泰 (balance) | EoC zone          | gather-return cycle  | bid/clear rhythm     |
-| Exotype      | sigil → params    | cyberant config      | practice regime      |
-| Xenotype     | ant arena         | other colony (war)   | market feedback      |
-
-** Nonstarter domain concepts
-
-*** Exotype (internal practice regime)
-- Bid rate: how often you propose/start new work
-- Clear rate: how often you finish/ship
-- Hold capacity: WIP limits, parallel projects
-- Precision: how much market signal you attend to
-
-*** Xenotype (external evaluation)
-- Market clears: do your bids get accepted? (commissions, grants, sales)
-- Survival: sustaining practice over time (not quitting)
-- Stability: consistent output without boom/bust cycles
-- GFE accumulation: genuine frontier expansion (new capabilities, reach)
-- Robustness: works across contexts (commissions, spec, grants, day-job)
-
-** The 泰 prediction
-
-Pure 乾 artist: starts everything, finishes nothing, burns out
-Pure 坤 artist: waits for permission, never ships, stalls out
-泰 artist: balanced bid/clear cycle, sustainable output, survives
-
-The 泰 zone in nonstarter terms:
-- bid-rate ∈ [0.3, 0.7] (not overbidding, not underbidding)
-- clear-rate ∈ [0.3, 0.7] (finishing enough to learn, not rushing)
-- market-attention ∈ [0.3, 0.7] (responsive but not reactive)
-
-** Hexagram interpretations for practice
-
-Some candidate mappings:
-
-- ䷊ 泰 (11): Dynamic balance — the sustainable practice regime
-- ䷋ 否 (12): Obstruction — when bid/clear cycle breaks down
-- ䷀ 乾 (1): Pure assertion — good for launches, bad for maintenance
-- ䷁ 坤 (2): Pure reception — good for learning phases, bad if stuck
-- ䷄ 需 (5): Waiting — strategic pause, not stall
-- ䷝ 離 (30): Clinging/Clarity — focused execution sprint
-
-** Testing approach
-
-Unlike MMCA and ants, we can't run controlled experiments on humans.
-But we can:
-
-1. Retrospective analysis: map past practice regimes to hexagrams,
-   check if 泰-like periods correlate with sustainable output
-
-2. Prospective tracking: use bid/clear logging (futon5a/track.clj)
-   to monitor practice regime, watch for 乾/坤 drift
-
-3. Intervention design: when stuck, consult hexagram for diagnosis
-   (am I too 乾? too 坤?) and prescribed shift
-
-4. Cross-check: do the same patterns that work in ant tournaments
-   predict good practice regimes? (indirect validation)
-
-** The meta-question
-
-If transfer works across all three domains, what does that mean?
-
-Hypothesis: the intervention/observation balance (yang/yin, creative/receptive)
-is a *universal* structure that applies wherever agents interact with
-environments. The I Ching encoded this 3000 years ago; we're rediscovering
-it through computational experiments.
-
-This would validate "exotic programming" as a genuine methodology:
-patterns discovered in one domain (CA) transfer to others (ants, art)
-through the CT interpretation layer.
-
-** Connection to job search
-
-The "sustainability meta-probe" (job search as nonstarter) is itself
-a test case:
-
-- Too 乾: spray applications everywhere, no focus, burnout
-- Too 坤: wait for perfect opportunity, never apply, stall
-- 泰: balanced search with clear criteria, sustainable pace
-
-GFE evaluation of job opportunities follows the same pattern:
-attend to market signal (offers, interviews) but don't be purely reactive.
-
-* Mission D — Music Domain Transfer
-
-Goal: extend the pattern transfer framework to music — both for *analyzing*
-existing music (aesthetic lens) and *creating* new music (composition tool).
-
-** Existing infrastructure (from AGENTS.md)
-
-FUTON5 already plans music integration:
-
-- Milestone B: Alda + Overtone integration
-- Section 4.1: "Let operators sound their transformations"
-- "Audible debugging" of pattern transforms
-- Link CA states to sound patterns (sonification)
-
-** Audio display for EoC
-
-Immediate goal: *hear* edge-of-chaos rather than just see it.
-
-Sonification mapping ideas:
-- Entropy → pitch range (low entropy = narrow, high = wide)
-- Motif diversity → harmonic complexity
-- Update frequency → rhythm density
-- Spatial clustering → stereo positioning
-- Regime transitions → timbral shifts
-
-This gives a direct perceptual channel for EoC detection. Some dynamics
-might be easier to hear than see (e.g., subtle phase relationships).
-
-** The four-domain table (updated)
-
-| Concept      | MMCA              | Ants                 | Nonstarters          | Music                |
-|--------------+-------------------+----------------------+----------------------+----------------------|
-| 乾 (yang)    | update-prob=1.0   | forage-only, starve  | overbid, burnout     | overplaying, no space|
-| 坤 (yin)     | update-prob=0.0   | passive trail-follow | underbid, stall      | underplaying, sparse |
-| 泰 (balance) | EoC zone          | gather-return cycle  | bid/clear rhythm     | call/response groove |
-| Exotype      | sigil → params    | cyberant config      | practice regime      | performance params   |
-| Xenotype     | ant arena         | other colony (war)   | market feedback      | listener/band response|
-
-** Aesthetic analysis: Neubauten vs Coleman
-
-Both are 泰-zone artists operating at edge-of-chaos, but in different parameter spaces:
-
-*** Einstürzende Neubauten
-- Industrial materials, extreme timbres
-- 乾 on *texture* (aggressive intervention on sound)
-- 泰 on *form* (structured chaos, not pure noise)
-- High update-prob on timbre, moderate on rhythm
-- Xenotype: audience endurance, mosh pit dynamics
-
-*** Ornette Coleman
-- Harmolodic freedom, melodic assertion
-- 泰 on *melody* (free but coherent)
-- High reception on *group dynamics* (listening-based improv)
-- Moderate update-prob, high match-threshold (melodic coherence)
-- Xenotype: band response, collective groove
-
-The hexagram lens reveals: *where* is each artist's 泰 zone? What parameters
-are they balancing? This is more precise than "they're both experimental."
-
-** Composition/improvisation tool
-
-Use hexagrams as:
-
-1. *Diagnostic*: "This section feels too 乾, needs more 坤"
-2. *Prescriptive*: "Try hexagram 57-xùn here: gentle persistence"
-3. *Structural*: "A = 乾 (attack), B = 坤 (sustain), C = 泰 (resolution)"
-4. *Mode selection*: Different hexagrams for different instruments/voices
-
-Example score annotation:
-#+begin_src
-[A section] ䷀ 乾 - full assertion, all instruments forte
-[B section] ䷁ 坤 - receptive, space, let decay happen
-[C section] ䷊ 泰 - call/response, drums+bass meet melody
-[Bridge]    ䷋ 否 - deliberate obstruction, tension builder
-#+end_src
-
-** Sonification protocol (sketch)
-
-#+begin_src clojure
-;; Map MMCA state → Alda/Overtone events
-(defn mmca->sound [grid metrics]
-  {:pitch    (scale-entropy (:entropy metrics) :minor)
-   :rhythm   (density->bpm (:update-rate metrics))
-   :timbre   (regime->instrument (:regime metrics))
-   :dynamics (diversity->velocity (:motif-count metrics))})
-
-;; Map hexagram → musical mode
-(defn hexagram->mode [hex]
-  (case (:number hex)
-    1  {:mode :lydian :tempo :fast :dynamics :fff}     ; 乾
-    2  {:mode :aeolian :tempo :slow :dynamics :pp}     ; 坤
-    11 {:mode :dorian :tempo :moderate :dynamics :mf}  ; 泰
-    ...))
-#+end_src
-
-** Implementation path
-
-1. *Audio display (quick win)*
-   - Wire MMCA metrics → Overtone/Alda
-   - Real-time sonification of CA runs
-   - Hear EoC vs collapse vs stasis
-
-2. *Hexagram → music mapping*
-   - Define musical interpretation for each hexagram
-   - Add @music-interpretation block to hexagram patterns
-   - Test: does 泰 hexagram produce 泰-sounding music?
-
-3. *Composition assistant*
-   - Input: desired structure (e.g., "泰 resolving to 坤")
-   - Output: suggested musical parameters
-   - Test against real compositions (Neubauten, Coleman, etc.)
-
-4. *Aesthetic analysis tool*
-   - Input: audio features (spectral, rhythmic, dynamic)
-   - Output: hexagram classification
-   - Validate: do experts agree with the analysis?
-
-** Xenotype for music
-
-What's the "ant war" equivalent for music?
-
-- Listener response (engagement, attention, emotional arc)
-- Band dynamics (does it groove? does it lock?)
-- Recording/performance survival (does it get played again?)
-- Cultural persistence (does it enter the repertoire?)
-
-These are harder to measure than ant survival, but not impossible:
-- Streaming data, skip rates
-- Concert recordings, audience response
-- Cover versions, citations
-- Expert evaluations
-
-** Connection to exotic programming thesis
-
-If the same 泰 structure that predicts EoC in MMCA also predicts:
-- Sustainable ant colonies
-- Sustainable creative practice
-- Compelling music
-
-...then "patterns of improvisation" is genuinely universal.
-
-Music is arguably the *original* domain for this kind of thinking.
-Jazz improvisers have always known about 泰 — they just called it
-"the pocket" or "the groove."
-
-** Playable arrangements (existing work)
-
-We already have infrastructure for generating physical instrument arrangements:
-
-*** resources/chicago.tex
-Chord chart for Chicago tuning (banjo) with:
-- Major, minor, Δ7 voicings
-- Fret positions and fingering shapes
-- Interval structure notation (1-3-5-1, etc.)
-
-*** resources/ii_v_circle.tex
-ii-V-I progressions in all 12 keys with:
-- Fret diagrams for each chord
-- Grip notation (interval structure)
-- Voice leading costs (finger movement distance)
-- Total cost per progression (optimization target)
-
-This is the "playable arrangements" concept: optimize for physical instrument
-constraints while preserving harmonic content.
-
-** Extending to ensembles
-
-The same principles should scale to:
-
-1. *String quartet*
-   - Four voices with range/crossing constraints
-   - Voice leading costs per part
-   - Physical playability (string crossings, positions)
-   - Hexagram-guided texture (乾 = tutti assertion, 坤 = solo + silence)
-
-2. *Jazz combo*
-   - Rhythm section + horns
-   - Comping patterns as 泰 (support without dominate)
-   - Solo sections as controlled 乾 (assertion with band 坤 response)
-
-3. *Improvisation group*
-   - Real-time hexagram cues
-   - Mode shifts as morphisms
-   - Collective 泰 as the goal state
-
-** The arrangement compiler (sketch)
-
-#+begin_src clojure
-(defn hexagram->arrangement
-  "Generate playable arrangement from hexagram + instrumentation"
-  [hex instruments]
-  (let [texture (hexagram->texture hex)           ; tutti/solo/call-response
-        dynamics (hexagram->dynamics hex)          ; fff/pp/mf
-        voice-leading (optimize-for-instruments    ; physical constraints
-                        (:voicing texture)
-                        instruments)]
-    {:score voice-leading
-     :parts (partition-by-instrument voice-leading instruments)
-     :cues (generate-conductor-cues hex)}))
-#+end_src
-
-** Integration with EoC sonification
-
-The arrangement compiler connects back to Mission D core:
-- MMCA run → hexagram sequence (based on regime)
-- Hexagram sequence → arrangement score
-- Arrangement score → playable parts
-
-This closes the loop: CA dynamics become performable music.
-
-** Voice leading optimizer (existing code)
-
-~futon5.ii-v-i~ (~src/futon5/ii_v_i.clj~, ~1200 lines) implements dynamic
-programming for optimal voice leading:
-
-*** Core algorithm
-- ~best-sequence~, ~best-triplet~, ~best-pair~ — DP over chord candidates
-- ~candidate-voicings~ — enumerate valid shapes for a chord
-- ~transition-cost~ — measure finger movement between shapes
-- ~fingering-cost~ — model physical playability (span, stretch, barre)
-
-*** Cost model
-- Span penalties (weighted by fret position)
-- Barre bonuses (same fret across strings = easier)
-- Anchor points (common tones reduce transition cost)
-- Per-finger deviation from ideal position
-
-*** Output
-- TikZ fret diagrams with fingerings and costs
-- Circle-of-fourths generation for all 12 keys
-- Total cost = sum of chord costs + transition costs
-
-*** Extension path
-
-This infrastructure generalizes to:
-
-1. *String quartet*: Replace chicago-shapes with string ranges/positions,
-   fingering-cost with bowing/position-change costs
-
-2. *Hexagram-guided voicing*: Add hexagram → voicing-preference map,
-   e.g., 乾 prefers wide voicings (assertion), 坤 prefers close (receptive)
-
-3. *EoC → arrangement*: Use MMCA regime to select hexagram → voicing style,
-   generate physically playable score that embodies the CA dynamics
-
-* Mission E — Collaborative Dynamics (Ensemble / Peeragogy)
-
-Goal: extend the pattern transfer framework to multi-agent collaboration —
-jazz ensembles, peer learning groups, any system where multiple agents
-improvise together.
-
-** The key distinction
-
-Mission D addresses *individual* instrument constraints (one player's
-physical playability). Mission E addresses *ensemble* dynamics — the
-relationships between collaborating agents.
-
-** The five-domain table (updated)
-
-| Concept      | MMCA              | Ants                 | Nonstarters          | Music (solo)         | Collaboration        |
-|--------------+-------------------+----------------------+----------------------+----------------------+----------------------|
-| 乾 (yang)    | update-prob=1.0   | forage-only          | overbid              | overplaying          | dominating           |
-| 坤 (yin)     | update-prob=0.0   | passive follow       | underbid             | underplaying         | passive/silent       |
-| 泰 (balance) | EoC zone          | gather-return        | bid/clear rhythm     | call/response        | mutual exchange      |
-| Exotype      | sigil → params    | cyberant config      | practice regime      | performance params   | collaboration style  |
-| Xenotype     | ant arena         | other colony         | market feedback      | listener response    | group learning       |
-
-** Jazz ensemble as paradigm case
-
-*** The Coleman Quartet (c. 1959-1961)
-
-Classic free jazz quartet as a 泰 system:
-
-- *Ornette Coleman* (alto): melodic 乾, asserting lines, initiating phrases
-- *Don Cherry* (pocket trumpet): responsive 乾, answering, complementing
-- *Charlie Haden* (bass): harmonic 坤, grounding, sustaining
-- *Ed Blackwell/Billy Higgins* (drums): rhythmic 泰, mediating, balancing
-
-The quartet works because the roles create dynamic equilibrium. Pure 乾
-(everyone soloing) = chaos. Pure 坤 (everyone waiting) = silence.
-泰 = the pocket.
-
-*** The Double Quartet ("Free Jazz", 1961)
-
-Two complete quartets playing simultaneously:
-- Left channel: Coleman, Cherry, Haden, Blackwell
-- Right channel: Eric Dolphy, Freddie Hubbard, Scott LaFaro, Billy Higgins
-
-This is *two 泰 zones interacting* — like two ant colonies, but cooperating.
-
-Analytical questions:
-- When are the two quartets in phase (collective 泰)?
-- When does one go 乾 while the other provides 坤 backdrop?
-- How do they avoid collision vs. create productive interference?
-- What's the xenotype? (Album sales? Critical reception? Influence?)
-
-** Peeragogy as general framework
-
-Jazz is one instance; the general case is *peer collaboration*:
-
-- Peer learning groups
-- Open source projects
-- Co-authorship
-- Jam sessions (musical or otherwise)
-- Any system where multiple agents improvise toward shared goals
-
-Peeragogy concepts (to be integrated from external work):
-- Roles and role-switching
-- Heartbeat (regular rhythms of engagement)
-- Carrying capacity (sustainable participation levels)
-- Scrapbook (collective memory)
-- Roadmap (shared direction without fixed destination)
-
-These map naturally to hexagram dynamics:
-- Role-switching = hexagram transitions
-- Heartbeat = 泰 rhythm maintenance
-- Carrying capacity = avoiding 乾 burnout
-- Scrapbook = 坤 receptive memory
-- Roadmap = collective VISION in FUTON terms
-
-** Hexagram analysis of collaboration patterns
-
-| Hexagram | Collaboration Pattern | Jazz Analog |
-|----------+-----------------------+-------------|
-| ䷀ 乾 | All asserting, no listening | Collective solo (chaos) |
-| ䷁ 坤 | All waiting, no initiative | Dead air |
-| ䷊ 泰 | Dynamic exchange | The pocket / groove |
-| ䷋ 否 | Blocked, no flow | Train wreck, lost form |
-| ䷄ 需 | Strategic waiting | Trading fours setup |
-| ䷌ 同人 | Fellowship, alignment | Tight unison passage |
-| ䷍ 大有 | Abundance, flourishing | Peak collective improv |
-
-** Xenotype for collaboration
-
-What's the "ant war" equivalent for human collaboration?
-
-- *Learning outcomes*: Did participants grow?
-- *Output quality*: Is the product good?
-- *Sustainability*: Can the group continue?
-- *Propagation*: Do ideas spread beyond the group?
-- *Satisfaction*: Do participants want to continue?
-
-These are harder to measure than ant survival but structurally similar:
-external evaluation of whether the collaboration "works."
-
-** Implementation sketch
-
-1. *Retrospective analysis*
-   - Annotate recordings/transcripts with hexagram labels
-   - Track transitions: who triggers 乾→泰, 泰→否, etc.
-   - Correlate with outcomes (learning, quality, satisfaction)
-
-2. *Real-time facilitation*
-   - Hexagram cues for group process
-   - "We're drifting 乾, need more 坤"
-   - Role-rotation prompts based on current pattern
-
-3. *Collaboration design*
-   - Structure sessions with hexagram arcs
-   - Plan 乾 openings, 泰 development, 坤 integration phases
-   - Match participant styles to needed roles
-
-** Connection to ant tournaments
-
-The Codex tournament (CT-stacks vs compiled configs) is structurally
-similar to ensemble dynamics:
-
-- CT-stack = role-differentiated ensemble (each hexagram = different voice)
-- Compiled config = blended ensemble (merged parameters, less distinct roles)
-
-If CT-stacks outperform compiled configs, that's evidence for the value
-of *distinct roles* in collaboration — supporting the Peeragogy insight
-that differentiated contributions outperform homogenized participation.
-
-** TODO: Import Peeragogy materials
-
-External work to integrate:
-- Peeragogy Handbook patterns
-- Role/antipattern analysis
-- Case studies from peer learning projects
-
-This would ground Mission E in existing collaborative practice research.
-
-* Mission F — Q&A Agents and Mathematical Discovery
-
-Goal: extend pattern transfer from AIF ants to Fulab agents to Q&A agents,
-realizing Turing's 1951 vision of machines that "converse with each other
-to sharpen their wits" — and ultimately building a mathematical discovery
-engine.
-
-** The transfer chain
-
-#+begin_src
-AIF Ants → Fulab Agents → Q&A Agents → Math Discovery
-   ↑            ↑              ↑              ↑
- (done)    (similar arch)  (Turing '51)   (the prize)
-#+end_src
-
-*** Step 1: AIF Ants (validated)
-- Cyberant adapter translates exotypes → AIF configs
-- Xenotype evaluation via ant arena / colony wars
-- Early results: cyberants beat AIF baseline
-- 泰 zone predicts sustainable foraging behavior
-
-*** Step 2: Fulab Agents (next)
-- Fulab architecture closely resembles AIF
-- Same precision/policy/adaptation structure
-- Transfer should be straightforward
-- Xenotype: can agents solve Fulab challenges?
-
-*** Step 3: Q&A Agents (LEAPQA / SFI vision)
-- Stack Exchange as training ground (18M questions, 13M answered)
-- Agents gain fitness by asking and answering questions
-- TPG-like composition: teams of interlinked rules
-- IAD framework (Ostrom): hexagrams as institutional rules
-- Xenotype: reputation, problem-solving success
-
-*** Step 4: Mathematical Discovery
-- Q&A agents applied to mathematical domains
-- Kolmogorov calculus of problems: Q ⊢ A
-- Pólya heuristic as morphism: hard problem → easier problem
-- Discovery = finding new Q that yields new A
-- Xenotype: provable theorems, novel conjectures
-
-** Architectural correspondence
-
-| Component | AIF Ants | Fulab | Q&A Agents | Math Discovery |
-|-----------+----------+-------+------------+----------------|
-| State | position, cargo, hunger | task state | knowledge state | proof state |
-| Action | forage, return, hold | API calls | ask, answer, vote | conjecture, prove |
-| Observation | pheromone, food, walls | responses | other Q&A, votes | counterexamples |
-| Policy | foraging strategy | task selection | question strategy | search heuristics |
-| Precision | env vs internal weight | confidence | certainty weighting | rigor level |
-| Xenotype | survival, score | task success | reputation | theorems proved |
-
-** Hexagram interpretation for Q&A
-
-| Hexagram | Q&A Behavior |
-|----------+--------------|
-| ䷀ 乾 | Asserting answers without reading the question |
-| ䷁ 坤 | Reading without contributing |
-| ䷊ 泰 | Dialogic exchange: ask clarifying Qs, provide scaffolded As |
-| ䷋ 否 | Stuck: question unclear, answer unhelpful |
-| ䷄ 需 | Strategic waiting: let the question mature |
-| ䷌ 同人 | Agreement: converging on consensus answer |
-
-The 泰 zone for Q&A agents:
-- ask-rate ∈ [0.3, 0.7] (not just lurking, not just posting)
-- answer-confidence ∈ [0.3, 0.7] (not overclaiming, not too tentative)
-- context-attention ∈ [0.3, 0.7] (attending to discussion, not ignoring)
-
-** Turing's 1951 Vision
-
-From "Intelligent Machinery, A Heretical Theory":
-
-"What we want is a machine that can learn from experience...
-[machines] might still be made to rival [humans] in chess.
-This... could be done fairly easily by... letting them play
-against each other... with a mechanism for intercommunication.
-They could ... converse with each other to sharpen their wits."
-
-This is exactly the xenotype framework:
-- Agents play against each other (ant war, Q&A competition)
-- Intercommunication (shared knowledge base, Q&A threads)
-- Sharpening wits (evolution toward better patterns)
-
-** Kolmogorov connection
-
-The arrow work (M9.5/M9.6) directly supports this:
-- Terms as knowledge representations
-- Normalization as inference
-- Mining arrows from corpora (Stack Exchange → formal patterns)
-
-Q ⊢ A in Kolmogorov's sense: a well-posed question *proves* its answer.
-The agent's job: learn to pose well-posed questions.
-
-** Koans as curriculum
-
-"Stepping stones, starting from simplest possible tasks and growing in
-complexity" (Arthur & Polak, SFI 2004):
-
-1. Trivial koans: pattern matching, simple lookup
-2. Basic inference: one-step deduction
-3. Multi-step: chaining inferences
-4. Creative: generating new questions
-5. Discovery: questions that yield novel theorems
-
-Hexagram transitions map the curriculum:
-- 坤 (receptive learning) → 泰 (dialogic practice) → 乾 (creative contribution)
-
-** Implementation path
-
-1. *Fulab adapter* (immediate)
-   - Mirror cyberant adapter for Fulab architecture
-   - Validate transfer: do 泰-configured agents perform well?
-
-2. *Q&A simulation environment*
-   - Synthetic Stack Exchange with bot participants
-   - Reputation as xenotype fitness
-   - Simple koans as initial content
-
-3. *Knowledge extraction* (T1 from LEAPQA)
-   - Stack Exchange → formal representations
-   - Argument modeling, semantic structure
-   - Feed into agent knowledge bases
-
-4. *Heuristic reasoning* (T2 from LEAPQA)
-   - Agents reason over extracted knowledge
-   - Pólya-style problem transformation
-   - Generate questions that lead to answers
-
-5. *Mathematical domain*
-   - Apply to formal math Q&A (MathOverflow, Lean prover)
-   - Conjecture generation
-   - Proof search guided by hexagram heuristics
-
-** Risk and reward
-
-Risk: Each step in the transfer chain could fail.
-- Fulab might not transfer cleanly
-- Q&A dynamics might be fundamentally different
-- Mathematical discovery might require something we don't have
-
-Reward: If it works, we have:
-- A general methodology for agent design across domains
-- A path to Turing's vision of self-improving AI
-- Potential for genuine mathematical discovery
-- Validation that "patterns of improvisation" are universal
-
-** SFI pitch (updated)
-
-"In 2019 we proposed agent-based Q&A learning. The infrastructure didn't
-exist. Now it does:
-
-- MMCA provides evolutionary search over agent configurations
-- Cyberant adapter demonstrates AIF transfer (validated on ants)
-- Hexagram framework provides institutional rules (IAD equivalent)
-- Xenotype evaluation closes the learning loop
-- Arrow infrastructure supports Kolmogorov-style reasoning
-
-We request support to extend the transfer chain: ants → Fulab → Q&A → math.
-Each step is testable. If transfer fails, we learn where. If it succeeds,
-we approach Turing's 1951 vision."
-
-*** Ratchet sanity test (post-normalization)
-
-Ran a longer sanity test after normalizing ratchet deltas (stddev scale, mean+q50 weights).
-
-#+begin_src bash
-bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
-  --runs 200 \
-  --update-every 20 \
-  --log /tmp/ratchet-sanity-long-20260121-223825.edn
-#+end_src
-
-Summary (derived from the log):
-
-- windows: 10
-- runs: 200
-- delta-score stats: min 0.159, max 0.900, mean 0.496 (n=8)
-- delta-weighted stats: min -0.682, max 0.800, mean -0.008 (n=8)
-- delta-mean-n stats: min -0.857, max 0.758, mean 0.013 (n=8)
-- delta-q50-n stats: min -0.905, max 0.862, mean -0.039 (n=8)
-- gates: {nil 8}
-
-Takeaway: ratchet deltas no longer saturate; scores are spread across the 0–1 range and
-weighted deltas sit in a balanced band around zero.
-
-*** Ratchet evidence persistence (iiching)
-
-We now persist ratchet evidence into iiching flexiargs under a dedicated
-`@exotype-ratchet` section so syncs don’t wipe it.
-
-Updater script (dry-run supported):
-
-#+begin_src bash
-bb -cp futon5/src:futon5/resources futon5/scripts/update_iiching_ratchet_evidence.clj \
-  --logs /tmp/ratchet-sanity-long-20260121-223825.edn \
-  --manifest futon5/resources/exotype-program-manifest.edn \
-  --iiching-root futon3/library/iiching \
-  --min-delta 0.3 \
-  --max-best 10 --max-recent 10
-#+end_src
-
-Notes:
-- The updater inserts/updates the `@exotype-ratchet` section **before** `@exotype-program`.
-- This keeps ratchet evidence safe from `iiching_sync_exotype.clj` (which rewrites from `@exotype-program` down).
-
-*** Ratchet sanity test (gated)
-
-Longer run with curriculum gate enabled to confirm blocking behavior.
-
-#+begin_src bash
-bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
-  --runs 300 \
-  --update-every 20 \
-  --curriculum-gate \
-  --log /tmp/ratchet-sanity-gated-20260121-230352.edn
-#+end_src
-
-Summary:
-
-- windows: 15
-- runs: 300
-- delta-score stats: min 0.260, max 0.935, mean 0.554 (n=13)
-- delta-weighted stats: min -0.481, max 0.869, mean 0.108 (n=13)
-- delta-mean-n stats: min -0.495, max 1.000, mean 0.119 (n=13)
-- delta-q50-n stats: min -0.460, max 0.736, mean 0.091 (n=13)
-- gates: {:blocked 6, nil 7}
-
-Takeaway: curriculum gating is active (~46% of ratchet contexts blocked) with normalized deltas.
-
-Read path ("pull off shelf"):
-
-- exoevolve can now read `@exotype-ratchet` / `@exotype-lift` from iiching and attach
-  it to each run entry as `:ratchet-library` (no scoring bonus).
-- Enable with:
-
-#+begin_src bash
-bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
-  --iiching-root ../futon3/library/iiching \
-  --iiching-manifest futon5/resources/exotype-program-manifest.edn
-#+end_src

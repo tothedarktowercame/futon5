@@ -25,6 +25,10 @@
     "Options:"
     "  --n N            Number of examples (default 20)."
     "  --seed N         RNG seed for example selection (default 4242)."
+    "  --run-seed N     Force a specific run seed for the first example."
+    "  --sigil S        Override exotype sigil."
+    "  --update-prob P  Override exotype update-prob."
+    "  --match-threshold P Override exotype match-threshold."
     "  --out-dir PATH   Output dir for images (default futon5/resources/figures)."
     "  --out-table PATH Output org table (default /tmp/mission-17a-compare-<ts>.org)."
     "  --scale PCT      Resize PNGs by percent (default 250)."
@@ -32,6 +36,9 @@
 
 (defn- parse-int [s]
   (try (Long/parseLong s) (catch Exception _ nil)))
+
+(defn- parse-double [s]
+  (try (Double/parseDouble s) (catch Exception _ nil)))
 
 (defn- parse-args [args]
   (loop [args args
@@ -47,6 +54,18 @@
 
           (= "--seed" flag)
           (recur (rest more) (assoc opts :seed (parse-int (first more))))
+
+          (= "--run-seed" flag)
+          (recur (rest more) (assoc opts :run-seed (parse-int (first more))))
+
+          (= "--sigil" flag)
+          (recur (rest more) (assoc opts :sigil (first more)))
+
+          (= "--update-prob" flag)
+          (recur (rest more) (assoc opts :update-prob (parse-double (first more))))
+
+          (= "--match-threshold" flag)
+          (recur (rest more) (assoc opts :match-threshold (parse-double (first more))))
 
           (= "--out-dir" flag)
           (recur (rest more) (assoc opts :out-dir (first more)))
@@ -123,7 +142,7 @@
     (shell/sh "mogrify" "-resize" (str scale "%") png)))
 
 (defn -main [& args]
-  (let [{:keys [help unknown n seed out-dir out-table scale]} (parse-args args)]
+  (let [{:keys [help unknown n seed run-seed sigil update-prob match-threshold out-dir out-table scale]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown) (println) (println (usage)))
@@ -135,16 +154,29 @@
             ts (System/currentTimeMillis)
             out-table (or out-table (format "/tmp/mission-17a-compare-%d.org" ts))
             baseline-cfg (:config (edn/read-string (slurp "futon5/resources/mission-17a-refine-baseline.edn")))
-            exotic-cfg (:config (edn/read-string (slurp "futon5/resources/mission-17a-refine-exotic.edn")))
+            raw-exotic-cfg (:config (edn/read-string (slurp "futon5/resources/mission-17a-refine-exotic.edn")))
+            exo-params (cond-> (:params (:exotype raw-exotic-cfg))
+                         (some? update-prob) (assoc :update-prob update-prob)
+                         (some? match-threshold) (assoc :match-threshold match-threshold))
+            exotype-override (cond-> (:exotype raw-exotic-cfg)
+                               (some? sigil) (assoc :sigil sigil)
+                               (or (some? update-prob) (some? match-threshold)) (assoc :params exo-params))
+            exotic-cfg (assoc raw-exotic-cfg :exotype exotype-override)
             gen-len (count (:genotype baseline-cfg))
             phe-len (count (:phenotype baseline-cfg))
             generations (int (:generations baseline-cfg))
-            rng (java.util.Random. seed)]
+            rng (java.util.Random. seed)
+            label-prefix (if (or (some? update-prob) (some? match-threshold))
+                           (format "mission-17a-compare-pt-u%.2f-m%.2f"
+                                   (double (or update-prob (:update-prob exo-params)))
+                                   (double (or match-threshold (:match-threshold exo-params))))
+                           "mission-17a-compare")]
         (.mkdirs (io/file out-dir))
         (let [rows
               (mapv
                (fn [idx]
-                 (let [run-seed (rng-int rng Integer/MAX_VALUE)
+                 (let [run-seed (long (or (when (and (= idx 0) (some? run-seed)) run-seed)
+                                          (rng-int rng Integer/MAX_VALUE)))
                        grng (java.util.Random. run-seed)
                        genotype (rng-sigil-string grng gen-len)
                        phenotype (rng-phenotype-string grng phe-len)
@@ -157,7 +189,7 @@
                                                         :phenotype phenotype
                                                         :seed run-seed
                                                         :exotype (exotype/resolve-exotype (:exotype exotic-cfg))))
-                       base-label (format "mission-17a-compare-%02d-seed-%d" (inc idx) run-seed)
+                       base-label (format "%s-%02d-seed-%d" label-prefix (inc idx) run-seed)
                        baseline-ppm (str (io/file out-dir (str base-label "-baseline.ppm")))
                        baseline-png (str (io/file out-dir (str base-label "-baseline.png")))
                        exotic-ppm (str (io/file out-dir (str base-label "-exotic.ppm")))

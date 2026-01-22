@@ -206,7 +206,7 @@
                          opts (cond-> base
                                 no-operators (assoc :operators []))]
                      {:result (mmca/run-mmca opts)
-                      :fresh? true})))]
+                      :fresh? true}))]
         (render/render-run->file! result out {:exotype? render-exotype})
         (when (and save-run (or fresh? input))
           (spit save-run (pr-str result))

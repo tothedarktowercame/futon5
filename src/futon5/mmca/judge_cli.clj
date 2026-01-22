@@ -3,6 +3,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [clojure.java.shell :as shell]
             [futon5.mmca.render :as render]
             [futon5.hexagram.metrics :as hex-metrics]
             [futon5.mmca.metrics :as mmca-metrics]))
@@ -20,8 +21,12 @@
     "  --out PATH            Output EDN lines file (default /tmp/mmca-judgements.edn)."
     "  --render-dir PATH     Write PPM renders for each run (optional)."
     "  --exotype             Render genotype/phenotype/exotype triptych."
+    "  --scale PCT           Resize renders by percent (e.g. 250)."
     "  --shuffle             Shuffle input order."
     "  --help                Show this message."]))
+
+(defn- parse-int [s]
+  (try (Long/parseLong s) (catch Exception _ nil)))
 
 (defn- parse-args [args]
   (loop [args args
@@ -43,6 +48,9 @@
 
           (= "--exotype" flag)
           (recur more (assoc opts :exotype true))
+
+          (= "--scale" flag)
+          (recur (rest more) (assoc opts :scale (parse-int (first more))))
 
           (= "--shuffle" flag)
           (recur more (assoc opts :shuffle true))
@@ -88,20 +96,41 @@
                 :signature sig}}))
 
 (defn- render-run!
-  [render-dir path run exotype?]
+  [render-dir path run exotype? scale]
   (when render-dir
     (let [base (-> path io/file .getName (str/replace #"\.edn$" ""))
           out (io/file render-dir (str base ".ppm"))]
       (.mkdirs (.getParentFile out))
       (render/render-run->file! run (.getPath out) {:exotype? exotype?})
+      (when (and scale (pos? (long scale)))
+        (shell/sh "mogrify" "-resize" (str scale "%") (.getPath out)))
       (.getPath out))))
+
+(defn- open-image!
+  [path]
+  (when path
+    (try
+      (let [pb (ProcessBuilder. ["display" path])]
+        (.start pb))
+      (catch Exception _ nil))))
+
+(defn- close-image!
+  [^Process proc]
+  (when proc
+    (try
+      (when (.isAlive proc)
+        (.destroy proc)
+        (Thread/sleep 50)
+        (when (.isAlive proc)
+          (.destroyForcibly proc)))
+      (catch Exception _ nil))))
 
 (defn- append-entry!
   [path entry]
   (spit path (str (pr-str entry) "\n") :append true))
 
 (defn -main [& args]
-  (let [{:keys [help unknown inputs out render-dir exotype shuffle]} (parse-args args)]
+  (let [{:keys [help unknown inputs out render-dir exotype scale shuffle]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do
@@ -119,12 +148,14 @@
         (println (format "Loaded %d runs." (count paths)))
         (doseq [path paths]
           (let [run (load-run path)
-                render-path (render-run! render-dir path run exotype)
+                render-path (render-run! render-dir path run exotype scale)
+                proc (open-image! render-path)
                 {:keys [summary hexagram]} (summarize run)
                 {:keys [avg-change avg-entropy-n avg-unique temporal-autocorr]} summary]
             (println)
             (println "Run:" path)
-            (when render-path (println "Render:" render-path))
+            (when render-path
+              (println "Render:" render-path))
             (println (format "Metrics: change %.3f | entropy-n %.3f | unique %.3f | autocorr %.3f"
                              (double (or avg-change 0.0))
                              (double (or avg-entropy-n 0.0))
@@ -135,22 +166,25 @@
                              (double (or (get-in hexagram [:signature :alpha-estimate]) 0.0))
                              (double (or (get-in hexagram [:signature :spectral-gap]) 0.0))
                              (double (or (get-in hexagram [:signature :projection-rank]) 0.0))))
-            (loop []
-              (let [resp (prompt-label)
-                    label (label->kw resp)]
-                (cond
-                  (= label :quit) (do (println "Stopping.") (System/exit 0))
-                  (= label :skip) (println "Skipped.")
-                  (keyword? label)
-                  (do
-                    (append-entry! out {:event :judgement
-                                        :timestamp (now)
-                                        :path path
-                                        :label label
-                                        :summary summary
-                                        :hexagram hexagram})
-                    (println "Saved.")))
-                (when-not (keyword? label)
-                  (println "Unknown response; try again.")
-                  (recur)))))))
+            (try
+              (loop []
+                (let [resp (prompt-label)
+                      label (label->kw resp)]
+                  (cond
+                    (= label :quit) (do (println "Stopping.") (System/exit 0))
+                    (= label :skip) (println "Skipped.")
+                    (keyword? label)
+                    (do
+                      (append-entry! out {:event :judgement
+                                          :timestamp (now)
+                                          :path path
+                                          :label label
+                                          :summary summary
+                                          :hexagram hexagram})
+                      (println "Saved.")))
+                  (when-not (keyword? label)
+                    (println "Unknown response; try again.")
+                    (recur))))
+              (finally
+                (close-image! proc)))))
         (println "Done.")))))
