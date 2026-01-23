@@ -123,7 +123,11 @@
      :strong-disagree strong-disagree}))
 
 (defn- mean-score [score-map keys]
-  (let [vals (map (fn [k] (->double (get score-map k))) keys)
+  (let [vals (map (fn [k]
+                    (if (= k :trigram-collapse)
+                      (->double (get-in score-map [k :score]))
+                      (->double (get score-map k))))
+                  keys)
         vals (remove nil? vals)]
     (if (seq vals)
       (/ (reduce + 0.0 vals) (double (count vals)))
@@ -134,11 +138,13 @@
         judgements (filter #(= :judgement (:event %)) entries)
         labeled (filter (fn [j] (and (:label j) (:scores j))) judgements)
         labels (map :label labeled)
-        scorers [:short :envelope :triad :shift :filament]
+        scorers [:short :envelope :triad :shift :filament :trigram-collapse]
         scorer-summaries (into {}
                                (map (fn [scorer]
                                       (let [scores (map (fn [j]
-                                                          (->double (get-in j [:scores scorer])))
+                                                          (if (= scorer :trigram-collapse)
+                                                            (->double (get-in j [:scores scorer :score]))
+                                                            (->double (get-in j [:scores scorer]))))
                                                         labeled)]
                                         [scorer (scorer-metrics labels scores)]))
                                     scorers))
