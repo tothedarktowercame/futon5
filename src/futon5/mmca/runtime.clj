@@ -423,10 +423,19 @@
       (if-let [next-kernel (and kernel-spec
                                 (seq ctxs)
                                 (apply-exotype-chain kernel-spec exotype ctxs rng))]
-        (assoc state'
-               :kernel next-kernel
-               :kernel-spec next-kernel
-               :kernel-fn (ca/kernel-fn next-kernel))
+        (let [prev-id (when kernel-spec (ca/kernel-id kernel-spec))
+              next-id (when next-kernel (ca/kernel-id next-kernel))
+              mutation? (and prev-id next-id (not= prev-id next-id))
+              state'' (cond-> state'
+                        mutation? (update :exotype-mutations (fnil conj [])
+                                          {:tick tick
+                                           :from prev-id
+                                           :to next-id
+                                           :exotype (select-keys exotype [:sigil :tier :params])}))]
+          (assoc state''
+                 :kernel next-kernel
+                 :kernel-spec next-kernel
+                 :kernel-fn (ca/kernel-fn next-kernel)))
         state'))))
 
 (defn- nominate-kernel-by-exotype
@@ -611,6 +620,7 @@
        :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
        :exotype-mode exotype-mode
        :exotype-nominations (not-empty (:exotype-nominations state))
+       :exotype-mutations (not-empty (:exotype-mutations state))
        :exotype-contexts (not-empty (:exotype-contexts state))
         :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
                         operators)
@@ -619,7 +629,7 @@
         :phe-history (:phenotypes history)
        :metrics-history metrics-history
        :proposals (not-empty proposals)
-       :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))
+        :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))
 
 (defn run-mmca-stream
   "Run a MetaMetaCA simulation and call step-fn with each generation state.
@@ -694,6 +704,7 @@
          :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
          :exotype-mode exotype-mode
          :exotype-nominations (not-empty (:exotype-nominations state))
+         :exotype-mutations (not-empty (:exotype-mutations state))
          :exotype-contexts (not-empty (:exotype-contexts state))
          :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
                          operators)

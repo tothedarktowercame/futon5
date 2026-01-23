@@ -9,7 +9,8 @@
             [futon5.mmca.metrics :as mmca-metrics]
             [futon5.mmca.register-shift :as register-shift]
             [futon5.mmca.trigram :as trigram]
-            [futon5.mmca.filament :as filament]))
+            [futon5.mmca.filament :as filament]
+            [futon5.mmca.trigram-collapse :as trigram-collapse]))
 
 (defn- usage []
   (str/join
@@ -151,6 +152,7 @@
         shift (register-shift/register-shift-summary run)
         trigram (trigram/score-early-late (:phe-history run))
         filament-score (double (or (:score (filament/analyze-run (phe->frames (:phe-history run)) {})) 0.0))
+        trigram-collapse (trigram-collapse/score-run run {:opts {}})
         {:keys [avg-change avg-entropy-n]} summary
         dead? (and (<= (double (or avg-change 0.0)) 0.05)
                    (<= (double (or avg-entropy-n 0.0)) 0.2))
@@ -163,6 +165,9 @@
      :shift (double (or (:shift/composite shift) 0.0))
      :trigram (double (or (:score trigram) 0.0))
      :filament filament-score
+     :trigram-collapse {:score (:score trigram-collapse)
+                        :epochs (mapv #(select-keys % [:tick-start :tick-end :score :early-collapse? :late-collapse?])
+                                      (:epochs trigram-collapse))}
      :hex hex-score
      :diagnostics {:dead? dead?
                    :confetti? confetti?
