@@ -1,0 +1,7 @@
+{:tai-constrained {:update-prob [0.3 0.7]
+                   :match-threshold [0.3 0.7]
+                   :sigil-family :gong}
+ :unconstrained {:update-prob [0.0 1.0]
+                 :match-threshold [0.0 1.0]
+                 :sigil-family :random}
+ :baseline {:exotype-enabled false}}
