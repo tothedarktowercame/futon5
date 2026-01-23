@@ -123,18 +123,50 @@
 (defn- phe->frames [phe-history]
   (mapv phe->grid phe-history))
 
+(defn- mask-genotype [gen phenotype keep-char]
+  (apply str
+         (keep (fn [[g p]]
+                 (when (= p keep-char) g))
+               (map vector (seq (or gen "")) (seq (or phenotype ""))))))
+
+(defn- diversity-count [xs]
+  (count (set xs)))
+
+(defn- geno-phe-diversity [gen-history phe-history]
+  (let [pairs (map vector (or gen-history []) (or phe-history []))
+        masked-ones (map (fn [[g p]] (mask-genotype g p \1)) pairs)
+        masked-zeros (map (fn [[g p]] (mask-genotype g p \0)) pairs)
+        geno-div-1 (diversity-count masked-ones)
+        geno-div-0 (diversity-count masked-zeros)
+        phe-div (diversity-count phe-history)
+        product (* geno-div-0 geno-div-1)]
+    {:geno-div-0 geno-div-0
+     :geno-div-1 geno-div-1
+     :phe-div phe-div
+     :geno-div-product product
+     :geno-phe-div (* phe-div product)}))
+
 (defn- score-run [run summary hexagram]
   (let [hex-score (* 100.0 (hex-metrics/hexagram-fitness (:class hexagram)))
         shift (register-shift/register-shift-summary run)
         trigram (trigram/score-early-late (:phe-history run))
-        filament-score (double (or (:score (filament/analyze-run (phe->frames (:phe-history run)) {})) 0.0))]
+        filament-score (double (or (:score (filament/analyze-run (phe->frames (:phe-history run)) {})) 0.0))
+        {:keys [avg-change avg-entropy-n]} summary
+        dead? (and (<= (double (or avg-change 0.0)) 0.05)
+                   (<= (double (or avg-entropy-n 0.0)) 0.2))
+        confetti? (and (>= (double (or avg-change 0.0)) 0.45)
+                       (>= (double (or avg-entropy-n 0.0)) 0.8))
+        diversity (geno-phe-diversity (:gen-history run) (:phe-history run))]
     {:short (double (or (:composite-score summary) 0.0))
      :envelope (envelope-score summary)
      :triad (triad-score summary hex-score)
      :shift (double (or (:shift/composite shift) 0.0))
      :trigram (double (or (:score trigram) 0.0))
      :filament filament-score
-     :hex hex-score}))
+     :hex hex-score
+     :diagnostics {:dead? dead?
+                   :confetti? confetti?
+                   :diversity diversity}}))
 
 (defn- render-run!
   [render-dir path run exotype? scale]

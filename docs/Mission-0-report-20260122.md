@@ -183,6 +183,7 @@ Important gaps:
 - Capture run metadata consistently: seed, length, generations, kernel spec, exotype, regime ID.
 - Add post-run summarizer for exoevolve logs (`futon5/scripts/exoevolve_summary.clj`).
 - Bake scorer snapshots into HIT judgements (judge-cli writes per-run scores at label time).
+- Add modular diagnostic tags in HIT judgements (dead/confetti + geno×phe diversity).
 
 **Success criterion**: overnight runs complete >95% of requested runs without silent truncation; rerenders require no ad‑hoc sanitation.
 
