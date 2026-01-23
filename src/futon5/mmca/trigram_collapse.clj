@@ -3,10 +3,11 @@
   (:require [futon5.mmca.metrics :as metrics]))
 
 (def ^:private default-opts
-  {:entropy-min 0.2
-   :change-min 0.05
-   :unique-min 0.05
-   :autocorr-max 0.9
+  {:entropy-min 0.1
+   :change-min 0.03
+   :unique-min 0.04
+   :autocorr-max 0.95
+   :min-reasons 3
    :early-penalty 0.5
    :late-penalty 0.1})
 
@@ -29,8 +30,9 @@
     (> (double (or (:temporal-autocorr summary) 0.0)) autocorr-max) (conj :high-autocorr)))
 
 (defn- collapse? [summary opts]
-  (let [reasons (collapse-reasons summary opts)]
-    {:collapse? (seq reasons)
+  (let [reasons (collapse-reasons summary opts)
+        min-reasons (int (or (:min-reasons opts) 1))]
+    {:collapse? (>= (count reasons) min-reasons)
      :reasons reasons}))
 
 (defn- merge-collapse [a b]
