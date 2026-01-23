@@ -10,6 +10,29 @@ full provenance, working scorers.
 
 ---
 
+## P0 Readiness Gate (Must Pass Before Stage 1)
+
+We will not run Stage 1 until the P0 gate is satisfied. Current status (as of
+2026-01-22) is **partial**.
+
+**Criteria**
+
+- [x] **Deterministic runner**: RNG-seeded execution + deterministic selection of exotypes.
+  - Status: **Done** (exoevolve uses RNG selection; seed logged).
+- [~] **Provenance logging**: full run metadata + periodic checkpoints + error logs.
+  - Status: **Partial** (meta/checkpoint/error events added; still need a standard post-run summary).
+- [~] **Reproducible artifact bundle**: exact command + seeds + configs + outputs in a stable location.
+  - Status: **Partial** (logs exist; standard bundle format not yet finalized).
+- [~] **Scorer/HIT alignment**: documented agreement threshold on a labeled set.
+  - Status: **Partial** (pilot HIT comparisons exist; no agreed threshold yet).
+- [ ] **Health/diagnostic triage**: freeze/magma detection and reporting tied to logs.
+  - Status: **Pending** (metrics exist, need standardized report).
+
+**Gate rule**: Stage 1 starts only when all criteria are at least **Partial** and
+the last two are **Done**.
+
+---
+
 ## Stage 1: Confirm the Tai Anchor
 
 **Claim**: The tai-zone constraint (update-prob in [0.3, 0.7], match-threshold in
