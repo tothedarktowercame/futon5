@@ -1498,6 +1498,46 @@ Hypothesis: CT-level composition should produce:
 The xenotype test is the only way to know if (2) holds — raw MMCA metrics
 can't distinguish "works here" from "works anywhere."
 
+** Approach 3
+*** Approach 3 kickoff (Phase 1)
+
+We are now starting Mission 0 Approach 3. Phase 1 is defined by
+`futon5/docs/Excursion-1-P1-xenotype-motifs.md` and is authorized because the
+P0 gate has passed (2026-01-23).
+
+Primary source for the plan:
+- `futon5/docs/Excursion-1-P1-xenotype-motifs.md` (Stage 1: Confirm the Tai Anchor)
+
+Phase 1 steps (from Excursion 1):
+1) Select anchor seeds:
+   - include Mission 17a seed 4242
+   - generate 19 additional seeds
+   - store in `futon5/resources/excursion-1-anchor-seeds.edn`
+2) Define three arms:
+   - `:tai-constrained` (update-prob [0.3 0.7], match-threshold [0.3 0.7], sigil-family :gong)
+   - `:unconstrained` (update-prob [0.0 1.0], match-threshold [0.0 1.0], sigil-family :random)
+   - `:baseline` (exotype disabled)
+   - store in `futon5/resources/excursion-1-arms.edn`
+3) Run batch:
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_1.clj \
+  --seeds futon5/resources/excursion-1-anchor-seeds.edn \
+  --arms futon5/resources/excursion-1-arms.edn \
+  --length 80 \
+  --generations 100 \
+  --out-dir /tmp/excursion-1-stage-1
+#+end_src
+4) Score all runs:
+   - primary: filament
+   - secondary: envelope, triad
+   - output `/tmp/excursion-1-stage-1/scores.csv`
+5) Analysis:
+   - paired t-test or Wilcoxon (tai vs unconstrained; tai vs baseline)
+   - effect size (Cohen’s d)
+   - output `/tmp/excursion-1-stage-1/analysis.edn`
+
+We will treat the Excursion 1 doc as the canonical runbook for this phase.
+
 ** Connection to 泰 finding
 
 The I Ching discovery showed: semantic structure (hexagram framework) predicts
@@ -1520,4 +1560,3 @@ that's evidence the semantic layer is doing useful work.
 - Add MMCA callback hook for xenotype evaluation
 - Log both arms with full lineage for post-hoc analysis
 - Consider factorial: (MMCA-only, MMCA+xeno) × (CT-stack, raw-params)
-
