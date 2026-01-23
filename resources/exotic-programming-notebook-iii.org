@@ -1624,6 +1624,31 @@ Filament (Stage 2a):
 Interpretation (prelim): soft Tai does not dominate; tight-tai beats it on filament.
 This suggests the sweet spot might be narrower than the envelope width (0.2).
 
+*** Approach 3 Phase 1 — Stage 1 rerun (200 seeds)
+
+We increased power using 200 seeds, same three arms as Stage 1.
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_1.clj \
+  --seeds futon5/resources/excursion-1-anchor-seeds-200.edn \
+  --arms futon5/resources/excursion-1-arms.edn \
+  --length 80 \
+  --generations 100 \
+  --out-dir /tmp/excursion-1-stage-1-200
+#+end_src
+
+Filament (N=200):
+- tai > unconstrained (p≈5.5e-7, d≈0.35)
+- tai > baseline (p≈0.033, d≈0.15)
+
+Envelope (N=200):
+- tai > unconstrained (p≈7.9e-5, d≈0.28)
+- tai < baseline (p≈0.040, d≈-0.15)
+
+Takeaway: with higher power, tai beats unconstrained on filament and envelope, and
+beats baseline on filament only. Effect sizes remain < 0.5, so the original success
+criteria are still not fully met.
+
 ** Connection to 泰 finding
 
 The I Ching discovery showed: semantic structure (hexagram framework) predicts
