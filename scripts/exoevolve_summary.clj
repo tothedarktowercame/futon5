@@ -160,8 +160,8 @@
   [summary]
   (let [meta (:meta summary)
         runs (:runs summary)
-        errors (:errors summary)
         hit (:hit summary)
+        bundle (:bundle summary)
         criteria
         {:deterministic-runner
          {:status (if (some? (get-in meta [:seed])) :pass :fail)
@@ -174,8 +174,15 @@
           :evidence "meta event + checkpoints"}
 
          :reproducible-bundle
-         {:status (if (some? (get-in meta [:opts])) :pass :fail)
-          :evidence "opts captured in meta"}
+         {:status (if (and (some? bundle)
+                           (some? (:argv bundle))
+                           (some? (:cwd bundle)))
+                    :pass :fail)
+          :evidence (if bundle
+                      (format "bundle argv=%s cwd=%s"
+                              (pr-str (:argv bundle))
+                              (:cwd bundle))
+                      "missing bundle event")}
 
          :scorer-hit-alignment
          {:status (cond
@@ -284,12 +291,14 @@
       :else
       (let [entries (vec (parse-edn-lines in))
             meta-entry (first (filter #(= :meta (:event %)) entries))
+            bundle-entry (first (filter #(= :bundle (:event %)) entries))
             runs (vec (collect-runs entries))
             windows (vec (collect-windows entries))
             errors (vec (collect-errors entries))
             checkpoints (vec (collect-checkpoints entries))
             hit-summary (when hit (summarize-hit hit))
             summary {:meta meta-entry
+                     :bundle bundle-entry
                      :runs (summarize-runs runs)
                      :windows (summarize-windows windows)
                      :errors {:count (count errors)
