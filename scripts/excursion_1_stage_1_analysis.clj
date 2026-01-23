@@ -1,6 +1,7 @@
 (ns excursion-1-stage-1-analysis
   (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.edn :as edn]))
 
 (defn- usage []
   (str/join
@@ -11,8 +12,9 @@
     "  bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_1_analysis.clj [options]"
     ""
     "Options:"
-    "  --scores PATH   Scores CSV from Stage 1 (required)."
+    "  --scores PATH   Scores CSV (required)."
     "  --out PATH      Output EDN analysis (default <scores-dir>/analysis.edn)."
+    "  --pairs EDN     Optional vector of [arm-a arm-b] pairs."
     "  --help          Show this message."]))
 
 (defn- parse-args [args]
@@ -24,6 +26,7 @@
           (#{"--help" "-h"} flag) (recur more (assoc opts :help true))
           (= "--scores" flag) (recur (rest more) (assoc opts :scores (first more)))
           (= "--out" flag) (recur (rest more) (assoc opts :out (first more)))
+          (= "--pairs" flag) (recur (rest more) (assoc opts :pairs (first more)))
           :else (recur more (assoc opts :unknown flag))))
       opts)))
 
@@ -98,7 +101,7 @@
           seeds)))
 
 (defn -main [& args]
-  (let [{:keys [help unknown scores out]} (parse-args args)]
+  (let [{:keys [help unknown scores out pairs]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown) (println) (println (usage)))
@@ -107,8 +110,10 @@
       (let [rows (parse-csv scores)
             index (build-index rows)
             metrics [:filament :envelope :triad :shift :short]
-            comparisons [[:tai-constrained :unconstrained]
-                         [:tai-constrained :baseline]]
+            comparisons (if pairs
+                          (edn/read-string pairs)
+                          [[:tai-constrained :unconstrained]
+                           [:tai-constrained :baseline]])
             results (into {}
                           (for [metric metrics]
                             [metric

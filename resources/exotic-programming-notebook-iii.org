@@ -1563,6 +1563,29 @@ Analysis (normal-approx paired t; see /tmp/excursion-1-stage-1/analysis.edn):
 Next: If we accept filament as primary, this is a weak-but-positive signal on tai.
 We should increase seeds or run Stage 2 ablations to validate specificity.
 
+*** Approach 3 Phase 1 — Stage 2 ablation run
+
+Ran Stage 2 ablations on the same 20 seeds.
+
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_2.clj \
+  --seeds futon5/resources/excursion-1-anchor-seeds.edn \
+  --arms futon5/resources/excursion-1-ablation-arms.edn \
+  --length 80 \
+  --generations 100 \
+  --out-dir /tmp/excursion-1-stage-2
+#+end_src
+
+Analysis (filament primary; /tmp/excursion-1-stage-2/analysis.edn):
+- filament: tai-zone vs relaxed (p≈0.600, d≈-0.12)
+- filament: tai-zone vs qian-ward (p≈0.058, d≈-0.42)
+- filament: tai-zone vs kun-ward (p≈0.00056, d≈-0.77)
+- filament: tai-zone vs tight-tai (p≈0.158, d≈-0.32)
+
+Interpretation (prelim): tai-zone is *worse* than qian/kun on filament in this sample,
+and not clearly better than relaxed/tight-tai. This conflicts with Stage 1’s weak tai advantage.
+We may need to increase seeds, or revisit the filament scoring threshold/implementation.
+
 ** Connection to 泰 finding
 
 The I Ching discovery showed: semantic structure (hexagram framework) predicts
