@@ -1538,6 +1538,18 @@ bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_1.clj \
 
 We will treat the Excursion 1 doc as the canonical runbook for this phase.
 
+*** Approach 3 P1 Readiness Gate — Exotype lift audit
+
+We found a mismatch between the intended “sigil → stable physics” exotype model
+and the current MMCA implementation (which is a contextual kernel‑steering
+operator). This makes Stage 1 results exploratory, not definitive.
+
+Audit + implications:
+- `futon5/docs/Mission-0-technote4-exotype-lift-audit.md`
+
+Conclusion: add a new P1 Readiness Gate — define and enforce a canonical lift
+spec before treating Stage 1 as validated.
+
 *** Approach 3 Phase 1 — Stage 1 run (Tai anchor)
 
 Ran Stage 1 batch using the Excursion 1 runner.
