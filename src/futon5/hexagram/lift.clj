@@ -1,7 +1,17 @@
 (ns futon5.hexagram.lift
-  "Lift exotype/context bits into hexagram representations."
+  "Lift exotype/context bits into hexagram representations.
+
+   The key operation is DIAGONALIZATION: the 6x6 exotype matrix is
+   eigendecomposed, and the signs of the 6 eigenvalues determine
+   the hexagram lines (yang if positive, yin if non-positive).
+
+   This ensures all four quadrants (LEFT/EGO/RIGHT/NEXT) contribute
+   to the hexagram identity through the eigenvalue structure."
   (:require [futon5.ca.core :as ca]
-            [futon5.hexagram.lines :as lines]))
+            [futon5.hexagram.lines :as lines])
+  (:import [org.apache.commons.math3.linear
+            Array2DRowRealMatrix
+            EigenDecomposition]))
 
 (def ^:private matrix-shape 6)
 
@@ -103,11 +113,48 @@
     (bits->matrix exotype-bits)))
 
 (defn diagonal
-  "Extract the 6-element diagonal from a 6x6 matrix."
+  "Extract the 6-element diagonal from a 6x6 matrix.
+   DEPRECATED: Use eigenvalue-diagonal for principled hexagram extraction."
   [matrix]
   (mapv (fn [idx]
           (get-in matrix [idx idx]))
         (range matrix-shape)))
+
+(defn- matrix->array2d
+  "Convert a Clojure 6x6 matrix to a Java double[][] array."
+  [matrix]
+  (into-array (map double-array
+                   (for [row matrix]
+                     (map double row)))))
+
+(defn eigenvalues
+  "Compute eigenvalues of a 6x6 matrix.
+   Returns a vector of 6 eigenvalues (real parts only, sorted by magnitude descending)."
+  [matrix]
+  (let [arr (matrix->array2d matrix)
+        rm (Array2DRowRealMatrix. arr)
+        eigen (EigenDecomposition. rm)
+        ;; Get real parts of eigenvalues (imaginary parts discarded)
+        reals (.getRealEigenvalues eigen)]
+    ;; Sort by absolute magnitude descending for consistent ordering
+    (vec (sort-by #(- (Math/abs %)) reals))))
+
+(defn eigenvalue-signs
+  "Compute the signs of eigenvalues as hexagram lines.
+   Returns 6 elements: 1 for positive eigenvalue, 0 for non-positive."
+  [matrix]
+  (let [eigs (eigenvalues matrix)]
+    (mapv (fn [ev] (if (pos? ev) 1 0)) eigs)))
+
+(defn eigenvalue-diagonal
+  "Diagonalize the matrix and extract hexagram lines from eigenvalue signs.
+
+   This is the principled compression: 36 bits → 6 eigenvalues → 6 signs.
+   All quadrants (LEFT/EGO/RIGHT/NEXT/PHENOTYPE) contribute to the
+   eigenvalue structure, so all aspects of the design pattern affect
+   the resulting hexagram."
+  [matrix]
+  (eigenvalue-signs matrix))
 
 (defn yang?
   "Return true if a value is interpreted as yang."
@@ -126,12 +173,24 @@
   [diag]
   (mapv (fn [v] (if (yang? v) :yang :yin)) diag))
 
-(defn exotype->hexagram-lines
-  "Lift exotype bits into a 6-line vector (:yin/:yang)."
+(defn exotype->hexagram-lines-legacy
+  "Lift exotype bits into a 6-line vector using simple diagonal extraction.
+   DEPRECATED: Use exotype->hexagram-lines for eigenvalue-based extraction."
   [exotype-bits]
   (-> (exotype->6x6 exotype-bits)
       diagonal
       diagonal->hexagram-lines))
+
+(defn exotype->hexagram-lines
+  "Lift exotype bits into a 6-line vector (:yin/:yang) via eigenvalue diagonalization.
+
+   The 6x6 matrix is eigendecomposed, and the signs of the 6 eigenvalues
+   determine the hexagram lines. This ensures all quadrants (IF/BECAUSE/
+   HOWEVER/THEN) contribute to the hexagram identity."
+  [exotype-bits]
+  (let [matrix (exotype->6x6 exotype-bits)
+        signs (eigenvalue-diagonal matrix)]
+    (mapv (fn [s] (if (pos? s) :yang :yin)) signs)))
 
 (defn exotype->hexagram
   "Lift exotype bits into a hexagram map."
