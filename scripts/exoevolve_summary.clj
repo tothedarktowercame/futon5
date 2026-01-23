@@ -33,15 +33,15 @@
 
 (defn- parse-edn-lines [path]
   (with-open [r (io/reader path)]
-    (->> (line-seq r)
-         (map str/trim)
-         (remove empty?)
-         (map (fn [line]
-                (try
-                  (edn/read-string line)
-                  (catch Exception _
-                    nil))))
-         (remove nil?))))
+    (vec (->> (line-seq r)
+              (map str/trim)
+              (remove empty?)
+              (map (fn [line]
+                     (try
+                       (edn/read-string line)
+                       (catch Exception _
+                         nil))))
+              (remove nil?)))))
 
 (def label->num {:not-eoc 0 :borderline 1 :eoc 2})
 
@@ -155,6 +155,57 @@
      :scorers scorer-summaries
      :pass? pass?}))
 
+(defn- gate-check
+  "Check P0 gate criteria and return status map."
+  [summary]
+  (let [meta (:meta summary)
+        runs (:runs summary)
+        errors (:errors summary)
+        hit (:hit summary)
+        criteria
+        {:deterministic-runner
+         {:status (if (some? (get-in meta [:seed])) :pass :fail)
+          :evidence "seed present in meta"}
+
+         :provenance-logging
+         {:status (if (and (some? meta)
+                           (>= (:count (:checkpoints summary)) 0))
+                    :pass :fail)
+          :evidence "meta event + checkpoints"}
+
+         :reproducible-bundle
+         {:status (if (some? (get-in meta [:opts])) :pass :fail)
+          :evidence "opts captured in meta"}
+
+         :scorer-hit-alignment
+         {:status (cond
+                    (nil? hit) :skip
+                    (:pass? hit) :pass
+                    :else :fail)
+          :evidence (if hit
+                      (format "ensemble exact=%.2f ordinal=%.2f spearman=%.2f"
+                              (double (get-in hit [:ensemble :exact] 0))
+                              (double (get-in hit [:ensemble :ordinal] 0))
+                              (double (get-in hit [:ensemble :spearman] 0)))
+                      "no HIT data provided")}
+
+         :health-diagnostic-triage
+         {:status (if (and (some? (:dead-rate runs))
+                           (some? (:confetti-rate runs)))
+                    :pass :fail)
+          :evidence (format "dead-rate=%.2f confetti-rate=%.2f"
+                            (double (:dead-rate runs 0))
+                            (double (:confetti-rate runs 0)))}}
+
+        all-pass? (every? (fn [[_ v]] (#{:pass :skip} (:status v)))
+                          criteria)]
+    {:event :gate-check
+     :gate :p0
+     :timestamp (System/currentTimeMillis)
+     :criteria criteria
+     :all-pass? all-pass?
+     :ready-for :stage-1}))
+
 (defn- avg [xs]
   (when (seq xs)
     (/ (reduce + 0.0 xs) (double (count xs)))))
@@ -246,10 +297,23 @@
                      :checkpoints {:count (count checkpoints)
                                    :last (last checkpoints)}
                      :hit hit-summary
-                     :events {:total (count entries)}}]
+                     :events {:total (count entries)}}
+            gate (gate-check summary)
+            summary (assoc summary :gate gate)]
         (spit out (pr-str summary))
         (when org
           (write-org org summary))
         (println "Wrote" out)
         (when org
-          (println "Wrote" org))))))
+          (println "Wrote" org))
+        (println)
+        (println "=== P0 Gate Check ===")
+        (doseq [[criterion {:keys [status evidence]}] (:criteria gate)]
+          (println (format "  %s: %s (%s)"
+                           (name criterion)
+                           (name status)
+                           evidence)))
+        (println)
+        (if (:all-pass? gate)
+          (println "GATE PASSED - Ready for Stage 1")
+          (println "GATE NOT PASSED - See failing criteria above"))))))

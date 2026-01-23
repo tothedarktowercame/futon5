@@ -542,75 +542,98 @@
               ratchet-library (when iiching-root
                                 (ratchet-lib/evidence-for library-opts (:sigil exotype) (:tier exotype)))
               exotype-overrides {:update-prob update-prob
-                                 :match-threshold match-threshold}]
-          (try
-            (let [eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides)
-                  entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context ratchet-library)
-                  batch' (conj batch entry)
-                  update? (>= (count batch') update-every)
-                  stats (when update? (summarize-batch batch'))
-                  delta (when (and update? prev-window)
-                          {:delta-mean (- (:mean stats) (:mean prev-window))
-                           :delta-q50 (- (:q50 stats) (:q50 prev-window))})
-                  population' (if update?
-                                (evolve-population rng population batch' tier)
-                                population)
-                  batch'' (if update? [] batch')
-                  window' (if update? (inc window) window)
-                  prev-window' (if update? stats prev-window)
-                  ratchet-state' (if update?
-                                   (ratchet/update-window ratchet-state stats)
-                                   ratchet-state)
-                  ratchet-context' (when (and update? prev-window)
-                                     (let [threshold (curriculum/curriculum-threshold window' nil)]
-                                       (ratchet/ratchet-context prev-window stats
-                                                                {:threshold threshold
-                                                                 :window window'
-                                                                 :gate? curriculum-gate})))]
-              (when log
-                (append-log! log entry))
-              (when (and log update?)
-                (append-log! log (window-log-entry window' stats delta)))
-              (when (and log heartbeat (zero? (mod (inc i) heartbeat)))
-                (append-log! log {:schema/version 1
-                                  :experiment/id :exoevolve
-                                  :event :checkpoint
-                                  :run/id (inc i)
-                                  :window window'
-                                  :errors errors}))
-              (when tap
-                (tap> (tap-run-entry entry)))
-              (when (and tap update?)
-                (tap> (tap-window-entry (window-log-entry window' stats delta))))
-              (when update?
-                (let [{:keys [mean best count]} (summarize-batch batch')]
-                  (println (format "exo update @ %d | mean %.2f | best %.2f | n %d"
-                                   (inc i)
-                                   (double (or mean 0.0))
-                                   (double (or best 0.0))
-                                   (long (or count 0))))))
-              (when (and heartbeat (zero? (mod (inc i) heartbeat)))
-                (println (format "exo heartbeat @ %d | window %d | errors %d"
-                                 (inc i) window' errors)))
-              (recur (inc i) window' prev-window' ratchet-state' ratchet-context' population' batch'' errors))
-            (catch Exception e
-              (let [entry {:schema/version 1
-                           :experiment/id :exoevolve
-                           :event :error
-                           :run/id (inc i)
-                           :exotype (select-keys exotype [:sigil :tier :params])
-                           :error {:class (str (class e))
-                                   :message (.getMessage e)}}]
-                (when log
-                  (append-log! log entry))
-                (when tap
-                  (tap> entry))
-                (if (= on-error :continue)
-                  (do
-                    (println (format "exo error @ %d | %s"
-                                     (inc i) (.getMessage e)))
-                    (recur (inc i) window prev-window ratchet-state ratchet-context population batch (inc errors)))
-                  (throw e))))))))))
+                                 :match-threshold match-threshold}
+              ;; Run evaluation in try/catch, return result map
+              result (try
+                       (let [eval (evaluate-exotype exotype length generations rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides)
+                             entry (log-entry (inc i) (:exotype eval) length generations eval context-depth ratchet-context ratchet-library)
+                             batch' (conj batch entry)
+                             update? (>= (count batch') update-every)
+                             stats (when update? (summarize-batch batch'))
+                             delta (when (and update? prev-window)
+                                     {:delta-mean (- (:mean stats) (:mean prev-window))
+                                      :delta-q50 (- (:q50 stats) (:q50 prev-window))})
+                             population' (if update?
+                                           (evolve-population rng population batch' tier)
+                                           population)
+                             batch'' (if update? [] batch')
+                             window' (if update? (inc window) window)
+                             prev-window' (if update? stats prev-window)
+                             ratchet-state' (if update?
+                                              (ratchet/update-window ratchet-state stats)
+                                              ratchet-state)
+                             ratchet-context' (when (and update? prev-window)
+                                                (let [threshold (curriculum/curriculum-threshold window' nil)]
+                                                  (ratchet/ratchet-context prev-window stats
+                                                                           {:threshold threshold
+                                                                            :window window'
+                                                                            :gate? curriculum-gate})))]
+                         (when log
+                           (append-log! log entry))
+                         (when (and log update?)
+                           (append-log! log (window-log-entry window' stats delta)))
+                         (when (and log heartbeat (zero? (mod (inc i) heartbeat)))
+                           (append-log! log {:schema/version 1
+                                             :experiment/id :exoevolve
+                                             :event :checkpoint
+                                             :run/id (inc i)
+                                             :window window'
+                                             :errors errors}))
+                         (when tap
+                           (tap> (tap-run-entry entry)))
+                         (when (and tap update?)
+                           (tap> (tap-window-entry (window-log-entry window' stats delta))))
+                         (when update?
+                           (let [{:keys [mean best count]} (summarize-batch batch')]
+                             (println (format "exo update @ %d | mean %.2f | best %.2f | n %d"
+                                              (inc i)
+                                              (double (or mean 0.0))
+                                              (double (or best 0.0))
+                                              (long (or count 0))))))
+                         (when (and heartbeat (zero? (mod (inc i) heartbeat)))
+                           (println (format "exo heartbeat @ %d | window %d | errors %d"
+                                            (inc i) window' errors)))
+                         {:ok true
+                          :i (inc i)
+                          :window window'
+                          :prev-window prev-window'
+                          :ratchet-state ratchet-state'
+                          :ratchet-context ratchet-context'
+                          :population population'
+                          :batch batch''
+                          :errors errors})
+                       (catch Exception e
+                         (let [entry {:schema/version 1
+                                      :experiment/id :exoevolve
+                                      :event :error
+                                      :run/id (inc i)
+                                      :exotype (select-keys exotype [:sigil :tier :params])
+                                      :error {:class (str (class e))
+                                              :message (.getMessage e)}}]
+                           (when log
+                             (append-log! log entry))
+                           (when tap
+                             (tap> entry))
+                           (if (= on-error :continue)
+                             (do
+                               (println (format "exo error @ %d | %s"
+                                                (inc i) (.getMessage e)))
+                               {:ok true
+                                :i (inc i)
+                                :window window
+                                :prev-window prev-window
+                                :ratchet-state ratchet-state
+                                :ratchet-context ratchet-context
+                                :population population
+                                :batch batch
+                                :errors (inc errors)})
+                             {:ok false :error e}))))]
+          ;; Recur outside try/catch based on result
+          (if (:ok result)
+            (recur (:i result) (:window result) (:prev-window result)
+                   (:ratchet-state result) (:ratchet-context result)
+                   (:population result) (:batch result) (:errors result))
+            (throw (:error result))))))))
 
 (defn -main [& args]
   (let [{:keys [help unknown] :as opts} (parse-args args)]

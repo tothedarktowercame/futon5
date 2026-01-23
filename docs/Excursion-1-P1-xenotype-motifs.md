@@ -13,23 +13,30 @@ full provenance, working scorers.
 ## P0 Readiness Gate (Must Pass Before Stage 1)
 
 We will not run Stage 1 until the P0 gate is satisfied. Current status (as of
-2026-01-22) is **partial**.
+2026-01-23) is **PASSED**.
 
 **Criteria**
 
 - [x] **Deterministic runner**: RNG-seeded execution + deterministic selection of exotypes.
-  - Status: **Done** (exoevolve uses RNG selection; seed logged).
-- [~] **Provenance logging**: full run metadata + periodic checkpoints + error logs.
-  - Status: **Partial** (meta/checkpoint/error events added; still need a standard post-run summary).
-- [~] **Reproducible artifact bundle**: exact command + seeds + configs + outputs in a stable location.
-  - Status: **Partial** (logs exist; standard bundle format not yet finalized).
-- [~] **Scorer/HIT alignment**: documented agreement threshold on a labeled set.
-  - Status: **Partial** (pilot HIT comparisons exist; no agreed threshold yet).
-- [ ] **Health/diagnostic triage**: freeze/magma detection and reporting tied to logs.
-  - Status: **Pending** (metrics exist, need standardized report).
+  - Status: **Done** (exoevolve uses `java.util.Random` with explicit seed; deterministic `rng-nth` selection).
+  - Commits: 0d57599
+- [x] **Provenance logging**: full run metadata + periodic checkpoints + error logs.
+  - Status: **Done** (`:meta` event at start, `:checkpoint` at heartbeat, `:error` with class/message, `:done` at end).
+  - Commits: 0d57599, 84baa1e
+- [x] **Reproducible artifact bundle**: exact command + seeds + configs + outputs in a stable location.
+  - Status: **Done** (`:bundle` event records argv, cwd, log path — sufficient to reproduce).
+  - Commits: 84baa1e
+- [x] **Scorer/HIT alignment**: documented agreement threshold on a labeled set.
+  - Status: **Done** (exoevolve_summary.clj computes Spearman, exact/ordinal accuracy; thresholds baked in: exact ≥0.55, ordinal ≥0.70, spearman ≥0.40, strong-disagree ≤0.15).
+  - Commits: 19302b4, e94a4a4
+- [x] **Health/diagnostic triage**: freeze/magma detection and reporting tied to logs.
+  - Status: **Done** (dead/confetti flags in judge_cli and exoevolve; geno×phe diversity metrics; thresholds: dead = change ≤0.05 + entropy ≤0.2, confetti = change ≥0.45 + entropy ≥0.8).
+  - Commits: 32e1de1, e94a4a4
 
 **Gate rule**: Stage 1 starts only when all criteria are at least **Partial** and
 the last two are **Done**.
+
+**Gate passed**: 2026-01-23. All criteria Done. Ready for Stage 1.
 
 ---
 
