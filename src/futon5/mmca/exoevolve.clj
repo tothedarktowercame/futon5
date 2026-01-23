@@ -459,7 +459,7 @@
            context-depth curriculum-gate tap hexagram-weight hexagram-log score-mode
            envelope-center envelope-width envelope-change-center envelope-change-width
            envelope-change update-prob match-threshold
-           iiching-root iiching-manifest heartbeat on-error]}]
+           iiching-root iiching-manifest heartbeat on-error argv]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
         generations (or generations default-generations)
@@ -486,6 +486,13 @@
                       :manifest iiching-manifest}
         on-error (or on-error :fail)
         heartbeat (when (and heartbeat (pos? heartbeat)) heartbeat)
+        bundle {:schema/version 1
+                :experiment/id :exoevolve
+                :event :bundle
+                :timestamp (System/currentTimeMillis)
+                :cwd (.getAbsolutePath (io/file "."))
+                :argv argv
+                :log log}
         run-meta {:schema/version 1
                   :experiment/id :exoevolve
                   :event :meta
@@ -511,6 +518,7 @@
                          :heartbeat heartbeat
                          :on-error on-error}}]
     (when log
+      (append-log! log bundle)
       (append-log! log run-meta))
     (loop [i 0
            window 0
@@ -618,5 +626,5 @@
 
       :else
       (do
-        (evolve-exotypes opts)
+        (evolve-exotypes (assoc opts :argv args))
         (println "Done.")))))
