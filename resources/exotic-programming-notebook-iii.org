@@ -1586,6 +1586,44 @@ Interpretation (prelim): tai-zone is *worse* than qian/kun on filament in this s
 and not clearly better than relaxed/tight-tai. This conflicts with Stage 1’s weak tai advantage.
 We may need to increase seeds, or revisit the filament scoring threshold/implementation.
 
+*** Approach 3 Phase 1a — Tai envelope (soft constraint)
+
+We tried a soft constraint around Tai using an envelope sampler (triangular within
+center±width).
+
+Stage 1a (tai-envelope vs unconstrained/baseline):
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_1.clj \
+  --seeds futon5/resources/excursion-1-anchor-seeds.edn \
+  --arms futon5/resources/excursion-1-arms-1a.edn \
+  --length 80 \
+  --generations 100 \
+  --out-dir /tmp/excursion-1-stage-1a
+#+end_src
+
+Filament (Stage 1a):
+- tai-envelope > unconstrained (p≈0.042, d≈0.45)
+- tai-envelope ≈ baseline (p≈0.794, d≈-0.06)
+
+Stage 2a (ablations vs tai-envelope):
+#+begin_src bash
+bb -cp futon5/src:futon5/resources futon5/scripts/excursion_1_stage_2.clj \
+  --seeds futon5/resources/excursion-1-anchor-seeds.edn \
+  --arms futon5/resources/excursion-1-ablation-arms-2a.edn \
+  --length 80 \
+  --generations 100 \
+  --out-dir /tmp/excursion-1-stage-2a
+#+end_src
+
+Filament (Stage 2a):
+- tai-envelope vs relaxed: p≈0.778, d≈-0.06
+- tai-envelope vs qian-ward: p≈0.440, d≈-0.17
+- tai-envelope vs kun-ward: p≈0.695, d≈-0.09
+- tai-envelope vs tight-tai: p≈0.0083, d≈-0.59
+
+Interpretation (prelim): soft Tai does not dominate; tight-tai beats it on filament.
+This suggests the sweet spot might be narrower than the envelope width (0.2).
+
 ** Connection to 泰 finding
 
 The I Ching discovery showed: semantic structure (hexagram framework) predicts

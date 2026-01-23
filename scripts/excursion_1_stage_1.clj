@@ -108,6 +108,20 @@
 (defn- sample-range [^java.util.Random rng [lo hi]]
   (+ (double lo) (* (.nextDouble rng) (- (double hi) (double lo)))))
 
+(defn- sample-envelope [^java.util.Random rng {:keys [center width]}]
+  (let [u (.nextDouble rng)
+        v (.nextDouble rng)
+        tri (/ (+ u v) 2.0)
+        lo (- (double center) (double width))
+        hi (+ (double center) (double width))
+        x (+ lo (* tri (- hi lo)))]
+    (max 0.0 (min 1.0 x))))
+
+(defn- sample-param [^java.util.Random rng arm k]
+  (if-let [env (get-in arm [:envelope k])]
+    (sample-envelope rng env)
+    (sample-range rng (k arm))))
+
 (defn- build-exotype [sigil update-prob match-threshold]
   (let [base (exotype/lift sigil)
         params (assoc (:params base)
@@ -124,9 +138,9 @@
         sigil (when exo-enabled
                 (pick-sigil rng (:sigil-family arm)))
         update-prob (when exo-enabled
-                      (sample-range rng (:update-prob arm)))
+                      (sample-param rng arm :update-prob))
         match-threshold (when exo-enabled
-                          (sample-range rng (:match-threshold arm)))
+                          (sample-param rng arm :match-threshold))
         exotype (when exo-enabled
                   (build-exotype sigil update-prob match-threshold))
         run (mmca/run-mmca {:genotype genotype

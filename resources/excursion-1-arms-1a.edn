@@ -1,0 +1,7 @@
+{:tai-envelope {:sigil-family :gong
+                :envelope {:update-prob {:center 0.5 :width 0.2}
+                           :match-threshold {:center 0.5 :width 0.2}}}
+ :unconstrained {:update-prob [0.0 1.0]
+                 :match-threshold [0.0 1.0]
+                 :sigil-family :random}
+ :baseline {:exotype-enabled false}}

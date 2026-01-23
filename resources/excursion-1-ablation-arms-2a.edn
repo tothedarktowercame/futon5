@@ -1,0 +1,15 @@
+{:tai-envelope {:sigil-family :gong
+                :envelope {:update-prob {:center 0.5 :width 0.2}
+                           :match-threshold {:center 0.5 :width 0.2}}}
+ :relaxed {:update-prob [0.2 0.8]
+           :match-threshold [0.2 0.8]
+           :sigil-family :gong}
+ :qian-ward {:update-prob [0.8 1.0]
+             :match-threshold [0.0 1.0]
+             :sigil-family :gong}
+ :kun-ward {:update-prob [0.0 0.2]
+            :match-threshold [0.0 1.0]
+            :sigil-family :gong}
+ :tight-tai {:update-prob [0.4 0.6]
+             :match-threshold [0.4 0.6]
+             :sigil-family :gong}}
