@@ -184,6 +184,7 @@ Important gaps:
 - Add post-run summarizer for exoevolve logs (`futon5/scripts/exoevolve_summary.clj`).
 - Bake scorer snapshots into HIT judgements (judge-cli writes per-run scores at label time).
 - Add modular diagnostic tags in HIT judgements (dead/confetti + geno×phe diversity).
+- Standard HIT alignment thresholds (initial): exact ≥ 0.55, ordinal ≥ 0.70, Spearman ≥ 0.40, strong-disagree ≤ 0.15.
 
 **Success criterion**: overnight runs complete >95% of requested runs without silent truncation; rerenders require no ad‑hoc sanitation.
 
