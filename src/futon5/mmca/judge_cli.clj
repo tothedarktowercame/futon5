@@ -6,7 +6,10 @@
             [clojure.java.shell :as shell]
             [futon5.mmca.render :as render]
             [futon5.hexagram.metrics :as hex-metrics]
-            [futon5.mmca.metrics :as mmca-metrics]))
+            [futon5.mmca.metrics :as mmca-metrics]
+            [futon5.mmca.register-shift :as register-shift]
+            [futon5.mmca.trigram :as trigram]
+            [futon5.mmca.filament :as filament]))
 
 (defn- usage []
   (str/join
@@ -95,6 +98,44 @@
      :hexagram {:class cls
                 :signature sig}}))
 
+(defn- band-score [x center width]
+  (let [x (double (or x 0.0))
+        center (double (or center 0.0))
+        width (double (or width 1.0))]
+    (if (pos? width)
+      (max 0.0 (- 1.0 (/ (Math/abs (- x center)) width)))
+      0.0)))
+
+(defn- envelope-score [summary]
+  (let [ent (band-score (:avg-entropy-n summary) 0.6 0.25)
+        chg (band-score (:avg-change summary) 0.2 0.15)]
+    (* 100.0 (/ (+ ent chg) 2.0))))
+
+(defn- triad-score [summary hex-score]
+  (let [gen-score (double (or (:gen/composite-score summary) (:composite-score summary) 0.0))
+        phe-score (double (or (:phe/composite-score summary) (:composite-score summary) 0.0))
+        exo-score (double (or hex-score 0.0))]
+    (/ (+ gen-score phe-score exo-score) 3.0)))
+
+(defn- phe->grid [s]
+  [(mapv (fn [ch] (if (= ch \1) 1 0)) (seq (or s "")))])
+
+(defn- phe->frames [phe-history]
+  (mapv phe->grid phe-history))
+
+(defn- score-run [run summary hexagram]
+  (let [hex-score (* 100.0 (hex-metrics/hexagram-fitness (:class hexagram)))
+        shift (register-shift/register-shift-summary run)
+        trigram (trigram/score-early-late (:phe-history run))
+        filament-score (double (or (:score (filament/analyze-run (phe->frames (:phe-history run)) {})) 0.0))]
+    {:short (double (or (:composite-score summary) 0.0))
+     :envelope (envelope-score summary)
+     :triad (triad-score summary hex-score)
+     :shift (double (or (:shift/composite shift) 0.0))
+     :trigram (double (or (:score trigram) 0.0))
+     :filament filament-score
+     :hex hex-score}))
+
 (defn- render-run!
   [render-dir path run exotype? scale]
   (when render-dir
@@ -146,11 +187,21 @@
             paths (read-inputs inputs)
             paths (if shuffle (vec (shuffle paths)) paths)]
         (println (format "Loaded %d runs." (count paths)))
+        (append-entry! out {:event :bundle
+                            :timestamp (now)
+                            :cwd (.getAbsolutePath (io/file "."))
+                            :argv args
+                            :inputs inputs
+                            :render-dir render-dir
+                            :exotype exotype
+                            :scale scale
+                            :shuffle shuffle})
         (doseq [path paths]
           (let [run (load-run path)
                 render-path (render-run! render-dir path run exotype scale)
                 proc (open-image! render-path)
                 {:keys [summary hexagram]} (summarize run)
+                scores (score-run run summary hexagram)
                 {:keys [avg-change avg-entropy-n avg-unique temporal-autocorr]} summary]
             (println)
             (println "Run:" path)
@@ -178,9 +229,12 @@
                       (append-entry! out {:event :judgement
                                           :timestamp (now)
                                           :path path
+                                          :run/id (:run/id run)
+                                          :seed (:seed run)
                                           :label label
                                           :summary summary
-                                          :hexagram hexagram})
+                                          :hexagram hexagram
+                                          :scores scores})
                       (println "Saved.")))
                   (when-not (keyword? label)
                     (println "Unknown response; try again.")
