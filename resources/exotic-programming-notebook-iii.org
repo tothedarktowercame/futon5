@@ -1649,6 +1649,83 @@ Takeaway: with higher power, tai beats unconstrained on filament and envelope, a
 beats baseline on filament only. Effect sizes remain < 0.5, so the original success
 criteria are still not fully met.
 
+**** Stage 1 (200 seeds): representative renders
+
+Rendered a small set of representative images (top/mid per arm by filament).
+Renders are scaled 250% and include genotype/phenotype/exotype triptychs.
+
+Reproduce render set:
+#+begin_src bash
+# Select representative runs (top/mid per arm by filament)
+python3 - <<'PY'
+import csv
+from pathlib import Path
+csv_path = Path('/tmp/excursion-1-stage-1-200/scores.csv')
+rows=[]
+with csv_path.open() as f:
+    r=csv.DictReader(f)
+    for row in r:
+        row['filament']=float(row['filament']) if row['filament']!='' else 0.0
+        rows.append(row)
+by_arm={}
+for row in rows:
+    by_arm.setdefault(row['arm'], []).append(row)
+sel=[]
+for arm, lst in by_arm.items():
+    lst_sorted=sorted(lst, key=lambda r: r['filament'], reverse=True)
+    n=len(lst_sorted)
+    top=lst_sorted[0]
+    mid=lst_sorted[n//2]
+    sel.append((arm, 'top', top))
+    sel.append((arm, 'mid', mid))
+out='/tmp/excursion-1-stage-1-200-picks.txt'
+with open(out,'w') as f:
+    for arm, tag, row in sel:
+        seed=row['seed']
+        path=f"/tmp/excursion-1-stage-1-200/excursion-1-stage-1-{arm}-seed-{seed}.edn"
+        f.write(f"{arm},{tag},{seed},{row['filament']},{path}\\n")
+print('wrote', out)
+PY
+
+# Render PPM -> PNG and scale 250%
+outdir=/tmp/excursion-1-stage-1-200-renders
+mkdir -p "$outdir"
+while IFS=, read -r arm tag seed fil path; do
+  base=$(basename "$path" .edn)
+  ppm="$outdir/${base}.ppm"
+  png="$outdir/${base}.png"
+  bb -cp futon5/src:futon5/resources -e "(require 'clojure.edn 'futon5.mmca.render)
+    (def run (clojure.edn/read-string {:readers {'object (fn [_] nil)}} (slurp \"$path\")))
+    (futon5.mmca.render/render-run->file! run \"$ppm\" {:exotype? true})"
+  convert "$ppm" "$png"
+  mogrify -resize 250% "$png"
+done < /tmp/excursion-1-stage-1-200-picks.txt
+#+end_src
+
+#+CAPTION: Stage 1 (200 seeds) — tai-constrained top (seed 263141554)
+#+ATTR_ORG: :width 1200
+[[file:/tmp/excursion-1-stage-1-200-renders/excursion-1-stage-1-tai-constrained-seed-263141554.png]]
+
+#+CAPTION: Stage 1 (200 seeds) — tai-constrained mid (seed 255103509)
+#+ATTR_ORG: :width 1200
+[[file:/tmp/excursion-1-stage-1-200-renders/excursion-1-stage-1-tai-constrained-seed-255103509.png]]
+
+#+CAPTION: Stage 1 (200 seeds) — unconstrained top (seed 263141554)
+#+ATTR_ORG: :width 1200
+[[file:/tmp/excursion-1-stage-1-200-renders/excursion-1-stage-1-unconstrained-seed-263141554.png]]
+
+#+CAPTION: Stage 1 (200 seeds) — unconstrained mid (seed 1877082691)
+#+ATTR_ORG: :width 1200
+[[file:/tmp/excursion-1-stage-1-200-renders/excursion-1-stage-1-unconstrained-seed-1877082691.png]]
+
+#+CAPTION: Stage 1 (200 seeds) — baseline top (seed 263141554)
+#+ATTR_ORG: :width 1200
+[[file:/tmp/excursion-1-stage-1-200-renders/excursion-1-stage-1-baseline-seed-263141554.png]]
+
+#+CAPTION: Stage 1 (200 seeds) — baseline mid (seed 1448619464)
+#+ATTR_ORG: :width 1200
+[[file:/tmp/excursion-1-stage-1-200-renders/excursion-1-stage-1-baseline-seed-1448619464.png]]
+
 ** Connection to 泰 finding
 
 The I Ching discovery showed: semantic structure (hexagram framework) predicts
