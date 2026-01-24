@@ -409,6 +409,139 @@
      :rules (mapv :rule results)
      :kernels (mapv :kernel results)}))
 
+;; =============================================================================
+;; EXOTYPE COMPOSITION
+;; =============================================================================
+
+(defn compose-rules-sequential
+  "Compose two rules sequentially: apply A then B.
+
+   Returns a composite kernel function."
+  [rule-a rule-b kernel-fn-map]
+  (let [spec-a (rule->kernel-spec rule-a)
+        spec-b (rule->kernel-spec rule-b)
+        kernel-a (get kernel-fn-map (:kernel spec-a))
+        kernel-b (get kernel-fn-map (:kernel spec-b))]
+    (fn [sigil pred next context]
+      (let [intermediate (kernel-a sigil pred next (merge context (:params spec-a)))
+            final (kernel-b (:sigil intermediate) pred next (merge context (:params spec-b)))]
+        final))))
+
+(defn compose-rules-blend
+  "Compose two rules by blending outputs.
+
+   Each rule produces a result; final output is bit-wise majority vote."
+  [rule-a rule-b kernel-fn-map]
+  (let [spec-a (rule->kernel-spec rule-a)
+        spec-b (rule->kernel-spec rule-b)
+        kernel-a (get kernel-fn-map (:kernel spec-a))
+        kernel-b (get kernel-fn-map (:kernel spec-b))]
+    (fn [sigil pred next context]
+      (let [result-a (kernel-a sigil pred next (merge context (:params spec-a)))
+            result-b (kernel-b sigil pred next (merge context (:params spec-b)))
+            bits-a (ca/bits-for (:sigil result-a))
+            bits-b (ca/bits-for (:sigil result-b))
+            ;; Bit-wise majority (with random tiebreaker)
+            blended (apply str
+                           (map (fn [a b]
+                                  (cond (= a b) a
+                                        (< (rand) 0.5) a
+                                        :else b))
+                                bits-a bits-b))]
+        (ca/entry-for-bits blended)))))
+
+(defn compose-rules-conditional
+  "Compose rules conditionally: use A if condition, else B.
+
+   Condition is a function (context) → boolean."
+  [rule-a rule-b condition-fn kernel-fn-map]
+  (let [spec-a (rule->kernel-spec rule-a)
+        spec-b (rule->kernel-spec rule-b)
+        kernel-a (get kernel-fn-map (:kernel spec-a))
+        kernel-b (get kernel-fn-map (:kernel spec-b))]
+    (fn [sigil pred next context]
+      (if (condition-fn context)
+        (kernel-a sigil pred next (merge context (:params spec-a)))
+        (kernel-b sigil pred next (merge context (:params spec-b)))))))
+
+(defn compose-rules-matrix
+  "Compose rules via parameter matrix multiplication.
+
+   The mutation and structure parameters are combined multiplicatively,
+   giving a new effective parameter set."
+  [rule-a rule-b]
+  (let [params-a (rule->physics-params rule-a)
+        params-b (rule->physics-params rule-b)
+        ;; Multiplicative composition of normalized parameters
+        composed-mutation (* (:mutation-bias params-a)
+                             (:mutation-bias params-b))
+        composed-structure (* (:structure-weight params-a)
+                              (:structure-weight params-b))
+        ;; Combined rule info
+        composed-desc (str "(" (:description params-a) ") × ("
+                           (:description params-b) ")")]
+    {:rule-a rule-a
+     :rule-b rule-b
+     :mutation-bias composed-mutation
+     :structure-weight composed-structure
+     :description composed-desc}))
+
+(defn make-composite-exotype
+  "Create a composite exotype from multiple rules.
+
+   composition-mode can be:
+   - :sequential — apply rules in order
+   - :blend — bit-wise blend outputs
+   - :matrix — multiply parameters
+
+   Returns a function (sigil pred next context) → result"
+  [rules composition-mode kernel-fn-map]
+  (case composition-mode
+    :sequential
+    (reduce (fn [composed-fn rule]
+              (let [spec (rule->kernel-spec rule)
+                    kernel-fn (get kernel-fn-map (:kernel spec))]
+                (fn [sigil pred next context]
+                  (let [intermediate (composed-fn sigil pred next context)]
+                    (kernel-fn (:sigil intermediate) pred next
+                               (merge context (:params spec)))))))
+            (fn [sigil _ _ _] {:sigil sigil})
+            rules)
+
+    :blend
+    (fn [sigil pred next context]
+      (let [results (map (fn [rule]
+                           (let [spec (rule->kernel-spec rule)
+                                 kernel-fn (get kernel-fn-map (:kernel spec))]
+                             (kernel-fn sigil pred next (merge context (:params spec)))))
+                         rules)
+            all-bits (map #(ca/bits-for (:sigil %)) results)
+            ;; Majority vote per bit position
+            blended (apply str
+                           (for [i (range 8)]
+                             (let [votes (map #(nth % i) all-bits)
+                                   ones (count (filter #(= \1 %) votes))
+                                   zeros (count (filter #(= \0 %) votes))]
+                               (cond (> ones zeros) \1
+                                     (< ones zeros) \0
+                                     :else (rand-nth [\0 \1])))))]
+        (ca/entry-for-bits blended)))
+
+    :matrix
+    (let [composed-params (reduce (fn [acc rule]
+                                    (let [params (rule->physics-params rule)]
+                                      {:mutation-bias (* (:mutation-bias acc)
+                                                         (:mutation-bias params))
+                                       :structure-weight (* (:structure-weight acc)
+                                                            (:structure-weight params))}))
+                                  {:mutation-bias 1.0 :structure-weight 1.0}
+                                  rules)
+          ;; Use first rule's kernel as base
+          base-spec (rule->kernel-spec (first rules))
+          base-kernel (get kernel-fn-map (:kernel base-spec))]
+      (fn [sigil pred next context]
+        (base-kernel sigil pred next (merge context composed-params))))))
+
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.
 
