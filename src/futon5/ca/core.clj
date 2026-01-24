@@ -120,6 +120,7 @@
   (let [ctx (cond
               (nil? context) nil
               (string? context) context
+              (map? context) (or (:phenotype-context context) (str context))
               :else (str context))]
     (when (and ctx (>= (count ctx) 4))
       (let [[a b c d] (take 4 (bits->ints ctx))
@@ -142,11 +143,15 @@
   (every? #(= % value) ints))
 
 (defn context-match-count [context]
-  (when (and (string? context) (seq context))
-    (let [digits (bits->ints context)
-          target (last digits)
-          olds (butlast digits)]
-      (count (filter #(= % target) olds)))))
+  (let [ctx (cond
+              (string? context) context
+              (map? context) (:phenotype-context context)
+              :else nil)]
+    (when (and (string? ctx) (seq ctx))
+      (let [digits (bits->ints ctx)
+            target (last digits)
+            olds (butlast digits)]
+        (count (filter #(= % target) olds))))))
 
 (defn randomly-flip-selected [bits value quantity]
   (let [positions (keep-indexed (fn [idx bit]
@@ -671,17 +676,22 @@
 (defn- template-entries
   [spec sigil context]
   (when (and context (not= :none (:template-mode spec)))
-    (let [raw (context->templates context)]
-      (when (seq raw)
-        (case (:template-mode spec)
-          :collection
-          (let [ones (count (filter #(= 1 %) (bits->ints (bits-for sigil))))
-                to-swap (- 4 ones)]
-            (cond
-              (> to-swap 0) (remove #(zero? (:result %)) raw)
-              (< to-swap 0) (remove #(= 1 (:result %)) raw)
-              :else raw))
-          raw)))))
+    (let [strictness (when (map? context) (:template-strictness context))
+          strictness (when (number? strictness) (double strictness))
+          strictness (when strictness (max 0.0 (min 1.0 strictness)))
+          allow? (or (nil? strictness) (< (rand) strictness))]
+      (when allow?
+        (let [raw (context->templates context)]
+          (when (seq raw)
+            (case (:template-mode spec)
+              :collection
+              (let [ones (count (filter #(= 1 %) (bits->ints (bits-for sigil))))
+                    to-swap (- 4 ones)]
+                (cond
+                  (> to-swap 0) (remove #(zero? (:result %)) raw)
+                  (< to-swap 0) (remove #(= 1 (:result %)) raw)
+                  :else raw))
+              raw)))))))
 
 (defn- base-output-fn
   [spec]
@@ -716,7 +726,16 @@
 
 (defn- apply-mutation
   [bits-str mutation context]
-  (let [count (mutation-count mutation context)]
+  (let [ctx-rate (when (and context (contains? context :mutation-rate))
+                   (double (:mutation-rate context)))
+        ctx-bias (when (and context (contains? context :mutation-bias))
+                   (double (:mutation-bias context)))
+        mutation (cond-> mutation
+                   ctx-rate (assoc :prob (max 0.0 (min 1.0 ctx-rate)))
+                   ctx-bias (assoc :prob (max 0.0 (min 1.0 ctx-bias)))
+                   (and (or ctx-rate ctx-bias) (= :none (:mode mutation)))
+                   (assoc :mode :fixed :count 1))
+        count (mutation-count mutation context)]
     (if (pos? count)
       (mutate-rule-n bits-str count)
       bits-str)))

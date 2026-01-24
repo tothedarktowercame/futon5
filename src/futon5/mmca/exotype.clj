@@ -8,13 +8,25 @@
    - NEXT (8): THEN / outcomes
    - PHENOTYPE (4): evidence
 
-   The hexagram (diagonal trace of the 6x6 matrix) identifies the physics family.
+   The hexagram (eigenvalue diagonalization of the 6x6 matrix) identifies the physics family.
    See hexagram/lift.clj for the full structure."
   (:require [futon5.ca.core :as ca]
             [futon5.hexagram.lift :as hex-lift]))
 
 (def ^:private mix-modes
   [:none :rotate-left :rotate-right :reverse :xor-neighbor :majority :swap-halves :scramble])
+
+(defn- rand-double
+  [^java.util.Random rng]
+  (if rng
+    (.nextDouble rng)
+    (rand)))
+
+(defn- rand-nth*
+  [^java.util.Random rng coll]
+  (if rng
+    (nth coll (.nextInt rng (count coll)))
+    (rand-nth coll)))
 
 (defn- normalize-sigil [sigil]
   (cond
@@ -219,13 +231,6 @@
      :description (str "Hex " hexagram " (" (name (:physics-mode base)) ") × "
                        (:name energy) " (" (name (:mode-bias energy-mod)) ")")}))
 
-(defn hexagram->physics-params
-  "Map a hexagram to physics parameters.
-   DEPRECATED: Use rule->physics-params for full 256-rule physics."
-  [hexagram-id]
-  ;; Default to Péng energy for backwards compatibility
-  (rule->physics-params (hex-lift/hexagram+energy->rule (dec (or hexagram-id 1)) 0)))
-
 (def ^:private sigil-table
   "Cached vector of all 256 sigils for index-based lookup."
   (delay (mapv :sigil (ca/sigil-entries))))
@@ -268,7 +273,7 @@
         ;; Derive physics family
         physics-family (context->physics-family context)
         physics-params (when physics-family
-                         (hexagram->physics-params (:hexagram-id physics-family)))]
+                         (rule->physics-params (:rule physics-family)))]
 
     {:pattern-id (:id pattern)
      :context context
@@ -442,10 +447,11 @@
             bits-a (ca/bits-for (:sigil result-a))
             bits-b (ca/bits-for (:sigil result-b))
             ;; Bit-wise majority (with random tiebreaker)
+            rng (:rng context)
             blended (apply str
                            (map (fn [a b]
                                   (cond (= a b) a
-                                        (< (rand) 0.5) a
+                                        (< (rand-double rng) 0.5) a
                                         :else b))
                                 bits-a bits-b))]
         (ca/entry-for-bits blended)))))
@@ -517,6 +523,7 @@
                          rules)
             all-bits (map #(ca/bits-for (:sigil %)) results)
             ;; Majority vote per bit position
+            rng (:rng context)
             blended (apply str
                            (for [i (range 8)]
                              (let [votes (map #(nth % i) all-bits)
@@ -524,7 +531,7 @@
                                    zeros (count (filter #(= \0 %) votes))]
                                (cond (> ones zeros) \1
                                      (< ones zeros) \0
-                                     :else (rand-nth [\0 \1])))))]
+                                     :else (rand-nth* rng [\0 \1])))))]
         (ca/entry-for-bits blended)))
 
     :matrix
@@ -559,85 +566,88 @@
    - kernel-fn-map: Map of kernel keywords to functions
 
    Returns a function (genotype phenotype prev-genotype) → evolved-genotype"
-  [global-rule bend-mode kernel-fn-map]
-  (let [;; Resolve global rule if it's a keyword
-        global-rule-num (cond
-                          (number? global-rule) global-rule
-                          (= global-rule :baldwin) 148  ; Family 4 + Péng
-                          (= global-rule :blending) 0   ; Family 0 + Péng
-                          (= global-rule :creative) 0
-                          (= global-rule :conservative) 40  ; Family 1 + Péng
-                          (= global-rule :adaptive) 68  ; Family 2 + Péng
-                          (= global-rule :transformative) 200  ; Family 6 + Péng
-                          :else 0)
-        global-spec (rule->kernel-spec global-rule-num)
-        global-kernel (get kernel-fn-map (:kernel global-spec))
-        global-params (:params global-spec)]
+  ([global-rule bend-mode kernel-fn-map]
+   (make-bent-evolution global-rule bend-mode kernel-fn-map nil))
+  ([global-rule bend-mode kernel-fn-map ^java.util.Random rng]
+   (let [;; Resolve global rule if it's a keyword
+         global-rule-num (cond
+                           (number? global-rule) global-rule
+                           (= global-rule :baldwin) 148  ; Family 4 + Péng
+                           (= global-rule :blending) 0   ; Family 0 + Péng
+                           (= global-rule :creative) 0
+                           (= global-rule :conservative) 40  ; Family 1 + Péng
+                           (= global-rule :adaptive) 68  ; Family 2 + Péng
+                           (= global-rule :transformative) 200  ; Family 6 + Péng
+                           :else 0)
+         global-spec (rule->kernel-spec global-rule-num)
+         global-kernel (get kernel-fn-map (:kernel global-spec))
+         global-params (:params global-spec)
+         global-physics (rule->physics-params global-rule-num)]
 
-    (fn [genotype phenotype prev-genotype]
-      (let [len (count genotype)
-            letters (vec (map str (seq genotype)))
-            phe-chars (vec (seq (or phenotype (apply str (repeat len "0")))))
-            prev-letters (vec (map str (seq (or prev-genotype genotype))))
-            default ca/default-sigil]
+     (fn [genotype phenotype prev-genotype]
+       (let [len (count genotype)
+             letters (vec (map str (seq genotype)))
+             phe-chars (vec (seq (or phenotype (apply str (repeat len "0")))))
+             prev-letters (vec (map str (seq (or prev-genotype genotype))))
+             default ca/default-sigil]
 
-        (->> (range len)
-             (map (fn [idx]
-                    (let [pred (get letters (dec idx) default)
-                          ego (get letters idx)
-                          succ (get letters (inc idx) default)
-                          prev (get prev-letters idx ego)
-                          phe (str (get phe-chars idx \0)
-                                   (get phe-chars (inc idx) \0)
-                                   (get phe-chars (+ idx 2) \0)
-                                   (get phe-chars (+ idx 3) \0))
+         (->> (range len)
+              (map (fn [idx]
+                     (let [pred (get letters (dec idx) default)
+                           ego (get letters idx)
+                           succ (get letters (inc idx) default)
+                           prev (get prev-letters idx ego)
+                           phe (str (get phe-chars idx \0)
+                                    (get phe-chars (inc idx) \0)
+                                    (get phe-chars (+ idx 2) \0)
+                                    (get phe-chars (+ idx 3) \0))
 
-                          ;; Compute local rule from 36-bit context
-                          local-ctx (build-local-context pred ego succ prev phe)
-                          local-spec (context->kernel-spec local-ctx)
-                          local-rule (:rule (hex-lift/context->physics-rule local-ctx))
+                           ;; Compute local rule from 36-bit context
+                           local-ctx (assoc (build-local-context pred ego succ prev phe) :rng rng)
+                           local-spec (context->kernel-spec local-ctx)
+                           local-rule (:rule (hex-lift/context->physics-rule local-ctx))
 
-                          ;; Bend local with global
-                          result (case bend-mode
-                                   ;; Sequential: global then local
-                                   :sequential
-                                   (let [intermediate (global-kernel ego pred succ
-                                                                     (merge local-ctx global-params))
-                                         local-kernel (get kernel-fn-map (:kernel local-spec))]
-                                     (local-kernel (:sigil intermediate) pred succ
-                                                   (merge local-ctx (:params local-spec))))
-
-                                   ;; Blend: average global and local outputs
-                                   :blend
-                                   (let [global-result (global-kernel ego pred succ
+                           ;; Bend local with global
+                           result (case bend-mode
+                                    ;; Sequential: global then local
+                                    :sequential
+                                    (let [intermediate (global-kernel ego pred succ
                                                                       (merge local-ctx global-params))
-                                         local-kernel (get kernel-fn-map (:kernel local-spec))
-                                         local-result (local-kernel ego pred succ
-                                                                    (merge local-ctx (:params local-spec)))
-                                         bits-g (ca/bits-for (:sigil global-result))
-                                         bits-l (ca/bits-for (:sigil local-result))
-                                         blended (apply str
-                                                        (map (fn [g l]
-                                                               (cond (= g l) g
-                                                                     (< (rand) 0.5) g
-                                                                     :else l))
-                                                             bits-g bits-l))]
-                                     (ca/entry-for-bits blended))
+                                          local-kernel (get kernel-fn-map (:kernel local-spec))]
+                                      (local-kernel (:sigil intermediate) pred succ
+                                                    (merge local-ctx (:params local-spec))))
 
-                                   ;; Matrix: compose parameters, use global kernel
-                                   :matrix
-                                   (let [local-params (rule->physics-params local-rule)
-                                         composed-params {:mutation-bias (* (:mutation-bias global-params 0.5)
-                                                                            (:mutation-bias local-params))
-                                                          :structure-weight (* (:structure-weight global-params 0.5)
-                                                                               (:structure-weight local-params))}]
-                                     (global-kernel ego pred succ (merge local-ctx composed-params)))
+                                    ;; Blend: average global and local outputs
+                                    :blend
+                                    (let [global-result (global-kernel ego pred succ
+                                                                       (merge local-ctx global-params))
+                                          local-kernel (get kernel-fn-map (:kernel local-spec))
+                                          local-result (local-kernel ego pred succ
+                                                                     (merge local-ctx (:params local-spec)))
+                                          bits-g (ca/bits-for (:sigil global-result))
+                                          bits-l (ca/bits-for (:sigil local-result))
+                                          blended (apply str
+                                                         (map (fn [g l]
+                                                                (cond (= g l) g
+                                                                      (< (rand-double rng) 0.5) g
+                                                                      :else l))
+                                                              bits-g bits-l))]
+                                      (ca/entry-for-bits blended))
 
-                                   ;; Default: just use local
-                                   (let [local-kernel (get kernel-fn-map (:kernel local-spec))]
-                                     (local-kernel ego pred succ (merge local-ctx (:params local-spec)))))]
-                      (:sigil result))))
-             (apply str))))))
+                                    ;; Matrix: compose parameters, use global kernel
+                                    :matrix
+                                    (let [local-params (rule->physics-params local-rule)
+                                          composed-params {:mutation-bias (* (:mutation-bias global-physics 0.5)
+                                                                             (:mutation-bias local-params))
+                                                           :structure-weight (* (:structure-weight global-physics 0.5)
+                                                                                (:structure-weight local-params))}]
+                                      (global-kernel ego pred succ (merge local-ctx composed-params)))
+
+                                    ;; Default: just use local
+                                    (let [local-kernel (get kernel-fn-map (:kernel local-spec))]
+                                      (local-kernel ego pred succ (merge local-ctx (:params local-spec)))))]
+                       (:sigil result))))
+              (apply str)))))))
 
 (defn evolve-with-global-exotype
   "Evolve a genotype using a global exotype that bends local physics.
@@ -653,9 +663,12 @@
    - kernel-fn-map: Map of kernel keywords to functions
 
    Returns the evolved genotype string."
-  [genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map]
-  (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map)]
-    (evolve-fn genotype phenotype prev-genotype)))
+  ([genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map]
+   (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map)]
+     (evolve-fn genotype phenotype prev-genotype)))
+  ([genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map ^java.util.Random rng]
+   (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map rng)]
+     (evolve-fn genotype phenotype prev-genotype))))
 
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.

@@ -1,9 +1,15 @@
 (ns futon5.mmca.iching
   "Parser and loader for the 64 I Ching (易經) hexagrams used as a base MMCA rule catalog."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]))
 
 (def ^:private hexagram-source "reference/pg25501.txt")
+(def ^:private hexagram-cache-resource "iching-hexagrams.edn")
+
+(defn- load-hexagram-cache []
+  (when-let [res (io/resource hexagram-cache-resource)]
+    (-> res slurp edn/read-string)))
 
 (defn- clean-lines [text]
   (-> text
@@ -91,8 +97,9 @@
      :notes (not-empty notes)}))
 
 (defn parse-hexagrams
-  "Parse the Gutenberg 易經 text into a structured 64-entry catalog."
-  ([] (parse-hexagrams (slurp (io/file hexagram-source))))
+  "Load the 64 I Ching hexagrams from cache, or parse from text as fallback."
+  ([] (or (load-hexagram-cache)
+          (parse-hexagrams (slurp (io/file hexagram-source)))))
   ([text]
    (let [lines (clean-lines text)
          sections (->> (collect-sections lines)
