@@ -542,6 +542,121 @@
       (fn [sigil pred next context]
         (base-kernel sigil pred next (merge context composed-params))))))
 
+;; =============================================================================
+;; GLOBAL + LOCAL BENDING
+;; =============================================================================
+
+(defn make-bent-evolution
+  "Create an evolution function where a global rule bends all local rules.
+
+   The global rule provides a 'stance' or 'physics mode' for the run.
+   Each cell still computes its local rule from its 36-bit context.
+   The effective rule at each cell is the composition of global and local.
+
+   Arguments:
+   - global-rule: The global physics rule (0-255) or a keyword like :baldwin
+   - bend-mode: How to compose (:sequential, :blend, :matrix)
+   - kernel-fn-map: Map of kernel keywords to functions
+
+   Returns a function (genotype phenotype prev-genotype) → evolved-genotype"
+  [global-rule bend-mode kernel-fn-map]
+  (let [;; Resolve global rule if it's a keyword
+        global-rule-num (cond
+                          (number? global-rule) global-rule
+                          (= global-rule :baldwin) 148  ; Family 4 + Péng
+                          (= global-rule :blending) 0   ; Family 0 + Péng
+                          (= global-rule :creative) 0
+                          (= global-rule :conservative) 40  ; Family 1 + Péng
+                          (= global-rule :adaptive) 68  ; Family 2 + Péng
+                          (= global-rule :transformative) 200  ; Family 6 + Péng
+                          :else 0)
+        global-spec (rule->kernel-spec global-rule-num)
+        global-kernel (get kernel-fn-map (:kernel global-spec))
+        global-params (:params global-spec)]
+
+    (fn [genotype phenotype prev-genotype]
+      (let [len (count genotype)
+            letters (vec (map str (seq genotype)))
+            phe-chars (vec (seq (or phenotype (apply str (repeat len "0")))))
+            prev-letters (vec (map str (seq (or prev-genotype genotype))))
+            default ca/default-sigil]
+
+        (->> (range len)
+             (map (fn [idx]
+                    (let [pred (get letters (dec idx) default)
+                          ego (get letters idx)
+                          succ (get letters (inc idx) default)
+                          prev (get prev-letters idx ego)
+                          phe (str (get phe-chars idx \0)
+                                   (get phe-chars (inc idx) \0)
+                                   (get phe-chars (+ idx 2) \0)
+                                   (get phe-chars (+ idx 3) \0))
+
+                          ;; Compute local rule from 36-bit context
+                          local-ctx (build-local-context pred ego succ prev phe)
+                          local-spec (context->kernel-spec local-ctx)
+                          local-rule (:rule (hex-lift/context->physics-rule local-ctx))
+
+                          ;; Bend local with global
+                          result (case bend-mode
+                                   ;; Sequential: global then local
+                                   :sequential
+                                   (let [intermediate (global-kernel ego pred succ
+                                                                     (merge local-ctx global-params))
+                                         local-kernel (get kernel-fn-map (:kernel local-spec))]
+                                     (local-kernel (:sigil intermediate) pred succ
+                                                   (merge local-ctx (:params local-spec))))
+
+                                   ;; Blend: average global and local outputs
+                                   :blend
+                                   (let [global-result (global-kernel ego pred succ
+                                                                      (merge local-ctx global-params))
+                                         local-kernel (get kernel-fn-map (:kernel local-spec))
+                                         local-result (local-kernel ego pred succ
+                                                                    (merge local-ctx (:params local-spec)))
+                                         bits-g (ca/bits-for (:sigil global-result))
+                                         bits-l (ca/bits-for (:sigil local-result))
+                                         blended (apply str
+                                                        (map (fn [g l]
+                                                               (cond (= g l) g
+                                                                     (< (rand) 0.5) g
+                                                                     :else l))
+                                                             bits-g bits-l))]
+                                     (ca/entry-for-bits blended))
+
+                                   ;; Matrix: compose parameters, use global kernel
+                                   :matrix
+                                   (let [local-params (rule->physics-params local-rule)
+                                         composed-params {:mutation-bias (* (:mutation-bias global-params 0.5)
+                                                                            (:mutation-bias local-params))
+                                                          :structure-weight (* (:structure-weight global-params 0.5)
+                                                                               (:structure-weight local-params))}]
+                                     (global-kernel ego pred succ (merge local-ctx composed-params)))
+
+                                   ;; Default: just use local
+                                   (let [local-kernel (get kernel-fn-map (:kernel local-spec))]
+                                     (local-kernel ego pred succ (merge local-ctx (:params local-spec)))))]
+                      (:sigil result))))
+             (apply str))))))
+
+(defn evolve-with-global-exotype
+  "Evolve a genotype using a global exotype that bends local physics.
+
+   This is the main entry point for MMCA runs with exotype physics.
+
+   Arguments:
+   - genotype: Current generation string
+   - phenotype: Phenotype string (or nil)
+   - prev-genotype: Previous generation (for NEXT context)
+   - global-rule: Global physics rule (number or keyword)
+   - bend-mode: How global bends local (:sequential, :blend, :matrix)
+   - kernel-fn-map: Map of kernel keywords to functions
+
+   Returns the evolved genotype string."
+  [genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map]
+  (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map)]
+    (evolve-fn genotype phenotype prev-genotype)))
+
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.
 
