@@ -149,82 +149,82 @@
    - :context-sigils [LEFT EGO RIGHT NEXT] — 32 bits from CA neighborhood
    - :phenotype-context — 4 bits from phenotype layer
 
-   The hexagram (diagonal trace) identifies which of 64 physics families."
+   The hexagram (from eigenvalue diagonalization) identifies the situation.
+   The primary energy (from phenotype bits) identifies the engagement mode.
+   Together: 64 × 4 = 256 physics rules."
   [context]
   (when context
-    (let [hexagram (hex-lift/context->hexagram context)
-          hex-num (or (:number hexagram) 0)]
-      {:hexagram-id hex-num
-       :hexagram-name (:name hexagram)
-       :lines (:lines hexagram)
-       ;; Coarse grouping: 64 hexagrams → 8 families (like eight energies)
-       :energy-family (keyword (str "family-" (inc (quot (dec (max 1 hex-num)) 8))))})))
+    (let [physics (hex-lift/context->physics-rule context)]
+      {:rule (:rule physics)
+       :hexagram-id (get-in physics [:hexagram :number])
+       :hexagram-name (get-in physics [:hexagram :name])
+       :hexagram-lines (get-in physics [:hexagram :lines])
+       :energy-key (get-in physics [:energy :key])
+       :energy-name (get-in physics [:energy :name])
+       :energy-dynamic (get-in physics [:energy :dynamic])
+       :description (:description physics)})))
+
+(def ^:private energy-dynamics
+  "Physics modifiers for each primary energy."
+  {:peng {:mutation-modifier 1.2   ; Péng expands → more mutation
+          :structure-modifier 0.8
+          :mode-bias :expand}
+   :lu   {:mutation-modifier 0.6   ; Lǚ yields → less mutation
+          :structure-modifier 1.3
+          :mode-bias :yield}
+   :ji   {:mutation-modifier 0.9   ; Jǐ focuses → selective mutation
+          :structure-modifier 1.0
+          :mode-bias :focus}
+   :an   {:mutation-modifier 1.1   ; Àn pushes → sustained pressure
+          :structure-modifier 0.9
+          :mode-bias :momentum}})
+
+(defn rule->physics-params
+  "Map a physics rule (0-255) to physics parameters.
+
+   Rule = hexagram (0-63) × 4 + energy (0-3)
+
+   The hexagram provides base parameters; the energy modulates them."
+  [rule]
+  (let [{:keys [hexagram energy]} (hex-lift/rule->hexagram+energy rule)
+        energy-key (:key energy)
+        energy-mod (get energy-dynamics energy-key)
+
+        ;; Base params from hexagram family (8 families of 8 hexagrams each)
+        family (quot (dec hexagram) 8)
+        base (case family
+               0 {:physics-mode :expansion    :mutation-bias 0.7 :structure-weight 0.3}
+               1 {:physics-mode :conservation :mutation-bias 0.2 :structure-weight 0.8}
+               2 {:physics-mode :adaptation   :mutation-bias 0.5 :structure-weight 0.5}
+               3 {:physics-mode :momentum     :mutation-bias 0.6 :structure-weight 0.4}
+               4 {:physics-mode :conditional  :mutation-bias 0.4 :structure-weight 0.5}
+               5 {:physics-mode :differentiation :mutation-bias 0.5 :structure-weight 0.3}
+               6 {:physics-mode :transformation :mutation-bias 0.8 :structure-weight 0.2}
+               7 {:physics-mode :consolidation :mutation-bias 0.3 :structure-weight 0.7}
+               {:physics-mode :neutral :mutation-bias 0.5 :structure-weight 0.5})
+
+        ;; Apply energy modulation
+        mutation-bias (* (:mutation-bias base)
+                         (or (:mutation-modifier energy-mod) 1.0))
+        structure-weight (* (:structure-weight base)
+                            (or (:structure-modifier energy-mod) 1.0))]
+
+    {:rule rule
+     :hexagram hexagram
+     :energy energy-key
+     :physics-mode (:physics-mode base)
+     :energy-mode (:mode-bias energy-mod)
+     :mutation-bias (min 1.0 (max 0.0 mutation-bias))
+     :structure-weight (min 1.0 (max 0.0 structure-weight))
+     :description (str "Hex " hexagram " (" (name (:physics-mode base)) ") × "
+                       (:name energy) " (" (name (:mode-bias energy-mod)) ")")}))
 
 (defn hexagram->physics-params
   "Map a hexagram to physics parameters.
-
-   This is the key function that defines stable physics from the 36-bit context.
-   The hexagram determines behavior; the EGO sigil only modulates within that."
+   DEPRECATED: Use rule->physics-params for full 256-rule physics."
   [hexagram-id]
-  (let [;; Group into 8 families (0-7) based on hexagram number
-        family (if (and hexagram-id (pos? hexagram-id))
-                 (quot (dec hexagram-id) 8)
-                 0)]
-    (case family
-      ;; Family 0 (hex 1-8): Creative/Receptive — expansion
-      0 {:physics-mode :expansion
-         :mutation-bias 0.7
-         :structure-weight 0.3
-         :description "Creative expansion"}
-
-      ;; Family 1 (hex 9-16): Small Taming — conservation
-      1 {:physics-mode :conservation
-         :mutation-bias 0.2
-         :structure-weight 0.8
-         :description "Conservation and accumulation"}
-
-      ;; Family 2 (hex 17-24): Following — adaptation
-      2 {:physics-mode :adaptation
-         :mutation-bias 0.5
-         :structure-weight 0.5
-         :description "Following and adaptation"}
-
-      ;; Family 3 (hex 25-32): Innocence — momentum
-      3 {:physics-mode :momentum
-         :mutation-bias 0.6
-         :structure-weight 0.4
-         :description "Innocent forward motion"}
-
-      ;; Family 4 (hex 33-40): Retreat — phenotype-conditional
-      4 {:physics-mode :conditional
-         :mutation-bias 0.4
-         :structure-weight 0.5
-         :phenotype-weight 0.6
-         :description "Retreat and conditioning"}
-
-      ;; Family 5 (hex 41-48): Decrease — differentiation
-      5 {:physics-mode :differentiation
-         :mutation-bias 0.5
-         :structure-weight 0.3
-         :description "Decrease and differentiation"}
-
-      ;; Family 6 (hex 49-56): Revolution — transformation
-      6 {:physics-mode :transformation
-         :mutation-bias 0.8
-         :structure-weight 0.2
-         :description "Revolution and transformation"}
-
-      ;; Family 7 (hex 57-64): Gentle — consolidation
-      7 {:physics-mode :consolidation
-         :mutation-bias 0.3
-         :structure-weight 0.7
-         :description "Gentle consolidation"}
-
-      ;; Default
-      {:physics-mode :neutral
-       :mutation-bias 0.5
-       :structure-weight 0.5
-       :description "Neutral dynamics"})))
+  ;; Default to Péng energy for backwards compatibility
+  (rule->physics-params (hex-lift/hexagram+energy->rule (dec (or hexagram-id 1)) 0)))
 
 (def ^:private sigil-table
   "Cached vector of all 256 sigils for index-based lookup."
@@ -283,20 +283,24 @@
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.
 
-   The full 36-bit context determines physics family via hexagram.
-   The exotype sigil provides local modulation within that family."
+   The full 36-bit context determines physics via:
+   - Hexagram (from eigenvalue diagonalization) = situation (1 of 64)
+   - Primary energy (from phenotype bits) = engagement mode (1 of 4)
+   - Combined: physics rule (1 of 256)
+
+   The exotype sigil provides additional local modulation."
   [kernel exotype context ^java.util.Random rng]
   (when (and kernel exotype context)
-    (let [;; Extract full 36-bit physics family from context
+    (let [;; Extract full 256-rule physics from context
           physics-family (context->physics-family context)
           physics-params (when physics-family
-                           (hexagram->physics-params (:hexagram-id physics-family)))
+                           (rule->physics-params (:rule physics-family)))
 
-          ;; EGO-derived params (8-bit modulation within physics family)
+          ;; EGO-derived params (8-bit modulation within physics)
           {:keys [tier params]} (resolve-exotype exotype)
           params (or params {})
 
-          ;; Physics family's mutation-bias overrides update-prob when available
+          ;; Physics rule's mutation-bias drives update probability
           base-prob (if physics-params
                       (:mutation-bias physics-params)
                       (or (:update-prob params) 1.0))
@@ -308,7 +312,7 @@
                 (contains? params :match-threshold) (assoc :match-threshold (:match-threshold params))
                 (contains? params :invert-on-phenotype?) (assoc :invert-on-phenotype? (:invert-on-phenotype? params))
                 (contains? params :rotation) (assoc :rotation (:rotation params))
-                ;; Add physics family info to context for downstream use
+                ;; Add physics info to context for downstream use
                 physics-family (assoc :physics-family physics-family)
                 physics-params (assoc :physics-params physics-params))
 
@@ -323,5 +327,5 @@
                  spec)]
       (-> (ca/normalize-kernel-spec spec)
           (assoc :label nil)
-          ;; Record which physics family was active
-          (cond-> physics-family (assoc :physics-family (:hexagram-id physics-family)))))))
+          ;; Record which physics rule was active
+          (cond-> physics-family (assoc :physics-rule (:rule physics-family)))))))

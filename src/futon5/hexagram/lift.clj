@@ -213,3 +213,77 @@
   (-> context
       context->segments
       exotype->hexagram))
+
+;; =============================================================================
+;; 256 PHYSICS RULES = 64 hexagrams × 4 primary energies
+;; =============================================================================
+
+(def primary-energies
+  "The four primary energies (四正) from Tai Chi.
+   These determine HOW to engage with the situation the hexagram describes."
+  [{:id 0 :key :peng :name "Péng" :hanzi "掤" :action "Ward Off"
+    :dynamic :expand :description "Create space, establish boundaries"}
+   {:id 1 :key :lu   :name "Lǚ"   :hanzi "捋" :action "Roll Back"
+    :dynamic :yield :description "Yield, redirect, absorb"}
+   {:id 2 :key :ji   :name "Jǐ"   :hanzi "擠" :action "Press"
+    :dynamic :focus :description "Concentrate force, direct attention"}
+   {:id 3 :key :an   :name "Àn"   :hanzi "按" :action "Push"
+    :dynamic :momentum :description "Forward drive, sustained pressure"}])
+
+(defn energy-by-id [id]
+  (nth primary-energies (mod id 4)))
+
+(defn energy-by-key [k]
+  (first (filter #(= k (:key %)) primary-energies)))
+
+(defn hexagram+energy->rule
+  "Combine hexagram (0-63) and energy (0-3) into physics rule (0-255).
+
+   Rule = hexagram * 4 + energy
+
+   This gives a unique rule for each (situation, engagement-mode) pair."
+  [hexagram-num energy-id]
+  (let [hex (mod (or hexagram-num 0) 64)
+        eng (mod (or energy-id 0) 4)]
+    (+ (* hex 4) eng)))
+
+(defn rule->hexagram+energy
+  "Decompose a physics rule (0-255) into hexagram and energy.
+
+   Returns {:hexagram n :energy energy-map}"
+  [rule]
+  (let [rule (mod (or rule 0) 256)
+        hex-num (quot rule 4)
+        eng-id (mod rule 4)]
+    {:hexagram (inc hex-num)  ; King Wen numbering is 1-64
+     :energy (energy-by-id eng-id)}))
+
+(defn context->energy
+  "Derive primary energy from context.
+
+   Uses the phenotype bits to select energy:
+   - Bits 0-1 of phenotype → energy index (0-3)"
+  [{:keys [phenotype-context]}]
+  (let [bits (or phenotype-context "00")
+        b0 (if (= (nth bits 0 \0) \1) 1 0)
+        b1 (if (= (nth bits 1 \0) \1) 2 0)
+        energy-id (+ b0 b1)]
+    (energy-by-id energy-id)))
+
+(defn context->physics-rule
+  "Derive the full 256-space physics rule from a sampled context.
+
+   The rule combines:
+   - Hexagram (from eigenvalue diagonalization of 36-bit matrix)
+   - Primary energy (from phenotype bits 0-1)
+
+   Returns {:rule n :hexagram {...} :energy {...}}"
+  [context]
+  (let [hexagram (context->hexagram context)
+        hex-num (or (:number hexagram) 1)
+        energy (context->energy context)
+        rule (hexagram+energy->rule (dec hex-num) (:id energy))]
+    {:rule rule
+     :hexagram hexagram
+     :energy energy
+     :description (str (:name hexagram) " + " (:name energy) " (" (:action energy) ")")}))
