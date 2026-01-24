@@ -41,7 +41,7 @@
     "  --xeno-pop N           Xenotype population size (default 12)."
     "  --update-every N       Xenotype update cadence (default 100)."
     "  --tier KW              Exotype tier: local, super, or both (default both)."
-    "  --seed N               RNG seed."])))
+    "  --seed N               RNG seed."]))
 
 (defn- parse-int [s]
   (try

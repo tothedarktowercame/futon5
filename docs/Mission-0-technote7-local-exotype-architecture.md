@@ -21,13 +21,13 @@ For each cell position x:
   ego    = sigil[x]        (8 bits)
   right  = sigil[x+1]      (8 bits)
   next   = sigil_prev[x]   (8 bits, from previous generation)
-  phe    = phenotype[x]    (4 bits)
+  phe    = phenotype-family[x]    (4 bits: 3 parents + child)
 
   context = {left, ego, right, next, phe}  (36 bits)
        ↓
   eigenvalue diagonalization → hexagram (6 bits)
        +
-  phenotype bits 0-1 → energy (2 bits)
+  phenotype-family bits 0-1 → energy (2 bits)
        ↓
   physics rule (8 bits, 0-255)
        ↓
@@ -105,10 +105,10 @@ Replace global kernel with local dispatch:
 ```clojure
 (defn evolve-sigil-local
   "Evolve a single sigil using locally-computed physics rule."
-  [sigil pred next phenotype-bits prev-sigil]
+  [sigil pred next phenotype-family prev-sigil]
   (let [;; Build 36-bit context
         context {:context-sigils [pred sigil next prev-sigil]
-                 :phenotype-context phenotype-bits}
+                 :phenotype-context phenotype-family}
 
         ;; Lift to physics rule
         physics (context->physics-rule context)
@@ -130,14 +130,19 @@ Replace global kernel with local dispatch:
   [genotype phenotype prev-genotype]
   (let [len (count genotype)
         letters (mapv str (seq genotype))
-        phe-bits (seq (or phenotype (repeat len "0000")))
+        phe-row (seq (or phenotype (repeat len "0")))
+        phe-next (when phenotype
+                   (evolve-phenotype-against-genotype genotype phenotype))
         prev-letters (mapv str (seq (or prev-genotype genotype)))]
     (->> (range len)
          (map (fn [idx]
                 (let [pred (get letters (dec idx) default-sigil)
                       self (get letters idx)
                       next (get letters (inc idx) default-sigil)
-                      phe (str (get phe-bits idx "0000"))
+                      phe (str (get phe-row (dec idx) \0)
+                               (get phe-row idx \0)
+                               (get phe-row (inc idx) \0)
+                               (get phe-next idx \0))
                       prev (get prev-letters idx self)]
                   (evolve-sigil-local self pred next phe prev))))
          (map :sigil)
