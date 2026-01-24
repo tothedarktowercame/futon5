@@ -1,0 +1,52 @@
+{:meta {:id :scorer-lu
+        :energy :lu
+        :energy-name "Yield"
+        :description "Stability-focused scorer: rewards temporal persistence and coherence"}
+
+ :diagram
+ {:nodes [;; Extract and thin frames
+          {:id :input :component :run-frames}
+          {:id :skeletons :component :thin-all}
+
+          ;; Measure persistence (overlap between consecutive skeletons)
+          {:id :persist-series :component :persistence-series}
+          {:id :avg-persist :component :mean}
+
+          ;; Giant component fraction (coherence)
+          {:id :frame0 :component :frame-at :params {:index 0}}
+          {:id :skel0 :component :thin-frame}
+          {:id :giant :component :giant-component-frac}
+
+          ;; Combine: persistence * coherence
+          {:id :combined :component :multiply}
+
+          ;; Output
+          {:id :out :component :output-score}]
+
+  :edges [;; Skeleton extraction
+          {:from :input :from-port :frames :to :skeletons :to-port :frames}
+
+          ;; Persistence
+          {:from :skeletons :from-port :skeletons :to :persist-series :to-port :skeletons}
+          {:value 1 :value-type :int :to :persist-series :to-port :radius}
+          {:from :persist-series :from-port :series :to :avg-persist :to-port :values}
+
+          ;; Giant component (from first skeleton as proxy)
+          {:from :input :from-port :frames :to :frame0 :to-port :frames}
+          {:from :frame0 :from-port :frame :to :skel0 :to-port :frame}
+          {:from :skel0 :from-port :skeleton :to :giant :to-port :skeleton}
+
+          ;; Combine
+          {:from :avg-persist :from-port :avg :to :combined :to-port :a}
+          {:from :giant :from-port :frac :to :combined :to-port :b}
+
+          ;; Output
+          {:from :combined :from-port :result :to :out :to-port :score}]
+
+  :output :out}
+
+ :interpretation
+ "Lǚ (Yield) energy rewards stability and coherence. This scorer measures
+  how well the skeleton persists over time (yielding to the same pattern)
+  and how coherent the structure is (single connected component). High scores
+  indicate stable, unified patterns that maintain their form."}

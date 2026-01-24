@@ -17,7 +17,7 @@
     "  --mutations N    Mutations per candidate (default 0)."
     "  --mutation-mix EDN  Map of mutation weights (default {:swap 0.5 :ablate 0.5 :rewire 0.5})."
     "  --templates PATH Template EDN (default futon5/resources/xenotype-templates.edn)."
-    "  --components PATH Component library EDN (default futon5/resources/xenotype-generator-components.edn)."
+    "  --components PATH Component library EDN (default resources/xenotype-generator-components.edn)."
     "  --out PATH       Output EDN (default /tmp/xenotype-synth-<ts>.edn)."
     "  --help           Show this message."]))
 
@@ -212,7 +212,7 @@
             mutations (int (or mutations 0))
             mix (normalized-mix mutation-mix)
             templates-path (or templates "futon5/resources/xenotype-templates.edn")
-            components-path (or components "futon5/resources/xenotype-generator-components.edn")
+            components-path (or components "resources/xenotype-generator-components.edn")
             out (or out (format "/tmp/xenotype-synth-%d.edn" (System/currentTimeMillis)))
             rng (java.util.Random. seed)
             templates (get (edn/read-string (slurp templates-path)) :templates)

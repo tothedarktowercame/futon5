@@ -1,0 +1,45 @@
+{:meta {:id :xenotype-104
+        :hexagram 26
+        :hexagram-name "Great Taming"
+        :hexagram-family "Youthful"
+        :energy :an
+        :energy-name "Push"
+        :description "Youthful learning with sustained push: explore through crossover with neighbors, accumulating experience"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-succ :component :context-succ}
+
+          ;; Learning through crossover - combine with predecessor
+          {:id :cross-pred :component :uniform-crossover}
+
+          ;; Learning through crossover - combine with successor
+          {:id :cross-succ :component :uniform-crossover}
+
+          ;; Blend the two crossovers
+          {:id :blend :component :blend}]
+
+  :edges [;; Crossover with predecessor (learn from past)
+          {:from :ctx-self :from-port :sigil :to :cross-pred :to-port :a}
+          {:from :ctx-pred :from-port :sigil :to :cross-pred :to-port :b}
+          {:value 0.3 :value-type :scalar :to :cross-pred :to-port :rate}
+
+          ;; Crossover with successor (anticipate future)
+          {:from :ctx-self :from-port :sigil :to :cross-succ :to-port :a}
+          {:from :ctx-succ :from-port :sigil :to :cross-succ :to-port :b}
+          {:value 0.3 :value-type :scalar :to :cross-succ :to-port :rate}
+
+          ;; Blend the two: 50/50 to balance past and future learning
+          {:from :cross-pred :from-port :result :to :blend :to-port :sigils}
+          {:from :cross-succ :from-port :result :to :blend :to-port :sigils}
+          {:value [0.5 0.5] :value-type :scalar-list :to :blend :to-port :weights}]
+
+  :output :blend}
+
+ :interpretation
+ "Sustained learning: continuously incorporate information from both
+  predecessor (past) and successor (future) through genetic crossover.
+  The blend balances both influences. This embodies Youthful (learning/exploration)
+  with Àn energy (sustained forward pressure in acquiring knowledge)."}

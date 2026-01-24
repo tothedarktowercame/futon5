@@ -1,0 +1,343 @@
+{:meta {:name "Xenotype Generator Components"
+        :version 1
+        :description "Primitives for generator wiring diagrams (Levels 2-5 from metaca-terminal-vocabulary-v2.md)"
+        :created "2026-01-24"}
+
+ :types {:sigil "8-bit sigil character"
+         :sigil-list "Vector of sigils"
+         :bits "8-bit binary string"
+         :scalar "Float in [0,1]"
+         :scalar-list "Vector of scalars"
+         :int "Integer"
+         :bool "Boolean"
+         :bool-list "Vector of booleans"
+         :context "Local context map {:pred :self :succ :prev :phe}"
+         :state "Hidden state map {:accum :count :bias :mode}"
+         :freq "Frequency map {sigil -> count}"}
+
+ :components
+ {;;; ============================================================
+  ;;; LEVEL 2: Sigil Operations (Atomic)
+  ;;; ============================================================
+
+  ;; Representation
+  :bits-for
+  {:inputs [[:sigil :sigil]]
+   :outputs [[:bits :bits]]
+   :doc "Extract 8-bit binary representation of sigil"}
+
+  :entry-for-bits
+  {:inputs [[:bits :bits]]
+   :outputs [[:sigil :sigil]]
+   :doc "Find nearest sigil for given bits"}
+
+  :sigil-index
+  {:inputs [[:sigil :sigil]]
+   :outputs [[:index :int]]
+   :doc "Numeric index [0,255] of sigil"}
+
+  :index-sigil
+  {:inputs [[:index :int]]
+   :outputs [[:sigil :sigil]]
+   :doc "Sigil at given index"}
+
+  ;; Bitwise Operations
+  :bit-xor
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "XOR of two sigils (addition mod 2)"}
+
+  :bit-and
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "AND of two sigils (multiplication)"}
+
+  :bit-or
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "OR of two sigils"}
+
+  :bit-not
+  {:inputs [[:sigil :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "NOT of sigil (flip all bits)"}
+
+  :bit-shift-left
+  {:inputs [[:sigil :sigil] [:n :int]]
+   :outputs [[:result :sigil]]
+   :doc "Rotate sigil left n positions"}
+
+  :bit-shift-right
+  {:inputs [[:sigil :sigil] [:n :int]]
+   :outputs [[:result :sigil]]
+   :doc "Rotate sigil right n positions"}
+
+  ;; Aggregation Operations
+  :majority
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:result :sigil]]
+   :doc "Per-bit majority vote across sigils"}
+
+  :minority
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:result :sigil]]
+   :doc "Per-bit minority vote across sigils"}
+
+  :blend
+  {:inputs [[:sigils :sigil-list] [:weights :scalar-list]]
+   :outputs [[:result :sigil]]
+   :doc "Weighted blend of sigils, snapped to nearest"}
+
+  :random-pick
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:result :sigil]]
+   :doc "Random selection from sigil set"}
+
+  :modal
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:result :sigil]]
+   :doc "Most frequent sigil in list"}
+
+  ;; Comparison Operations
+  :similarity
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:score :scalar]]
+   :doc "1 - (hamming distance / 8)"}
+
+  :distance
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:dist :int]]
+   :doc "Hamming distance [0,8]"}
+
+  :same?
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:equal :bool]]
+   :doc "Exact equality check"}
+
+  :balance
+  {:inputs [[:sigil :sigil]]
+   :outputs [[:bal :scalar]]
+   :doc "(1-bits - 0-bits) / 8, in [-1,1]"}
+
+  ;; Mutation Operations
+  :mutate
+  {:inputs [[:sigil :sigil] [:rate :scalar]]
+   :outputs [[:result :sigil]]
+   :doc "Flip each bit with given probability"}
+
+  :mutate-toward
+  {:inputs [[:sigil :sigil] [:target :sigil] [:rate :scalar]]
+   :outputs [[:result :sigil]]
+   :doc "Bias mutation toward target sigil"}
+
+  :crossover
+  {:inputs [[:a :sigil] [:b :sigil] [:point :int]]
+   :outputs [[:result :sigil]]
+   :doc "Single-point crossover at given position"}
+
+  :uniform-crossover
+  {:inputs [[:a :sigil] [:b :sigil] [:rate :scalar]]
+   :outputs [[:result :sigil]]
+   :doc "Per-bit crossover with given probability"}
+
+  ;;; ============================================================
+  ;;; LEVEL 3: String/Population Operations
+  ;;; ============================================================
+
+  ;; Entropy and Diversity
+  :entropy
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:score :scalar]]
+   :doc "Shannon entropy (normalized to [0,1])"}
+
+  :diversity
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:score :scalar]]
+   :doc "Unique count / length"}
+
+  :evenness
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:score :scalar]]
+   :doc "How evenly distributed sigils are"}
+
+  :dominance
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:score :scalar]]
+   :doc "Frequency of most common sigil"}
+
+  ;; Allele Operations
+  :allele-freq
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:freq :freq]]
+   :doc "Frequency table {sigil -> count}"}
+
+  :allele-rank
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:ranked :sigil-list]]
+   :doc "Sigils sorted by frequency (descending)"}
+
+  :rare-alleles
+  {:inputs [[:sigils :sigil-list] [:threshold :scalar]]
+   :outputs [[:rare :sigil-list]]
+   :doc "Alleles with frequency below threshold"}
+
+  :common-alleles
+  {:inputs [[:sigils :sigil-list] [:threshold :scalar]]
+   :outputs [[:common :sigil-list]]
+   :doc "Alleles with frequency above threshold"}
+
+  ;; Pattern Matching
+  :match-template
+  {:inputs [[:sigils :sigil-list] [:template :sigil-list]]
+   :outputs [[:positions :int]]
+   :doc "Find template occurrences, return count"}
+
+  :find-repeats
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:count :int]]
+   :doc "Count of repeated subsequences"}
+
+  :autocorr
+  {:inputs [[:sigils :sigil-list]]
+   :outputs [[:score :scalar]]
+   :doc "Spatial autocorrelation"}
+
+  ;; Aggregate Comparisons
+  :hamming-dist
+  {:inputs [[:a :sigil-list] [:b :sigil-list]]
+   :outputs [[:dist :int]]
+   :doc "Total bit differences between strings"}
+
+  :change-rate
+  {:inputs [[:a :sigil-list] [:b :sigil-list]]
+   :outputs [[:rate :scalar]]
+   :doc "Normalized Hamming distance"}
+
+  ;;; ============================================================
+  ;;; LEVEL 4: Composition (Control Flow)
+  ;;; ============================================================
+
+  :if-then-else-sigil
+  {:inputs [[:cond :bool] [:then :sigil] [:else :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "Conditional: if cond then 'then' else 'else'"}
+
+  :threshold-sigil
+  {:inputs [[:score :scalar] [:threshold :scalar] [:above :sigil] [:below :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "If score >= threshold, return above, else below"}
+
+  :select-by-index
+  {:inputs [[:sigils :sigil-list] [:index :int]]
+   :outputs [[:result :sigil]]
+   :doc "Select sigil at index (clamped)"}
+
+  :select-by-score
+  {:inputs [[:sigils :sigil-list] [:score :scalar]]
+   :outputs [[:result :sigil]]
+   :doc "Select sigil by score position in list"}
+
+  ;;; ============================================================
+  ;;; LEVEL 5: Hidden State Operations
+  ;;; ============================================================
+
+  ;; Accumulation
+  :accum-add
+  {:inputs [[:state :state] [:value :scalar] [:decay :scalar]]
+   :outputs [[:state :state]]
+   :doc "Add value to accumulator with decay"}
+
+  :accum-reset
+  {:inputs [[:state :state]]
+   :outputs [[:state :state]]
+   :doc "Reset accumulator to 0"}
+
+  :accum-read
+  {:inputs [[:state :state]]
+   :outputs [[:value :scalar]]
+   :doc "Read current accumulator value"}
+
+  ;; Thresholds and Triggers
+  :threshold?
+  {:inputs [[:state :state] [:level :scalar]]
+   :outputs [[:above :bool]]
+   :doc "Is accumulator above level?"}
+
+  :trigger-on
+  {:inputs [[:state :state] [:condition :bool]]
+   :outputs [[:state :state]]
+   :doc "Set trigger when condition is true"}
+
+  :triggered?
+  {:inputs [[:state :state]]
+   :outputs [[:triggered :bool]]
+   :doc "Check if trigger has fired"}
+
+  :cooldown
+  {:inputs [[:state :state] [:ticks :int]]
+   :outputs [[:state :state]]
+   :doc "Prevent re-trigger for N ticks"}
+
+  ;; Preference/Bias
+  :set-bias
+  {:inputs [[:state :state] [:pattern :sigil]]
+   :outputs [[:state :state]]
+   :doc "Set preferred output pattern"}
+
+  :apply-bias
+  {:inputs [[:sigil :sigil] [:state :state]]
+   :outputs [[:result :sigil]]
+   :doc "Bias output toward state's preference"}
+
+  :learn-bias
+  {:inputs [[:state :state] [:outcome :scalar]]
+   :outputs [[:state :state]]
+   :doc "Update bias from outcome feedback"}
+
+  ;;; ============================================================
+  ;;; CONTEXT: Extract from Local Context
+  ;;; ============================================================
+
+  :context-pred
+  {:inputs [[:ctx :context]]
+   :outputs [[:sigil :sigil]]
+   :doc "Extract predecessor sigil from context"}
+
+  :context-self
+  {:inputs [[:ctx :context]]
+   :outputs [[:sigil :sigil]]
+   :doc "Extract self sigil from context"}
+
+  :context-succ
+  {:inputs [[:ctx :context]]
+   :outputs [[:sigil :sigil]]
+   :doc "Extract successor sigil from context"}
+
+  :context-prev
+  {:inputs [[:ctx :context]]
+   :outputs [[:sigil :sigil]]
+   :doc "Extract previous-generation sigil from context"}
+
+  :context-phe
+  {:inputs [[:ctx :context]]
+   :outputs [[:bits :bits]]
+   :doc "Extract phenotype bits from context"}
+
+  :context-neighbors
+  {:inputs [[:ctx :context]]
+   :outputs [[:sigils :sigil-list]]
+   :doc "Extract [pred self succ] as list"}
+
+  ;;; ============================================================
+  ;;; OUTPUT: Final output node
+  ;;; ============================================================
+
+  :output-sigil
+  {:inputs [[:sigil :sigil]]
+   :outputs [[:out :sigil]]
+   :doc "Terminal node: output a sigil"}
+
+  :output-with-state
+  {:inputs [[:sigil :sigil] [:state :state]]
+   :outputs [[:out :sigil] [:state-out :state]]
+   :doc "Terminal node: output sigil and updated state"}}}

@@ -1,0 +1,50 @@
+{:meta {:id :xenotype-038
+        :hexagram 10
+        :hexagram-name "Treading"
+        :hexagram-family "Receptive"
+        :energy :lu
+        :energy-name "Yield"
+        :description "Receptive yielding: preserve self when aligned with neighbors, blend toward consensus when not"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Compute consensus (majority of neighbors)
+          {:id :consensus :component :majority}
+
+          ;; Check alignment with consensus
+          {:id :similarity :component :similarity}
+
+          ;; Path A: Aligned -> preserve self
+          ;; Path B: Not aligned -> blend toward consensus
+
+          {:id :blend :component :blend}
+          {:id :choose :component :threshold-sigil}]
+
+  :edges [;; Get consensus
+          {:from :neighbors :from-port :sigils :to :consensus :to-port :sigils}
+
+          ;; Check similarity to consensus
+          {:from :ctx-self :from-port :sigil :to :similarity :to-port :a}
+          {:from :consensus :from-port :result :to :similarity :to-port :b}
+
+          ;; Blend path: 60% consensus, 40% self
+          {:from :ctx-self :from-port :sigil :to :blend :to-port :sigils}
+          {:from :consensus :from-port :result :to :blend :to-port :sigils}
+          {:value [0.4 0.6] :value-type :scalar-list :to :blend :to-port :weights}
+
+          ;; Choose: if similarity > 0.75, keep self; else blend
+          {:from :similarity :from-port :score :to :choose :to-port :score}
+          {:value 0.75 :value-type :scalar :to :choose :to-port :threshold}
+          {:from :ctx-self :from-port :sigil :to :choose :to-port :above}
+          {:from :blend :from-port :result :to :choose :to-port :below}]
+
+  :output :choose}
+
+ :interpretation
+ "Treading carefully: When already aligned with the neighborhood consensus
+  (similarity > 0.75), preserve the current state. When misaligned, yield
+  by blending toward the consensus. This embodies Receptive (conservation)
+  with Lǚ energy (yielding without losing self entirely)."}

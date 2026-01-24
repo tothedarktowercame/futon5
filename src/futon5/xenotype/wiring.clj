@@ -2,7 +2,7 @@
   (:require [clojure.edn :as edn]))
 
 (def ^:private default-components-path
-  "futon5/resources/xenotype-generator-components.edn")
+  "resources/xenotype-generator-components.edn")
 
 (defn load-components
   ([] (load-components default-components-path))
@@ -88,7 +88,12 @@
               (add-error (str "edge missing input port type to " to-id)))
             (when (and out-type in-type)
               (when (not (or (= out-type in-type)
-                             (and (= in-type :scalar-list) (= out-type :scalar))))
+                             ;; Scalars can flow into scalar-list
+                             (and (= in-type :scalar-list) (= out-type :scalar))
+                             ;; Bools can flow into bool-list
+                             (and (= in-type :bool-list) (= out-type :bool))
+                             ;; Sigils can flow into sigil-list
+                             (and (= in-type :sigil-list) (= out-type :sigil))))
                 (add-error (str "edge type mismatch " from-id " -> " to-id ": " out-type " vs " in-type)))))))
       (when (and (nil? (:from edge)) (nil? (:value edge)))
         (add-warning "edge has neither :from nor :value")))

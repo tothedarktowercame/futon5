@@ -1,0 +1,44 @@
+{:meta {:id :xenotype-232
+        :hexagram 58
+        :hexagram-name "The Joyous"
+        :hexagram-family "Joy"
+        :energy :an
+        :energy-name "Push"
+        :description "Joy through sustained harmony: blend with neighbors to maximize evenness and shared patterns"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-succ :component :context-succ}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Measure current evenness
+          {:id :evenness :component :evenness}
+
+          ;; Create harmonious blend of all three
+          {:id :harmony-blend :component :blend}
+
+          ;; Additional: add slight random variation for joy/play
+          {:id :joy-mutate :component :mutate}]
+
+  :edges [;; Check evenness
+          {:from :neighbors :from-port :sigils :to :evenness :to-port :sigils}
+
+          ;; Blend all three neighbors equally (perfect harmony)
+          {:from :ctx-pred :from-port :sigil :to :harmony-blend :to-port :sigils}
+          {:from :ctx-self :from-port :sigil :to :harmony-blend :to-port :sigils}
+          {:from :ctx-succ :from-port :sigil :to :harmony-blend :to-port :sigils}
+          {:value [0.33 0.34 0.33] :value-type :scalar-list :to :harmony-blend :to-port :weights}
+
+          ;; Add a tiny bit of playful randomness
+          {:from :harmony-blend :from-port :result :to :joy-mutate :to-port :sigil}
+          {:value 0.05 :value-type :scalar :to :joy-mutate :to-port :rate}]
+
+  :output :joy-mutate}
+
+ :interpretation
+ "The Joyous Lake creates harmony through blending: combine self with
+  both neighbors in equal measure, then add a touch of playful variation.
+  The sustained push (Àn) toward harmony creates a dynamic equilibrium
+  that embodies joy - not static perfection, but lively balance."}

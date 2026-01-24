@@ -1,0 +1,97 @@
+{:meta {:id :scorer-an
+        :energy :an
+        :energy-name "Push"
+        :description "Filament complexity scorer: rewards branching, cycles, and persistent structure"}
+
+ :diagram
+ {:nodes [;; Extract and thin frames
+          {:id :input :component :run-frames}
+          {:id :skeletons :component :thin-all}
+
+          ;; Get final skeleton for structure metrics
+          {:id :frame-count :component :frames-count}
+          {:id :last-frame :component :frame-at}
+          {:id :last-skel :component :thin-frame}
+
+          ;; Structure metrics
+          {:id :length :component :skeleton-length}
+          {:id :branch :component :branchpoint-density}
+          {:id :cycles :component :cycle-count}
+          {:id :endpoint :component :endpoint-density}
+
+          ;; Persistence over time
+          {:id :persist-series :component :persistence-series}
+          {:id :avg-persist :component :mean}
+
+          ;; Combine components:
+          ;; score = log(length) * branch * (1 + cycles) * persist / endpoint
+          {:id :log-len :component :log1p}
+          {:id :cycle-boost :component :add}
+          {:id :endpoint-penalty :component :add}
+
+          {:id :part1 :component :multiply}
+          {:id :part2 :component :multiply}
+          {:id :part3 :component :multiply}
+          {:id :final :component :divide}
+
+          ;; Output
+          {:id :out :component :output-score}]
+
+  :edges [;; Skeleton extraction
+          {:from :input :from-port :frames :to :skeletons :to-port :frames}
+          {:from :input :from-port :frames :to :frame-count :to-port :frames}
+
+          ;; Get last frame
+          {:from :input :from-port :frames :to :last-frame :to-port :frames}
+          ;; Note: we use a constant for index since frame-count output can't easily wire
+          ;; In practice, would need dynamic indexing or use last frame directly
+          {:value 10 :value-type :int :to :last-frame :to-port :index}
+          {:from :last-frame :from-port :frame :to :last-skel :to-port :frame}
+
+          ;; Metrics from last skeleton
+          {:from :last-skel :from-port :skeleton :to :length :to-port :skeleton}
+          {:from :last-skel :from-port :skeleton :to :branch :to-port :skeleton}
+          {:from :last-skel :from-port :skeleton :to :cycles :to-port :skeleton}
+          {:from :last-skel :from-port :skeleton :to :endpoint :to-port :skeleton}
+
+          ;; Persistence
+          {:from :skeletons :from-port :skeletons :to :persist-series :to-port :skeletons}
+          {:value 1 :value-type :int :to :persist-series :to-port :radius}
+          {:from :persist-series :from-port :series :to :avg-persist :to-port :values}
+
+          ;; Compute score components
+          {:from :length :from-port :length :to :log-len :to-port :x}
+
+          {:from :cycles :from-port :cycles :to :cycle-boost :to-port :a}
+          {:value 1.0 :value-type :scalar :to :cycle-boost :to-port :b}
+
+          {:from :endpoint :from-port :density :to :endpoint-penalty :to-port :a}
+          {:value 0.1 :value-type :scalar :to :endpoint-penalty :to-port :b}
+
+          ;; Combine: log(len) * branch
+          {:from :log-len :from-port :result :to :part1 :to-port :a}
+          {:from :branch :from-port :density :to :part1 :to-port :b}
+
+          ;; * (1 + cycles)
+          {:from :part1 :from-port :result :to :part2 :to-port :a}
+          {:from :cycle-boost :from-port :result :to :part2 :to-port :b}
+
+          ;; * persistence
+          {:from :part2 :from-port :result :to :part3 :to-port :a}
+          {:from :avg-persist :from-port :avg :to :part3 :to-port :b}
+
+          ;; / (endpoint + 0.1)
+          {:from :part3 :from-port :result :to :final :to-port :a}
+          {:from :endpoint-penalty :from-port :result :to :final :to-port :b}
+
+          ;; Output
+          {:from :final :from-port :result :to :out :to-port :score}]
+
+  :output :out}
+
+ :interpretation
+ "Àn (Push) energy rewards sustained complexity. This is the full filament
+  scorer that measures skeleton length, branching density, cycle count, and
+  temporal persistence, while penalizing loose endpoints. High scores indicate
+  complex, interconnected patterns that persist and grow over time - the
+  sustained push toward elaborate structure."}
