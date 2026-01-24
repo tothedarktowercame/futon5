@@ -16,6 +16,20 @@
 (def ^:private mix-modes
   [:none :rotate-left :rotate-right :reverse :xor-neighbor :majority :swap-halves :scramble])
 
+(defn- rand-double
+  "Get a random double [0,1), optionally using provided RNG for reproducibility."
+  [^java.util.Random rng]
+  (if rng
+    (.nextDouble rng)
+    (rand)))
+
+(defn- rand-nth*
+  "Random element from collection, optionally using provided RNG."
+  [^java.util.Random rng coll]
+  (if rng
+    (nth coll (.nextInt rng (count coll)))
+    (rand-nth coll)))
+
 (defn- normalize-sigil [sigil]
   (cond
     (nil? sigil) nil
@@ -442,10 +456,11 @@
             bits-a (ca/bits-for (:sigil result-a))
             bits-b (ca/bits-for (:sigil result-b))
             ;; Bit-wise majority (with random tiebreaker)
+            rng (:rng context)
             blended (apply str
                            (map (fn [a b]
                                   (cond (= a b) a
-                                        (< (rand) 0.5) a
+                                        (< (rand-double rng) 0.5) a
                                         :else b))
                                 bits-a bits-b))]
         (ca/entry-for-bits blended)))))
@@ -517,6 +532,7 @@
                          rules)
             all-bits (map #(ca/bits-for (:sigil %)) results)
             ;; Majority vote per bit position
+            rng (:rng context)
             blended (apply str
                            (for [i (range 8)]
                              (let [votes (map #(nth % i) all-bits)
@@ -524,7 +540,7 @@
                                    zeros (count (filter #(= \0 %) votes))]
                                (cond (> ones zeros) \1
                                      (< ones zeros) \0
-                                     :else (rand-nth [\0 \1])))))]
+                                     :else (rand-nth* rng [\0 \1])))))]
         (ca/entry-for-bits blended)))
 
     :matrix
@@ -557,9 +573,12 @@
    - global-rule: The global physics rule (0-255) or a keyword like :baldwin
    - bend-mode: How to compose (:sequential, :blend, :matrix)
    - kernel-fn-map: Map of kernel keywords to functions
+   - rng (optional): java.util.Random for reproducible randomness
 
    Returns a function (genotype phenotype prev-genotype) → evolved-genotype"
-  [global-rule bend-mode kernel-fn-map]
+  ([global-rule bend-mode kernel-fn-map]
+   (make-bent-evolution global-rule bend-mode kernel-fn-map nil))
+  ([global-rule bend-mode kernel-fn-map ^java.util.Random rng]
   (let [;; Resolve global rule if it's a keyword
         global-rule-num (cond
                           (number? global-rule) global-rule
@@ -593,7 +612,7 @@
                                    (get phe-chars (+ idx 3) \0))
 
                           ;; Compute local rule from 36-bit context
-                          local-ctx (build-local-context pred ego succ prev phe)
+                          local-ctx (assoc (build-local-context pred ego succ prev phe) :rng rng)
                           local-spec (context->kernel-spec local-ctx)
                           local-rule (:rule (hex-lift/context->physics-rule local-ctx))
 
@@ -619,7 +638,7 @@
                                          blended (apply str
                                                         (map (fn [g l]
                                                                (cond (= g l) g
-                                                                     (< (rand) 0.5) g
+                                                                     (< (rand-double rng) 0.5) g
                                                                      :else l))
                                                              bits-g bits-l))]
                                      (ca/entry-for-bits blended))
@@ -637,7 +656,7 @@
                                    (let [local-kernel (get kernel-fn-map (:kernel local-spec))]
                                      (local-kernel ego pred succ (merge local-ctx (:params local-spec)))))]
                       (:sigil result))))
-             (apply str))))))
+             (apply str)))))))
 
 (defn evolve-with-global-exotype
   "Evolve a genotype using a global exotype that bends local physics.
@@ -651,11 +670,15 @@
    - global-rule: Global physics rule (number or keyword)
    - bend-mode: How global bends local (:sequential, :blend, :matrix)
    - kernel-fn-map: Map of kernel keywords to functions
+   - rng (optional): java.util.Random for reproducible randomness
 
    Returns the evolved genotype string."
-  [genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map]
-  (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map)]
-    (evolve-fn genotype phenotype prev-genotype)))
+  ([genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map]
+   (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map)]
+     (evolve-fn genotype phenotype prev-genotype)))
+  ([genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map ^java.util.Random rng]
+   (let [evolve-fn (make-bent-evolution global-rule bend-mode kernel-fn-map rng)]
+     (evolve-fn genotype phenotype prev-genotype))))
 
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.

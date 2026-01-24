@@ -120,6 +120,7 @@
   (let [ctx (cond
               (nil? context) nil
               (string? context) context
+              (map? context) (or (:phenotype-context context) (str context))
               :else (str context))]
     (when (and ctx (>= (count ctx) 4))
       (let [[a b c d] (take 4 (bits->ints ctx))
@@ -142,11 +143,15 @@
   (every? #(= % value) ints))
 
 (defn context-match-count [context]
-  (when (and (string? context) (seq context))
-    (let [digits (bits->ints context)
-          target (last digits)
-          olds (butlast digits)]
-      (count (filter #(= % target) olds)))))
+  (let [ctx (cond
+              (string? context) context
+              (map? context) (:phenotype-context context)
+              :else nil)]
+    (when (and (string? ctx) (seq ctx))
+      (let [digits (bits->ints ctx)
+            target (last digits)
+            olds (butlast digits)]
+        (count (filter #(= % target) olds))))))
 
 (defn randomly-flip-selected [bits value quantity]
   (let [positions (keep-indexed (fn [idx bit]
