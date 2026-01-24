@@ -280,6 +280,135 @@
                :next-from :then
                :phenotype-from :evidence}}))
 
+;; =============================================================================
+;; 256 RUNNABLE EXOTYPES: Rule → Kernel + Params
+;; =============================================================================
+
+(def ^:private family->kernel
+  "Map hexagram families to base kernel behaviors."
+  {0 :blending           ; Creative (1-8) — creative mixing
+   1 :multiplication     ; Taming (9-16) — conservative
+   2 :ad-hoc-template    ; Following (17-24) — adaptive
+   3 :blending-mutation  ; Innocence (25-32) — forward motion
+   4 :blending-baldwin   ; Retreat (33-40) — phenotype-conditional
+   5 :collection-template ; Decrease (41-48) — differentiating
+   6 :mutating-template  ; Revolution (49-56) — transformation
+   7 :blending})         ; Gentle (57-64) — gentle consolidation
+
+(def ^:private energy->kernel-params
+  "Energy modulation of kernel parameters."
+  {:peng {:mutation-rate 0.30 :bit-bias :yang :template-strictness 0.5}
+   :lu   {:mutation-rate 0.10 :bit-bias :preserve :template-strictness 0.8}
+   :ji   {:mutation-rate 0.20 :bit-bias :selective :template-strictness 0.9}
+   :an   {:mutation-rate 0.25 :bit-bias :momentum :template-strictness 0.6}})
+
+(defn rule->kernel-spec
+  "Map a physics rule (0-255) to a runnable kernel specification.
+
+   Returns:
+   {:kernel :kernel-keyword
+    :params {:mutation-rate N :bit-bias K ...}
+    :rule N
+    :hexagram N
+    :energy :key}"
+  [rule]
+  (let [{:keys [hexagram energy]} (hex-lift/rule->hexagram+energy rule)
+        family (quot (dec hexagram) 8)
+        base-kernel (get family->kernel family :mutating-template)
+        energy-key (:key energy)
+        energy-params (get energy->kernel-params energy-key {})]
+    {:kernel base-kernel
+     :params energy-params
+     :rule rule
+     :hexagram hexagram
+     :energy energy-key
+     :description (str (name base-kernel) " + " (:name energy))}))
+
+(defn context->kernel-spec
+  "Compute kernel specification from local 36-bit context.
+
+   This is the key function for local exotype computation:
+   context → hexagram → energy → rule → kernel + params"
+  [context]
+  (let [physics (hex-lift/context->physics-rule context)]
+    (rule->kernel-spec (:rule physics))))
+
+;; =============================================================================
+;; LOCAL EVOLUTION (per-cell physics)
+;; =============================================================================
+
+(defn build-local-context
+  "Build a 36-bit context from local CA neighborhood.
+
+   Arguments:
+   - pred: predecessor sigil (LEFT)
+   - ego: self sigil (EGO)
+   - succ: successor sigil (RIGHT)
+   - prev: previous generation's value at this position (NEXT)
+   - phenotype: 4-bit phenotype string at this position"
+  [pred ego succ prev phenotype]
+  {:context-sigils [(or pred ca/default-sigil)
+                    (or ego ca/default-sigil)
+                    (or succ ca/default-sigil)
+                    (or prev ego ca/default-sigil)]
+   :phenotype-context (or phenotype "0000")})
+
+(defn evolve-sigil-local
+  "Evolve a single sigil using locally-computed physics rule.
+
+   The 36-bit context (pred, ego, succ, prev, phenotype) determines
+   which kernel and parameters to use for this specific cell.
+
+   Returns {:sigil S :rule N :kernel K}"
+  [ego pred succ prev phenotype kernel-fn-map]
+  (let [context (build-local-context pred ego succ prev phenotype)
+        {:keys [kernel params rule]} (context->kernel-spec context)
+        kernel-fn (get kernel-fn-map kernel (get kernel-fn-map :mutating-template))
+        ;; Add params to context for kernel use
+        ctx-with-params (merge context params)
+        result (kernel-fn ego pred succ ctx-with-params)]
+    {:sigil (:sigil result)
+     :rule rule
+     :kernel kernel}))
+
+(defn evolve-string-local
+  "Evolve entire genotype string with per-cell local physics.
+
+   Each cell computes its own 36-bit context and applies the
+   corresponding physics rule. Different cells may use different kernels.
+
+   Arguments:
+   - genotype: current generation string
+   - phenotype: phenotype string (same length, or nil)
+   - prev-genotype: previous generation (for NEXT context)
+   - kernel-fn-map: map of kernel-keyword → function
+
+   Returns {:genotype S :rules [r0 r1 ...] :kernels [k0 k1 ...]}"
+  [genotype phenotype prev-genotype kernel-fn-map]
+  (let [len (count genotype)
+        letters (vec (map str (seq genotype)))
+        phe-chars (vec (seq (or phenotype (apply str (repeat len "0")))))
+        prev-letters (vec (map str (seq (or prev-genotype genotype))))
+        default ca/default-sigil
+
+        results
+        (mapv (fn [idx]
+                (let [pred (get letters (dec idx) default)
+                      ego (get letters idx)
+                      succ (get letters (inc idx) default)
+                      prev (get prev-letters idx ego)
+                      ;; Get 4 phenotype bits for this position
+                      phe-start (* idx 1)  ; 1 bit per position for now
+                      phe (str (get phe-chars idx \0)
+                               (get phe-chars (inc idx) \0)
+                               (get phe-chars (+ idx 2) \0)
+                               (get phe-chars (+ idx 3) \0))]
+                  (evolve-sigil-local ego pred succ prev phe kernel-fn-map)))
+              (range len))]
+    {:genotype (apply str (map :sigil results))
+     :rules (mapv :rule results)
+     :kernels (mapv :kernel results)}))
+
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.
 
