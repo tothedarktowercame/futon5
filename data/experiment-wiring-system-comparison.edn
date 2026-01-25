@@ -1,0 +1,112 @@
+{:description "Compare legacy vs prototype wiring systems on same seeds"
+ :hypothesis "Prototype graph-based wirings may inherently produce collapse vs legacy kernel wirings"
+ :length 120
+ :generations 120
+ :models
+ [;; === Seed 4242 ===
+  ;; Legacy wiring (known-good)
+  {:id :legacy-gong-4242
+   :label "legacy 工 seed 4242"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Prototype wiring (graph-based) - testing if it collapses
+  ;; Note: prototype wirings don't use the same param system
+  ;; This will use whatever the default prototype behavior is
+  {:id :proto-001-4242
+   :label "prototype-001 creative-peng seed 4242"
+   :seed 4242
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  ;; === Seed 238310129 ===
+  {:id :legacy-gong-238310129
+   :label "legacy 工 seed 238310129"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :proto-001-238310129
+   :label "prototype-001 creative-peng seed 238310129"
+   :seed 238310129
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  ;; === Seed 352362012 (noted as "best run seen" in earlier work) ===
+  {:id :legacy-gong-352362012
+   :label "legacy 工 seed 352362012"
+   :seed 352362012
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :proto-001-352362012
+   :label "prototype-001 creative-peng seed 352362012"
+   :seed 352362012
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  ;; === Also test Codex's finding: u=0.45 might be better ===
+  {:id :legacy-gong-u45-4242
+   :label "legacy 工 u=0.45 seed 4242"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.45
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :legacy-gong-u45-238310129
+   :label "legacy 工 u=0.45 seed 238310129"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.45
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; === Try u=0.40 to see if the trend continues ===
+  {:id :legacy-gong-u40-4242
+   :label "legacy 工 u=0.40 seed 4242"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.40
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :legacy-gong-u40-238310129
+   :label "legacy 工 u=0.40 seed 238310129"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.40
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}]}
