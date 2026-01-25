@@ -60,7 +60,9 @@
                                  (case op
                                    :xor (if (= x y) \0 \1)
                                    :and (if (and (= x \1) (= y \1)) \1 \0)
-                                   :or (if (or (= x \1) (= y \1)) \1 \0)))
+                                   :or (if (or (= x \1) (= y \1)) \1 \0)
+                                   :nand (if (and (= x \1) (= y \1)) \0 \1)
+                                   :nor (if (or (= x \1) (= y \1)) \0 \1)))
                                bits-a bits-b))]
     (bits->sigil result)))
 
@@ -146,6 +148,14 @@
    :bit-or
    (fn [{:keys [a b]} _ _]
      {:result (bit-op :or a b)})
+
+   :bit-nand
+   (fn [{:keys [a b]} _ _]
+     {:result (bit-op :nand a b)})
+
+   :bit-nor
+   (fn [{:keys [a b]} _ _]
+     {:result (bit-op :nor a b)})
 
    :bit-not
    (fn [{:keys [sigil]} _ _]

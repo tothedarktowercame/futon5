@@ -162,14 +162,14 @@
 ;;; ============================================================
 
 (defn hexagram->simple-wiring
-  "Generate a simpler wiring based on hexagram lines.
+  "Generate a wiring based on hexagram lines.
 
-   Uses a 3-stage structure:
-   - Stage 1: Input selection (lines 1-2)
-   - Stage 2: Core operation (lines 3-4)
-   - Stage 3: Output (lines 5-6)
+   Uses a 3-stage structure with 64 unique wirings:
+   - Stage 1: Input topology (lines 1-2) - which contexts feed where
+   - Stage 2: Core operation (lines 3-4) - first binary operation
+   - Stage 3: Output operation (lines 5-6) - second binary operation
 
-   Each pair of lines selects one of 4 component variants."
+   Each pair of lines selects one of 4 variants (4×4×4 = 64 unique)."
   [hexagram-number]
   (let [hex-lines (lines/hexagram-number->lines hexagram-number)
         hex-info (lines/hexagram-number->hexagram hexagram-number)
@@ -179,38 +179,56 @@
                     (+ (if (= l1 :yang) 2 0)
                        (if (= l2 :yang) 1 0)))
 
-        ;; Component choices for each stage (4 options each)
-        ;; Avoid bit-not and majority for simpler port handling
-        stage1-opts [:context-self :context-pred :context-succ :context-self]
-        stage2-opts [:bit-and :bit-or :bit-xor :bit-and]
-        stage3-opts [:bit-and :bit-or :bit-xor :bit-or]
+        ;; Stage indices
+        topo-idx (pair->idx (nth hex-lines 0) (nth hex-lines 1))
+        core-idx (pair->idx (nth hex-lines 2) (nth hex-lines 3))
+        output-idx (pair->idx (nth hex-lines 4) (nth hex-lines 5))
 
-        ;; Select components
-        input-comp (nth stage1-opts (pair->idx (nth hex-lines 0) (nth hex-lines 1)))
-        core-comp (nth stage2-opts (pair->idx (nth hex-lines 2) (nth hex-lines 3)))
-        output-comp (nth stage3-opts (pair->idx (nth hex-lines 4) (nth hex-lines 5)))
+        ;; Stage 1: Input topology - determines which contexts feed core vs final
+        ;; 4 distinct routing patterns:
+        ;;   0: pred+succ→core, self→final  (neighbors combine, self modulates)
+        ;;   1: self+succ→core, pred→final  (self+right combine, left modulates)
+        ;;   2: pred+self→core, succ→final  (left+self combine, right modulates)
+        ;;   3: self+self→core, pred→final  (self-interaction, left modulates - identity-like)
+        topo-names ["nei" "suc" "pre" "slf"]
+        [core-a core-b final-mod]
+        (case topo-idx
+          0 [:ctx-pred :ctx-succ :ctx-self]   ;; neighbors → core, self modulates
+          1 [:ctx-self :ctx-succ :ctx-pred]   ;; self+succ → core, pred modulates
+          2 [:ctx-pred :ctx-self :ctx-succ]   ;; pred+self → core, succ modulates
+          3 [:ctx-self :ctx-self :ctx-pred])  ;; self+self → core (tends to identity)
 
-        ;; Build wiring - all binary ops use :a/:b ports, output :result
-        nodes [{:id :ctx-main :component input-comp}
+        ;; Stage 2 & 3: Operations (4 distinct each)
+        stage2-opts [:bit-and :bit-or :bit-xor :bit-nand]
+        stage3-opts [:bit-and :bit-or :bit-xor :bit-nor]
+
+        core-comp (nth stage2-opts core-idx)
+        output-comp (nth stage3-opts output-idx)
+
+        ;; Build nodes
+        nodes [{:id :ctx-self :component :context-self}
                {:id :ctx-pred :component :context-pred}
                {:id :ctx-succ :component :context-succ}
                {:id :core :component core-comp}
                {:id :final :component output-comp}
                {:id :output :component :output-sigil}]
 
-        ;; All components here are binary ops with :a/:b inputs and :result output
-        ;; output-sigil expects :sigil input
-        edges [{:from :ctx-pred :to :core :to-port :a}
-               {:from :ctx-succ :to :core :to-port :b}
+        ;; Build edges based on topology
+        edges [{:from core-a :to :core :to-port :a}
+               {:from core-b :to :core :to-port :b}
                {:from :core :to :final :to-port :a :from-port :result}
-               {:from :ctx-main :to :final :to-port :b}
-               {:from :final :to :output :to-port :sigil :from-port :result}]]
+               {:from final-mod :to :final :to-port :b}
+               {:from :final :to :output :to-port :sigil :from-port :result}]
+
+        ;; Formula includes topology for uniqueness
+        formula (str (nth topo-names topo-idx) ":" (name core-comp) "→" (name output-comp))]
 
     {:meta {:id (keyword (str "hex-" hexagram-number))
             :hexagram-number hexagram-number
             :hexagram-name (:name hex-info)
             :lines hex-lines
-            :formula (str (name input-comp) " → " (name core-comp) " → " (name output-comp))}
+            :topology topo-idx
+            :formula formula}
      :diagram {:nodes (vec nodes)
                :edges (vec edges)
                :output :output}}))

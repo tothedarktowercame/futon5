@@ -60,6 +60,18 @@
    :traits [:allele-stratified]
    :doc "OR of two sigils"}
 
+  :bit-nand
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
+   :doc "NAND of two sigils (NOT AND)"}
+
+  :bit-nor
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
+   :doc "NOR of two sigils (NOT OR)"}
+
   :bit-not
   {:inputs [[:sigil :sigil]]
    :outputs [[:result :sigil]]
