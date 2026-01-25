@@ -1,0 +1,36 @@
+{:meta {:id :legacy-locked-kernel-mission07
+        :label "Legacy locked kernel (Mission 07 top exotype #1)"
+        :source {:notebook "exotic-programming-notebook.org"
+                 :run "Mission 7B top exotype #1 locked kernel rerun"
+                 :seed 1695261645}
+        :description "Legacy kernel spec locked from Mission 07 top exotype #1 nomination."}
+
+ :diagram
+ {:nodes [{:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :legacy-step :component :legacy-kernel-step
+           :params {:kernel {:blend-mode :none
+                             :mutation {:mode :none, :count 0, :offset 2, :prob 0.33}
+                             :template-mode :context
+                             :mix-shift 0
+                             :mix-mode :xor-neighbor
+                             :balance {:enabled? true, :min-ones 2, :max-ones 6, :chance 0.05, :flip-count 1}
+                             :label nil
+                             :flip? false
+                             :reserved "000000"}}}
+          {:id :out :component :output-sigil}]
+
+  :edges [{:from :ctx-pred :from-port :sigil :to :legacy-step :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy-step :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy-step :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy-step :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy-step :to-port :phe}
+          {:from :legacy-step :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Legacy kernel spec locked from Mission 07 top exotype #1 nomination; no exotype applied."}

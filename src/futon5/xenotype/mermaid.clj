@@ -2,14 +2,17 @@
   "Render xenotype wiring diagrams as Mermaid flowcharts."
   (:require [clojure.string :as str]))
 
+(defn- sanitize-label
+  "Escape label text that conflicts with Mermaid syntax."
+  [s]
+  (-> (str s)
+      (str/replace "{" "&#123;")
+      (str/replace "}" "&#125;")))
+
 (defn- node-label
   "Generate a label for a node."
   [node]
-  (let [component (name (:component node))
-        params (:params node)]
-    (if (seq params)
-      (str component "<br/>" (pr-str params))
-      component)))
+  (sanitize-label (name (:component node))))
 
 (defn- node-shape
   "Determine node shape based on component type."

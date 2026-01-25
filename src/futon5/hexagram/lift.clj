@@ -149,10 +149,11 @@
   [matrix]
   (let [arr (matrix->array2d matrix)
         rm-class (Class/forName "org.apache.commons.math3.linear.Array2DRowRealMatrix")
+        rm-iface (Class/forName "org.apache.commons.math3.linear.RealMatrix")
         ed-class (Class/forName "org.apache.commons.math3.linear.EigenDecomposition")
         rm-ctor (.getConstructor rm-class (into-array Class [(class arr)]))
         rm (.newInstance rm-ctor (object-array [arr]))
-        ed-ctor (.getConstructor ed-class (into-array Class [(class rm)]))
+        ed-ctor (.getConstructor ed-class (into-array Class [rm-iface]))
         eigen (.newInstance ed-ctor (object-array [rm]))
         reals (vec (.getRealEigenvalues eigen))]
     (vec (sort-by #(- (Math/abs %)) reals))))

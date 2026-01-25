@@ -1,0 +1,29 @@
+{:meta {:name "Legacy regime harness"
+        :created "2026-01-24"
+        :description "Fixed-seed harness for comparing legacy generator regimes and local-physics baseline."
+        :notes "Seeds drawn from Mission 17a refine + compare highlights."}
+
+ :length 120
+ :generations 120
+
+ :seeds [4242
+         238310129
+         1281562706
+         71312373
+         352362012
+         201709760
+         1564354771
+         955468957]
+
+ :models [{:id :legacy-baseline
+           :label "legacy-baseline"
+           :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"}
+          {:id :legacy-exotype-gong-super
+           :label "legacy-exotype-gong-super"
+           :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"}
+          {:id :legacy-exotype-xiong-super
+           :label "legacy-exotype-xiong-super"
+           :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super.edn"}
+          {:id :new-local-physics
+           :label "new-local-physics"
+           :wiring "data/xenotype-legacy-wirings/new-local-physics.edn"}]}

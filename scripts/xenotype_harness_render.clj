@@ -18,7 +18,7 @@
     "  --runs-dir PATH     Directory containing run EDN files."
     "  --out-dir PATH      Output directory (default = runs-dir)."
     "  --mmdc-cmd CMD      Mermaid command prefix (default: aa-exec -p chrome -- mmdc)."
-    "  --help              Show this message."])))
+    "  --help              Show this message."]))
 
 (defn- parse-args [args]
   (loop [args args
@@ -26,7 +26,7 @@
     (if (seq args)
       (let [[flag & more] args]
         (cond
-          (#{{"--help" "-h"}} flag)
+          (#{"--help" "-h"} flag)
           (recur more (assoc opts :help true))
 
           (= "--runs-dir" flag)

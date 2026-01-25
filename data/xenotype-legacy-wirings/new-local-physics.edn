@@ -1,0 +1,26 @@
+{:meta {:id :new-local-physics
+        :label "New local physics"
+        :source {:notebook "metaca-terminal-vocabulary-v2.md"
+                 :notes "Uses per-cell local physics (current fundamentals)."}
+        :description "Approximate current fundamentals via per-cell local physics kernel."}
+
+ :diagram
+ {:nodes [{:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :local-step :component :new-kernel-step}
+          {:id :out :component :output-sigil}]
+
+  :edges [{:from :ctx-pred :from-port :sigil :to :local-step :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :local-step :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :local-step :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :local-step :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :local-step :to-port :phe}
+          {:from :local-step :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Per-cell local physics kernel step; approximates current fundamentals."}

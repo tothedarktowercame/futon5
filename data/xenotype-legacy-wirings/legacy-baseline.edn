@@ -1,0 +1,28 @@
+{:meta {:id :legacy-baseline
+        :label "Legacy baseline kernel"
+        :source {:notebook "exotic-programming-notebook-iii.org"
+                 :run "Mission 17a refine baseline"
+                 :seed 4242}
+        :description "Legacy global kernel step with mutating-template; no exotype."}
+
+ :diagram
+ {:nodes [{:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :legacy-step :component :legacy-kernel-step
+           :params {:kernel :mutating-template}}
+          {:id :out :component :output-sigil}]
+
+  :edges [{:from :ctx-pred :from-port :sigil :to :legacy-step :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy-step :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy-step :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy-step :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy-step :to-port :phe}
+          {:from :legacy-step :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Minimal legacy baseline wiring: apply mutating-template kernel per cell."}
