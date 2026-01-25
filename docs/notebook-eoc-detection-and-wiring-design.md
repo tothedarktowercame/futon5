@@ -232,27 +232,55 @@ Detection method:
 
 **Every single run collapses to barcode by generation 100.**
 
-### Diagnosis Thresholds
+### Full Classification Scheme
+
+The detector now identifies **both** failure modes and the sweet spot:
 
 ```
-IF frozen-ratio > 0.7 THEN :vertical-barcode
-IF row-periodicity detected THEN :periodic-attractor
-IF mean-barcode-score > 0.15 THEN :horizontal-stripes
-IF exotype-unique < 5 THEN :exotype-collapse
-ELSE :healthy
+IF final-change-rate > 0.6 THEN :hot        -- Too chaotic (galaxy)
+IF frozen-ratio > 0.7       THEN :barcode   -- Too collapsed (stripes)
+IF frozen-ratio > 0.5       THEN :cooling   -- Trending toward barcode
+IF final-change-rate < 0.1  THEN :frozen    -- Nearly static
+IF 0.15 < change-rate < 0.45 AND frozen < 0.5 THEN :eoc-candidate
+ELSE :unknown
 ```
 
-### The Real Problem
+**The Regime Map**:
+```
+                    ← more stable    more chaotic →
 
-None of our wirings sustain EoC. They all:
-1. Start with coral-like activity (early generations)
-2. Collapse to barcode (74-93% frozen columns by gen 100)
-3. Settle into a few wide frozen stripes
+      FROZEN        BARCODE         EoC           HOT
+      (static)      (stripes)       (coral)       (galaxy)
+      <5% change    <10% change     15-45%        >60%
+      --% frozen    >70% frozen     <50% frozen   few frozen
+```
 
-The difference between wirings is minor:
-- Legacy: 74-93% frozen (varies by seed)
-- Boundary Guardian: 79-87% frozen (slightly better on average)
-- Prototype-001: 88-93% frozen (slightly worse)
+### The Real Problem: Cooling, Not Hot
+
+Updated analysis with change rates reveals the trajectory:
+
+| Run | Early Change | Final Change | Frozen % | Status |
+|-----|--------------|--------------|----------|--------|
+| legacy-352362012 (w=120) | 31% | **22%** | 55% | **COOLING** |
+| proto-352362012 (w=120) | 30% | **21%** | 58% | **COOLING** |
+| legacy-4242 (w=100) | 26% | 11% | 74% | BARCODE |
+| proto-4242 (w=100) | 27% | 0.7% | 88% | BARCODE |
+| boundary-4242 (w=100) | 25% | 7% | 79% | BARCODE |
+
+**Key insight**: All runs START in the EoC zone (17-31% early change rate) but COOL into barcode (0.4-11% final, 74-93% frozen).
+
+The "hot" failure mode (>60% change rate) was not observed in these experiments. Codex's 0.995 report may have been:
+- Different wiring configuration
+- Measured at different time (early generations?)
+- Different measurement (per-cell vs per-generation?)
+
+**Two Distinct Failure Modes**:
+
+1. **Hot** (galaxy-like): Too chaotic, >60% cells change per generation, noisy/random appearance. We haven't reproduced this in current experiments but it's a real failure mode that Codex observed.
+
+2. **Barcode** (stripe-like): Collapsed to attractors, columns freeze, deterministic patterns. This is what we're seeing in all current runs.
+
+**EoC is the narrow band between them** — sustained moderate activity (15-45% change) without freezing into patterns or exploding into noise. The current experiments show runs that START in EoC territory but COOL into barcode.
 
 ### Next Direction: Attractor Escape
 
