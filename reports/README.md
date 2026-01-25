@@ -10,6 +10,7 @@ Research reports, experiments, and visualizations from the futon5 MMCA project.
 |--------|-------------|
 | [Rule Photo Essay](rule-photo-essay.md) | Elementary CA rules (90, 110, 30, 184, 54) as MMCA wirings with spacetime visualizations |
 | [Rule 90 Bitplane Grid](images/rule-90-bitplanes-grid.png) | Decomposition of Rule 90 into 8 binary bitplanes |
+| [Rule 90 Sierpinski Diagnostic](rule90-sierpinski-diagnostic.md) | Testing if MMCA preserves Rule 90 dynamics (pure vs wiring comparison) |
 
 ## Key Findings
 
