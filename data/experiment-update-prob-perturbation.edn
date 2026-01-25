@@ -1,0 +1,84 @@
+{:description "Controlled perturbation: vary update-prob around known-good 工 baseline"
+ :hypothesis "update-prob=0.5 is optimal; deviations will degrade performance"
+ :baseline "Mission 17a 工 (update-prob=0.5, match-threshold=0.44)"
+ :primary-metric :filament
+ :length 120
+ :generations 120
+ :models
+ [;; Baseline: 工 with update-prob=0.5 (known-good)
+  {:id :baseline-工-up50
+   :label "baseline 工 update-prob=0.50"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Perturbation A: increase update-prob to 0.6
+  {:id :perturb-工-up60
+   :label "perturb 工 update-prob=0.60"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.6
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Perturbation B: decrease update-prob to 0.4
+  {:id :perturb-工-up40
+   :label "perturb 工 update-prob=0.40"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.4
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Replicate baseline on second seed
+  {:id :baseline-工-up50-seed2
+   :label "baseline 工 update-prob=0.50 seed2"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Perturbation A on second seed
+  {:id :perturb-工-up60-seed2
+   :label "perturb 工 update-prob=0.60 seed2"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.6
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Perturbation B on second seed
+  {:id :perturb-工-up40-seed2
+   :label "perturb 工 update-prob=0.40 seed2"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.4
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}]}
