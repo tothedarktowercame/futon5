@@ -88,35 +88,68 @@ See also: `reports/known-good-20-jvm3.md` for the full 20-run baseline set with 
 
 Start from these. Do not attempt to rediscover them from random search.
 
-## Automatic Failure Detection
+## Universal Health Classification
 
-Before reporting results, classify each run. These checks are mandatory.
+Use the standard health classifier for all run classification:
 
-The pseudocode below is illustrative. Use the last available phenotype row; if phenotype is absent, map the last genotype row to bits (sigil→bits) before classifying. If that mapping is not available, mark collapse as `:unknown` and call it out explicitly. For short runs (<10 generations), adapt the frozen check proportionally.
-
-### Collapsed (Hot → White)
-```
-white_ratio = count(last_row == 1) / length(last_row)
-IF white_ratio > 0.85 THEN status = :collapsed-white
-```
-
-### Collapsed (Hot → Black)
-```
-black_ratio = count(last_row == 0) / length(last_row)
-IF black_ratio > 0.85 THEN status = :collapsed-black
+```bash
+bb -cp src:resources scripts/run_health_report.clj \
+  --runs-dir /path/to/runs \
+  --markdown reports/health/experiment-name-health.md \
+  --csv reports/health/experiment-name-health.csv
 ```
 
-### Frozen (Stagnant)
-```
-IF last N rows are identical (N = min(10, max(2, generations/2))) THEN status = :frozen
-```
+### Classification Scheme
 
-### Possibly Good
-```
-IF none of the above THEN status = :candidate
-```
+| Status | Criteria | Visual | Action |
+|--------|----------|--------|--------|
+| **HOT** | >60% change rate | Galaxy (chaotic) | Reduce update-prob |
+| **BARCODE** | >70% columns frozen | Vertical stripes | System collapsed |
+| **COOLING** | 50-70% frozen | Trending → barcode | May still collapse |
+| **FROZEN** | <5% change rate | Static/dead | Increase update-prob |
+| **EoC** | 15-45% change, <50% frozen | Coral reef | **This is the target** |
+| **COLLAPSED** | >90% white or black | Uniform | Severely broken |
+| **PERIODIC** | Row repetition | Attractor | Low-dimensional trap |
 
-Only `:candidate` runs are worth examining further. Collapsed and frozen runs are failures.
+### Key Metrics
+
+- **Change Rate (final)**: % cells changing per gen in last 20 generations
+- **Change Rate (early)**: % cells changing in generations 5-25
+- **Frozen Ratio**: % columns with identical values in last 20 rows
+- **Stripe Count**: Number of contiguous frozen regions
+
+### Persist Health Reports
+
+**IMPORTANT**: Health reports must be committed to `reports/health/` so they're visible to all agents.
+
+Workflow:
+1. Run experiment → `/tmp/experiment-name/` (ephemeral)
+2. Classify → `reports/health/experiment-name-health.{md,csv}` (persistent)
+3. Commit the report
+4. Analyze and plan next experiment
+
+### The Two Failure Modes
+
+Runs fail in two distinct ways — **don't confuse them**:
+
+1. **HOT (galaxy)**: Too chaotic, everything changing, no structure
+   - Fix: Reduce update-prob, add stability bias
+
+2. **BARCODE (stripes)**: Collapsed to periodic attractor, columns frozen
+   - Fix: Inject perturbation, maintain diversity pressure
+
+**EoC is the narrow band between them.** Most experiments show BARCODE collapse by generation 100.
+
+### Legacy Detection Rules (Still Valid)
+
+The old collapsed/frozen/candidate checks are subsumed by the new classifier:
+
+- `collapsed-white` = >90% white final row → now part of COLLAPSED
+- `collapsed-black` = >90% black final row → now part of COLLAPSED
+- `frozen` = rows identical → now captured by FROZEN (<5% change)
+- `candidate` = none of above → now EoC or COOLING depending on metrics
+
+Only **EoC** runs are worth examining further. All other classifications are failure modes.
 
 ## Decision Tree: What To Try Next
 
