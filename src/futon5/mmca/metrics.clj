@@ -2,7 +2,8 @@
   "Metric helpers for MMCA runs."
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [futon5.ca.core :as ca]))
+            [futon5.ca.core :as ca]
+            [futon5.mmca.band-analysis :as band]))
 
 (defn avg [xs]
   (when (seq xs)
@@ -252,6 +253,16 @@
         phe-series-summary (when (seq phe-history) (summarize-series phe-history))
         phe-summary (when phe-series-summary (prefixed-summary "phe" phe-series-summary))
         basis (if (seq phe-history) phe-history gen-history)
+        band-analysis (band/analyze-run result)
+        band-summary (when band-analysis
+                       {:band-score (:band-score band-analysis)
+                        :band-moderate-ratio (:moderate-ratio band-analysis)
+                        :band-chaotic-ratio (:chaotic-ratio band-analysis)
+                        :band-frozen-ratio (:frozen-ratio band-analysis)
+                        :band-interpretation (:interpretation band-analysis)
+                        :band-active-bands (:active-bands band-analysis)
+                        :band-widest-band (:widest-band band-analysis)
+                        :band-history-type (:history-type band-analysis)})
         compress (compressibility-metrics basis)
         autocorr (autocorr-metrics basis)
         coherence (coherence-score interesting autocorr)
@@ -285,6 +296,7 @@
            compress
            autocorr
            {:first-stasis-step stasis-step}
+           band-summary
            gen-summary
            phe-summary
            lesion-summary

@@ -115,7 +115,13 @@
        vec))
 
 (def eval-registry
-  {:series-field (fn [{:keys [series]} {:keys [key]} _]
+  {:summary-field (fn [{:keys [summary]} {:keys [key]} _]
+                    (let [v (cond
+                              (vector? key) (get-in summary key)
+                              (keyword? key) (get summary key)
+                              :else nil)]
+                      {:score (double (or (when (number? v) v) 0.0))}))
+   :series-field (fn [{:keys [series]} {:keys [key]} _]
                    {:values (series-values series key)})
    :series-regime-flag (fn [{:keys [series]} {:keys [regime]} _]
                          {:flags (series-flags series #(= (:regime %) regime))})
@@ -201,7 +207,7 @@
 (defn evaluate-diagram
   "Evaluate a wiring diagram and return {:output .. :node-values ..}."
   ([diagram context] (evaluate-diagram diagram context {}))
-  ([diagram {:keys [summary run frames hex-score series components-path ctx state] :as context} registry]
+  ([diagram {:keys [summary run frames hex-score series components-path ctx state] :as _context} registry]
    (let [lib (wiring/load-components (or components-path "resources/xenotype-generator-components.edn"))
          registry (merge default-registry eval-registry generator/generator-registry registry)
          nodes (:nodes diagram)
@@ -247,9 +253,11 @@
 (defn evaluate-run-diagram
   "Evaluate a wiring diagram against a run, using windowed macro feature series."
   ([diagram run] (evaluate-run-diagram diagram run {}))
-  ([diagram run {:keys [W S components-path registry] :or {W 10 S 10}}]
-   (let [series (metrics/windowed-macro-features run {:W W :S S})]
+  ([diagram run {:keys [W S components-path registry summary] :or {W 10 S 10}}]
+   (let [series (metrics/windowed-macro-features run {:W W :S S})
+         summary (or summary (metrics/summarize-run run))]
      (evaluate-diagram diagram {:run run
                                 :series series
+                                :summary summary
                                 :components-path components-path}
                        (or registry {})))))

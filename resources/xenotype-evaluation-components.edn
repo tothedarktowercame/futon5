@@ -1,0 +1,85 @@
+{:types
+ {:summary {}
+  :series {}
+  :scalar {}
+  :scalar-list {}
+  :bool {}
+  :bool-list {}}
+
+ :components
+ {:summary-field
+  {:kind :source
+   :inputs [[:summary :summary]]
+   :outputs [[:score :scalar]]}
+
+  :series-field
+  {:kind :source
+   :inputs [[:series :series]]
+   :outputs [[:values :scalar-list]]}
+
+  :series-regime-flag
+  {:kind :source
+   :inputs [[:series :series]]
+   :outputs [[:flags :bool-list]]}
+
+  :temporal-mean
+  {:kind :combinator
+   :inputs [[:series :scalar-list]]
+   :outputs [[:score :scalar]]}
+
+  :series-min
+  {:kind :combinator
+   :inputs [[:values :scalar-list]]
+   :outputs [[:score :scalar]]}
+
+  :series-max
+  {:kind :combinator
+   :inputs [[:values :scalar-list]]
+   :outputs [[:score :scalar]]}
+
+  :series-ratio
+  {:kind :combinator
+   :inputs [[:flags :bool-list]]
+   :outputs [[:score :scalar]]}
+
+  :weighted-sum
+  {:kind :combinator
+   :inputs [[:scores :scalar-list] [:weights :scalar-list]]
+   :outputs [[:score :scalar]]}
+
+  :rank-fusion
+  {:kind :combinator
+   :inputs [[:scores :scalar-list]]
+   :outputs [[:rank :scalar]]}
+
+  :disagreement
+  {:kind :combinator
+   :inputs [[:scores :scalar-list]]
+   :outputs [[:sigma :scalar]]}
+
+  :normalize
+  {:kind :combinator
+   :inputs [[:score :scalar]]
+   :outputs [[:score :scalar]]}
+
+  :threshold-gate
+  {:kind :gate
+   :inputs [[:score :scalar] [:threshold :scalar]]
+   :outputs [[:pass? :bool]]}
+
+  :if-then-else
+  {:kind :control
+   :inputs [[:cond :bool] [:then :scalar] [:else :scalar]]
+   :outputs [[:score :scalar]]}
+
+  :parallel-vote
+  {:kind :control
+   :inputs [[:votes :bool-list]]
+   :outputs [[:pass? :bool]]}
+
+  :sequential-filter
+  {:kind :control
+   :inputs [[:scores :scalar-list] [:min-score :scalar]]
+   :outputs [[:scores :scalar-list]]}}
+
+ :constraints {}}
