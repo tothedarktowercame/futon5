@@ -11,7 +11,8 @@
    - Sigil → exotype params (existing, via futon5.mmca.exotype)
    - Exotype params → CT interpretation (mode structure, transitions)
    - CT interpretation → AIF policy config (cyberant terminals)"
-  (:require [futon5.adapters.notions :as notions]
+  (:require [clojure.edn :as edn]
+            [futon5.adapters.notions :as notions]
             [futon5.mmca.exotype :as exotype]))
 
 ;; =============================================================================
@@ -389,27 +390,298 @@
    "All other sigils interpolate between these poles.
     The 'meaning' of a sigil is its position in this space."})
 
+;; =============================================================================
+;; Wiring Diagram → Cyberant Config
+;; =============================================================================
+;;
+;; Wiring diagrams are compositional structures with nodes and edges.
+;; Key components to recognize:
+;;   - :legacy-kernel-step  → legacy path with exotype params (baseline behavior)
+;;   - :bit-xor, :bit-and   → creative/mutation operations (differentiate)
+;;   - :threshold-sigil     → gates/conditional switching (adapt triggers)
+;;   - :diversity           → diversity measurement (novelty sensing)
+;;   - :context-*           → context extraction (observations)
+
+(defn- find-nodes-by-component
+  "Find all nodes with a specific component type."
+  [diagram component-kw]
+  (filter #(= component-kw (:component %)) (:nodes diagram)))
+
+(defn- find-nodes-by-pattern
+  "Find nodes whose component name matches a pattern."
+  [diagram pattern]
+  (filter #(and (:component %)
+                (re-find pattern (name (:component %))))
+          (:nodes diagram)))
+
+(defn- extract-legacy-node
+  "Extract legacy kernel node and its params."
+  [diagram]
+  (first (find-nodes-by-component diagram :legacy-kernel-step)))
+
+(defn- extract-creative-nodes
+  "Find creative/mutation nodes (xor, and, mutate, etc)."
+  [diagram]
+  (find-nodes-by-pattern diagram #"xor|and|mutate|creative"))
+
+(defn- extract-gate-nodes
+  "Find gate/threshold nodes."
+  [diagram]
+  (find-nodes-by-pattern diagram #"threshold|gate"))
+
+(defn- extract-diversity-nodes
+  "Find diversity measurement nodes."
+  [diagram]
+  (find-nodes-by-component diagram :diversity))
+
+(defn- has-component?
+  "Check if diagram has a component of given type."
+  [diagram component-kw]
+  (seq (find-nodes-by-component diagram component-kw)))
+
+(defn- has-pattern?
+  "Check if diagram has a component matching pattern."
+  [diagram pattern]
+  (seq (find-nodes-by-pattern diagram pattern)))
+
+;; --- Wiring Structure Analysis ---
+
+(defn analyze-wiring-structure
+  "Analyze a wiring diagram's structural patterns.
+   Returns a map describing the wiring's behavioral architecture."
+  [wiring]
+  (let [diagram (:diagram wiring)
+        legacy-node (extract-legacy-node diagram)
+        creative-nodes (extract-creative-nodes diagram)
+        gate-nodes (extract-gate-nodes diagram)
+        diversity-nodes (extract-diversity-nodes diagram)]
+    {:id (get-in wiring [:meta :id])
+     :label (get-in wiring [:meta :label])
+
+     ;; Component presence
+     :has-legacy? (some? legacy-node)
+     :has-creative? (seq creative-nodes)
+     :has-gate? (seq gate-nodes)
+     :has-diversity? (seq diversity-nodes)
+
+     ;; Legacy path details
+     :legacy (when legacy-node
+               (let [params (:params legacy-node)]
+                 {:sigil (:exotype-sigil params)
+                  :tier (:exotype-tier params)
+                  :exotype-params (:exotype-params params)}))
+
+     ;; Creative path details
+     :creative {:count (count creative-nodes)
+                :types (mapv :component creative-nodes)}
+
+     ;; Gate details
+     :gate {:count (count gate-nodes)
+            :types (mapv :component gate-nodes)}
+
+     ;; Diversity sensing
+     :diversity {:count (count diversity-nodes)}
+
+     ;; Structural classification
+     :pattern (cond
+                (and (seq gate-nodes) (seq creative-nodes) (some? legacy-node))
+                :boundary-guardian  ; gate chooses between legacy and creative
+
+                (and (seq creative-nodes) (some? legacy-node))
+                :hybrid             ; both paths but no gate
+
+                (seq creative-nodes)
+                :creative-only      ; pure creative, no legacy
+
+                (some? legacy-node)
+                :legacy-only        ; pure legacy wrapper
+
+                :else
+                :unknown)}))
+
+;; --- Wiring → CT Interpretation ---
+
+(defn wiring->ct-interpretation
+  "Interpret a wiring diagram as CT structure.
+   Maps wiring components to behavioral patterns."
+  [wiring]
+  (let [analysis (analyze-wiring-structure wiring)
+        legacy-params (get-in analysis [:legacy :exotype-params])
+        pattern (:pattern analysis)]
+
+    {:wiring-id (:id analysis)
+     :pattern pattern
+
+     ;; VISION: what modes/situations does this wiring recognize?
+     :vision
+     (cond-> {:diversity-aware? (:has-diversity? analysis)
+              :conditional? (:has-gate? analysis)}
+       ;; If has legacy, inherit its mode bias
+       legacy-params
+       (assoc :mode-bias (rotation->mode-bias (or (:rotation legacy-params) 0))
+              :constraint-strength (threshold->constraint-strength
+                                    (or (:match-threshold legacy-params) 0.5))))
+
+     ;; PLAN: how does it intend to behave?
+     :plan
+     (cond-> {}
+       ;; Legacy path contributes baseline behavior
+       legacy-params
+       (assoc :baseline-coordination (mix-mode->coordination
+                                       (or (:mix-mode legacy-params) :none))
+              :baseline-transition-rate (update-prob->transition-rate
+                                          (or (:update-prob legacy-params) 0.5)))
+       ;; Creative path adds differentiation capability
+       (:has-creative? analysis)
+       (assoc :creative-coordination :differentiate
+              :creative-mode :novelty-seek))
+
+     ;; ADAPT: when does it switch between paths?
+     :adapt
+     (cond-> {:switchable? (:has-gate? analysis)}
+       (:has-gate? analysis)
+       (assoc :trigger (if (:has-diversity? analysis) :diversity-high :threshold)
+              :switch-threshold 0.5)  ; default, could extract from wiring
+       (:has-diversity? analysis)
+       (assoc :diversity-driven? true))}))
+
+;; --- CT Interpretation → Cyberant Config (for wirings) ---
+
+(defn wiring-ct->cyberant-config
+  "Convert wiring CT interpretation to cyberant config."
+  [{:keys [wiring-id pattern vision plan adapt] :as interp}]
+  (let [;; Base policy from legacy path (if present)
+        base-policy (if (:mode-bias vision)
+                      (mode-bias->policy-priors (:mode-bias vision))
+                      {:forage 0.25 :return 0.25 :hold 0.25 :pheromone 0.25})
+
+        ;; Base pattern-sense from legacy coordination
+        base-pattern-sense (coordination->pattern-behavior
+                            (or (:baseline-coordination plan) :independent))
+
+        ;; Creative pattern-sense (for switching)
+        creative-pattern-sense (when (:creative-coordination plan)
+                                 (coordination->pattern-behavior
+                                  (:creative-coordination plan)))]
+
+    {:species (keyword (str "cyber-wiring-" (or (name wiring-id) "unknown")))
+     :wiring-id wiring-id
+     :wiring-pattern pattern
+
+     ;; Policy structure (from legacy baseline)
+     :policy-priors base-policy
+     :default-mode (or (:mode-bias vision) :adaptive)
+
+     ;; Precision / temperature
+     :precision {:Pi-o (constraint-strength->precision
+                        (or (:constraint-strength vision) :moderate))
+                 :tau (transition-rate->tau
+                       (or (:baseline-transition-rate plan) :moderate))}
+
+     ;; Pattern behavior (baseline)
+     :pattern-sense base-pattern-sense
+
+     ;; Adaptation config (gate behavior)
+     :adapt-config
+     (when (:switchable? adapt)
+       {:enabled? true
+        :trigger (or (:trigger adapt) :novelty-high)
+        :threshold (or (:switch-threshold adapt) 0.5)
+        :diversity-driven? (:diversity-driven? adapt)
+        ;; What to switch TO when trigger fires
+        :switch-to (when creative-pattern-sense
+                     {:pattern-sense creative-pattern-sense})})
+
+     ;; CT provenance
+     :ct-provenance interp}))
+
+;; --- Main Wiring Pipeline ---
+
+(defn wiring->cyberant
+  "Full pipeline: wiring diagram → analysis → CT interpretation → cyberant config.
+
+   This is the generalized version of sigil->cyberant that handles
+   compositional wiring structures with gates, creative paths, and diversity sensing."
+  [wiring]
+  (-> wiring
+      wiring->ct-interpretation
+      wiring-ct->cyberant-config))
+
+(defn load-wiring
+  "Load a wiring from an EDN file."
+  [path]
+  (try
+    (edn/read-string {:readers {'object (fn [_] nil)}}
+                     (slurp path))
+    (catch Exception e
+      (println "Warning: Could not load wiring" path ":" (.getMessage e))
+      nil)))
+
+(defn wiring-file->cyberant
+  "Load a wiring file and convert to cyberant config."
+  [path]
+  (when-let [wiring (load-wiring path)]
+    (wiring->cyberant wiring)))
+
+;; --- Unified Entry Point ---
+
+(defn convert->cyberant
+  "Unified conversion: accepts sigil string, wiring map, or file path.
+
+   Examples:
+     (convert->cyberant \"工\")                         ; sigil
+     (convert->cyberant {:diagram {...} :meta {...}})  ; wiring map
+     (convert->cyberant \"data/wiring-ladder/level-5-creative.edn\")  ; file"
+  [input]
+  (cond
+    ;; String: either sigil or file path
+    (string? input)
+    (if (or (.endsWith input ".edn")
+            (.contains input "/"))
+      (wiring-file->cyberant input)
+      (sigil->cyberant input))
+
+    ;; Map with :diagram key: wiring
+    (and (map? input) (:diagram input))
+    (wiring->cyberant input)
+
+    ;; Map with :sigil key: assume exotype-like
+    (and (map? input) (:sigil input))
+    (sigil->cyberant (:sigil input))
+
+    :else
+    (throw (ex-info "Unknown input type for cyberant conversion"
+                    {:input input :type (type input)}))))
+
 (comment
-  ;; Example usage
+  ;; === Sigil examples (existing) ===
   (sigil->cyberant "土")
   ;; => {:species :cyber-土, :sigil "土", :tier :local, ...}
 
-  ;; Flexiarg-driven patterns (uses @ant-interpretation when present)
-  (pattern-id->cyberant "iching/hexagram-44-gou")
-
-  (interpret-foundational-sigils)
-  ;; => {:foundational [...], :interpolation-note "..."}
-
-  ;; Batch convert EoC candidates from M17
   (batch-convert ["土" "工" "上" "下"])
 
-  ;; Batch convert pattern ids
-  (batch-patterns ["iching/hexagram-44-gou" "iching/hexagram-11-tai"])
+  ;; === Wiring examples (new) ===
 
-  ;; Compose a module-based program
-  (pattern-program->cyberant
-   {:policy "iching/hexagram-44-gou"
-    :precision "iching/hexagram-52-gen"
-    :pattern-sense "iching/hexagram-57-xun"
-    :adapt "iching/hexagram-43-guai"})
+  ;; Load and convert L5-creative
+  (wiring-file->cyberant "data/wiring-ladder/level-5-creative.edn")
+  ;; => {:species :cyber-wiring-level-5-creative,
+  ;;     :wiring-pattern :boundary-guardian,
+  ;;     :adapt-config {:enabled? true, :trigger :diversity-high, ...}, ...}
+
+  ;; Analyze wiring structure
+  (-> (load-wiring "data/wiring-ladder/level-5-creative.edn")
+      analyze-wiring-structure)
+  ;; => {:pattern :boundary-guardian, :has-legacy? true, :has-creative? true, ...}
+
+  ;; Unified entry point
+  (convert->cyberant "工")                                    ; sigil
+  (convert->cyberant "data/wiring-ladder/level-5-creative.edn")  ; file
+
+  ;; Compare L5-creative vs pure sigil
+  (let [l5 (convert->cyberant "data/wiring-ladder/level-5-creative.edn")
+        gong (convert->cyberant "工")]
+    {:l5-pattern (:wiring-pattern l5)
+     :l5-adapt (:adapt-config l5)
+     :gong-pattern (:wiring-pattern gong)  ; nil (it's a sigil, not wiring)
+     :gong-adapt (:adapt-config gong)})    ; nil
   )
