@@ -300,3 +300,19 @@ And **multiple exotypes** (gong, xiong, etc.) in `data/xenotype-legacy-wirings/`
 - `reports/wirings/wiring-outcomes.edn` - manual outcome tracking
 - `reports/wirings/learning-loop-analysis.md` - auto-generated analysis
 - `reports/health/*.csv` - per-experiment health data (input to learning loop)
+
+### Wiring Outcomes Schema (v2)
+
+The wiring outcomes registry now supports **cross-domain validation**:
+- `:mmca-outcomes` → in-domain health metrics
+- `:xenotype-transfer` → per-domain transfer results (e.g., ants)
+
+When updating `reports/wirings/wiring-outcomes.edn`, include transfer results
+if available and note the schema version change.
+
+### Learning Loop (Trait-Aware)
+
+The learning loop report now includes **component trait coverage** and
+trait correlations (e.g., `allele-stratified`, `sigil-level`). Review the
+"Trait Coverage" section in `reports/wirings/learning-loop-analysis.md`
+after each run.

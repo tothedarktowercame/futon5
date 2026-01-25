@@ -30,16 +30,21 @@
       (< (count s) len) (str s (apply str (repeat (- len (count s)) fill)))
       :else (subs s 0 len))))
 
-(defn- bits->byte [bits]
-  (Integer/parseInt bits 2))
+(defn- fold12->8 [bits12]
+  (let [bits12 (pad-right (or bits12 "") 12 "0")
+        int (Integer/parseInt bits12 2)
+        low (bit-and int 0xFF)
+        high (bit-and (bit-shift-right int 8) 0xF)
+        mask (bit-or high (bit-shift-left high 4))]
+    (bit-xor low mask)))
 
-(defn- bits->rgb [bits]
-  (let [bits (pad-right (or bits "") 24 "0")
-        channels (partition 8 bits)]
-    (mapv (fn [chunk] (bits->byte (apply str chunk))) channels)))
-
-(defn- xor-bits [a b]
-  (apply str (map (fn [x y] (if (= x y) \0 \1)) a b)))
+(defn- bits36->rgb [bits]
+  (let [bits (pad-right (or bits "") 36 "0")
+        [a b c] (partition 12 bits)
+        r (fold12->8 (apply str a))
+        g (fold12->8 (apply str b))
+        b (fold12->8 (apply str c))]
+    [r g b]))
 
 (defn- sigil-at [s idx]
   (if (and s (<= 0 idx) (< idx (count s)))
@@ -59,28 +64,29 @@
   [history]
   (mapv #(render-row % (fn [ch] (sigil->rgb (str ch)))) history))
 
-(defn- exotype->rgb [pred self next out phe-bits]
-  (let [base (str (ca/bits-for pred) (ca/bits-for self) (ca/bits-for next))
-        extra (str (ca/bits-for out) (apply str phe-bits))
-        mask (apply str (take 24 (cycle extra)))
-        mixed (xor-bits base mask)]
-    (bits->rgb mixed)))
+(defn- exotype->rgb [pred self next prev phe-bits]
+  (let [bits (str (ca/bits-for pred)
+                  (ca/bits-for self)
+                  (ca/bits-for next)
+                  (ca/bits-for prev)
+                  (apply str phe-bits))]
+    (bits36->rgb bits)))
 
-(defn- exotype-row [g g-next p p-next len]
+(defn- exotype-row [g g-prev p p-next len]
   (let [g (pad-right g len ca/default-sigil)
-        g-next (pad-right g-next len ca/default-sigil)
+        g-prev (pad-right g-prev len ca/default-sigil)
         p (pad-right p len "0")
         p-next (pad-right p-next len "0")]
     (mapv (fn [x]
             (let [pred (sigil-at g (dec x))
                   self (sigil-at g x)
                   next (sigil-at g (inc x))
-                  out (sigil-at g-next x)
+                  prev (sigil-at g-prev x)
                   phe-bits [(bit-at p (dec x))
                             (bit-at p x)
                             (bit-at p (inc x))
                             (bit-at p-next x)]]
-              (exotype->rgb pred self next out phe-bits)))
+              (exotype->rgb pred self next prev phe-bits)))
           (range len))))
 
 (defn- join-panels [panels]
@@ -106,11 +112,11 @@
         g-len (count (or (first gen-history) ""))]
     (mapv (fn [idx]
             (let [g (nth gen-history idx "")
-                  g-next (nth gen-history (inc idx) "")
+                  g-prev (nth gen-history (max 0 (dec idx)) "")
                   p (if (seq phe-history) (nth phe-history idx "") "")
                   p-next (if (seq phe-history) (nth phe-history (inc idx) "") "")
                   g-row (render-row g (fn [ch] (sigil->rgb (str ch))))
-                  e-row (exotype-row g g-next p p-next g-len)]
+                  e-row (exotype-row g g-prev p p-next g-len)]
               (join-panels [g-row e-row])))
           (range rows))))
 
@@ -121,12 +127,12 @@
         p-len (count (or (first phe-history) ""))]
     (mapv (fn [idx]
             (let [g (pad-right (nth gen-history idx "") g-len ca/default-sigil)
-                  g-next (pad-right (nth gen-history (inc idx) "") g-len ca/default-sigil)
+                  g-prev (pad-right (nth gen-history (max 0 (dec idx)) "") g-len ca/default-sigil)
                   p (pad-right (nth phe-history idx "") p-len "0")
                   p-next (pad-right (nth phe-history (inc idx) "") p-len "0")
                   g-row (render-row g (fn [ch] (sigil->rgb (str ch))))
                   p-row (render-row p phenotype->rgb)
-                  e-row (exotype-row g g-next p p-next g-len)]
+                  e-row (exotype-row g g-prev p p-next g-len)]
               (join-panels [g-row p-row e-row])))
           (range rows))))
 
