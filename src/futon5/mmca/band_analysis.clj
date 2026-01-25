@@ -6,10 +6,14 @@
 (defn- string->bits [s]
   (mapv char->bit s))
 
+(defn- rows-from-history
+  [history row->values]
+  (mapv row->values history))
+
 (defn column-values
   "Extract values for column idx across all generations."
-  [history idx]
-  (mapv #(nth (string->bits %) idx) history))
+  [rows idx]
+  (mapv #(nth % idx) rows))
 
 (defn- shannon-entropy
   "Compute Shannon entropy of a sequence of values."
@@ -28,13 +32,13 @@
 
 (defn column-entropy
   "Entropy of a single column over time."
-  [history idx]
-  (shannon-entropy (column-values history idx)))
+  [rows idx]
+  (shannon-entropy (column-values rows idx)))
 
 (defn column-change-rate
   "Fraction of generations where column idx changes value."
-  [history idx]
-  (let [col (column-values history idx)
+  [rows idx]
+  (let [col (column-values rows idx)
         pairs (partition 2 1 col)
         changes (count (filter (fn [[a b]] (not= a b)) pairs))]
     (if (< (count col) 2)
@@ -44,8 +48,8 @@
 (defn column-run-lengths
   "Compute run lengths (consecutive same values) for a column.
    Returns map with :mean-run-length and :max-run-length."
-  [history idx]
-  (let [col (column-values history idx)
+  [rows idx]
+  (let [col (column-values rows idx)
         runs (partition-by identity col)
         lengths (map count runs)]
     {:mean-run-length (if (seq lengths) (double (/ (reduce + lengths) (count lengths))) 0.0)
@@ -53,10 +57,10 @@
 
 (defn analyze-column
   "Full analysis of a single column."
-  [history idx]
-  (let [entropy (column-entropy history idx)
-        change-rate (column-change-rate history idx)
-        runs (column-run-lengths history idx)]
+  [rows idx]
+  (let [entropy (column-entropy rows idx)
+        change-rate (column-change-rate rows idx)
+        runs (column-run-lengths rows idx)]
     {:column idx
      :entropy entropy
      :change-rate change-rate
@@ -70,9 +74,10 @@
 
 (defn analyze-all-columns
   "Analyze all columns in a history."
-  [history]
-  (let [len (count (first history))]
-    (mapv #(analyze-column history %) (range len))))
+  [history row->values]
+  (let [rows (rows-from-history history row->values)
+        len (count (first rows))]
+    (mapv #(analyze-column rows %) (range len))))
 
 (defn band-summary
   "Summarize vertical band characteristics for a run."
@@ -147,22 +152,24 @@
     {:periodic? false}))
 
 (defn analyze-history
-  "Analyze a raw history vector of strings."
-  [history]
-  (when (seq history)
-    (let [col-analyses (analyze-all-columns history)
-          summary (band-summary col-analyses)
-          bands (find-active-bands col-analyses)
-          periodicity (row-periodicity history)]
-      (assoc summary
-             :generations (count history)
-             :active-bands (count bands)
-             :band-widths (map count bands)
-             :widest-band (if (seq bands) (apply max (map count bands)) 0)
-             :row-periodicity periodicity
-             :row-periodic? (:periodic? periodicity)
-             :row-period (:period periodicity)
-             :row-period-strength (:strength periodicity)))))
+  "Analyze a raw history vector. Use :row->values to coerce rows."
+  ([history]
+   (analyze-history history {:row->values string->bits}))
+  ([history {:keys [row->values] :or {row->values string->bits}}]
+   (when (seq history)
+     (let [col-analyses (analyze-all-columns history row->values)
+           summary (band-summary col-analyses)
+           bands (find-active-bands col-analyses)
+           periodicity (row-periodicity history)]
+       (assoc summary
+              :generations (count history)
+              :active-bands (count bands)
+              :band-widths (map count bands)
+              :widest-band (if (seq bands) (apply max (map count bands)) 0)
+              :row-periodicity periodicity
+              :row-periodic? (:periodic? periodicity)
+              :row-period (:period periodicity)
+              :row-period-strength (:strength periodicity))))))
 
 (defn analyze-run
   "Analyze a run map with :phe-history or :gen-history."
@@ -170,7 +177,8 @@
   (let [phe-hist (:phe-history run)
         gen-hist (:gen-history run)
         history (if (seq phe-hist) phe-hist gen-hist)
-        history-type (if (seq phe-hist) :phenotype :genotype)]
+        history-type (if (seq phe-hist) :phenotype :genotype)
+        row->values (if (= history-type :phenotype) string->bits vec)]
     (when (seq history)
-      (assoc (analyze-history history)
+      (assoc (analyze-history history {:row->values row->values})
              :history-type history-type))))

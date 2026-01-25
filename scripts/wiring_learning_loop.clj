@@ -10,8 +10,7 @@
 
    Usage:
      bb -cp src:resources scripts/wiring_learning_loop.clj [options]"
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.wiring.features :as features]))
 
@@ -198,14 +197,40 @@
 (defn analyze-correlations
   "Analyze correlations between all features and outcomes."
   [joined]
-  (let [feature-keys [:node-count :edge-count :complexity
-                      :gate-nodes :legacy-nodes :creative-nodes :diversity-nodes
-                      :gate-ratio :creative-ratio
-                      :has-legacy? :has-gates? :has-creative? :has-diversity?]]
+  (let [base-keys [:node-count :edge-count :complexity
+                   :gate-nodes :legacy-nodes :creative-nodes :diversity-nodes
+                   :gate-ratio :creative-ratio
+                   :has-legacy? :has-gates? :has-creative? :has-diversity?]
+        trait-keys (->> joined
+                        (mapcat #(keys (:wiring-features %)))
+                        (filter #(= "trait" (namespace %)))
+                        distinct
+                        sort)
+        feature-keys (concat base-keys trait-keys)]
     (->> feature-keys
          (map #(feature-correlation joined %))
          (filter some?)
          (sort-by :correlation >))))
+
+(defn- trait-coverage
+  [features]
+  (let [trait-counts (->> features
+                          (map :trait-counts)
+                          (remove nil?))
+        traits (->> trait-counts
+                    (mapcat keys)
+                    distinct
+                    sort)]
+    (for [trait traits
+          :let [counts (map #(get % trait 0) trait-counts)
+                ratios (map #(get % trait 0.0) (map :trait-ratios features))
+                avg-count (when (seq counts)
+                            (/ (reduce + counts) (double (count counts))))
+                avg-ratio (when (seq ratios)
+                            (/ (reduce + ratios) (double (count ratios))))]]
+      {:trait trait
+       :avg-count avg-count
+       :avg-ratio avg-ratio})))
 
 ;; === Suggestions ===
 
@@ -255,7 +280,7 @@
 ;; === Output ===
 
 (defn markdown-report
-  [features outcomes joined correlations suggestions]
+  [features _outcomes joined correlations suggestions]
   (str/join
    "\n"
    (concat
@@ -266,7 +291,7 @@
      "## Data Summary"
      ""
      (format "- **Wirings analyzed**: %d" (count features))
-     (format "- **Outcomes collected**: %d" (count outcomes))
+     (format "- **Outcomes collected**: %d" (count _outcomes))
      (format "- **Joined records**: %d" (count joined))
      ""
      "## Classification Distribution"
@@ -289,6 +314,18 @@
 
     (for [{:keys [feature correlation n]} correlations]
       (format "| %s | %.3f | %d |" (name feature) correlation n))
+
+    [""
+     "## Trait Coverage"
+     ""
+     "| Trait | Avg Nodes | Avg Ratio |"
+     "|-------|-----------|-----------|"]
+
+    (let [summary (trait-coverage features)]
+      (if (seq summary)
+        (for [{:keys [trait avg-count avg-ratio]} summary]
+          (format "| %s | %.2f | %.3f |" (name trait) (double avg-count) (double avg-ratio)))
+        ["| (none) | 0 | 0.000 |"]))
 
     [""
      "## Insights"
@@ -315,7 +352,7 @@
 ;; === Main ===
 
 (defn -main [& args]
-  (let [{:keys [help unknown wirings-dir health-dir outcomes out markdown]}
+  (let [{:keys [help unknown wirings-dir health-dir out markdown]}
         (parse-args args)
         wirings-dir (or wirings-dir "data")
         health-dir (or health-dir "reports/health")]

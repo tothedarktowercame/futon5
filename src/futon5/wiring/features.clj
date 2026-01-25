@@ -1,8 +1,7 @@
 (ns futon5.wiring.features
   "Extract structural features from wiring diagrams for learning."
   (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.set :as set]))
+            [clojure.java.io :as io]))
 
 ;; === Feature Extraction ===
 
@@ -15,6 +14,64 @@
   "Extract set of component types used."
   [diagram]
   (set (map :component (:nodes diagram))))
+
+(def ^:private generator-components-path
+  "xenotype-generator-components.edn")
+
+(defn- load-generator-components
+  []
+  (when-let [res (io/resource generator-components-path)]
+    (edn/read-string {:readers {'object (fn [_] nil)}}
+                     (slurp res))))
+
+(defonce ^:private generator-components*
+  (delay (load-generator-components)))
+
+(defn- generator-components
+  []
+  @generator-components*)
+
+(defn- component-traits
+  [lib component-id]
+  (set (get-in lib [:components component-id :traits])))
+
+(defn- trait-counts
+  [diagram lib]
+  (if (and diagram lib)
+    (reduce (fn [acc {:keys [component]}]
+              (reduce (fn [acc trait]
+                        (update acc trait (fnil inc 0)))
+                      acc
+                      (component-traits lib component)))
+            {}
+            (:nodes diagram))
+    {}))
+
+(defn- trait-ratios
+  [diagram trait-counts]
+  (let [n (count (:nodes diagram))]
+    (into {}
+          (for [[trait count] trait-counts]
+            [trait (if (pos? n)
+                     (double (/ count n))
+                     0.0)]))))
+
+(defn- trait-feature-map
+  [trait-counts trait-ratios]
+  (merge
+   (into {} (for [[trait count] trait-counts]
+              [(keyword "trait" (str (name trait) "-nodes")) count]))
+   (into {} (for [[trait ratio] trait-ratios]
+              [(keyword "trait" (str (name trait) "-ratio")) ratio]))))
+
+(defn allele-stratified-nodes
+  "Count nodes whose component is tagged :allele-stratified."
+  ([diagram] (allele-stratified-nodes diagram (generator-components)))
+  ([diagram lib]
+   (let [nodes (:nodes diagram)]
+     (count (filter (fn [{:keys [component]}]
+                      (contains? (component-traits lib component) :allele-stratified))
+                    nodes)))))
 
 (defn has-component?
   "Check if wiring uses a specific component type."
@@ -112,9 +169,15 @@
   "Extract all structural features from a wiring diagram.
    Returns a map of feature-name → value."
   [wiring]
-  (let [diagram (:diagram wiring)]
+  (let [diagram (:diagram wiring)
+        lib (when diagram (generator-components))
+        trait-counts (when diagram (trait-counts diagram lib))
+        trait-ratios (when diagram (trait-ratios diagram trait-counts))
+        trait-features (trait-feature-map (or trait-counts {}) (or trait-ratios {}))
+        allele-count (get trait-counts :allele-stratified 0)]
     (if diagram
-      {:node-count (node-count diagram)
+      (merge
+       {:node-count (node-count diagram)
        :edge-count (edge-count diagram)
        :nodes-with-params (nodes-with-params diagram)
        :value-edges (value-edges diagram)
@@ -123,6 +186,9 @@
        :legacy-nodes (legacy-nodes diagram)
        :creative-nodes (creative-nodes diagram)
        :diversity-nodes (diversity-nodes diagram)
+       :allele-stratified-nodes allele-count
+       :trait-counts trait-counts
+       :trait-ratios trait-ratios
        :max-in-degree (max-in-degree diagram)
        :max-out-degree (max-out-degree diagram)
        ;; Boolean features
@@ -130,6 +196,7 @@
        :has-gates? (pos? (gate-nodes diagram))
        :has-creative? (pos? (creative-nodes diagram))
        :has-diversity? (pos? (diversity-nodes diagram))
+       :has-allele-stratified? (pos? allele-count)
        ;; Derived features
        :complexity (+ (node-count diagram) (edge-count diagram))
        :gate-ratio (if (pos? (node-count diagram))
@@ -137,7 +204,11 @@
                      0.0)
        :creative-ratio (if (pos? (node-count diagram))
                          (double (/ (creative-nodes diagram) (node-count diagram)))
-                         0.0)}
+                         0.0)
+       :allele-stratified-ratio (if (pos? (node-count diagram))
+                                  (double (/ allele-count (node-count diagram)))
+                                  0.0)}
+       trait-features)
       ;; No diagram - probably direct exotype specification
       {:node-count 0
        :edge-count 0

@@ -45,57 +45,68 @@
   :bit-xor
   {:inputs [[:a :sigil] [:b :sigil]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "XOR of two sigils (addition mod 2)"}
 
   :bit-and
   {:inputs [[:a :sigil] [:b :sigil]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "AND of two sigils (multiplication)"}
 
   :bit-or
   {:inputs [[:a :sigil] [:b :sigil]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "OR of two sigils"}
 
   :bit-not
   {:inputs [[:sigil :sigil]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "NOT of sigil (flip all bits)"}
 
   :bit-shift-left
   {:inputs [[:sigil :sigil] [:n :int]]
    :outputs [[:result :sigil]]
+   :traits [:bit-mixing]
    :doc "Rotate sigil left n positions"}
 
   :bit-shift-right
   {:inputs [[:sigil :sigil] [:n :int]]
    :outputs [[:result :sigil]]
+   :traits [:bit-mixing]
    :doc "Rotate sigil right n positions"}
 
   ;; Aggregation Operations
   :majority
   {:inputs [[:sigils :sigil-list]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "Per-bit majority vote across sigils"}
 
   :minority
   {:inputs [[:sigils :sigil-list]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "Per-bit minority vote across sigils"}
 
   :blend
   {:inputs [[:sigils :sigil-list] [:weights :scalar-list]]
    :outputs [[:result :sigil]]
+   :traits [:sigil-level]
    :doc "Weighted blend of sigils, snapped to nearest"}
 
   :random-pick
   {:inputs [[:sigils :sigil-list]]
    :outputs [[:result :sigil]]
+   :traits [:sigil-level]
    :doc "Random selection from sigil set"}
 
   :modal
   {:inputs [[:sigils :sigil-list]]
    :outputs [[:result :sigil]]
+   :traits [:sigil-level]
    :doc "Most frequent sigil in list"}
 
   ;; Comparison Operations
@@ -123,21 +134,25 @@
   :mutate
   {:inputs [[:sigil :sigil] [:rate :scalar]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "Flip each bit with given probability"}
 
   :mutate-toward
   {:inputs [[:sigil :sigil] [:target :sigil] [:rate :scalar]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "Bias mutation toward target sigil"}
 
   :crossover
   {:inputs [[:a :sigil] [:b :sigil] [:point :int]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "Single-point crossover at given position"}
 
   :uniform-crossover
   {:inputs [[:a :sigil] [:b :sigil] [:rate :scalar]]
    :outputs [[:result :sigil]]
+   :traits [:allele-stratified]
    :doc "Per-bit crossover with given probability"}
 
   ;;; ============================================================

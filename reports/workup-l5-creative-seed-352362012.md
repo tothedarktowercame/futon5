@@ -41,6 +41,15 @@ From `scripts/vertical_band_analysis.clj` output:
 - Interpretation: **mostly‑chaotic**
 - Row periodicity: **none detected**
 
+## Band Analysis (genotype, symbol-level)
+Computed via `band-analysis/analyze-history` with raw symbols (not bit‑coerced):
+- Chaotic columns: **100%** (100/100)
+- Frozen columns: **0%**
+- Band score: **0.0**
+- Mean change rate: **0.9967**
+- Interpretation: **mostly‑chaotic**
+- Row periodicity: **none detected**
+
 ## Summary Metrics (run :summary)
 From run EDN `:summary`:
 - `avg-change` **0.9967** (genotype)
@@ -52,8 +61,25 @@ From run EDN `:summary`:
 - `band-interpretation` **:mostly-chaotic**
 - `band-row-periodic?` **false**
 
+## Structured Chaos (diagonal coherence heuristic)
+Computed with new `structured-chaos-score` (diag autocorr × spatial band × activity):
+- **Genotype**: diag‑autocorr **0.0145**, structured‑chaos **0.0**
+- **Phenotype**: diag‑autocorr **0.5022**, structured‑chaos **0.1676**
+
+## Stunted Trees (Rule‑90‑style clearings)
+Triangle‑clearing detector on **genotype bitplanes**:
+- Best plane: **5**
+- Triangles found (max across planes): **40**
+- Triangle score (best plane): **0.133**
+- Density (best plane): **0.396**
+- Avg height (max): **3.54**
+
+Vote‑projection (majority of sigil bits; seeded tie‑break):
+- Triangles found: **1**
+- Triangle score: **0.003**
+
 ## Layered Observations
-- **Genotype**: strong structure (high entropy/change but visually ordered).
+- **Genotype**: visually EoC (structured, not uniform chaos); the **triangle detector on bitplanes** now aligns with the visual “stunted tree” pattern, even though symbol‑level band metrics still read mostly‑chaotic.
 - **Phenotype**: acceptable dynamics (change ~0.5, no barcode).
 - **Exotype**: appears turbulent/chaotic — may be the “price” of the above.
 

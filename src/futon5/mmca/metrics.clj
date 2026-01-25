@@ -3,7 +3,8 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [futon5.ca.core :as ca]
-            [futon5.mmca.band-analysis :as band]))
+            [futon5.mmca.band-analysis :as band]
+            [futon5.mmca.triangle-analysis :as tri]))
 
 (defn avg [xs]
   (when (seq xs)
@@ -64,6 +65,38 @@
       (/ (double (count (filter (fn [[a b]] (= a b)) pairs)))
          total))))
 
+(defn- row->vec [row]
+  (cond
+    (vector? row) row
+    (string? row) (vec row)
+    (sequential? row) (vec row)
+    :else (vec (seq (str row)))))
+
+(defn- diag-autocorr-pair [row-a row-b shift]
+  (let [a (row->vec row-a)
+        b (row->vec row-b)
+        len (min (count a) (count b))
+        shift (int shift)
+        offset (Math/abs shift)
+        n (- len offset)
+        start-a (if (neg? shift) offset 0)
+        start-b (if (pos? shift) offset 0)]
+    (when (pos? n)
+      (loop [idx 0
+             matches 0]
+        (if (>= idx n)
+          (/ (double matches) (double n))
+          (recur (inc idx)
+                 (if (= (nth a (+ start-a idx))
+                        (nth b (+ start-b idx)))
+                   (inc matches)
+                   matches)))))))
+
+(defn- diag-autocorr [history shift]
+  (let [pairs (partition 2 1 history)
+        diag (keep (fn [[a b]] (diag-autocorr-pair a b shift)) pairs)]
+    (avg diag)))
+
 (defn autocorr-metrics [history]
   (let [entries (remove nil? history)
         spatial (keep spatial-autocorr entries)
@@ -71,9 +104,16 @@
         temporal (keep (fn [[a b]]
                          (when-let [rate (hamming-rate a b)]
                            (- 1.0 rate)))
-                       pairs)]
+                       pairs)
+        diag-left (diag-autocorr entries -1)
+        diag-right (diag-autocorr entries 1)
+        diag-max (when (or diag-left diag-right)
+                   (apply max (remove nil? [diag-left diag-right])))]
     {:spatial-autocorr (avg spatial)
-     :temporal-autocorr (avg temporal)}))
+     :temporal-autocorr (avg temporal)
+     :diag-autocorr-left diag-left
+     :diag-autocorr-right diag-right
+     :diag-autocorr diag-max}))
 
 (defn phenotype-metrics [phe-history]
   (let [pairs (partition 2 1 phe-history)
@@ -145,6 +185,16 @@
   (when (and (number? x) (pos? (double width)))
     (max 0.0 (- 1.0 (/ (Math/abs (- x center)) (double width))))))
 
+(defn structured-chaos-score
+  "Heuristic: diagonal coherence + mid-band spatial structure + high activity."
+  [{:keys [avg-entropy-n avg-change]} {:keys [spatial-autocorr diag-autocorr]}]
+  (let [diag (or diag-autocorr 0.0)
+        spatial-score (or (band-score spatial-autocorr 0.5 0.35) 0.0)
+        change-score (or (band-score avg-change 0.8 0.45) 0.0)
+        entropy-score (or (band-score avg-entropy-n 0.7 0.4) 0.0)
+        chaos (max change-score entropy-score)]
+    (* diag spatial-score chaos)))
+
 (defn coherence-score
   [{:keys [avg-entropy-n avg-change]} {:keys [spatial-autocorr temporal-autocorr]}]
   (let [entropy-score (or (band-score avg-entropy-n 0.6 0.35) 0.0)
@@ -191,13 +241,15 @@
   (let [k (fn [suffix] (keyword prefix suffix))]
     {(k "composite-score") (:composite-score summary)
      (k "coherence") (:coherence summary)
+     (k "structured-chaos-score") (:structured-chaos-score summary)
      (k "score") (:score summary)
      (k "avg-change") (:avg-change summary)
      (k "avg-entropy-n") (:avg-entropy-n summary)
      (k "avg-unique") (:avg-unique summary)
      (k "lz78-ratio") (:lz78-ratio summary)
      (k "temporal-autocorr") (:temporal-autocorr summary)
-     (k "spatial-autocorr") (:spatial-autocorr summary)}))
+     (k "spatial-autocorr") (:spatial-autocorr summary)
+     (k "diag-autocorr") (:diag-autocorr summary)}))
 
 (defn summarize-series [series]
   (let [metrics-history (series-metrics-history series)
@@ -205,9 +257,11 @@
         compress (compressibility-metrics series)
         autocorr (autocorr-metrics series)
         coherence (coherence-score interesting autocorr)
+        structured (structured-chaos-score interesting autocorr)
         composite (composite-score interesting compress autocorr nil coherence)]
     (merge {:composite-score composite
-            :coherence coherence}
+            :coherence coherence
+            :structured-chaos-score structured}
            interesting
            compress
            autocorr)))
@@ -243,12 +297,14 @@
         gen-compress (compressibility-metrics gen-history)
         gen-autocorr (autocorr-metrics gen-history)
         gen-coherence (coherence-score gen-interesting gen-autocorr)
+        gen-structured (structured-chaos-score gen-interesting gen-autocorr)
         gen-composite (composite-score gen-interesting gen-compress gen-autocorr nil gen-coherence)
         gen-summary (prefixed-summary "gen"
                                       (merge gen-interesting
                                              gen-compress
                                              gen-autocorr
                                              {:coherence gen-coherence
+                                              :structured-chaos-score gen-structured
                                               :composite-score gen-composite}))
         phe-series-summary (when (seq phe-history) (summarize-series phe-history))
         phe-summary (when phe-series-summary (prefixed-summary "phe" phe-series-summary))
@@ -266,9 +322,53 @@
                         :band-row-periodic? (:row-periodic? band-analysis)
                         :band-row-period (:row-period band-analysis)
                         :band-row-period-strength (:row-period-strength band-analysis)})
+        gen-triangle (when (seq gen-history) (tri/analyze-genotype gen-history))
+        gen-triangle-summary (when gen-triangle
+                               {:gen/triangle-best-plane (:triangle-best-plane gen-triangle)
+                                :gen/triangle-score-max (:triangle-score-max gen-triangle)
+                                :gen/triangle-count-max (:triangle-count-max gen-triangle)
+                                :gen/triangle-density-max (:triangle-density-max gen-triangle)
+                                :gen/triangle-avg-height-max (:triangle-avg-height-max gen-triangle)})
+        gen-triangle-vote (when (seq gen-history)
+                            (tri/analyze-genotype-vote gen-history
+                                                       {:seed (:seed result)
+                                                        :tie-breaker :seeded}))
+        gen-triangle-vote-summary (when gen-triangle-vote
+                                    {:gen/triangle-vote-score (:triangle-score gen-triangle-vote)
+                                     :gen/triangle-vote-count (:triangle-count gen-triangle-vote)
+                                     :gen/triangle-vote-density (:triangle-density gen-triangle-vote)
+                                     :gen/triangle-vote-avg-height (:triangle-avg-height gen-triangle-vote)
+                                     :gen/triangle-vote-tie-breaker (:triangle-vote-tie-breaker gen-triangle-vote)})
+        gen-band (when (seq gen-history) (band/analyze-history gen-history {:row->values vec}))
+        gen-band-summary (when gen-band
+                           {:gen/band-score (:band-score gen-band)
+                            :gen/band-moderate-ratio (:moderate-ratio gen-band)
+                            :gen/band-chaotic-ratio (:chaotic-ratio gen-band)
+                            :gen/band-frozen-ratio (:frozen-ratio gen-band)
+                            :gen/band-interpretation (:interpretation gen-band)
+                            :gen/band-active-bands (:active-bands gen-band)
+                            :gen/band-widest-band (:widest-band gen-band)
+                            :gen/band-row-periodic? (:row-periodic? gen-band)
+                            :gen/band-row-period (:row-period gen-band)
+                            :gen/band-row-period-strength (:row-period-strength gen-band)})
+        phe-band (when (seq phe-history) (band/analyze-history phe-history))
+        phe-band-summary (when phe-band
+                           {:phe/band-score (:band-score phe-band)
+                            :phe/band-moderate-ratio (:moderate-ratio phe-band)
+                            :phe/band-chaotic-ratio (:chaotic-ratio phe-band)
+                            :phe/band-frozen-ratio (:frozen-ratio phe-band)
+                            :phe/band-interpretation (:interpretation phe-band)
+                            :phe/band-active-bands (:active-bands phe-band)
+                            :phe/band-widest-band (:widest-band phe-band)
+                            :phe/band-row-periodic? (:row-periodic? phe-band)
+                            :phe/band-row-period (:row-period phe-band)
+                            :phe/band-row-period-strength (:row-period-strength phe-band)})
+        triangle (when (seq phe-history) (tri/analyze-history phe-history))
+        triangle-summary (when triangle (assoc triangle :triangle-history-type :phenotype))
         compress (compressibility-metrics basis)
         autocorr (autocorr-metrics basis)
         coherence (coherence-score interesting autocorr)
+        structured (structured-chaos-score interesting autocorr)
         lesion (:lesion result)
         lesion-target (:target lesion)
         lesion-series (cond
@@ -294,12 +394,18 @@
                     (+ (* 0.65 base-composite) (* 0.35 gen-composite))
                     base-composite)]
     (merge {:composite-score composite
-            :coherence coherence}
+            :coherence coherence
+            :structured-chaos-score structured}
            interesting
            compress
            autocorr
            {:first-stasis-step stasis-step}
            band-summary
+           gen-triangle-summary
+           gen-triangle-vote-summary
+           triangle-summary
+           gen-band-summary
+           phe-band-summary
            gen-summary
            phe-summary
            lesion-summary

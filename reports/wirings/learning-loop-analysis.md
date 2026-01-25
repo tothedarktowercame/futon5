@@ -19,6 +19,8 @@ Date: 2026-01-25
 
 | Feature | Correlation | N |
 |---------|-------------|---|
+| allele-stratified-ratio | 0.250 | 9 |
+| allele-stratified-nodes | 0.250 | 9 |
 | creative-ratio | 0.155 | 25 |
 | creative-nodes | 0.139 | 25 |
 | diversity-nodes | 0.086 | 25 |
@@ -29,8 +31,17 @@ Date: 2026-01-25
 | node-count | -0.063 | 25 |
 | legacy-nodes | -0.180 | 25 |
 
+## Trait Coverage
+
+| Trait | Avg Nodes | Avg Ratio |
+|-------|-----------|-----------|
+| allele-stratified | 0.61 | 0.075 |
+| sigil-level | 0.18 | 0.025 |
+
 ## Insights
 
+- **+** allele-stratified-ratio: allele-stratified-ratio correlates positively with better outcomes (r=0.25)
+- **+** allele-stratified-nodes: allele-stratified-nodes correlates positively with better outcomes (r=0.25)
 - **+** creative-ratio: creative-ratio correlates positively with better outcomes (r=0.16)
 - **+** creative-nodes: creative-nodes correlates positively with better outcomes (r=0.14)
 - **-** legacy-nodes: legacy-nodes correlates negatively with better outcomes (r=-0.18)
@@ -38,8 +49,9 @@ Date: 2026-01-25
 ## Recommendations
 
 - [high] No EoC runs found - try wider grids, more seeds, or perturbation injection
+- [medium] Try wirings with more allele-stratified-ratio
+- [medium] Try wirings with more allele-stratified-nodes
 - [medium] Try wirings with more creative-ratio
-- [medium] Try wirings with more creative-nodes
 - [low] Try wirings with less legacy-nodes
 
 ## Next Steps
