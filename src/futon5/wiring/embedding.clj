@@ -193,8 +193,8 @@
     {:wiring-id (get-in wiring [:meta :id])
      :path-count (count paths)
      :signatures (sort sigs)
-     :input-components (set (map (comp :component first) paths))
-     :max-depth (apply max (map count paths))}))
+     :input-components (set (keep (comp :component first) paths))
+     :max-depth (if (seq paths) (apply max (map count paths)) 0)}))
 
 (defn compare-wirings
   "Compare two wirings and show their path differences."
