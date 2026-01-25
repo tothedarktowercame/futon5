@@ -94,6 +94,95 @@
    :length (count genotype)})
 
 ;;; ============================================================
+;;; Pattern Failure Detectors
+;;; ============================================================
+
+(defn row-uniformity
+  "Measure how uniform a row is (fraction of cells matching mode)."
+  [row]
+  (if (empty? row)
+    1.0
+    (let [freqs (frequencies row)
+          mode-count (apply max (vals freqs))]
+      (/ (double mode-count) (count row)))))
+
+(defn detect-barcode
+  "Detect BARCODE pattern: horizontal stripes (uniform rows).
+   Returns score 0-1 where 1 = definite barcode."
+  [history]
+  (if (or (empty? history) (< (count history) 5))
+    0.0
+    (let [;; Skip first few rows (may be initialization artifacts)
+          rows (drop 3 history)
+          uniformities (map row-uniformity rows)
+          ;; Barcode if most rows are highly uniform
+          high-uniform (count (filter #(> % 0.8) uniformities))]
+      (/ (double high-uniform) (count rows)))))
+
+(defn diagonal-shift
+  "Shift a row by n positions (circular)."
+  [row n]
+  (let [len (count row)
+        n (mod n len)]
+    (str (subs row n) (subs row 0 n))))
+
+(defn row-correlation
+  "Measure correlation between two rows (fraction matching)."
+  [row1 row2]
+  (if (or (empty? row1) (empty? row2) (not= (count row1) (count row2)))
+    0.0
+    (let [matches (count (filter true? (map = row1 row2)))]
+      (/ (double matches) (count row1)))))
+
+(defn detect-candycane
+  "Detect CANDYCANE pattern: diagonal stripes.
+   Checks if shifting row N by N correlates with row 0.
+   Also checks for consistent diagonal structure across the history.
+   Returns score 0-1 where 1 = definite candycane."
+  [history]
+  (if (or (empty? history) (< (count history) 10))
+    0.0
+    (let [rows (vec (map str history))
+          ;; Method 1: Check diagonal shift correlation with base row
+          base-row (nth rows 5) ;; Skip initial transient
+          correlations
+          (for [offset (range 1 (min 30 (- (count rows) 5)))]
+            (let [shifted-base (diagonal-shift base-row offset)
+                  target-row (get rows (+ 5 offset))]
+              (when target-row
+                (row-correlation shifted-base target-row))))
+          valid-corrs (filter some? correlations)
+          high-corrs (count (filter #(> % 0.5) valid-corrs))
+          method1-score (if (empty? valid-corrs) 0.0 (/ (double high-corrs) (count valid-corrs)))
+
+          ;; Method 2: Check if adjacent rows are just shifts of each other
+          shift-correlations
+          (for [i (range 10 (min 40 (dec (count rows))))]
+            (let [row-a (get rows i)
+                  row-b (get rows (inc i))
+                  ;; Try shifts of 1 and 2
+                  corr1 (row-correlation (diagonal-shift row-a 1) row-b)
+                  corr2 (row-correlation (diagonal-shift row-a 2) row-b)]
+              (max corr1 corr2)))
+          valid-shifts (filter some? shift-correlations)
+          high-shifts (count (filter #(> % 0.6) valid-shifts))
+          method2-score (if (empty? valid-shifts) 0.0 (/ (double high-shifts) (count valid-shifts)))]
+      (max method1-score method2-score))))
+
+(defn detect-failures
+  "Detect pattern failures in a run history.
+   Returns map of failure types with scores."
+  [history]
+  (let [barcode (detect-barcode history)
+        candycane (detect-candycane history)]
+    {:barcode barcode
+     :candycane candycane
+     :fails? (or (> barcode 0.5) (> candycane 0.4))
+     :failure-types (cond-> []
+                      (> barcode 0.5) (conj :barcode)
+                      (> candycane 0.4) (conj :candycane))}))
+
+;;; ============================================================
 ;;; Main Runner
 ;;; ============================================================
 

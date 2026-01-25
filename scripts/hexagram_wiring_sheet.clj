@@ -237,21 +237,49 @@
 
     (.append sb "---\n\n")
 
+    ;; Pattern Failures Summary
+    (let [all-failures (filter #(get-in (val %) [:failures :fails?]) results)
+          barcode-fails (filter #(some #{:barcode} (get-in (val %) [:failures :failure-types])) results)
+          candycane-fails (filter #(some #{:candycane} (get-in (val %) [:failures :failure-types])) results)
+          passes (filter #(not (get-in (val %) [:failures :fails?])) results)]
+      (.append sb "## Pattern Quality Assessment\n\n")
+      (.append sb (format "**Passes:** %d / 64 (%.0f%%)\n\n" (count passes) (* 100.0 (/ (count passes) 64))))
+      (.append sb (format "**Fails:** %d / 64\n" (count all-failures)))
+      (.append sb (format "- BARCODE (horizontal stripes): %d\n" (count barcode-fails)))
+      (.append sb (format "- CANDYCANE (diagonal stripes): %d\n\n" (count candycane-fails)))
+
+      (when (seq passes)
+        (.append sb "### Passing Hexagrams\n\n")
+        (doseq [[n result] (sort-by #(- (get-in (val %) [:metrics :entropy-n] 0)) passes)]
+          (let [hex-info (lines/hexagram-number->hexagram n)]
+            (.append sb (format "- **#%d %s** `%s` (E:%.2f, U:%d)\n"
+                                n (:name hex-info) (:formula result)
+                                (get-in result [:metrics :entropy-n] 0)
+                                (get-in result [:metrics :unique] 0)))))
+        (.append sb "\n")))
+
+    (.append sb "---\n\n")
+
     ;; Summary table
-    (.append sb "## Summary by Trigram Pair\n\n")
-    (.append sb "| # | Name | Lines | Formula | Entropy | Unique |\n")
-    (.append sb "|---|------|-------|---------|---------|--------|\n")
+    (.append sb "## Full Summary\n\n")
+    (.append sb "| # | Name | Lines | Formula | Entropy | Unique | Status |\n")
+    (.append sb "|---|------|-------|---------|---------|--------|--------|\n")
     (doseq [n (range 1 65)]
       (let [result (get results n)
             hex-info (lines/hexagram-number->hexagram n)
-            lines-str (apply str (map #(if (= % :yang) "⚊" "⚋") (:lines hex-info)))]
-        (.append sb (format "| %d | %s | %s | `%s` | %.2f | %d |\n"
+            lines-str (apply str (map #(if (= % :yang) "⚊" "⚋") (:lines hex-info)))
+            failures (:failures result)
+            status (cond
+                     (get failures :fails?) (str "FAIL: " (str/join "," (map name (:failure-types failures))))
+                     :else "PASS")]
+        (.append sb (format "| %d | %s | %s | `%s` | %.2f | %d | %s |\n"
                             n
                             (or (:name hex-info) "?")
                             lines-str
                             (or (:formula result) "?")
                             (or (get-in result [:metrics :entropy-n]) 0.0)
-                            (or (get-in result [:metrics :unique]) 0)))))
+                            (or (get-in result [:metrics :unique]) 0)
+                            status))))
     (.append sb "\n")
 
     ;; Methodology
@@ -296,10 +324,13 @@
                             (catch Exception e
                               (println (str "  Warning: hexagram " n " failed: " (.getMessage e)))
                               nil))
-                      final-metrics (when run (last (:metrics-history run)))]
-                  [n {:history (when run (take 50 (:gen-history run)))
+                      final-metrics (when run (last (:metrics-history run)))
+                      history (when run (take 50 (:gen-history run)))
+                      failures (when history (runtime/detect-failures history))]
+                  [n {:history history
                       :metrics {:entropy-n (:entropy-n final-metrics)
                                 :unique (:unique-sigils final-metrics)}
+                      :failures failures
                       :formula (get-in wiring [:meta :formula])}])))]
 
     (println "\nGenerating grid image...")
