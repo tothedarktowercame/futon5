@@ -1,0 +1,81 @@
+;; Wiring Ladder Experiment
+;; Tests compositional build-up of wiring complexity
+;; Run with: bb -cp src:resources scripts/xenotype_portrait_run.clj --config data/experiment-wiring-ladder.edn
+
+{:description "Compositional build-up: test each wiring level independently"
+ :hypothesis "Levels 1-4 should produce identical results. Level 5 should differ."
+ :length 100
+ :generations 100
+
+ :models
+ [;; === Level 0: No exotype (baseline) ===
+  {:id :level-0-w100-seed-4242
+   :label "L0 baseline"
+   :seed 4242
+   :wiring "data/wiring-ladder/level-0-baseline.edn"}
+  {:id :level-0-w100-seed-352362012
+   :label "L0 baseline"
+   :seed 352362012
+   :wiring "data/wiring-ladder/level-0-baseline.edn"}
+
+  ;; === Level 1: Legacy kernel only ===
+  {:id :level-1-w100-seed-4242
+   :label "L1 legacy"
+   :seed 4242
+   :wiring "data/wiring-ladder/level-1-legacy.edn"}
+  {:id :level-1-w100-seed-352362012
+   :label "L1 legacy"
+   :seed 352362012
+   :wiring "data/wiring-ladder/level-1-legacy.edn"}
+
+  ;; === Level 2: Legacy in wiring form ===
+  {:id :level-2-w100-seed-4242
+   :label "L2 context"
+   :seed 4242
+   :wiring "data/wiring-ladder/level-2-context.edn"}
+  {:id :level-2-w100-seed-352362012
+   :label "L2 context"
+   :seed 352362012
+   :wiring "data/wiring-ladder/level-2-context.edn"}
+
+  ;; === Level 3: Legacy + diversity sense ===
+  {:id :level-3-w100-seed-4242
+   :label "L3 diversity"
+   :seed 4242
+   :wiring "data/wiring-ladder/level-3-diversity.edn"}
+  {:id :level-3-w100-seed-352362012
+   :label "L3 diversity"
+   :seed 352362012
+   :wiring "data/wiring-ladder/level-3-diversity.edn"}
+
+  ;; === Level 4: Legacy + diversity + gate ===
+  {:id :level-4-w100-seed-4242
+   :label "L4 gate"
+   :seed 4242
+   :wiring "data/wiring-ladder/level-4-gate.edn"}
+  {:id :level-4-w100-seed-352362012
+   :label "L4 gate"
+   :seed 352362012
+   :wiring "data/wiring-ladder/level-4-gate.edn"}
+
+  ;; === Level 5: Full hybrid with creative ===
+  {:id :level-5-w100-seed-4242
+   :label "L5 creative"
+   :seed 4242
+   :wiring "data/wiring-ladder/level-5-creative.edn"}
+  {:id :level-5-w100-seed-352362012
+   :label "L5 creative"
+   :seed 352362012
+   :wiring "data/wiring-ladder/level-5-creative.edn"}]
+
+ :analysis
+ {:expected-equivalences
+  [[[:level-1-w100-seed-4242 :level-2-w100-seed-4242] "L1 = L2 (same behavior)"]
+   [[:level-2-w100-seed-4242 :level-3-w100-seed-4242] "L2 = L3 (measuring shouldn't change)"]
+   [[:level-3-w100-seed-4242 :level-4-w100-seed-4242] "L3 = L4 (gate structure neutral)"]]
+
+  :expected-differences
+  [[[:level-4-w100-seed-4242 :level-5-w100-seed-4242] "L4 ≠ L5 (creative path activates)"]]
+
+  :primary-metric "health-classification"
+  :secondary-metrics ["change-rate" "frozen-ratio"]}}

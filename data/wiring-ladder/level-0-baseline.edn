@@ -1,0 +1,13 @@
+;; Level 0: Baseline
+;; No exotype - raw CA dynamics
+;; This is the control: what happens without any xenotype intervention?
+
+{:meta {:id :level-0-baseline
+        :level 0
+        :label "No exotype (raw CA)"
+        :description "Control condition. CA evolves without exotype intervention."
+        :additions nil
+        :expected "Should show natural CA dynamics. May collapse or stabilize depending on rule."}
+
+ ;; No wiring diagram - use :exotype nil in experiment config
+ :exotype nil}

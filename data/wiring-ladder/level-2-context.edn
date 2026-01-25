@@ -1,0 +1,45 @@
+;; Level 2: Legacy Kernel with Explicit Context
+;; Same behavior as Level 1, but expressed as a wiring diagram
+;; This validates that the wiring infrastructure doesn't change behavior
+
+{:meta {:id :level-2-context
+        :level 2
+        :label "Legacy kernel (wiring form)"
+        :description "Level 1 behavior expressed as wiring diagram with explicit context."
+        :additions [:context-nodes :wiring-structure]
+        :expected "MUST match Level 1 exactly. If different, wiring infra has a bug."}
+
+ :diagram
+ {:nodes [;; Context extraction (explicit)
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+
+          ;; Legacy kernel (same as Level 1)
+          {:id :legacy :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "工"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 0
+                                     :match-threshold 0.4444444444444444
+                                     :invert-on-phenotype? false
+                                     :update-prob 0.5
+                                     :mix-mode :rotate-left
+                                     :mix-shift 0}}}
+
+          ;; Output
+          {:id :out :component :output-sigil}]
+
+  :edges [;; Feed context to legacy kernel
+          {:from :ctx-pred :from-port :sigil :to :legacy :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy :to-port :phe}
+
+          ;; Direct output
+          {:from :legacy :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}}
