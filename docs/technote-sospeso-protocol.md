@@ -69,6 +69,34 @@ short justification line: e.g., **“validated by X”** or **“reversible by Y
 
 This prevents habitual “0.99” inflation.
 
+## Planning gate (non-trivial actions only)
+
+The existing “plan before acting” rule in MUSN is too blunt: agents don’t
+follow it consistently, and the resulting punishments feel arbitrary.
+Instead, use a **non‑trivial action gate** tied to the sospeso protocol.
+
+### Trigger (non‑trivial)
+
+Apply the planning gate only when the action is non‑trivial, e.g.:
+
+- schema changes, core parser changes, or API changes
+- multi‑file refactors or dependency changes
+- external side‑effects (deploys, data migrations, irreversible actions)
+
+### Requirement
+
+If the gate triggers, the agent must:
+
+1) Write a short plan (steps + rollback), and
+2) Assign confidence `p ∈ {0.3, 0.6, 0.8, 0.95}`.
+
+Then it must either:
+- Rescope to safety, or
+- Proceed with the sospeso tax.
+
+This makes planning **enforced only when needed**, and the cost of skipping
+planning explicit and budgeted.
+
 ## AIF alignment
 
 - **Donations (dana)** expand feasibility (resource channel).
