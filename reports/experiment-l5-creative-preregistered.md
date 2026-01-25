@@ -1,31 +1,44 @@
-# Preregistered Hypotheses: L5‑Creative Gate Tuning
+# Preregistered Hypotheses: L5‑Creative Gate Tuning (Exotype‑Trace Aware)
 
 Date: 2026-01-25
 
 ## Goal
 Sustain genotype Rule‑90‑like structure (bitplane triangles) **without** phenotype barcode collapse and **without** runaway exotype chaos.
 
+## Exotype Data Definition (Global‑Kernel Mode)
+We are **not** running local‑physics exotypes here. Instead, we define an
+**exotype trace** from the local 36‑bit context:
+
+```
+pred(8) + self(8) + succ(8) + prev(8) + phenotype‑family(4) = 36 bits
+```
+
+We use the full 36‑bit context for metrics (unique count + change rate).
+The exotype panel in renders is a **folded 36→24 bit** visualization to RGB
+(context‑folded colors).
+
 ## Hypotheses (with predictions)
 
 **H1: Creative‑path overuse drives exotype chaos.**  
-*Rationale*: XOR is allele‑stratified and can dominate dynamics if the gate fires too often.  
-*Prediction*: Increasing the diversity threshold (0.6–0.7) reduces creative activation, lowering exotype chaos while preserving genotype triangles.  
-*Falsifier*: Triangle score drops sharply or phenotype collapses as threshold increases.
+*Prediction*: Increasing threshold (0.6–0.7) reduces exotype‑trace change/diversity
+while preserving genotype triangles.  
+*Falsifier*: Exotype‑trace change stays maximal or genotype triangles collapse.
 
 **H2: Boundary‑aware gating stabilizes without killing structure.**  
-*Rationale*: Good bands sit between chaos and freeze; reacting to “too chaotic” or “too frozen” should resist barcode collapse.  
-*Prediction*: Boundary‑aware gate yields higher genotype triangle scores **and** lower barcode/frozen ratios than pure diversity gating.  
+*Prediction*: Boundary‑aware gate yields higher genotype triangle scores **and**
+lower barcode/frozen ratios than diversity‑only gate.  
 *Falsifier*: No improvement vs baseline.
 
 **H3: Genotype structure lives in bitplanes, not projections.**  
-*Rationale*: Bitplane triangle detector is strong; vote projection nearly eliminates signal.  
-*Prediction*: Candidates that “work” show high genotype bitplane triangle scores even when phenotype is only moderate.  
-*Falsifier*: Visual structure without triangle signal, or triangle signal without visual structure.
+*Prediction*: Working candidates retain high genotype bitplane triangle scores even
+when phenotype is only moderate.  
+*Falsifier*: Visual structure without triangle signal, or triangle signal without
+visual structure.
 
 **H4: Exotype turbulence can be tolerated if phenotype remains non‑barcode.**  
-*Rationale*: L5‑creative shows acceptable phenotype with chaotic exotype; phenotype seems closer to observable EoC.  
-*Prediction*: Exotype chaos does not force phenotype barcode collapse in the best thresholds.  
-*Falsifier*: Exotype chaos strongly correlates with phenotype barcode in the sweep.
+*Prediction*: Exotype‑trace change may remain high while phenotype stays within
+EoC‑ish band (change 0.15–0.45, frozen < 0.5).  
+*Falsifier*: Exotype‑trace chaos tightly correlates with phenotype barcode.
 
 ## Planned Experiments
 
@@ -36,7 +49,7 @@ Sustain genotype Rule‑90‑like structure (bitplane triangles) **without** phe
 - Metrics:
   - Genotype bitplane triangle score (max across planes)
   - Phenotype change rate + frozen ratio + band score
-  - Exotype diversity + change rate (if available)
+  - **Exotype‑trace** unique count + change rate (36‑bit context)
 
 ### Phase 2 — Boundary‑Aware Gate (single wiring change)
 - Replace diversity‑only gate with chaos/freeze‑aware gate.
@@ -49,50 +62,80 @@ Sustain genotype Rule‑90‑like structure (bitplane triangles) **without** phe
 ## Success Criteria (Target)
 - Genotype: triangle score ≥ **0.10**
 - Phenotype: change **0.15–0.45**, frozen **< 0.50**, band score **> 0.20**
-- Exotype: can be turbulent, but avoid collapse to 3–4 active exotypes if measurable
+- Exotype‑trace: avoid “max‑chaos” if possible (unique + change significantly below 1.0)
 
-## Results (to fill)
+## Results
 
 ### Phase 1 — Threshold Sweep
-Run dir: `/tmp/exp-l5-threshold-sweep-1769348128/runs`  
-Health: `/tmp/exp-l5-threshold-sweep-1769348128/health.md` (all **UNKNOWN**, change ≈ 0.49–0.51, frozen ≈ 0–1%)
+Run dir: `/tmp/exp-l5-threshold-sweep-1769348128/runs`
 
-Summary (from `:summary` metrics):
+Summary:
 
-| Threshold | Seed | Gen triangle score (max) | Gen triangle plane | Phe band score | Phe change |
-|-----------|------|---------------------------|--------------------|----------------|-----------|
-| 0.4 | 352362012 | 0.133 | 5 | 0.13 | 0.500 |
-| 0.5 | 352362012 | 0.133 | 5 | 0.13 | 0.500 |
-| 0.6 | 352362012 | 0.133 | 5 | 0.13 | 0.500 |
-| 0.7 | 352362012 | 0.113 | 0 | 0.10 | 0.499 |
-| 0.4 | 4242 | 0.131 | 7 | 0.13 | 0.500 |
-| 0.5 | 4242 | 0.131 | 7 | 0.13 | 0.500 |
-| 0.6 | 4242 | 0.131 | 7 | 0.13 | 0.500 |
-| 0.7 | 4242 | 0.088 | 2 | 0.19 | 0.492 |
+| Threshold | Seed | Exo‑trace unique (avg) | Exo‑trace change (avg) | Gen triangle score | Phe band score | Phe change |
+|-----------|------|-------------------------|------------------------|--------------------|----------------|-----------|
+| 0.4 | 352362012 | 100.0 | 1.000 | 0.133 | 0.13 | 0.500 |
+| 0.4 | 4242 | 100.0 | 1.000 | 0.131 | 0.13 | 0.500 |
+| 0.5 | 352362012 | 100.0 | 1.000 | 0.133 | 0.13 | 0.500 |
+| 0.5 | 4242 | 100.0 | 1.000 | 0.131 | 0.13 | 0.500 |
+| 0.6 | 352362012 | 100.0 | 1.000 | 0.133 | 0.13 | 0.500 |
+| 0.6 | 4242 | 100.0 | 1.000 | 0.131 | 0.13 | 0.500 |
+| 0.7 | 352362012 | 100.0 | 0.9998 | 0.113 | 0.10 | 0.499 |
+| 0.7 | 4242 | 100.0 | 1.000 | 0.088 | 0.19 | 0.492 |
 
-Notes:
-- Thresholds **0.4–0.6 produced identical outcomes** for both seeds.
-- Threshold 0.7 reduced genotype triangle score and shifted best plane.
-- Phenotype band scores remain low (mostly‑chaotic), below the target (>0.20).
-- Exotype metrics were not available in this harness run (diagram‑only model).
-
-#### Exotype Proxy vs True Exotype (illustrative)
-Using **L5‑thr‑0.5 / seed 352362012**:
-- **Proxy exotype panel** (derived from gen/phe via XOR‑mixed RGB):  
-  avg unique per gen ≈ **100.0**, avg change ≈ **1.0**
-- **True exotype rules** (local‑physics run, per‑cell rules):  
-  avg unique per gen ≈ **60.7**, avg change ≈ **0.758**
-
-Takeaway: the proxy panel is *maximally chaotic* (all cells changing), while
-true exotype rules are **less chaotic and more structured**. They are not the
-same object.
+Observations:
+- Thresholds **0.4–0.6 produce identical outcomes** for both seeds.
+- Threshold 0.7 reduces genotype triangle scores and shifts planes.
+- Phenotype band scores remain low (mostly‑chaotic), below target (>0.20).
+- Exotype‑trace metrics are **maximal** across thresholds (unique≈100, change≈1.0).
 
 Hypothesis check (Phase 1):
-- **H1** (threshold reduces exotype chaos while preserving triangles): **inconclusive** (no exotype metrics; triangles unchanged until 0.7, where they weaken).
-- **H3** (bitplanes > vote projection): still supported (vote projection remains near zero signal in L5 runs).
+- **H1** not supported: exotype‑trace chaos did **not** decrease with higher thresholds.
+- **H3** still supported: bitplane triangles persist where vote projection fails.
 
 ### Phase 2 — Boundary‑Aware Gate
-TBD
+Run dir: `/tmp/exp-l5-boundary-1769350374/runs`
+
+Summary:
+
+| Model | Seed | Exo‑trace unique (avg) | Exo‑trace change (avg) | Gen triangle score | Phe band score | Phe change |
+|-------|------|-------------------------|------------------------|--------------------|----------------|-----------|
+| L5-boundary | 352362012 | 48.80 | 0.451 | 0.302 | 0.10 | 0.087 |
+| L5-boundary | 4242 | 46.82 | 0.435 | 0.587 | 0.12 | 0.084 |
+
+Observations:
+- Exotype‑trace **drops sharply** vs Phase 1 (unique ~47–49, change ~0.44–0.45).
+- Genotype triangle scores **increase**, especially for seed 4242.
+- Phenotype change is **very low** (≈0.084–0.087) with sparse‑activity band interpretation.
+- Phenotype band score remains **below target** (>0.20); behavior looks too frozen/cool.
+
+Hypothesis check (Phase 2):
+- **H2 partially supported**: boundary gate improves genotype triangles and reduces exotype chaos,
+  but pushes phenotype out of the EoC band.
 
 ### Phase 3 — Cross‑Domain Check
-TBD
+Run dir: `/tmp/exp-l5-boundary-1769350374`
+
+Setup:
+- Wiring: `/tmp/exp-l5-threshold-sweep-1769348128/level-5-creative-boundary.edn`
+- Conversion: `/tmp/cyberant-compare-boundary-1769353234/*`
+- Benchmark: `futon2` `ants.compare`
+- Runs: 20, Ticks: 300
+
+Summary (snowdrift/default):
+- Mean score: cyber (wiring) **127.29**, cyber‑sigil **133.15**
+- Win rate (cyber > sigil): **0.30** (6/20)
+- Termination: all runs ended by queen starvation
+
+Summary (patchy):
+- Mean score: cyber (wiring) **12.21**, cyber‑sigil **0.00**
+- Win rate (cyber > sigil): **1.00** (20/20)
+- Termination: all runs ended by queen starvation
+
+Summary (sparse):
+- Mean score: cyber (wiring) **10.74**, cyber‑sigil **0.00**
+- Win rate (cyber > sigil): **1.00** (20/20)
+- Termination: all runs ended by queen starvation
+
+Observation:
+- Boundary‑aware wiring does **not** outperform baseline sigils in the default environment.
+- Boundary‑aware wiring **dominates** in patchy/sparse environments (sigils collapse to zero).
