@@ -10,8 +10,9 @@
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
             [clojure.java.io :as io]
-            [futon5.mmca.runtime :as mmca]
             [futon5.mmca.exotype :as exotype]
+            [futon5.xenotype.interpret :as interpret]
+            [futon5.xenotype.generator :as generator]
             [futon5.ca.core :as ca]))
 
 (defn random-genotype [len seed]
@@ -51,16 +52,51 @@
                                    :when (pos? p)]
                                (* p (Math/log p))))))}))
 
+(defn evolve-cell-with-wiring
+  "Apply wiring diagram to a single cell, given its neighborhood context."
+  [diagram pred-sigil self-sigil succ-sigil]
+  (let [ctx {:pred (str pred-sigil)
+             :self (str self-sigil)
+             :succ (str succ-sigil)}
+        result (interpret/evaluate-diagram (:diagram diagram) {:ctx ctx} generator/generator-registry)
+        output-node (:output (:diagram diagram))
+        output-value (get-in result [:node-values output-node :out])]
+    (or output-value self-sigil)))
+
+(defn evolve-genotype-with-wiring
+  "Evolve entire genotype string using wiring diagram."
+  [diagram genotype]
+  (let [len (count genotype)
+        chars (vec (seq genotype))]
+    (apply str
+           (for [i (range len)]
+             (let [pred (get chars (mod (dec i) len))
+                   self (get chars i)
+                   succ (get chars (mod (inc i) len))]
+               (evolve-cell-with-wiring diagram pred self succ))))))
+
+(defn run-wiring-ca
+  "Run a wiring diagram as a CA for multiple generations."
+  [wiring genotype phenotype generations]
+  (loop [gen-history [genotype]
+         phe-history [phenotype]
+         current genotype
+         gen 0]
+    (if (>= gen generations)
+      {:gen-history gen-history
+       :phe-history phe-history}
+      (let [next-gen (evolve-genotype-with-wiring wiring current)]
+        (recur (conj gen-history next-gen)
+               (conj phe-history phenotype)  ; phenotype unchanged for now
+               next-gen
+               (inc gen))))))
+
 (defn run-wiring [wiring-path seed generations width]
   (let [wiring (edn/read-string (slurp wiring-path))
         wiring-id (get-in wiring [:meta :id] :unknown)
         genotype (random-genotype width seed)
         phenotype (apply str (repeat width "0"))
-        run (mmca/run-mmca {:genotype genotype
-                            :phenotype phenotype
-                            :generations generations
-                            :seed seed
-                            :wiring wiring})]
+        run (run-wiring-ca wiring genotype phenotype generations)]
     {:wiring-id wiring-id
      :wiring-path wiring-path
      :seed seed
