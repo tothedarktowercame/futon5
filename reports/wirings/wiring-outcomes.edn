@@ -2,8 +2,9 @@
 ;; Tracks which wirings produce which health outcomes
 ;; Updated: 2026-01-25
 
-{:schema-version 1
+{:schema-version 2
  :last-updated "2026-01-25"
+ :schema-notes "v2 adds :xenotype-transfer for cross-domain validation results"
 
  :wirings
  [;; === Legacy Wirings ===
@@ -64,6 +65,58 @@
      :best-seed 352362012
      :notes "Seed 352362012 reached COOLING (58% frozen, 21% change)"}]}
 
+  ;; === Wiring Ladder (Compositional Build-up) ===
+  {:id :level-5-creative
+   :path "data/wiring-ladder/level-5-creative.edn"
+   :description "Full boundary-guardian: legacy + diversity + gate + creative path"
+   :structure {:uses-legacy-kernel? true
+               :uses-gates? true
+               :uses-creative? true
+               :uses-diversity? true
+               :node-count 12
+               :edge-count 13
+               :pattern :boundary-guardian}
+   :params {:sigil "工"
+            :diversity-threshold 0.5
+            :update-prob 0.5
+            :match-threshold 0.44}
+   :outcomes
+   [{:experiment "wiring-ladder"
+     :width 100
+     :generations 100
+     :seeds [352362012]
+     :health-counts {:hot 0 :eoc 0 :cooling 0 :barcode 0 :unknown 1}
+     :best-outcome :unknown  ;; Actually promising - 50% change rate, 0% frozen
+     :best-seed 352362012
+     :notes "Change rate 0.508, frozen ratio 0.0 - different from barcode!"}]
+   :xenotype-transfer
+   {:ants
+    {:date "2026-01-25"
+     :competitor [:sigil "工" "土"]
+     :environments
+     [{:distribution :snowdrift
+       :runs 20
+       :ticks 300
+       :mean-score 119.25
+       :competitor-mean-score 127.28
+       :win-rate 0.20
+       :notes "Loses to pure sigils in uniform food environment"}
+      {:distribution :patchy
+       :runs 20
+       :ticks 300
+       :mean-score 12.35
+       :competitor-mean-score 0.0
+       :win-rate 1.00
+       :notes "Dominates - sigils score ZERO, cannot find isolated patches"}
+      {:distribution :sparse
+       :runs 10
+       :ticks 300
+       :mean-score 10.85
+       :competitor-mean-score 0.0
+       :win-rate 1.00
+       :notes "Same pattern - exploration essential for survival"}]
+     :summary "Novelty-seeking trades peak performance for robustness"}}}
+
   ;; === Hybrid Wirings ===
   {:id :boundary-guardian-001
    :path "data/xenotype-hybrid-wirings/boundary-guardian-001.edn"
@@ -86,16 +139,21 @@
      :notes "Performs similar to pure legacy - creative path may not trigger enough"}]}]
 
  :summary
- {:total-wirings 3
-  :total-experiments 5
-  :total-runs 25
-  :health-distribution {:hot 0 :eoc 0 :cooling 2 :barcode 23 :frozen 0}
-  :best-overall {:wiring :legacy-baseline
-                 :seed 352362012
-                 :width 120
-                 :outcome :cooling
-                 :change-rate 0.22
-                 :frozen-ratio 0.55}}
+ {:total-wirings 4
+  :total-experiments 6
+  :total-runs 26
+  :health-distribution {:hot 0 :eoc 0 :cooling 2 :barcode 23 :frozen 0 :unknown 1}
+  :best-mmca {:wiring :legacy-baseline
+              :seed 352362012
+              :width 120
+              :outcome :cooling
+              :change-rate 0.22
+              :frozen-ratio 0.55}
+  :best-transfer {:wiring :level-5-creative
+                  :domain :ants
+                  :environment :patchy
+                  :win-rate 1.00
+                  :notes "100% win rate in patchy environments where sigils fail completely"}}
 
  :hypotheses
  [{:id :width-helps
@@ -111,7 +169,15 @@
   {:id :gates-help
    :status :inconclusive
    :evidence "boundary-guardian has gates but performs like legacy"
-   :next-test "Inspect gate activation frequency"}]
+   :next-test "Inspect gate activation frequency"}
+
+  {:id :exploration-robustness
+   :status :strongly-supported
+   :evidence "L5-creative loses in uniform environments but wins 100% in patchy/sparse"
+   :next-test "Find threshold where exploration becomes valuable"
+   :implications ["Adaptive strategies trade peak performance for robustness"
+                  "Environmental structure determines strategy value"
+                  "Cross-domain transfer validates behavioral patterns"]}]
 
  :next-experiments
  [{:priority 1
@@ -127,4 +193,21 @@
    :width 120
    :generations [100 200 500]
    :seeds [352362012]
-   :goal "Does COOLING eventually collapse to BARCODE?"}]}
+   :goal "Does COOLING eventually collapse to BARCODE?"}
+
+  {:priority 3
+   :description "Wiring ladder transfer benchmark"
+   :wirings [:level-0-baseline :level-1-legacy :level-2-context
+             :level-3-diversity :level-4-gate :level-5-creative]
+   :domain :ants
+   :environments [:snowdrift :patchy :sparse]
+   :runs-per-env 20
+   :goal "Identify which compositional additions improve transfer"}
+
+  {:priority 4
+   :description "Threshold sweep for L5-creative in ants"
+   :wiring :level-5-creative
+   :domain :ants
+   :diversity-thresholds [0.3 0.4 0.5 0.6 0.7]
+   :environments [:patchy]
+   :goal "Optimize diversity threshold for exploration/exploitation balance"}]}
