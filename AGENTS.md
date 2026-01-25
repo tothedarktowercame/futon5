@@ -4,11 +4,11 @@ Use clj-kondo to identify and fix parenthesis errors.
 
 ## Important: This Is Guidance, Not a Formal Spec
 
-This document provides principles and heuristics, not a complete specification. Use judgment. If something isn't defined precisely, figure it out from context or ask. Do not use ambiguity as an excuse for inaction.
+This document provides principles and heuristics, not a complete specification. Use judgment. If something isn't defined precisely, infer it from context or ask. Do not use ambiguity as an excuse for inaction.
 
-The pseudocode examples are illustrative. You know what "final phenotype row" means. You know how to count white pixels. Implement the spirit, not the letter.
+The pseudocode examples are illustrative. By “final phenotype row” we mean the last entry in `:phe-history` (if present). If phenotype is absent, use the last genotype row mapped to bits (via sigil→bits), or mark collapse as `:unknown` and note it in the report. Implement the spirit, not the letter.
 
-If a wiring doesn't have `update-prob`, use whatever parameter controls intervention pressure. If runs are short, adapt the frozen check. These are not gotchas — they're obvious adaptations.
+If a wiring doesn't have `update-prob`, use whatever parameter controls intervention pressure (e.g., match-threshold, gate threshold, mutation rate, exotype weight, kernel mix strength). If runs are short, adapt the frozen check. These are not gotchas — they're obvious adaptations.
 
 ## Mission 0 Experimental Methodology
 
@@ -55,7 +55,7 @@ If a wiring doesn't have `update-prob`, use whatever parameter controls interven
 | **Hold** | Mixed results, 2-3/5 seeds better | Flag for larger sample |
 | **Discard** | Worse than baseline on ≥3/5 seeds | Record as failed, don't revisit |
 
-(Cohen's d = (mean_A - mean_B) / pooled_std_dev. Look it up if unfamiliar.)
+(Cohen's d = (mean_A - mean_B) / pooled_std_dev. Use the primary metric across the shared seed set. If pooled std dev is 0, report d as 0 and note the degeneracy.)
 
 ### Anti-Patterns (What Not To Do)
 
@@ -92,7 +92,7 @@ Start from these. Do not attempt to rediscover them from random search.
 
 Before reporting results, classify each run. These checks are mandatory.
 
-The pseudocode below is illustrative. Use the last available phenotype row (or genotype if phenotype is absent). For short runs (<10 generations), adapt the frozen check proportionally.
+The pseudocode below is illustrative. Use the last available phenotype row; if phenotype is absent, map the last genotype row to bits (sigil→bits) before classifying. If that mapping is not available, mark collapse as `:unknown` and call it out explicitly. For short runs (<10 generations), adapt the frozen check proportionally.
 
 ### Collapsed (Hot → White)
 ```
@@ -108,7 +108,7 @@ IF black_ratio > 0.85 THEN status = :collapsed-black
 
 ### Frozen (Stagnant)
 ```
-IF last N rows are identical (N = min(10, generations/2)) THEN status = :frozen
+IF last N rows are identical (N = min(10, max(2, generations/2))) THEN status = :frozen
 ```
 
 ### Possibly Good
