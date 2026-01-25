@@ -7,13 +7,30 @@
 
    This ensures all four quadrants (LEFT/EGO/RIGHT/NEXT) contribute
    to the hexagram identity through the eigenvalue structure."
-  (:require [futon5.ca.core :as ca]
-            [futon5.hexagram.lines :as lines])
-  (:import [org.apache.commons.math3.linear
-            Array2DRowRealMatrix
-            EigenDecomposition]))
+  (:require [clojure.java.io :as io]
+            [futon5.ca.core :as ca]
+            [futon5.hexagram.lines :as lines]))
 
 (def ^:private matrix-shape 6)
+
+(def ^:private pod-eigs-path
+  (or (System/getenv "POD_EIGS_PATH")
+      "pod-eigs/target/release/pod-eigs"))
+
+(def ^:private babashka?
+  (boolean (System/getProperty "babashka.version")))
+
+(def ^:private pod-eigs-fn
+  (delay
+    (when babashka?
+      (try
+        (when (.exists (io/file pod-eigs-path))
+          ((requiring-resolve 'babashka.pods/load-pod) pod-eigs-path)
+          (requiring-resolve 'pod.eigs/eigenvalues))
+        (catch Throwable _ nil)))))
+
+(def ^:private eigenvalue-cache-limit 10000)
+(defonce ^:private eigenvalue-cache (atom {}))
 
 (def ^:private matrix-layout
   [[:ego :right :right :right :right :right]
@@ -127,17 +144,52 @@
                    (for [row matrix]
                      (map double row)))))
 
+(defn- java-eigenvalues
+  "Compute eigenvalues via Apache Commons Math, using reflection to avoid hard deps in bb."
+  [matrix]
+  (let [arr (matrix->array2d matrix)
+        rm-class (Class/forName "org.apache.commons.math3.linear.Array2DRowRealMatrix")
+        ed-class (Class/forName "org.apache.commons.math3.linear.EigenDecomposition")
+        rm-ctor (.getConstructor rm-class (into-array Class [(class arr)]))
+        rm (.newInstance rm-ctor (object-array [arr]))
+        ed-ctor (.getConstructor ed-class (into-array Class [(class rm)]))
+        eigen (.newInstance ed-ctor (object-array [rm]))
+        reals (vec (.getRealEigenvalues eigen))]
+    (vec (sort-by #(- (Math/abs %)) reals))))
+
+(defn- pod-eigenvalues
+  "Compute eigenvalues via the pod; returns real parts sorted by abs desc."
+  [matrix]
+  (let [pod-fn @pod-eigs-fn]
+    (when pod-fn
+      (let [resp (pod-fn {:rows matrix :symmetric false})
+            pairs (:eigenvalues resp)
+            reals (mapv first pairs)]
+        (vec (sort-by #(- (Math/abs %)) reals))))))
+
+(defn- cached-eigenvalues
+  [matrix compute-fn]
+  (let [key (vec (map double (mapcat identity matrix)))]
+    (if-let [hit (get @eigenvalue-cache key)]
+      hit
+      (let [value (compute-fn matrix)]
+        (swap! eigenvalue-cache
+               (fn [m]
+                 (let [m' (assoc m key value)]
+                   (if (> (count m') eigenvalue-cache-limit)
+                     {}
+                     m'))))
+        value))))
+
 (defn eigenvalues
   "Compute eigenvalues of a 6x6 matrix.
    Returns a vector of 6 eigenvalues (real parts only, sorted by magnitude descending)."
   [matrix]
-  (let [arr (matrix->array2d matrix)
-        rm (Array2DRowRealMatrix. arr)
-        eigen (EigenDecomposition. rm)
-        ;; Get real parts of eigenvalues (imaginary parts discarded)
-        reals (.getRealEigenvalues eigen)]
-    ;; Sort by absolute magnitude descending for consistent ordering
-    (vec (sort-by #(- (Math/abs %)) reals))))
+  (cached-eigenvalues
+   matrix
+   (fn [m]
+     (or (pod-eigenvalues m)
+         (java-eigenvalues m)))))
 
 (defn eigenvalue-signs
   "Compute the signs of eigenvalues as hexagram lines.

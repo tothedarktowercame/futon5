@@ -2,7 +2,9 @@
   "Generator component implementations for xenotype wiring diagrams.
 
    These implement the Level 2-5 primitives from metaca-terminal-vocabulary-v2.md."
-  (:require [futon5.ca.core :as ca]))
+  (:require [clojure.string :as str]
+            [futon5.ca.core :as ca]
+            [futon5.mmca.exotype :as exotype]))
 
 ;;; ============================================================
 ;;; Helpers
@@ -34,7 +36,7 @@
   [n]
   (let [n (mod (int n) 256)
         bits (format "%8s" (Integer/toBinaryString n))
-        bits (clojure.string/replace bits " " "0")]
+        bits (str/replace bits " " "0")]
     (bits->sigil bits)))
 
 (defn- hamming-weight
@@ -64,6 +66,45 @@
 
 (defn- clamp [x lo hi]
   (max lo (min hi x)))
+
+(defn- resolve-exotype-param
+  [params]
+  (let [exotype (cond
+                  (map? (:exotype params)) (:exotype params)
+                  (:exotype-sigil params) {:sigil (:exotype-sigil params)
+                                           :tier (:exotype-tier params)}
+                  :else nil)
+        exotype (cond-> exotype
+                  (:exotype-params params) (assoc :params (:exotype-params params)))]
+    (when exotype
+      (exotype/resolve-exotype exotype))))
+
+(defn- seeded-rng
+  [state pred self succ prev phe]
+  (java.util.Random.
+   (long (hash [(or (:seed state) 0)
+                (:tick state)
+                (:x state)
+                pred self succ prev phe]))))
+
+(defn- legacy-kernel-step
+  [{:keys [pred self succ prev phe state]} params _]
+  (let [kernel (or (:kernel params) :mutating-template)
+        exo (resolve-exotype-param params)
+        ctx (exotype/build-local-context pred self succ prev phe)
+        rng (when exo (seeded-rng state pred self succ prev phe))
+        kernel-spec (ca/kernel-spec-for kernel)
+        kernel-spec (if exo
+                      (exotype/apply-exotype kernel-spec exo ctx rng)
+                      kernel-spec)
+        kernel-fn (ca/kernel-fn kernel-spec)
+        result (kernel-fn self pred succ ctx)]
+    {:result (:sigil result)}))
+
+(defn- new-kernel-step
+  [{:keys [pred self succ prev phe]} _ _]
+  (let [result (exotype/evolve-sigil-local self pred succ prev phe ca/kernels)]
+    {:result (:sigil result)}))
 
 ;;; ============================================================
 ;;; Level 2: Sigil Operations (Atomic)
@@ -527,6 +568,10 @@
    (fn [{:keys [sigil state]} _ _]
      {:out sigil :state-out state})})
 
+(def kernel-registry
+  {:legacy-kernel-step legacy-kernel-step
+   :new-kernel-step new-kernel-step})
+
 ;;; ============================================================
 ;;; Combined Registry
 ;;; ============================================================
@@ -538,4 +583,5 @@
          level-4-registry
          level-5-registry
          context-registry
+         kernel-registry
          output-registry))

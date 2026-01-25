@@ -5,6 +5,7 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.render :as render]
             [futon5.mmca.runtime :as mmca]
+            [futon5.xenotype.mermaid :as mermaid]
             [futon5.xenotype.wiring :as wiring]))
 
 (def ^:private default-length 64)
@@ -36,9 +37,15 @@
     "  --seed N               Seed for deterministic init."
     "  --input PATH           Render from an EDN run result instead of running."
     "  --save-run PATH        Write the run result to EDN (optional)."
-    "  --wiring-path PATH     Wiring diagram EDN path (optional)."
-    "  --wiring-index N       Wiring candidate index if EDN has :candidates (default 0)."
-    "  --wiring-out PATH      Mermaid output path (default xenotype-portrait.mmd)."
+    "  --gen-wiring-path PATH Generator wiring EDN path (optional)."
+    "  --gen-wiring-index N   Generator wiring index if EDN has :candidates (default 0)."
+    "  --gen-wiring-out PATH  Generator mermaid output path (default xenotype-generator.mmd)."
+    "  --score-wiring-path PATH Scorer wiring EDN path (optional)."
+    "  --score-wiring-index N  Scorer wiring index if EDN has :candidates (default 0)."
+    "  --score-wiring-out PATH Scorer mermaid output path (default xenotype-scorer.mmd)."
+    "  --wiring-path PATH     (deprecated) Wiring diagram EDN path."
+    "  --wiring-index N       (deprecated) Wiring candidate index."
+    "  --wiring-out PATH      (deprecated) Mermaid output path."
     "  --out PATH             Output image path (PPM only; default triptych.ppm)."
     "  --help                 Show this message."]))
 
@@ -118,6 +125,24 @@
           (= "--wiring-out" flag)
           (recur (rest more) (assoc opts :wiring-out (first more)))
 
+          (= "--gen-wiring-path" flag)
+          (recur (rest more) (assoc opts :gen-wiring-path (first more)))
+
+          (= "--gen-wiring-index" flag)
+          (recur (rest more) (assoc opts :gen-wiring-index (parse-int (first more))))
+
+          (= "--gen-wiring-out" flag)
+          (recur (rest more) (assoc opts :gen-wiring-out (first more)))
+
+          (= "--score-wiring-path" flag)
+          (recur (rest more) (assoc opts :score-wiring-path (first more)))
+
+          (= "--score-wiring-index" flag)
+          (recur (rest more) (assoc opts :score-wiring-index (parse-int (first more))))
+
+          (= "--score-wiring-out" flag)
+          (recur (rest more) (assoc opts :score-wiring-out (first more)))
+
           (= "--out" flag)
           (recur (rest more) (assoc opts :out (first more)))
 
@@ -137,6 +162,21 @@
 
 (defn- load-run [path]
   (edn/read-string (slurp path)))
+
+(def ^:private default-gen-wiring-path
+  "resources/xenotype-wirings/prototype-001-creative-peng.edn")
+
+(def ^:private default-score-wiring-path
+  "resources/xenotype-scorer-wirings/scorer-peng-diversity.edn")
+
+(defn- existing-path [path]
+  (when (and path (.exists (io/file path))) path))
+
+(defn- extract-diagram [data]
+  (cond
+    (and (map? data) (:diagram data)) (:diagram data)
+    (map? data) data
+    :else (wiring/example-diagram)))
 
 (defn- sanitize-id [id]
   (-> (cond
@@ -205,24 +245,37 @@
              classes
              [""]))))
 
-(defn- resolve-wiring-diagram [{:keys [wiring-path wiring-index]}]
-  (cond
-    (and wiring-path (seq wiring-path))
-    (let [data (edn/read-string (slurp wiring-path))]
-      (cond
-        (and (map? data) (:candidates data))
-        (let [idx (long (or wiring-index 0))]
-          (nth (:candidates data) (max 0 (min (dec (count (:candidates data))) idx))))
-        (map? data) data
-        :else (wiring/example-diagram)))
-    :else
-    (wiring/example-diagram)))
+(defn- resolve-wiring
+  [{:keys [wiring-path wiring-index default-path]}]
+  (let [path (or (and (seq wiring-path) wiring-path)
+                 (existing-path default-path))]
+    (cond
+      (and path (seq path))
+      (let [data (edn/read-string (slurp path))]
+        (cond
+          (and (map? data) (:candidates data))
+          (let [idx (long (or wiring-index 0))]
+            (nth (:candidates data) (max 0 (min (dec (count (:candidates data))) idx))))
+          (map? data) data
+          :else (wiring/example-diagram)))
+      :else
+      (wiring/example-diagram))))
+
+(defn- wiring->mermaid-text
+  [wiring _title]
+  (diagram->mermaid (extract-diagram wiring)))
+
+(defn- wiring-title [wiring fallback]
+  (or (get-in wiring [:meta :id])
+      (get-in wiring [:meta :name])
+      fallback))
 
 (defn -main [& args]
   (let [{:keys [help unknown out-dir genotype length phenotype phenotype-length generations
                 kernel mode pattern-sigils no-operators lock-kernel freeze-genotype
                 genotype-gate gate-signal seed input save-run wiring-path wiring-index
-                wiring-out out]} (parse-args args)]
+                wiring-out out gen-wiring-path gen-wiring-index gen-wiring-out
+                score-wiring-path score-wiring-index score-wiring-out]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do (println "Unknown option:" unknown)
@@ -231,7 +284,10 @@
       :else
       (let [out-dir (or out-dir "/tmp/futon5-xenotype-portrait")
             out (or out (str out-dir "/triptych.ppm"))
-            wiring-out (or wiring-out (str out-dir "/xenotype-portrait.mmd"))
+            gen-wiring-path (or gen-wiring-path wiring-path)
+            gen-wiring-index (or gen-wiring-index wiring-index)
+            gen-wiring-out (or gen-wiring-out wiring-out (str out-dir "/xenotype-generator.mmd"))
+            score-wiring-out (or score-wiring-out (str out-dir "/xenotype-scorer.mmd"))
             _ (.mkdirs (io/file out-dir))
             {:keys [result fresh?]}
             (if input
@@ -263,15 +319,20 @@
                 {:result (mmca/run-mmca opts)
                  :fresh? true}))]
         (render/render-run->file! result out {:exotype? true})
-        (let [diagram (resolve-wiring-diagram {:wiring-path wiring-path
-                                               :wiring-index wiring-index})
-              mermaid (diagram->mermaid diagram)]
-          (spit wiring-out mermaid))
+        (let [gen-wiring (resolve-wiring {:wiring-path gen-wiring-path
+                                          :wiring-index gen-wiring-index
+                                          :default-path default-gen-wiring-path})
+              score-wiring (resolve-wiring {:wiring-path score-wiring-path
+                                            :wiring-index score-wiring-index
+                                            :default-path default-score-wiring-path})]
+          (spit gen-wiring-out (wiring->mermaid-text gen-wiring (wiring-title gen-wiring "generator")))
+          (spit score-wiring-out (wiring->mermaid-text score-wiring (wiring-title score-wiring "scorer"))))
         (when (and save-run (or fresh? input))
           (spit save-run (pr-str result))
           (println "Saved run" save-run))
         (println "Wrote" out)
-        (println "Wrote" wiring-out)))))
+        (println "Wrote" gen-wiring-out)
+        (println "Wrote" score-wiring-out)))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

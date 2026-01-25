@@ -329,6 +329,20 @@
    :doc "Extract [pred self succ] as list"}
 
   ;;; ============================================================
+  ;;; KERNEL STEPS: Legacy vs Local Physics
+  ;;; ============================================================
+
+  :legacy-kernel-step
+  {:inputs [[:pred :sigil] [:self :sigil] [:succ :sigil] [:prev :sigil] [:phe :bits] [:state :state]]
+   :outputs [[:result :sigil]]
+   :doc "Apply legacy global-kernel evolution (optionally exotype-modulated)"}
+
+  :new-kernel-step
+  {:inputs [[:pred :sigil] [:self :sigil] [:succ :sigil] [:prev :sigil] [:phe :bits]]
+   :outputs [[:result :sigil]]
+   :doc "Apply local-physics evolution (current fundamentals)"}
+
+  ;;; ============================================================
   ;;; OUTPUT: Final output node
   ;;; ============================================================
 
