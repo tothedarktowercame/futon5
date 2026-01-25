@@ -197,3 +197,68 @@ To prevent barcode collapse:
 - **Reward spatial complexity**: Penalize horizontally uniform patterns
 
 This is closer to the original 泰 zone insight: the system needs to stay in a regime where it doesn't collapse to simple attractors.
+
+---
+
+## Barcode Detector Results (2026-01-25)
+
+Implemented `scripts/barcode_detector.clj` to automatically detect vertical barcode collapse.
+
+### Key Insight: Vertical Freezing
+
+The "barcode" pattern is **vertical column freezing** — columns that maintain the same value throughout late generations. This creates vertical stripes in the visualization.
+
+Detection method:
+```clojure
+(defn column-frozen? [history col-idx n]
+  (let [last-n (take-last n history)
+        col-vals (map #(nth % col-idx) last-n)]
+    (apply = col-vals)))
+```
+
+### Results: All Runs Show Barcode Collapse
+
+| Wiring | Seed | Frozen % | Stripes | Max Width |
+|--------|------|----------|---------|-----------|
+| Legacy 工 | 4242 | 74% | 12 | 17 |
+| Legacy 工 | 238310129 | 92% | 9 | 28 |
+| Legacy 工 | 352362012 | 93% | 6 | 31 |
+| Boundary Guardian | 4242 | 79% | 10 | 22 |
+| Boundary Guardian | 238310129 | 87% | 13 | 25 |
+| Boundary Guardian | 352362012 | 87% | 8 | 35 |
+| Prototype-001 | 4242 | 88% | 9 | 46 |
+| Prototype-001 | 238310129 | 93% | 8 | 33 |
+| Prototype-001 | 352362012 | 93% | 6 | 33 |
+
+**Every single run collapses to barcode by generation 100.**
+
+### Diagnosis Thresholds
+
+```
+IF frozen-ratio > 0.7 THEN :vertical-barcode
+IF row-periodicity detected THEN :periodic-attractor
+IF mean-barcode-score > 0.15 THEN :horizontal-stripes
+IF exotype-unique < 5 THEN :exotype-collapse
+ELSE :healthy
+```
+
+### The Real Problem
+
+None of our wirings sustain EoC. They all:
+1. Start with coral-like activity (early generations)
+2. Collapse to barcode (74-93% frozen columns by gen 100)
+3. Settle into a few wide frozen stripes
+
+The difference between wirings is minor:
+- Legacy: 74-93% frozen (varies by seed)
+- Boundary Guardian: 79-87% frozen (slightly better on average)
+- Prototype-001: 88-93% frozen (slightly worse)
+
+### Next Direction: Attractor Escape
+
+To sustain EoC, we need mechanisms that:
+1. **Detect freezing in progress**: Monitor per-column change rate during run
+2. **Inject perturbation**: When a column starts freezing, inject noise
+3. **Maintain diversity pressure**: Penalize uniform neighborhoods
+
+This is a **homeostatic control problem**: the wiring needs a feedback loop that detects and resists collapse.
