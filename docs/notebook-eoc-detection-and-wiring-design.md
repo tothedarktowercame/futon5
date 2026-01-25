@@ -262,3 +262,19 @@ To sustain EoC, we need mechanisms that:
 3. **Maintain diversity pressure**: Penalize uniform neighborhoods
 
 This is a **homeostatic control problem**: the wiring needs a feedback loop that detects and resists collapse.
+
+### Cross-Experiment Analysis
+
+Running the detector on all available experiment data (24 runs):
+
+| Experiment | Runs | Collapsed | Healthy | Notes |
+|------------|------|-----------|---------|-------|
+| Boundary Guardian | 9 | 9 (100%) | 0 | Width=100, all collapse |
+| Wiring Comparison | 10 | 8 (80%) | 2 | Width=120, seed 352362012 resists |
+| Update-prob | 6 | 6 (100%) | 0 | Width=120, all collapse |
+
+**Seed 352362012 is special**: On width=120, both legacy (55%) and prototype-001 (58%) stay below the 70% threshold. This seed may have structural properties that resist collapse.
+
+**Width matters**: Narrower grids (100) collapse more completely than wider grids (120). This suggests boundary effects help sustain activity.
+
+**Update-prob has minor effect**: 0.40 vs 0.50 vs 0.60 all collapse to similar levels (74-84% frozen).
