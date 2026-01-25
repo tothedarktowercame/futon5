@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.metrics :as metrics]
+            [futon5.mmca.runtime :as runtime]
             [futon5.xenotype.interpret :as interpret]))
 
 (def ^:private default-config "data/xenotype-regime-harness.edn")
@@ -70,7 +71,7 @@
       (str/replace #"\s+" "-")
       (str/replace #"[^a-zA-Z0-9._-]" "")))
 
-(defn- load-diagram
+(defn- load-wiring-data
   [{:keys [wiring index]}]
   (let [path (or wiring "")
         data (edn/read-string (slurp path))]
@@ -81,14 +82,27 @@
             safe-idx (max 0 (min (dec (count candidates)) idx))]
         (nth candidates safe-idx))
 
-      (and (map? data) (:diagram data))
-      (:diagram data)
-
       (map? data)
       data
 
       :else
       (throw (ex-info "Unsupported wiring data" {:path path})))))
+
+(defn- resolve-model
+  [model]
+  (let [data (cond
+               (:wiring model) (load-wiring-data model)
+               (:diagram model) model
+               (contains? model :exotype) model
+               :else model)
+        diagram (cond
+                  (and (map? data) (:diagram data)) (:diagram data)
+                  (and (map? data) (or (:nodes data) (:edges data) (:output data))) data
+                  :else nil)
+        exotype (when (and (map? data) (contains? data :exotype))
+                  (:exotype data))]
+    {:diagram diagram
+     :exotype exotype}))
 
 (defn- bit-at [s idx]
   (if (and s (<= 0 idx) (< idx (count s)))
@@ -151,7 +165,7 @@
     {:genotype next-genotype
      :phenotype phe-next}))
 
-(defn- run-model
+(defn- run-diagram-model
   [{:keys [diagram seed generations base-genotype base-phenotype]}]
   (loop [tick 0
          gen-history [base-genotype]
@@ -175,6 +189,15 @@
             phe-history' (when phe-history (conj phe-history phenotype))
             metrics-history' (conj metrics-history (derive-metrics gen-history'))]
         (recur (inc tick) gen-history' phe-history' metrics-history' (peek gen-history))))))
+
+(defn- run-exotype-model
+  [{:keys [seed generations base-genotype base-phenotype exotype]}]
+  (runtime/run-mmca {:genotype base-genotype
+                     :phenotype base-phenotype
+                     :generations generations
+                     :mode :god
+                     :exotype exotype
+                     :seed seed}))
 
 (defn- write-run!
   [{:keys [out-dir label result meta]}]
@@ -204,20 +227,27 @@
                 base-genotype (rng-sigil-string rng length)
                 base-phenotype (rng-phenotype-string rng length)]
             (doseq [model models]
-              (let [diagram (load-diagram model)
+              (let [{:keys [diagram exotype]} (resolve-model model)
                     label (sanitize-label (str (:label model) "-seed-" seed))
                     meta {:model-id (:id model)
                           :model-label (:label model)
                           :wiring (:wiring model)
+                          :exotype exotype
                           :seed seed
                           :length length
                           :generations generations}
-                    result (run-model {:diagram diagram
-                                       :seed seed
-                                       :length length
-                                       :generations generations
-                                       :base-genotype base-genotype
-                                       :base-phenotype base-phenotype})]
+                    result (if diagram
+                             (run-diagram-model {:diagram diagram
+                                                 :seed seed
+                                                 :length length
+                                                 :generations generations
+                                                 :base-genotype base-genotype
+                                                 :base-phenotype base-phenotype})
+                             (run-exotype-model {:seed seed
+                                                 :generations generations
+                                                 :base-genotype base-genotype
+                                                 :base-phenotype base-phenotype
+                                                 :exotype exotype}))]
                 (write-run! {:out-dir out-dir
                              :label label
                              :result result
