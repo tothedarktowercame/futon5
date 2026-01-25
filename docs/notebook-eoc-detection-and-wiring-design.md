@@ -150,3 +150,50 @@ This is **boundary guardian behavior** expressed through hexagram selection.
 | Hybrid threshold was wrong | Use change-rate, not diversity |
 
 The wiring infrastructure isn't broken — we were just measuring the wrong thing and designing fallbacks for the wrong condition.
+
+---
+
+## Visual Inspection Results (2026-01-25)
+
+Human review of `docs/inspection-gallery.org` revealed a different failure mode:
+
+### Key Observations
+
+1. **Prototype-001 (seed 352362012)**: "Coral at first and in some locales, but then produces barcode stripes (Newtonian physics)"
+
+2. **Legacy 工 (seed 352362012)**: "Similar but somewhat worse"
+
+3. **Vertical bands**: "Visible bands of interest but they repeat" — periodic/oscillatory, not sustained EoC
+
+4. **Exotype layer**: "Structure, but of the barcode variety — only 3-4 active exotypes"
+
+5. **Boundary Guardian vs Legacy**: "Quite similar"
+
+### New Failure Mode: Barcode Collapse
+
+The system isn't staying "hot" (chaotic) — it's collapsing into **low-dimensional attractors**:
+- Starts with EoC ("coral at first")
+- Degenerates into repeating stripes ("barcode")
+- Exotype diversity collapses to only 3-4 active rules
+
+This is a different problem than we thought:
+- Not chaotic (high change-rate)
+- Not frozen (zero change)
+- **Periodic/deterministic** — found a simple attractor
+
+### Detection Ideas
+
+1. **Exotype diversity**: Count unique active exotypes. If < 5, flag as "barcode collapse"
+
+2. **Periodicity detection**: Look for repeating row patterns. If rows repeat with period P < 10, flag.
+
+3. **Spatial autocorrelation**: Barcode patterns have high horizontal autocorrelation. Coral reef has moderate.
+
+### Wiring Implications
+
+To prevent barcode collapse:
+- **Inject noise when periodicity detected**: Break out of attractors
+- **Maintain exotype diversity**: Don't let the system settle on 3-4 rules
+- **Reward spatial complexity**: Penalize horizontally uniform patterns
+
+This is closer to the original 泰 zone insight: the system needs to stay in a regime where it doesn't collapse to simple attractors.
