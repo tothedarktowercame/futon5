@@ -278,3 +278,52 @@ Running the detector on all available experiment data (24 runs):
 **Width matters**: Narrower grids (100) collapse more completely than wider grids (120). This suggests boundary effects help sustain activity.
 
 **Update-prob has minor effect**: 0.40 vs 0.50 vs 0.60 all collapse to similar levels (74-84% frozen).
+
+---
+
+## Proposed Next Experiments
+
+Based on barcode detector findings, here are concrete experiments ordered by expected insight:
+
+### Experiment 1: Width Scaling Study
+**Hypothesis**: Wider grids resist collapse because boundary effects break up attractor basins.
+```
+Widths: 80, 100, 120, 160, 200
+Seeds: 4242, 352362012
+Measure: Frozen column % at gen 100, 200, 300
+```
+**Why**: Seed 352362012 resists on width=120 but collapses on width=100. This is a cheap experiment (same wiring, different grid size).
+
+### Experiment 2: Generation Depth Study
+**Hypothesis**: All runs collapse eventually; seed 352362012 just takes longer.
+```
+Width: 120
+Seeds: 352362012 (healthy), 4242 (collapsed)
+Generations: 100, 200, 500, 1000
+Measure: Frozen column % trajectory over time
+```
+**Why**: We need to know if collapse is inevitable or if some configurations sustain indefinitely.
+
+### Experiment 3: Perturbation Injection
+**Hypothesis**: Injecting noise when freezing detected can break out of attractors.
+```
+Implementation:
+1. Monitor per-column change rate during run (not just at end)
+2. When column change rate drops below 0.05 for 10 consecutive gens, inject noise
+3. Noise = flip cell with probability 0.1
+
+Measure: Does this sustain EoC or just delay collapse?
+```
+**Why**: This is the homeostatic control approach. If it works, it can be lifted into wiring design.
+
+### Experiment 4: Seed 352362012 Autopsy
+**Hypothesis**: Seed 352362012 has structural properties (initial genotype pattern) that resist collapse.
+```
+Analysis:
+1. Extract initial genotype pattern from seed 352362012
+2. Compare to collapsed seeds (4242, 238310129)
+3. Look for: symmetry, information content, spatial frequency
+
+Measure: What is structurally different?
+```
+**Why**: If we understand WHY this seed resists, we can design wirings that produce similar initial conditions.
