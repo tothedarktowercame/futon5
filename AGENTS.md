@@ -75,3 +75,116 @@ The following configurations have been validated as producing EoC:
    - evidence: "most stable EoC in M17a", lands in 泰 zone
 
 Start from these. Do not attempt to rediscover them from random search.
+
+## Automatic Failure Detection
+
+Before reporting results, classify each run. These checks are mandatory.
+
+### Collapsed (Hot → White)
+```
+white_ratio = count(phenotype_final == 1) / length
+IF white_ratio > 0.85 THEN status = :collapsed-white
+```
+
+### Collapsed (Hot → Black)
+```
+black_ratio = count(phenotype_final == 0) / length
+IF black_ratio > 0.85 THEN status = :collapsed-black
+```
+
+### Frozen (Stagnant)
+```
+IF last 10 phenotype rows are identical THEN status = :frozen
+```
+
+### Possibly Good
+```
+IF none of the above THEN status = :candidate
+```
+
+Only `:candidate` runs are worth examining further. Collapsed and frozen runs are failures.
+
+## Decision Tree: What To Try Next
+
+When runs fail, do not flail randomly. Follow this flowchart:
+
+```
+START
+  │
+  ▼
+┌─────────────────────────────────┐
+│ Run batch with current params   │
+└─────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────┐
+│ Classify each run               │
+│ (collapsed/frozen/candidate)    │
+└─────────────────────────────────┘
+  │
+  ▼
+┌─────────────────────────────────┐
+│ Are most runs collapsed?        │
+└─────────────────────────────────┘
+  │YES                      │NO
+  ▼                         ▼
+┌──────────────────┐  ┌─────────────────────────────────┐
+│ update-prob is   │  │ Are most runs frozen?           │
+│ too high.        │  └─────────────────────────────────┘
+│                  │    │YES                      │NO
+│ ACTION:          │    ▼                         ▼
+│ update-prob      │  ┌──────────────────┐  ┌──────────────────┐
+│ -= 0.1           │  │ update-prob is   │  │ You have         │
+│                  │  │ too low.         │  │ candidates!      │
+│ Retry.           │  │                  │  │                  │
+└──────────────────┘  │ ACTION:          │  │ Evaluate them    │
+                      │ update-prob      │  │ against baseline │
+                      │ += 0.1           │  │ and report.      │
+                      │                  │  └──────────────────┘
+                      │ Retry.           │
+                      └──────────────────┘
+
+IF update-prob adjustments don't help after 3 tries:
+  → Reset to known-good params (工: update-prob=0.5, match-threshold=0.44)
+  → The wiring structure itself may be the problem
+
+IF known-good params also collapse with this wiring:
+  → The wiring is broken. Discard it and try a different wiring.
+```
+
+## Reporting Template
+
+After each batch, report what you learned. Do not just dump results.
+
+```markdown
+## Batch Report: [description]
+
+### Configuration
+- Wiring: [path]
+- Params: update-prob=[X], match-threshold=[Y]
+- Seeds: [list]
+- Baseline comparison: [which known-good run]
+
+### Results Summary
+- Total runs: N
+- Collapsed: X (Y%)
+- Frozen: X (Y%)
+- Candidates: X (Y%)
+
+### Classification
+| Seed | Status | Notes |
+|------|--------|-------|
+| 4242 | collapsed-white | 92% white final row |
+| 1234 | candidate | looks structured |
+| ... | ... | ... |
+
+### What I Learned
+- [If all collapsed]: update-prob [X] is too high for this wiring
+- [If mixed]: seeds [A, B] worked, seeds [C, D] collapsed — investigating why
+- [If candidates found]: runs [X, Y] beat baseline on filament by [Z]
+
+### Next Action
+- [Concrete next step based on decision tree]
+```
+
+This report goes to the user. Do not present unlabeled image dumps.
