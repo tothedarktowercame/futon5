@@ -1,0 +1,18 @@
+{:length 100
+ :generations 100
+ :seeds [4242 238310129 1281562706 71312373 352362012 201709760 1564354771 955468957 1701878710 1695261645]
+ :models
+ [;; Known-good anchor
+  {:id :baseline-gong
+   :label "Baseline legacy 工"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"}
+
+  ;; Prototype wiring
+  {:id :prototype-001
+   :label "Prototype 001 creative peng"
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  ;; Hybrid wiring
+  {:id :hybrid-001-gong
+   :label "Hybrid 001 + 工 fallback"
+   :wiring "data/xenotype-hybrid-wirings/hybrid-prototype-001-gong.edn"}]}

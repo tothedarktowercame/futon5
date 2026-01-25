@@ -1,0 +1,69 @@
+{:meta {:id :hybrid-prototype-001-gong
+        :label "Hybrid: prototype-001 + legacy 工 fallback"
+        :source {:prototype "resources/xenotype-wirings/prototype-001-creative-peng.edn"
+                 :baseline "Mission 17a 工"}
+        :description "Use prototype-001 output when diversity is moderate/high; fall back to legacy 工 kernel when diversity is low."}
+
+ :diagram
+ {:nodes [;; Context
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Prototype path (from prototype-001)
+          {:id :diversity :component :diversity}
+          {:id :mutate :component :mutate}
+          {:id :xor :component :bit-xor}
+          {:id :choose-proto :component :threshold-sigil}
+
+          ;; Legacy fallback (工, super)
+          {:id :legacy-step :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "工"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 0
+                                     :match-threshold 0.4444444444444444
+                                     :invert-on-phenotype? false
+                                     :update-prob 0.5
+                                     :mix-mode :rotate-left
+                                     :mix-shift 0}}}
+
+          ;; Hybrid chooser
+          {:id :choose-hybrid :component :threshold-sigil}
+          {:id :out :component :output-sigil}]
+
+  :edges [;; Diversity input
+          {:from :neighbors :from-port :sigils :to :diversity :to-port :sigils}
+
+          ;; Prototype path
+          {:from :ctx-self :from-port :sigil :to :mutate :to-port :sigil}
+          {:value 0.3 :value-type :scalar :to :mutate :to-port :rate}
+          {:from :ctx-pred :from-port :sigil :to :xor :to-port :a}
+          {:from :ctx-succ :from-port :sigil :to :xor :to-port :b}
+          {:from :diversity :from-port :score :to :choose-proto :to-port :score}
+          {:value 0.5 :value-type :scalar :to :choose-proto :to-port :threshold}
+          {:from :xor :from-port :result :to :choose-proto :to-port :above}
+          {:from :mutate :from-port :result :to :choose-proto :to-port :below}
+
+          ;; Legacy fallback inputs
+          {:from :ctx-pred :from-port :sigil :to :legacy-step :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy-step :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy-step :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy-step :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy-step :to-port :phe}
+
+          ;; Hybrid chooser: use prototype when diversity >= 0.45
+          {:from :diversity :from-port :score :to :choose-hybrid :to-port :score}
+          {:value 0.45 :value-type :scalar :to :choose-hybrid :to-port :threshold}
+          {:from :choose-proto :from-port :result :to :choose-hybrid :to-port :above}
+          {:from :legacy-step :from-port :result :to :choose-hybrid :to-port :below}
+
+          {:from :choose-hybrid :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Hybrid wiring: reuse prototype-001's diversity-based mutate/xor logic, but fall back to legacy 工 kernel when diversity is low (score < 0.45)."}
