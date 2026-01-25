@@ -1,0 +1,7 @@
+file,seed,label,classification,detail,change_rate_early,change_rate_final,frozen_ratio,white_ratio,width,generations
+baseline--update-prob0.50-seed-4242.edn,,,barcode,"82% columns frozen, 7 stripes",0.19874999999999995,0.06000000000000001,0.8166666666666667,0.6333333333333333,120,121
+baseline--update-prob0.50-seed2-seed-238310129.edn,,,barcode,"84% columns frozen, 14 stripes",0.20750000000000002,0.07083333333333333,0.8416666666666667,0.4916666666666667,120,121
+perturb--update-prob0.40-seed-4242.edn,,,barcode,"74% columns frozen, 11 stripes",0.20291666666666663,0.08875,0.7416666666666667,0.575,120,121
+perturb--update-prob0.40-seed2-seed-238310129.edn,,,barcode,"80% columns frozen, 13 stripes",0.18874999999999997,0.07333333333333333,0.8,0.5083333333333333,120,121
+perturb--update-prob0.60-seed-4242.edn,,,barcode,"78% columns frozen, 14 stripes",0.20249999999999999,0.04458333333333334,0.7833333333333333,0.5416666666666667,120,121
+perturb--update-prob0.60-seed2-seed-238310129.edn,,,barcode,"78% columns frozen, 14 stripes",0.2066666666666667,0.08875,0.775,0.5333333333333333,120,121
