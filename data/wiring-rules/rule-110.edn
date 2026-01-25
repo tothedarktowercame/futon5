@@ -17,7 +17,8 @@
    {:id :not-lcr :component :bit-not}
    ;; Final: (C OR R) AND NOT(L AND C AND R)
    {:id :final :component :bit-and}
-   {:id :output :component :output}]
+   {:id :output :component :output-sigil}]
+  :output :output
   :edges
   [{:from :self :to :or-cr :to-port :a}
    {:from :succ :to :or-cr :to-port :b}

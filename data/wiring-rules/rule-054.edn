@@ -19,7 +19,8 @@
    {:id :and-l-notc :component :bit-and}
    ;; Final OR
    {:id :or-final :component :bit-or}
-   {:id :output :component :output}]
+   {:id :output :component :output-sigil}]
+  :output :output
   :edges
   [{:from :pred :to :not-l}
    {:from :self :to :xor-cr :to-port :a}

@@ -11,7 +11,8 @@
    {:id :or-cr :component :bit-or}
    ;; L XOR (C OR R)
    {:id :xor-l-or :component :bit-xor}
-   {:id :output :component :output}]
+   {:id :output :component :output-sigil}]
+  :output :output
   :edges
   [{:from :self :to :or-cr :to-port :a}
    {:from :succ :to :or-cr :to-port :b}

@@ -7,7 +7,8 @@
   [{:id :pred :component :context-pred}
    {:id :succ :component :context-succ}
    {:id :xor-lr :component :bit-xor}
-   {:id :output :component :output}]
+   {:id :output :component :output-sigil}]
+  :output :output
   :edges
   [{:from :pred :to :xor-lr :to-port :a}
    {:from :succ :to :xor-lr :to-port :b}
