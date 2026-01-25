@@ -161,7 +161,7 @@
   (apply str (repeatedly length #(rng-int rng 2))))
 
 (defn- load-run [path]
-  (edn/read-string (slurp path)))
+  (edn/read-string {:readers {'object (fn [_] nil)}} (slurp path)))
 
 (def ^:private default-gen-wiring-path
   "resources/xenotype-wirings/prototype-001-creative-peng.edn")
