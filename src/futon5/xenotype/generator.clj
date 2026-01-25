@@ -67,6 +67,10 @@
 (defn- clamp [x lo hi]
   (max lo (min hi x)))
 
+(defn- band-score [x center width]
+  (when (and (number? x) (pos? (double width)))
+    (max 0.0 (- 1.0 (/ (Math/abs (- x center)) (double width))))))
+
 (defn- resolve-exotype-param
   [params]
   (let [exotype (cond
@@ -225,18 +229,26 @@
              [mode _] (apply max-key val freqs)]
          {:result mode})))
 
-   ;; Comparison Operations
-   :similarity
-   (fn [{:keys [a b]} _ _]
-     {:score (- 1.0 (/ (hamming-distance a b) 8.0))})
+  ;; Comparison Operations
+  :similarity
+  (fn [{:keys [a b]} _ _]
+    {:score (- 1.0 (/ (hamming-distance a b) 8.0))})
 
-   :distance
-   (fn [{:keys [a b]} _ _]
-     {:dist (hamming-distance a b)})
+  :distance
+  (fn [{:keys [a b]} _ _]
+    {:dist (hamming-distance a b)})
 
-   :same?
-   (fn [{:keys [a b]} _ _]
-     {:equal (= a b)})
+  :stability-band
+  (fn [{:keys [a b center width]} params _]
+    (let [sim (- 1.0 (/ (hamming-distance a b) 8.0))
+          center (double (or center (:center params) 0.6))
+          width (double (or width (:width params) 0.3))
+          score (band-score sim center width)]
+      {:score score}))
+
+  :same?
+  (fn [{:keys [a b]} _ _]
+    {:equal (= a b)})
 
    :balance
    (fn [{:keys [sigil]} _ _]

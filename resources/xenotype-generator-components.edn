@@ -120,6 +120,11 @@
    :outputs [[:dist :int]]
    :doc "Hamming distance [0,8]"}
 
+  :stability-band
+  {:inputs [[:a :sigil] [:b :sigil] [:center :scalar] [:width :scalar]]
+   :outputs [[:score :scalar]]
+   :doc "Band score of sigil similarity (high when similarity ~ center)"}
+
   :same?
   {:inputs [[:a :sigil] [:b :sigil]]
    :outputs [[:equal :bool]]
