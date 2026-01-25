@@ -189,8 +189,14 @@
   (cached-eigenvalues
    matrix
    (fn [m]
-     (or (pod-eigenvalues m)
-         (java-eigenvalues m)))))
+     (try
+       (or (pod-eigenvalues m)
+           (java-eigenvalues m))
+       (catch Exception _
+         ;; Fallback: use diagonal entries if eigendecomposition fails.
+         (let [diag (mapv (fn [idx] (double (get-in m [idx idx] 0.0)))
+                          (range matrix-shape))]
+           (vec (sort-by #(- (Math/abs %)) diag))))))))
 
 (defn eigenvalue-signs
   "Compute the signs of eigenvalues as hexagram lines.

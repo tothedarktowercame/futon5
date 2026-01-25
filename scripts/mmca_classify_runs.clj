@@ -7,6 +7,10 @@
 (def ^:private default-white-threshold 0.85)
 (def ^:private default-black-threshold 0.85)
 (def ^:private default-genotype-bit-mode :majority)
+(def ^:private default-hot-entropy-threshold 0.9)
+(def ^:private default-hot-change-threshold 0.9)
+(def ^:private default-burst-run-threshold 6)
+(def ^:private default-burst-share-threshold 0.1)
 
 (defn- usage []
   (str/join
@@ -23,6 +27,10 @@
     "  --white-threshold X    Collapse-white threshold (default 0.85)."
     "  --black-threshold X    Collapse-black threshold (default 0.85)."
     "  --genotype-bit-mode M  Map genotype sigils to bits using :majority, :first, or :parity."
+    "  --hot-entropy X        Hotness entropy-n threshold (default 0.9)."
+    "  --hot-change X         Hotness avg-change threshold (default 0.9)."
+    "  --burst-run X          Long-run length needed to count as bursty (default 6)."
+    "  --burst-share X        Share of columns with long runs to qualify as bursty (default 0.1)."
     "  --help                 Show this message."]))
 
 (defn- parse-double* [s]
@@ -54,6 +62,18 @@
 
           (= "--genotype-bit-mode" flag)
           (recur (rest more) (assoc opts :genotype-bit-mode (some-> (first more) keyword)))
+
+          (= "--hot-entropy" flag)
+          (recur (rest more) (assoc opts :hot-entropy-threshold (parse-double* (first more))))
+
+          (= "--hot-change" flag)
+          (recur (rest more) (assoc opts :hot-change-threshold (parse-double* (first more))))
+
+          (= "--burst-run" flag)
+          (recur (rest more) (assoc opts :burst-run-threshold (parse-double* (first more))))
+
+          (= "--burst-share" flag)
+          (recur (rest more) (assoc opts :burst-share-threshold (parse-double* (first more))))
 
           :else
           (recur more (assoc opts :unknown flag))))
@@ -102,6 +122,65 @@
         (when (>= n 2)
           (apply = (take-last n rows)))))))
 
+(defn- max-run-length
+  [rows idx]
+  (let [rows (vec rows)
+        total (count rows)]
+    (loop [i 0
+           prev nil
+           run 0
+           max-run 0]
+      (if (< i total)
+        (let [row ^String (nth rows i)
+              ch (.charAt row idx)
+              same? (= ch prev)
+              run' (if same? (inc run) 1)
+              max-run' (if same? max-run (max max-run run))]
+          (recur (inc i) ch run' max-run'))
+        (max max-run run)))))
+
+(defn- burstiness
+  [rows opts]
+  (let [rows (vec rows)]
+    (if (seq rows)
+      (let [width (count (first rows))
+            run-threshold (long (or (:burst-run-threshold opts) default-burst-run-threshold))
+            share-threshold (double (or (:burst-share-threshold opts) default-burst-share-threshold))
+            max-runs (mapv #(max-run-length rows %) (range width))
+            long-count (count (filter #(>= % run-threshold) max-runs))
+            share (if (pos? width) (/ (double long-count) (double width)) 0.0)]
+        {:bursty? (>= share share-threshold)
+         :long-run-share share
+         :long-run-threshold run-threshold
+         :long-run-count long-count
+         :width width})
+      {:bursty? false
+       :long-run-share nil
+       :long-run-threshold (long (or (:burst-run-threshold opts) default-burst-run-threshold))
+       :long-run-count 0
+       :width 0})))
+
+(defn- hotness
+  [summary rows opts]
+  (let [entropy (:avg-entropy-n summary)
+        change (:avg-change summary)
+        hot-entropy (double (or (:hot-entropy-threshold opts) default-hot-entropy-threshold))
+        hot-change (double (or (:hot-change-threshold opts) default-hot-change-threshold))]
+    (if (and (number? entropy)
+             (number? change)
+             (>= (double entropy) hot-entropy)
+             (>= (double change) hot-change))
+      (let [{:keys [bursty?] :as burst} (burstiness rows opts)
+            hot? (and (seq rows) (not bursty?))]
+        (merge burst
+               {:hot? hot?
+                :entropy entropy
+                :change change
+                :hot-reason (when hot? :high-entropy-change-nonbursty)}))
+      {:hot? false
+       :entropy entropy
+       :change change})))
+
 (defn- classify-run
   [run opts]
   (let [{:keys [white-threshold black-threshold genotype-bit-mode]} opts
@@ -109,15 +188,18 @@
         black-threshold (double (or black-threshold default-black-threshold))
         genotype-bit-mode (or genotype-bit-mode default-genotype-bit-mode)
         {:keys [rows source]} (row-history run genotype-bit-mode)
+        summary (:summary run)
         last-row (when (seq rows) (peek rows))
         white (ratio last-row \1)
         black (ratio last-row \0)
         frozen (boolean (and rows (frozen? rows (:generations run))))
+        hot (hotness summary rows opts)
         status (cond
                  (nil? last-row) :unknown
                  (and white (> white white-threshold)) :collapsed-white
                  (and black (> black black-threshold)) :collapsed-black
                  frozen :frozen
+                 (:hot? hot) :hot
                  :else :candidate)]
     {:status status
      :seed (:seed run)
@@ -125,7 +207,13 @@
      :white-ratio white
      :black-ratio black
      :frozen? frozen
-     :row-source source}))
+     :row-source source
+     :hot? (:hot? hot)
+     :hot-reason (:hot-reason hot)
+     :hot-entropy (:entropy hot)
+     :hot-change (:change hot)
+     :long-run-share (:long-run-share hot)
+     :long-run-threshold (:long-run-threshold hot)}))
 
 (defn- summarize
   [rows]
@@ -134,6 +222,7 @@
      :collapsed-white (get counts :collapsed-white 0)
      :collapsed-black (get counts :collapsed-black 0)
      :frozen (get counts :frozen 0)
+     :hot (get counts :hot 0)
      :candidate (get counts :candidate 0)
      :unknown (get counts :unknown 0)}))
 
@@ -157,6 +246,7 @@
                (format "- Collapsed (white): %d" (:collapsed-white summary))
                (format "- Collapsed (black): %d" (:collapsed-black summary))
                (format "- Frozen: %d" (:frozen summary))
+               (format "- Hot: %d" (:hot summary))
                (format "- Candidates: %d" (:candidate summary))
                (format "- Unknown: %d" (:unknown summary))
                ""
@@ -187,7 +277,10 @@
             summary (summarize rows)
             payload {:summary summary
                      :rows rows
-                     :opts (select-keys opts [:white-threshold :black-threshold :genotype-bit-mode])}]
+                     :opts (select-keys opts
+                                        [:white-threshold :black-threshold :genotype-bit-mode
+                                         :hot-entropy-threshold :hot-change-threshold
+                                         :burst-run-threshold :burst-share-threshold])}]
         (println (format "Classified %d runs from %s" (:total summary) runs-dir))
         (when out
           (spit out (pr-str payload))
