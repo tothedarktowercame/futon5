@@ -170,6 +170,86 @@
        (fund! ds (:id proposal) :note "auto-funded via threshold")))))
 
 ;; =============================================================================
+;; Mana ledger (session budget)
+;; =============================================================================
+
+(defn mana-balance
+  "Get current mana balance for a session."
+  [ds session-id]
+  (-> (jdbc/execute-one! ds
+                         ["SELECT COALESCE(SUM(delta), 0) as balance
+                           FROM mana_events WHERE session_id = ?"
+                          session-id]
+                         query-opts)
+      :balance))
+
+(defn record-mana!
+  "Record a mana credit/debit for a session turn."
+  [ds {:keys [session-id turn delta reason note]}]
+  (let [id (str (random-uuid))
+        balance (+ (mana-balance ds session-id) delta)
+        reason* (when reason (if (keyword? reason) (name reason) (str reason)))]
+    (jdbc/execute! ds
+                   ["INSERT INTO mana_events
+                     (id, session_id, turn, delta, reason, note, balance)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    id session-id turn delta reason* note balance])
+    {:id id
+     :session-id session-id
+     :turn turn
+     :delta delta
+     :reason reason
+     :note note
+     :balance balance}))
+
+(defn mana-summary
+  "Summarize mana activity for a session."
+  [ds session-id]
+  (let [{:keys [earned spent balance]}
+        (jdbc/execute-one! ds
+                           ["SELECT
+                               COALESCE(SUM(CASE WHEN delta > 0 THEN delta ELSE 0 END), 0) as earned,
+                               COALESCE(SUM(CASE WHEN delta < 0 THEN delta ELSE 0 END), 0) as spent,
+                               COALESCE(SUM(delta), 0) as balance
+                             FROM mana_events WHERE session_id = ?"
+                            session-id]
+                           query-opts)]
+    {:session-id session-id
+     :earned earned
+     :spent (Math/abs (double spent))
+     :balance balance}))
+
+;; =============================================================================
+;; Sidecar events (adjunct metadata)
+;; =============================================================================
+
+(defn record-sidecar-event!
+  "Record a sidecar event payload for audit linkage."
+  [ds {:keys [session-id turn event-type payload]}]
+  (let [id (str (random-uuid))
+        event-type* (if (keyword? event-type) (name event-type) (str event-type))
+        payload* (when payload (pr-str payload))]
+    (jdbc/execute! ds
+                   ["INSERT INTO sidecar_events
+                     (id, session_id, turn, event_type, payload)
+                     VALUES (?, ?, ?, ?, ?)"
+                    id session-id turn event-type* payload*])
+    {:id id
+     :session-id session-id
+     :turn turn
+     :event-type event-type
+     :payload payload}))
+
+(defn list-sidecar-events
+  "List sidecar events for a session."
+  [ds session-id]
+  (jdbc/execute! ds
+                 ["SELECT * FROM sidecar_events
+                   WHERE session_id = ? ORDER BY created_at DESC"
+                  session-id]
+                 query-opts))
+
+;; =============================================================================
 ;; Queries & History
 ;; =============================================================================
 

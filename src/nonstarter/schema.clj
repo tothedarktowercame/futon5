@@ -62,6 +62,28 @@
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
+   "-- Mana events: internal currency ledger (per session/turn)
+    CREATE TABLE IF NOT EXISTS mana_events (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      turn INTEGER,
+      delta REAL NOT NULL,
+      reason TEXT,
+      note TEXT,
+      balance REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Sidecar events: adjunct metadata from portal/compass
+    CREATE TABLE IF NOT EXISTS sidecar_events (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      turn INTEGER,
+      event_type TEXT NOT NULL,
+      payload TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
    "-- Xenotypes: counterfactual timelines
     --   Fake people buying nonexistent products
     --   (capitalism's logic, fully explicit)
@@ -109,6 +131,8 @@
     CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status)"
    "CREATE INDEX IF NOT EXISTS idx_votes_proposal ON votes(proposal_id)"
    "CREATE INDEX IF NOT EXISTS idx_funding_proposal ON funding_events(proposal_id)"
+   "CREATE INDEX IF NOT EXISTS idx_mana_events_session ON mana_events(session_id)"
+   "CREATE INDEX IF NOT EXISTS idx_sidecar_events_session ON sidecar_events(session_id)"
    "CREATE INDEX IF NOT EXISTS idx_xenotypes_simulation ON xenotypes(simulation_id)"
    "CREATE INDEX IF NOT EXISTS idx_personal_blocks_week ON personal_blocks(week_id)"
 
