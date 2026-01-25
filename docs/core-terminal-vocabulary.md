@@ -32,12 +32,12 @@ The AIF/GFE loop is the **meta-policy**:
 *which* xenotypes get selected and *how* they adapt. The free energy signal
 is what "bends" the xenotype population toward effectiveness.
 
-| Layer | What it is | What selects it |
-|-------|------------|-----------------|
-| Genotype | CA rule (sigil) | Exotype |
-| Exotype | Local per-cell policy | Xenotype |
-| Xenotype | Global system policy | AIF/GFE loop |
-| AIF/GFE | Meta-policy | (fixed) |
+| Layer    | What it is            | What selects it |
+|----------|-----------------------|-----------------|
+| Genotype | CA rule (sigil)       | Exotype         |
+| Exotype  | Local per-cell policy | Xenotype        |
+| Xenotype | Global system policy  | AIF/GFE loop    |
+| AIF/GFE  | Meta-policy           | (fixed)         |
 
 The AIF/GFE loop is the only level that doesn't evolve — it's the fixed
 reference frame within which evolution happens.
@@ -81,12 +81,12 @@ OBSERVABLES (o) ──► BELIEFS (μ) ──► POLICIES (π) ──► ACTIONS
 
 **What the agent can sense from the environment.**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `o/raw` | domain-specific | Raw sensory input |
-| `o/normalized` | [0,1] vector | Normalized observation vector |
-| `o/gradient` | vector | Change in observations |
-| `o/surprise` | scalar [0,1] | Prediction error magnitude |
+| Field          | Type            | Description                   |
+|----------------|-----------------|-------------------------------|
+| `o/raw`        | domain-specific | Raw sensory input             |
+| `o/normalized` | [0,1] vector    | Normalized observation vector |
+| `o/gradient`   | vector          | Change in observations        |
+| `o/surprise`   | scalar [0,1]    | Prediction error magnitude    |
 
 Domain instantiation required: What are the raw observables? How are they normalized?
 
@@ -94,12 +94,12 @@ Domain instantiation required: What are the raw observables? How are they normal
 
 **The agent's inferred state of the world and itself.**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `μ/state` | domain-specific | Current inferred world state |
-| `μ/self` | domain-specific | Current inferred self state |
-| `μ/mode` | keyword | Inferred operating mode/phase |
-| `μ/confidence` | [0,1] | Confidence in current beliefs |
+| Field          | Type            | Description                   |
+|----------------|-----------------|-------------------------------|
+| `μ/state`      | domain-specific | Current inferred world state  |
+| `μ/self`       | domain-specific | Current inferred self state   |
+| `μ/mode`       | keyword         | Inferred operating mode/phase |
+| `μ/confidence` | [0,1]           | Confidence in current beliefs |
 
 Domain instantiation required: What hidden states are tracked? What modes exist?
 
@@ -107,11 +107,11 @@ Domain instantiation required: What hidden states are tracked? What modes exist?
 
 **What the agent expects or desires.**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `C/preferred` | distribution | Preferred observations (attractors) |
-| `C/avoided` | distribution | Dispreferred observations (repellors) |
-| `C/mode-prior` | distribution | Prior over operating modes |
+| Field          | Type         | Description                           |
+|----------------|--------------|---------------------------------------|
+| `C/preferred`  | distribution | Preferred observations (attractors)   |
+| `C/avoided`    | distribution | Dispreferred observations (repellors) |
+| `C/mode-prior` | distribution | Prior over operating modes            |
 
 Domain instantiation required: What does the agent "want"? What does it avoid?
 
@@ -119,12 +119,12 @@ Domain instantiation required: What does the agent "want"? What does it avoid?
 
 **Rules for selecting actions given beliefs and expectations.**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `π/active` | policy-id | Currently active policy |
-| `π/repertoire` | [policy-id] | Available policies |
-| `π/weights` | {policy-id → weight} | Policy selection weights |
-| `π/trace` | [policy-id] | History of policy activations |
+| Field          | Type                 | Description                   |
+|----------------|----------------------|-------------------------------|
+| `π/active`     | policy-id            | Currently active policy       |
+| `π/repertoire` | [policy-id]          | Available policies            |
+| `π/weights`    | {policy-id → weight} | Policy selection weights      |
+| `π/trace`      | [policy-id]          | History of policy activations |
 
 **THIS IS WHERE XENOTYPES LIVE.**
 
@@ -134,12 +134,12 @@ A xenotype IS a policy (or a meta-policy that selects among policies).
 
 **What the agent can do to the environment.**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `a/primitive` | action-id | Primitive action taken |
-| `a/macro` | macro-action-id | Higher-level action category |
-| `a/parameters` | map | Action parameters |
-| `a/outcome` | domain-specific | Observed outcome of action |
+| Field          | Type            | Description                  |
+|----------------|-----------------|------------------------------|
+| `a/primitive`  | action-id       | Primitive action taken       |
+| `a/macro`      | macro-action-id | Higher-level action category |
+| `a/parameters` | map             | Action parameters            |
+| `a/outcome`    | domain-specific | Observed outcome of action   |
 
 Domain instantiation required: What actions are available? What parameters do they have?
 
@@ -147,12 +147,12 @@ Domain instantiation required: What actions are available? What parameters do th
 
 **The quantity being minimized.**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `G/pragmatic` | scalar | Pragmatic value (goal achievement) |
-| `G/epistemic` | scalar | Epistemic value (uncertainty reduction) |
-| `G/total` | scalar | Combined free energy |
-| `G/components` | map | Breakdown of G into components |
+| Field          | Type   | Description                             |
+|----------------|--------|-----------------------------------------|
+| `G/pragmatic`  | scalar | Pragmatic value (goal achievement)      |
+| `G/epistemic`  | scalar | Epistemic value (uncertainty reduction) |
+| `G/total`      | scalar | Combined free energy                    |
+| `G/components` | map    | Breakdown of G into components          |
 
 Domain instantiation required: How is pragmatic value measured? How is uncertainty measured?
 
@@ -179,13 +179,13 @@ run-outcome(n) ──► belief-about-xenotypes ──► π* ──► select-x
                            └── "which xenotypes produce good runs?"
 ```
 
-| Inner Loop | Outer Loop |
-|------------|------------|
-| Observables: cell context | Observables: run metrics |
-| Beliefs: hidden state | Beliefs: xenotype quality estimates |
-| Policy: xenotype wiring | Policy: xenotype selection/evolution |
-| Actions: output sigil | Actions: choose next xenotype to try |
-| Free Energy: local G | Free Energy: fitness score |
+| Inner Loop                | Outer Loop                           |
+|---------------------------|--------------------------------------|
+| Observables: cell context | Observables: run metrics             |
+| Beliefs: hidden state     | Beliefs: xenotype quality estimates  |
+| Policy: xenotype wiring   | Policy: xenotype selection/evolution |
+| Actions: output sigil     | Actions: choose next xenotype to try |
+| Free Energy: local G      | Free Energy: fitness score           |
 
 **The outer loop is also AIF.** It's the same abstract structure, but the
 "agent" is the evolution process and the "environment" is the space of possible runs.
