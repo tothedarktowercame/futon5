@@ -2,6 +2,14 @@
 
 Use clj-kondo to identify and fix parenthesis errors.
 
+## Important: This Is Guidance, Not a Formal Spec
+
+This document provides principles and heuristics, not a complete specification. Use judgment. If something isn't defined precisely, figure it out from context or ask. Do not use ambiguity as an excuse for inaction.
+
+The pseudocode examples are illustrative. You know what "final phenotype row" means. You know how to count white pixels. Implement the spirit, not the letter.
+
+If a wiring doesn't have `update-prob`, use whatever parameter controls intervention pressure. If runs are short, adapt the frozen check. These are not gotchas — they're obvious adaptations.
+
 ## Mission 0 Experimental Methodology
 
 ### Principles
@@ -43,9 +51,11 @@ Use clj-kondo to identify and fix parenthesis errors.
 
 | Outcome | Criteria | Action |
 |---------|----------|--------|
-| **Promote** | Beats baseline on ≥4/5 seeds, effect size d>0.3 | Add to known-good library |
+| **Promote** | Beats baseline on ≥4/5 seeds, Cohen's d > 0.3 on primary metric | Add to known-good library |
 | **Hold** | Mixed results, 2-3/5 seeds better | Flag for larger sample |
 | **Discard** | Worse than baseline on ≥3/5 seeds | Record as failed, don't revisit |
+
+(Cohen's d = (mean_A - mean_B) / pooled_std_dev. Look it up if unfamiliar.)
 
 ### Anti-Patterns (What Not To Do)
 
@@ -66,13 +76,15 @@ Before any experimental run:
 
 ### Known-Good Baseline Reference
 
-The following configurations have been validated as producing EoC:
+The full baseline library is in `data/known-good-runset-20.edn`. Key anchor:
 
-1. **Mission 17a 工** (anchor configuration)
+1. **Mission 17a 工** (primary anchor)
    - sigil: 工
    - update-prob: 0.50
    - match-threshold: 0.44
-   - evidence: "most stable EoC in M17a", lands in 泰 zone
+   - evidence: "most stable EoC in M17a"
+
+See also: `reports/known-good-20-jvm3.md` for the full 20-run baseline set with reproduction commands.
 
 Start from these. Do not attempt to rediscover them from random search.
 
@@ -80,21 +92,23 @@ Start from these. Do not attempt to rediscover them from random search.
 
 Before reporting results, classify each run. These checks are mandatory.
 
+The pseudocode below is illustrative. Use the last available phenotype row (or genotype if phenotype is absent). For short runs (<10 generations), adapt the frozen check proportionally.
+
 ### Collapsed (Hot → White)
 ```
-white_ratio = count(phenotype_final == 1) / length
+white_ratio = count(last_row == 1) / length(last_row)
 IF white_ratio > 0.85 THEN status = :collapsed-white
 ```
 
 ### Collapsed (Hot → Black)
 ```
-black_ratio = count(phenotype_final == 0) / length
+black_ratio = count(last_row == 0) / length(last_row)
 IF black_ratio > 0.85 THEN status = :collapsed-black
 ```
 
 ### Frozen (Stagnant)
 ```
-IF last 10 phenotype rows are identical THEN status = :frozen
+IF last N rows are identical (N = min(10, generations/2)) THEN status = :frozen
 ```
 
 ### Possibly Good
@@ -106,7 +120,9 @@ Only `:candidate` runs are worth examining further. Collapsed and frozen runs ar
 
 ## Decision Tree: What To Try Next
 
-When runs fail, do not flail randomly. Follow this flowchart:
+When runs fail, do not flail randomly. Follow this flowchart.
+
+Note: "update-prob" below means "the primary parameter controlling intervention pressure." For some wirings this is literally `update-prob`. For others it might be `match-threshold`, a gate threshold, or kernel selection. Use judgment — the principle is "reduce pressure if collapsing, increase if frozen."
 
 ```
 START
