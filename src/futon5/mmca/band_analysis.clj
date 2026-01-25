@@ -117,18 +117,52 @@
               []
               moderate-indices))))
 
+(defn- find-period
+  "Find the smallest period P where row[i] == row[i+P] for most rows.
+   Returns {:period P :strength ratio} or nil if no strong period found."
+  [history max-period min-strength]
+  (let [rows (vec history)
+        total (count rows)]
+    (when (>= total (* 2 max-period))
+      (let [check-period (fn [p]
+                           (let [pairs (range 0 (- total p))
+                                 matches (count (filter (fn [idx]
+                                                          (= (nth rows idx)
+                                                             (nth rows (+ idx p))))
+                                                        pairs))
+                                 total-pairs (count pairs)]
+                             (when (pos? total-pairs)
+                               {:period p :strength (double (/ matches total-pairs))})))]
+        (->> (range 2 (inc max-period))
+             (map check-period)
+             (filter #(and % (> (:strength %) min-strength)))
+             first)))))
+
+(defn row-periodicity
+  "Detect if rows repeat with a short period.
+   Returns {:periodic? bool :period P :strength ratio}"
+  [history]
+  (if-let [result (find-period history 20 0.7)]
+    (assoc result :periodic? true)
+    {:periodic? false}))
+
 (defn analyze-history
   "Analyze a raw history vector of strings."
   [history]
   (when (seq history)
     (let [col-analyses (analyze-all-columns history)
           summary (band-summary col-analyses)
-          bands (find-active-bands col-analyses)]
+          bands (find-active-bands col-analyses)
+          periodicity (row-periodicity history)]
       (assoc summary
              :generations (count history)
              :active-bands (count bands)
              :band-widths (map count bands)
-             :widest-band (if (seq bands) (apply max (map count bands)) 0)))))
+             :widest-band (if (seq bands) (apply max (map count bands)) 0)
+             :row-periodicity periodicity
+             :row-periodic? (:periodic? periodicity)
+             :row-period (:period periodicity)
+             :row-period-strength (:strength periodicity)))))
 
 (defn analyze-run
   "Analyze a run map with :phe-history or :gen-history."

@@ -28,7 +28,14 @@
                    (:widest-band analysis)))
   (println (format "  Band score: %.3f, Interpretation: %s"
                    (:band-score analysis)
-                   (name (:interpretation analysis)))))
+                   (name (:interpretation analysis))))
+  (when-let [periodic? (:row-periodic? analysis)]
+    (println (format "  Row periodicity: %s"
+                     (if periodic?
+                       (format "YES (period=%d, strength=%.2f)"
+                               (long (or (:row-period analysis) 0))
+                               (double (or (:row-period-strength analysis) 0.0)))
+                       "no")))))
 
 (defn -main [& args]
   (let [runs-dir (first args)]
