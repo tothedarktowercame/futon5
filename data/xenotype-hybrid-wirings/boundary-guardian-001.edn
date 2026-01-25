@@ -1,0 +1,96 @@
+{:meta {:id :boundary-guardian-001
+        :label "Boundary Guardian: stability-biased hybrid"
+        :source {:principles "docs/wiring-design-principles-from-good-bands.md"
+                 :notebook "docs/notebook-eoc-detection-and-wiring-design.md"}
+        :description "The key insight: prototype wirings fail because they ALWAYS change. Legacy 工 works because update-prob=0.5 provides stability. This wiring uses legacy 工 as the base, with creative exploration only when neighbors show high diversity (potential for interesting dynamics)."}
+
+ :diagram
+ {:nodes [;; Context extraction
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Measure neighbor diversity
+          {:id :diversity :component :diversity}
+
+          ;; Primary path: legacy 工 kernel (provides stability via update-prob=0.5)
+          {:id :legacy-base :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "工"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 0
+                                     :match-threshold 0.4444444444444444
+                                     :invert-on-phenotype? false
+                                     :update-prob 0.5
+                                     :mix-mode :rotate-left
+                                     :mix-shift 0}}}
+
+          ;; Creative path: XOR for differentiation (only used when diversity is moderate)
+          {:id :xor-creative :component :bit-xor}
+
+          ;; Guardian chooser: use legacy by default, creative only in moderate diversity
+          ;; Moderate diversity (0.3-0.7) suggests interesting boundary conditions
+          {:id :low-gate :component :threshold-sigil}
+          {:id :high-gate :component :threshold-sigil}
+
+          {:id :out :component :output-sigil}]
+
+  :edges [;; Measure diversity
+          {:from :neighbors :from-port :sigils :to :diversity :to-port :sigils}
+
+          ;; Legacy path gets full context
+          {:from :ctx-pred :from-port :sigil :to :legacy-base :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy-base :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy-base :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy-base :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy-base :to-port :phe}
+
+          ;; Creative path: XOR neighbors
+          {:from :ctx-pred :from-port :sigil :to :xor-creative :to-port :a}
+          {:from :ctx-succ :from-port :sigil :to :xor-creative :to-port :b}
+
+          ;; Two-threshold gate for "moderate diversity" band
+          ;; If diversity < 0.3: use legacy (neighbors too uniform, need stability)
+          ;; If diversity > 0.7: use legacy (neighbors too chaotic, need stability)
+          ;; If 0.3 <= diversity <= 0.7: use creative (interesting boundary zone)
+
+          ;; Low gate: if diversity >= 0.3, pass through to high gate; else use legacy
+          {:from :diversity :from-port :score :to :low-gate :to-port :score}
+          {:value 0.3 :value-type :scalar :to :low-gate :to-port :threshold}
+          {:from :xor-creative :from-port :result :to :low-gate :to-port :above}
+          {:from :legacy-base :from-port :result :to :low-gate :to-port :below}
+
+          ;; High gate: if diversity <= 0.7, use low-gate result; else use legacy
+          ;; Note: threshold-sigil uses "above" for score > threshold
+          ;; So we flip: if diversity > 0.7, use legacy (above path)
+          {:from :diversity :from-port :score :to :high-gate :to-port :score}
+          {:value 0.7 :value-type :scalar :to :high-gate :to-port :threshold}
+          {:from :legacy-base :from-port :result :to :high-gate :to-port :above}
+          {:from :low-gate :from-port :result :to :high-gate :to-port :below}
+
+          {:from :high-gate :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Boundary Guardian: stability-first hybrid wiring.
+
+  The key insight: prototype wirings produce 99%+ change per tick because
+  they ALWAYS output something new. Legacy 工 works because update-prob=0.5
+  means 50% of the time it keeps the current value.
+
+  This wiring uses legacy 工 as the BASE (providing stability), and only
+  switches to creative XOR when diversity is in the 'interesting' moderate
+  range (0.3-0.7). This is the boundary zone where good EoC bands form.
+
+  When diversity is too low (< 0.3) or too high (> 0.7):
+  → Use legacy 工 for stability
+
+  When diversity is moderate (0.3-0.7):
+  → Try creative differentiation via XOR
+
+  This implements the 'boundary guardian' pattern: stable at extremes,
+  creative at boundaries."}
