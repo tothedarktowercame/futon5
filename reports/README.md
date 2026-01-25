@@ -16,6 +16,7 @@ Research reports, experiments, and visualizations from the futon5 MMCA project.
 
 | Report | Description |
 |--------|-------------|
+| [Hexagram Behavior Report](hexagram-behavior-report.md) | Hexagram distributions from MMCA wiring runs via eigenvalue diagonalization |
 | [L5-Creative Workup](workup-l5-creative-seed-352362012.md) | Deep dive into L5-creative seed 352362012 - Rule 90 patterns, triangle detection |
 | [Domain Transfer: L5-Creative → Ants](domain-transfer-l5-creative-ants.md) | Cross-domain validation showing exploration advantage in patchy environments |
 | [Exotype EoC Search Strategy](strategy-exotype-eoc-search.md) | Strategy for finding exotype-layer Edge of Chaos, Rule 90 → hexagram 63/64 connection |
@@ -78,3 +79,4 @@ Spacetime visualizations and diagrams in [`images/`](images/):
 - **Visual overview**: [Rule Photo Essay](rule-photo-essay.md)
 - **Cross-domain validation**: [Domain Transfer Report](domain-transfer-l5-creative-ants.md)
 - **Hexagram connection**: [Exotype EoC Strategy](strategy-exotype-eoc-search.md)
+- **Hexagram sampling**: [Hexagram Behavior Report](hexagram-behavior-report.md)
