@@ -1,0 +1,14 @@
+{:meta {:id :rule-090
+        :description "Rule 90: XOR(left, right) - Sierpinski triangle, Class 3"
+        :wolfram-class 3
+        :formula "L XOR R"}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :succ :component :context-succ}
+   {:id :xor-lr :component :bit-xor}
+   {:id :output :component :output}]
+  :edges
+  [{:from :pred :to :xor-lr :to-port :a}
+   {:from :succ :to :xor-lr :to-port :b}
+   {:from :xor-lr :to :output}]}}
