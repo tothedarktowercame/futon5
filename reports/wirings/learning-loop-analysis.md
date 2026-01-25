@@ -4,7 +4,7 @@ Date: 2026-01-25
 
 ## Data Summary
 
-- **Wirings analyzed**: 22
+- **Wirings analyzed**: 30
 - **Outcomes collected**: 25
 - **Joined records**: 25
 
@@ -19,31 +19,28 @@ Date: 2026-01-25
 
 | Feature | Correlation | N |
 |---------|-------------|---|
-| complexity | -0.158 | 13 |
-| creative-nodes | -0.158 | 13 |
-| diversity-nodes | -0.158 | 13 |
-| edge-count | -0.158 | 13 |
-| gate-nodes | -0.158 | 13 |
-| node-count | -0.158 | 13 |
-| gate-ratio | -0.158 | 13 |
-| creative-ratio | -0.158 | 13 |
+| creative-ratio | 0.155 | 25 |
+| creative-nodes | 0.139 | 25 |
+| diversity-nodes | 0.086 | 25 |
+| gate-ratio | 0.054 | 25 |
+| gate-nodes | 0.008 | 25 |
+| edge-count | -0.045 | 25 |
+| complexity | -0.051 | 25 |
+| node-count | -0.063 | 25 |
+| legacy-nodes | -0.180 | 25 |
 
 ## Insights
 
-- **-** complexity: complexity correlates negatively with better outcomes (r=-0.16)
-- **-** creative-nodes: creative-nodes correlates negatively with better outcomes (r=-0.16)
-- **-** diversity-nodes: diversity-nodes correlates negatively with better outcomes (r=-0.16)
-- **-** edge-count: edge-count correlates negatively with better outcomes (r=-0.16)
-- **-** gate-nodes: gate-nodes correlates negatively with better outcomes (r=-0.16)
-- **-** node-count: node-count correlates negatively with better outcomes (r=-0.16)
-- **-** gate-ratio: gate-ratio correlates negatively with better outcomes (r=-0.16)
-- **-** creative-ratio: creative-ratio correlates negatively with better outcomes (r=-0.16)
+- **+** creative-ratio: creative-ratio correlates positively with better outcomes (r=0.16)
+- **+** creative-nodes: creative-nodes correlates positively with better outcomes (r=0.14)
+- **-** legacy-nodes: legacy-nodes correlates negatively with better outcomes (r=-0.18)
 
 ## Recommendations
 
 - [high] No EoC runs found - try wider grids, more seeds, or perturbation injection
-- [low] Try wirings with less complexity
-- [low] Try wirings with less creative-nodes
+- [medium] Try wirings with more creative-ratio
+- [medium] Try wirings with more creative-nodes
+- [low] Try wirings with less legacy-nodes
 
 ## Next Steps
 

@@ -60,13 +60,20 @@
        (remove #(str/includes? (.getName %) "outcomes"))))
 
 (defn collect-wiring-features
-  "Collect features from all wirings."
+  "Collect features from all wirings.
+   Scans both the given root and resources/xenotype-wirings/."
   [root]
-  (->> (find-wiring-files root)
-       (map #(.getPath %))
-       (map features/extract-features-from-file)
-       (filter some?)
-       vec))
+  (let [data-files (find-wiring-files root)
+        resource-files (when (.exists (io/file "resources/xenotype-wirings"))
+                         (->> (file-seq (io/file "resources/xenotype-wirings"))
+                              (filter #(.isFile %))
+                              (filter #(str/ends-with? (.getName %) ".edn"))))
+        all-files (concat data-files resource-files)]
+    (->> all-files
+         (map #(.getPath %))
+         (map features/extract-features-from-file)
+         (filter some?)
+         vec)))
 
 ;; === Collect Outcomes ===
 
@@ -95,18 +102,28 @@
 ;; === Join Features to Outcomes ===
 
 (defn extract-wiring-id-from-filename
-  "Try to extract wiring ID from a run filename."
+  "Try to extract wiring ID from a run filename.
+   Maps run output filenames to actual wiring IDs."
   [filename]
   (cond
-    (str/includes? filename "legacy") :legacy-baseline
-    (str/includes? filename "prototype-001") :prototype-001-creative-peng
-    (str/includes? filename "boundary-guardian") :boundary-guardian-001
+    ;; Wiring ladder levels
     (str/includes? filename "level-0") :level-0-baseline
     (str/includes? filename "level-1") :level-1-legacy
     (str/includes? filename "level-2") :level-2-context
     (str/includes? filename "level-3") :level-3-diversity
     (str/includes? filename "level-4") :level-4-gate
     (str/includes? filename "level-5") :level-5-creative
+    ;; Prototype wirings (file is prototype-001-creative-peng.edn but ID is :xenotype-001)
+    (str/includes? filename "prototype-001") :xenotype-001
+    (str/includes? filename "prototype-038") :xenotype-038
+    (str/includes? filename "prototype-071") :xenotype-071
+    ;; Named wirings
+    (str/includes? filename "boundary-guardian") :boundary-guardian-001
+    (str/includes? filename "hybrid-prototype") :hybrid-prototype-001-gong
+    ;; Legacy/baseline runs (use legacy kernel, map to legacy-baseline wiring)
+    (str/includes? filename "legacy") :legacy-baseline
+    (str/includes? filename "baseline") :legacy-baseline
+    (str/includes? filename "perturb") :legacy-baseline  ; parameter variations
     :else :unknown))
 
 (defn join-features-to-outcomes

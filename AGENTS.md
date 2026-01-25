@@ -237,3 +237,66 @@ After each batch, report what you learned. Do not just dump results.
 ```
 
 This report goes to the user. Do not present unlabeled image dumps.
+
+## Wiring Learning Loop (MANDATORY)
+
+After running experiments, **you must close the learning loop** by connecting outcomes back to wiring features. This is how we learn which wiring characteristics produce better results.
+
+### Workflow
+
+1. **Run experiments** → output to `/tmp/experiment-name/`
+2. **Classify runs** → persist to `reports/health/experiment-name-health.csv`
+3. **Run learning loop analysis**:
+   ```bash
+   bb -cp src:resources scripts/wiring_learning_loop.clj \
+     --markdown reports/wirings/learning-loop-analysis.md
+   ```
+4. **Review correlations** → which features correlate with better outcomes?
+5. **Design next wiring** → guided by the insights, not random exploration
+
+### What the Learning Loop Does
+
+- Extracts structural features from all wirings (node count, edge count, creative nodes, gate nodes, etc.)
+- Joins wiring features to health outcomes from `reports/health/*.csv`
+- Calculates correlations between features and outcome quality
+- Generates actionable recommendations
+
+### Current Insights (2026-01-25)
+
+From 25 runs across 3 wirings:
+
+| Feature | Correlation | Interpretation |
+|---------|-------------|----------------|
+| creative-ratio | +0.16 | More creative/mutation nodes → better |
+| creative-nodes | +0.14 | XOR, mutate components help |
+| diversity-nodes | +0.09 | Diversity sensing helps |
+| legacy-nodes | -0.18 | Heavy legacy dependence → worse |
+
+**Recommendation**: Prioritize wirings with creative paths over pure legacy wrapping.
+
+### Anti-Pattern: Wiring Soup
+
+Do NOT test complex wirings without understanding component contributions. Instead:
+
+1. Use the **wiring ladder** (`data/wiring-ladder/level-*.edn`) for systematic build-up
+2. Test one addition at a time (Level 1 → Level 2 → ... → Level 5)
+3. Confirm behavior changes at each level before adding complexity
+
+### Varying Inputs Systematically
+
+We have been focused on:
+- **Wiring**: xenotype-001 (prototype-001-creative-peng)
+- **Exotype**: 工 (gong-super)
+
+But there are **8 prototype wirings** in `resources/xenotype-wirings/`:
+- xenotype-001, 038, 071, 104, 129, 166, 199, 232
+
+And **multiple exotypes** (gong, xiong, etc.) in `data/xenotype-legacy-wirings/`.
+
+**Next frontier**: Lock other parameters, systematically vary wiring + exotype combinations.
+
+### Registry Files
+
+- `reports/wirings/wiring-outcomes.edn` - manual outcome tracking
+- `reports/wirings/learning-loop-analysis.md` - auto-generated analysis
+- `reports/health/*.csv` - per-experiment health data (input to learning loop)
