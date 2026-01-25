@@ -70,6 +70,58 @@
     (.dispose g)
     img))
 
+(defn render-featured-hexagram
+  "Render a larger, labeled spacetime diagram for a featured hexagram."
+  [n result hex-info output-path]
+  (let [history (:history result)
+        ;; Larger dimensions
+        spacetime-w 400
+        spacetime-h 250
+        hex-symbol-w 60
+        hex-symbol-h 80
+        padding 20
+        header-h 40
+
+        total-w (+ spacetime-w hex-symbol-w (* 3 padding))
+        total-h (+ spacetime-h header-h (* 2 padding))
+
+        img (BufferedImage. total-w total-h BufferedImage/TYPE_INT_RGB)
+        g (.createGraphics img)]
+
+    ;; Background
+    (.setColor g Color/WHITE)
+    (.fillRect g 0 0 total-w total-h)
+
+    ;; Header with hexagram info
+    (.setColor g Color/BLACK)
+    (.setFont g (Font. "SansSerif" Font/BOLD 16))
+    (.drawString g (format "#%d %s" n (:name hex-info)) padding 25)
+
+    (.setFont g (Font. "Monospaced" Font/PLAIN 12))
+    (.drawString g (or (:formula result) "?") (+ padding 150) 25)
+
+    ;; Hexagram symbol on left
+    (when-let [lines (:lines hex-info)]
+      (let [hex-img (render-hexagram-lines lines hex-symbol-w hex-symbol-h)]
+        (.drawImage g hex-img padding (+ header-h padding) nil)))
+
+    ;; Spacetime diagram
+    (when history
+      (let [st-img (render-mini-spacetime history spacetime-w spacetime-h)]
+        (.drawImage g st-img (+ hex-symbol-w (* 2 padding)) (+ header-h padding) nil)))
+
+    ;; Metrics below spacetime
+    (.setFont g (Font. "SansSerif" Font/PLAIN 11))
+    (.drawString g (format "Entropy: %.3f  |  Unique sigils: %d"
+                           (or (get-in result [:metrics :entropy-n]) 0.0)
+                           (or (get-in result [:metrics :unique]) 0))
+                 (+ hex-symbol-w (* 2 padding))
+                 (+ header-h spacetime-h padding 15))
+
+    (.dispose g)
+    (ImageIO/write img "PNG" (io/file output-path))
+    output-path))
+
 ;;; ============================================================
 ;;; Grid Sheet
 ;;; ============================================================
@@ -149,14 +201,40 @@
 ;;; Report Generation
 ;;; ============================================================
 
-(defn generate-report [results output-path]
+(defn generate-report [results output-path output-dir]
   (let [sb (StringBuilder.)
-        timestamp (java.time.LocalDateTime/now)]
+        timestamp (java.time.LocalDateTime/now)
+        sorted (sort-by #(get-in (val %) [:metrics :entropy-n] 0) results)
+        lowest-5 (take 5 sorted)
+        highest-5 (take 5 (reverse sorted))]
 
     (.append sb "# Hexagram Wiring Test Sheet\n\n")
     (.append sb (str "*Generated: " timestamp "*\n\n"))
     (.append sb "All 64 I Ching hexagrams mapped to wiring diagrams and executed.\n\n")
     (.append sb "![Hexagram Grid](images/hexagram-wiring-grid.png)\n\n")
+    (.append sb "---\n\n")
+
+    ;; Entropy Extremes with images (moved up for visual impact)
+    (.append sb "## Entropy Extremes\n\n")
+
+    (.append sb "### Highest Entropy (Most Chaotic)\n\n")
+    (.append sb "These hexagrams produce complex, information-rich patterns:\n\n")
+    (doseq [[n result] highest-5]
+      (let [hex-info (lines/hexagram-number->hexagram n)
+            img-name (format "hex-%02d.png" n)]
+        ;; Generate individual image
+        (render-featured-hexagram n result hex-info (str output-dir "/" img-name))
+        (.append sb (format "![Hexagram %d](images/%s)\n\n" n img-name))))
+
+    (.append sb "### Lowest Entropy (Most Ordered)\n\n")
+    (.append sb "These hexagrams collapse to uniform or simple patterns:\n\n")
+    (doseq [[n result] lowest-5]
+      (let [hex-info (lines/hexagram-number->hexagram n)
+            img-name (format "hex-%02d.png" n)]
+        ;; Generate individual image
+        (render-featured-hexagram n result hex-info (str output-dir "/" img-name))
+        (.append sb (format "![Hexagram %d](images/%s)\n\n" n img-name))))
+
     (.append sb "---\n\n")
 
     ;; Summary table
@@ -174,21 +252,6 @@
                             (or (:formula result) "?")
                             (or (get-in result [:metrics :entropy-n]) 0.0)
                             (or (get-in result [:metrics :unique]) 0)))))
-    (.append sb "\n")
-
-    ;; Top/bottom by entropy
-    (.append sb "## Entropy Extremes\n\n")
-    (let [sorted (sort-by #(get-in (val %) [:metrics :entropy-n] 0) results)]
-      (.append sb "**Lowest entropy (most ordered):**\n")
-      (doseq [[n result] (take 5 sorted)]
-        (let [hex-info (lines/hexagram-number->hexagram n)]
-          (.append sb (format "- #%d %s: %.3f\n" n (:name hex-info)
-                              (get-in result [:metrics :entropy-n] 0)))))
-      (.append sb "\n**Highest entropy (most chaotic):**\n")
-      (doseq [[n result] (take 5 (reverse sorted))]
-        (let [hex-info (lines/hexagram-number->hexagram n)]
-          (.append sb (format "- #%d %s: %.3f\n" n (:name hex-info)
-                              (get-in result [:metrics :entropy-n] 0))))))
     (.append sb "\n")
 
     ;; Methodology
@@ -242,11 +305,12 @@
     (println "\nGenerating grid image...")
     (generate-sheet results (str output-dir "/hexagram-wiring-grid.png"))
 
-    (println "Generating report...")
-    (generate-report results "reports/hexagram-wiring-sheet.md")
+    (println "Generating report with featured hexagram images...")
+    (generate-report results "reports/hexagram-wiring-sheet.md" output-dir)
 
     (println "\nDone!")
     (println "  Grid: reports/images/hexagram-wiring-grid.png")
+    (println "  Featured: reports/images/hex-*.png")
     (println "  Report: reports/hexagram-wiring-sheet.md")))
 
 (-main)

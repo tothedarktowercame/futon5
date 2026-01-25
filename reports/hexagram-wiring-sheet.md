@@ -1,10 +1,42 @@
 # Hexagram Wiring Test Sheet
 
-*Generated: 2026-01-25T16:58:45.880737925*
+*Generated: 2026-01-25T18:11:36.810716330*
 
 All 64 I Ching hexagrams mapped to wiring diagrams and executed.
 
 ![Hexagram Grid](images/hexagram-wiring-grid.png)
+
+---
+
+## Entropy Extremes
+
+### Highest Entropy (Most Chaotic)
+
+These hexagrams produce complex, information-rich patterns:
+
+![Hexagram 63](images/hex-63.png)
+
+![Hexagram 52](images/hex-52.png)
+
+![Hexagram 30](images/hex-30.png)
+
+![Hexagram 38](images/hex-38.png)
+
+![Hexagram 47](images/hex-47.png)
+
+### Lowest Entropy (Most Ordered)
+
+These hexagrams collapse to uniform or simple patterns:
+
+![Hexagram 7](images/hex-07.png)
+
+![Hexagram 20](images/hex-20.png)
+
+![Hexagram 58](images/hex-58.png)
+
+![Hexagram 27](images/hex-27.png)
+
+![Hexagram 54](images/hex-54.png)
 
 ---
 
@@ -76,22 +108,6 @@ All 64 I Ching hexagrams mapped to wiring diagrams and executed.
 | 62 | 小過 | ⚊⚋⚋⚋⚋⚊ | `context-succ → bit-and → bit-or` | 0.99 | 72 |
 | 63 | 既濟 | ⚊⚋⚊⚋⚊⚋ | `context-succ → bit-xor → bit-xor` | 0.99 | 72 |
 | 64 | 未濟 | ⚋⚊⚋⚊⚋⚊ | `context-pred → bit-or → bit-or` | -0.00 | 1 |
-
-## Entropy Extremes
-
-**Lowest entropy (most ordered):**
-- #7 師: -0.000
-- #20 觀: -0.000
-- #58 兌: -0.000
-- #27 頤: -0.000
-- #54 歸妹: -0.000
-
-**Highest entropy (most chaotic):**
-- #63 既濟: 0.992
-- #52 艮: 0.992
-- #30 離: 0.992
-- #38 睽: 0.992
-- #47 困: 0.992
 
 ## Methodology
 
