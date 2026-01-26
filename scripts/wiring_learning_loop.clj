@@ -105,6 +105,11 @@
    Maps run output filenames to actual wiring IDs."
   [filename]
   (cond
+    ;; Hexagram wirings (hex-01, hex-1, etc.)
+    (re-find #"hex-0*([0-9]+)" filename)
+    (let [[_ num] (re-find #"hex-0*([0-9]+)" filename)
+          n (Integer/parseInt num)]
+      (keyword (str "hex-" n)))
     ;; Wiring ladder levels
     (str/includes? filename "level-0") :level-0-baseline
     (str/includes? filename "level-1") :level-1-legacy

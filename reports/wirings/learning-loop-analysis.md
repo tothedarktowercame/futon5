@@ -1,58 +1,56 @@
 # Wiring Learning Loop Analysis
 
-Date: 2026-01-25
+Date: 2026-01-26
 
 ## Data Summary
 
-- **Wirings analyzed**: 30
-- **Outcomes collected**: 25
-- **Joined records**: 25
+- **Wirings analyzed**: 72
+- **Outcomes collected**: 89
+- **Joined records**: 89
 
 ## Classification Distribution
 
 | Classification | Count | % |
 |----------------|-------|---|
-| cooling | 2 | 8.0% |
-| barcode | 23 | 92.0% |
+| eoc | 9 | 10.1% |
+| cooling | 4 | 4.5% |
+| barcode | 25 | 28.1% |
+| hot | 5 | 5.6% |
+| collapsed-black | 14 | 15.7% |
+| unknown | 23 | 25.8% |
+| collapsed-white | 8 | 9.0% |
+| periodic | 1 | 1.1% |
 
 ## Feature Correlations with Outcome Quality
 
 | Feature | Correlation | N |
 |---------|-------------|---|
-| allele-stratified-ratio | 0.250 | 9 |
-| allele-stratified-nodes | 0.250 | 9 |
-| creative-ratio | 0.155 | 25 |
-| creative-nodes | 0.139 | 25 |
-| diversity-nodes | 0.086 | 25 |
-| gate-ratio | 0.054 | 25 |
-| gate-nodes | 0.008 | 25 |
-| edge-count | -0.045 | 25 |
-| complexity | -0.051 | 25 |
-| node-count | -0.063 | 25 |
-| legacy-nodes | -0.180 | 25 |
+| complexity | 0.003 | 70 |
+| gate-nodes | 0.003 | 70 |
+| diversity-nodes | 0.003 | 70 |
+| node-count | 0.003 | 70 |
+| edge-count | 0.003 | 70 |
+| gate-ratio | 0.003 | 70 |
+| allele-stratified-ratio | -0.003 | 70 |
+| creative-nodes | -0.120 | 70 |
+| creative-ratio | -0.134 | 70 |
 
 ## Trait Coverage
 
 | Trait | Avg Nodes | Avg Ratio |
 |-------|-----------|-----------|
-| allele-stratified | 0.61 | 0.075 |
-| sigil-level | 0.18 | 0.025 |
+| allele-stratified | 1.96 | 0.323 |
+| sigil-level | 0.07 | 0.010 |
 
 ## Insights
 
-- **+** allele-stratified-ratio: allele-stratified-ratio correlates positively with better outcomes (r=0.25)
-- **+** allele-stratified-nodes: allele-stratified-nodes correlates positively with better outcomes (r=0.25)
-- **+** creative-ratio: creative-ratio correlates positively with better outcomes (r=0.16)
-- **+** creative-nodes: creative-nodes correlates positively with better outcomes (r=0.14)
-- **-** legacy-nodes: legacy-nodes correlates negatively with better outcomes (r=-0.18)
+- **-** creative-nodes: creative-nodes correlates negatively with better outcomes (r=-0.12)
+- **-** creative-ratio: creative-ratio correlates negatively with better outcomes (r=-0.13)
 
 ## Recommendations
 
-- [high] No EoC runs found - try wider grids, more seeds, or perturbation injection
-- [medium] Try wirings with more allele-stratified-ratio
-- [medium] Try wirings with more allele-stratified-nodes
-- [medium] Try wirings with more creative-ratio
-- [low] Try wirings with less legacy-nodes
+- [low] Try wirings with less creative-nodes
+- [low] Try wirings with less creative-ratio
 
 ## Next Steps
 
