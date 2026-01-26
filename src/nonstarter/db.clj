@@ -3,7 +3,8 @@
 
    All the desire market mechanics, backed by SQLite.
    The facts established are permanent records."
-  (:require [next.jdbc :as jdbc]
+  (:require [clojure.string :as str]
+            [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
             [nonstarter.schema :as schema]))
 
@@ -256,15 +257,15 @@
 (defn create-hypothesis!
   "Create a hypothesis entry."
   [ds {:keys [title statement context status priority mana-estimate]}]
-  (when-not (and title statement)
-    (throw (ex-info "Hypothesis requires :title and :statement" {})))
+  (when-not (and title statement (not (str/blank? context)) (number? mana-estimate))
+    (throw (ex-info "Hypothesis requires :title, :statement, :context, and numeric :mana-estimate" {})))
   (let [id (str (random-uuid))
         record {:id id
                 :title title
                 :statement statement
                 :context context
                 :status (or status "active")
-                :priority priority
+                :priority (or priority 0)
                 :mana_estimate mana-estimate}]
     (jdbc/execute! ds
                    ["INSERT INTO hypotheses (id, title, statement, context, status, priority, mana_estimate)

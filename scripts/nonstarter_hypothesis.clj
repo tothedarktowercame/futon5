@@ -7,8 +7,8 @@
 (defn- usage []
   (str "usage: clj -M -m scripts.nonstarter-hypothesis <command> [opts]\n\n"
        "Commands:\n"
-       "  register --db PATH --title TEXT --statement TEXT [--context TEXT] [--status STATUS]\n"
-       "           [--priority N] [--mana N] [--print-id] [--format edn|text]\n"
+       "  register --db PATH --title TEXT --statement TEXT --context TEXT --mana N [--status STATUS]\n"
+       "           [--print-id] [--format edn|text]\n"
        "  update   --db PATH --id ID [--status STATUS] [--priority N] [--mana N] [--format edn|text]\n"
        "  vote     --db PATH --id ID [--voter TEXT] [--weight N] [--note TEXT] [--format edn|text]\n"
        "  list     --db PATH [--status STATUS] [--format edn|text]\n"))
@@ -99,9 +99,12 @@
     (case cmd
       "register"
       (do
-        (when (or (str/blank? (str title)) (str/blank? (str statement)))
+        (when (or (str/blank? (str title))
+                  (str/blank? (str statement))
+                  (str/blank? (str context))
+                  (not (number? mana-estimate)))
           (binding [*out* *err*]
-            (println "register requires --title and --statement")
+            (println "register requires --title, --statement, --context, and --mana")
             (println (usage)))
           (System/exit 2))
         (let [ds (schema/connect! db)
@@ -109,7 +112,7 @@
                                                 :statement statement
                                                 :context context
                                                 :status status
-                                                :priority priority
+                                                :priority 0
                                                 :mana-estimate mana-estimate})]
           (cond
             print-id (println (:id record))

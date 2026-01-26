@@ -157,22 +157,20 @@
     (string-trim-left
      (replace-regexp-in-string "^SLF4J.*\n?" "" raw))))
 
-(defun nonstarter-hypothesis-register (title statement &optional context status priority mana)
+(defun nonstarter-hypothesis-register (title statement &optional context status mana)
   "Register a hypothesis in the local Nonstarter DB."
   (interactive
    (list (read-string "Title: ")
          (read-string "Statement: ")
-         (read-string "Context (optional): ")
+         (read-string "Context (required): ")
          (read-string "Status (default active): ")
-         (read-string "Priority (optional): ")
-         (read-string "Mana estimate (optional): ")))
+         (read-string "Mana estimate (required): ")))
   (let* ((args (list "--db" (nonstarter--db)
                      "register"
                      "--title" title
                      "--statement" statement))
          (args (if (nonstarter--blank-p context) args (append args (list "--context" context))))
          (args (if (nonstarter--blank-p status) args (append args (list "--status" status))))
-         (args (if (nonstarter--blank-p priority) args (append args (list "--priority" priority))))
          (args (if (nonstarter--blank-p mana) args (append args (list "--mana" mana))))
          (args (append args (list "--format" "text")))
          (output (apply #'nonstarter--run-script
