@@ -1,0 +1,18 @@
+%% Hexagram 63
+graph LR
+
+    %% Nodes
+    ctx-self([context-self])
+    ctx-pred([context-pred])
+    ctx-succ([context-succ])
+    core[bit-xor]
+    final[bit-xor]
+    output([output-sigil])
+    style output stroke:#333,stroke-width:3px
+
+    %% Edges
+    ctx-pred -->|a| core
+    ctx-self -->|b| core
+    core -->|result → a| final
+    ctx-succ -->|b| final
+    final -->|result → sigil| output
