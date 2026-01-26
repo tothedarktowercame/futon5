@@ -1,6 +1,7 @@
 (ns scripts.nonstarter-hypothesis
   "CLI for Nonstarter hypotheses."
   (:require [clojure.string :as str]
+            [nonstarter.config :as config]
             [nonstarter.db :as db]
             [nonstarter.schema :as schema]))
 
@@ -11,11 +12,13 @@
        "           [--print-id] [--format edn|text]\n"
        "  update   --db PATH --id ID [--status STATUS] [--priority N] [--mana N] [--format edn|text]\n"
        "  vote     --db PATH --id ID [--voter TEXT] [--weight N] [--note TEXT] [--format edn|text]\n"
-       "  list     --db PATH [--status STATUS] [--format edn|text]\n"))
+       "  list     --db PATH [--status STATUS] [--format edn|text]\n\n"
+       "Options:\n"
+       "  --config PATH   EDN config file (provides :db and :defaults)\n"))
 
 (defn- parse-args [args]
   (loop [opts {:args []
-               :format "edn"}
+               :format nil}
          remaining args]
     (if (empty? remaining)
       opts
@@ -31,6 +34,7 @@
         "--voter" (recur (assoc opts :voter (second remaining)) (nnext remaining))
         "--weight" (recur (assoc opts :weight (Double/parseDouble (second remaining))) (nnext remaining))
         "--note" (recur (assoc opts :note (second remaining)) (nnext remaining))
+        "--config" (recur (assoc opts :config (second remaining)) (nnext remaining))
         "--format" (recur (assoc opts :format (second remaining)) (nnext remaining))
         "--print-id" (recur (assoc opts :print-id true) (next remaining))
         (recur (update opts :args conj (first remaining)) (next remaining))))))
@@ -38,7 +42,7 @@
 (defn- ensure-db [db]
   (when (str/blank? (str db))
     (binding [*out* *err*]
-      (println "--db is required")
+      (println "--db is required (or provide --config with :db)")
       (println (usage)))
     (System/exit 2)))
 
@@ -91,9 +95,9 @@
            records))
 
 (defn -main [& args]
-  (let [{:keys [args db id title statement context status priority mana-estimate voter weight note print-id]
-         :as opts} (parse-args args)
-        output-format (:format opts)
+  (let [opts (config/apply-config (parse-args args))
+        {:keys [args db id title statement context status priority mana-estimate voter weight note print-id]} opts
+        output-format (or (:format opts) "edn")
         cmd (first args)]
     (ensure-db db)
     (case cmd

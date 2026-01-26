@@ -1,11 +1,12 @@
 (ns scripts.nonstarter-ingest-linearized
   "Ingest mission/excursion items into Nonstarter hypotheses."
   (:require [clojure.string :as str]
+            [nonstarter.config :as config]
             [nonstarter.db :as db]
             [nonstarter.schema :as schema]))
 
 (defn- usage []
-  "usage: bb -m scripts.nonstarter-ingest-linearized --db PATH [--update]\n")
+  "usage: bb -m scripts.nonstarter-ingest-linearized --db PATH [--update] [--config PATH]\n")
 
 (defn- parse-args [args]
   (loop [opts {:update false}
@@ -15,6 +16,7 @@
       (case (first remaining)
         "--db" (recur (assoc opts :db (second remaining)) (nnext remaining))
         "--update" (recur (assoc opts :update true) (next remaining))
+        "--config" (recur (assoc opts :config (second remaining)) (nnext remaining))
         (recur opts (next remaining))))))
 
 (def ^:private items
@@ -89,10 +91,10 @@
   (into {} (map (juxt :title identity) records)))
 
 (defn -main [& args]
-  (let [{:keys [db update]} (parse-args args)]
+  (let [{:keys [db update]} (config/apply-config (parse-args args))]
     (when (str/blank? (str db))
       (binding [*out* *err*]
-        (println "--db is required")
+        (println "--db is required (or provide --config with :db)")
         (println (usage)))
       (System/exit 2))
     (let [ds (schema/connect! db)

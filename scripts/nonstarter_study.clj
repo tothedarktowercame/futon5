@@ -2,6 +2,7 @@
   "CLI for Nonstarter study preregistrations." 
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
+            [nonstarter.config :as config]
             [nonstarter.db :as db]
             [nonstarter.schema :as schema]))
 
@@ -12,11 +13,13 @@
        "           [--design EDN] [--metrics EDN] [--seeds EDN] [--status STATUS] [--results EDN] [--notes TEXT]\n"
        "           [--priority N] [--mana N] [--print-id] [--format edn|text]\n"
        "  update   --db PATH --id ID [--status STATUS] [--results EDN] [--notes TEXT] [--priority N] [--mana N] [--format edn|text]\n"
-       "  list     --db PATH [--hypothesis-id ID] [--format edn|text]\n"))
+       "  list     --db PATH [--hypothesis-id ID] [--format edn|text]\n\n"
+       "Options:\n"
+       "  --config PATH   EDN config file (provides :db and :defaults)\n"))
 
 (defn- parse-args [args]
   (loop [opts {:args []
-               :format "edn"}
+               :format nil}
          remaining args]
     (if (empty? remaining)
       opts
@@ -33,6 +36,7 @@
         "--notes" (recur (assoc opts :notes (second remaining)) (nnext remaining))
         "--priority" (recur (assoc opts :priority (Long/parseLong (second remaining))) (nnext remaining))
         "--mana" (recur (assoc opts :mana-estimate (Double/parseDouble (second remaining))) (nnext remaining))
+        "--config" (recur (assoc opts :config (second remaining)) (nnext remaining))
         "--format" (recur (assoc opts :format (second remaining)) (nnext remaining))
         "--print-id" (recur (assoc opts :print-id true) (next remaining))
         (recur (update opts :args conj (first remaining)) (next remaining))))))
@@ -40,7 +44,7 @@
 (defn- ensure-db [db]
   (when (str/blank? (str db))
     (binding [*out* *err*]
-      (println "--db is required")
+      (println "--db is required (or provide --config with :db)")
       (println (usage)))
     (System/exit 2)))
 
@@ -94,9 +98,9 @@
           (recur funded (conj unfunded record) (rest remaining) running))))))
 
 (defn -main [& args]
-  (let [{:keys [args db id hypothesis-id study-name design metrics seeds status results notes priority mana-estimate print-id]
-         :as opts} (parse-args args)
-        output-format (:format opts)
+  (let [opts (config/apply-config (parse-args args))
+        {:keys [args db id hypothesis-id study-name design metrics seeds status results notes priority mana-estimate print-id]} opts
+        output-format (or (:format opts) "edn")
         cmd (first args)]
     (ensure-db db)
     (case cmd

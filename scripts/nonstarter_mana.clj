@@ -1,6 +1,7 @@
 (ns scripts.nonstarter-mana
   "CLI for Nonstarter mana donations."
   (:require [clojure.string :as str]
+            [nonstarter.config :as config]
             [nonstarter.db :as db]
             [nonstarter.schema :as schema]))
 
@@ -8,11 +9,13 @@
   (str "usage: bb -m scripts.nonstarter-mana <command> [opts]\n\n"
        "Commands:\n"
        "  donate --db PATH --amount N [--donor TEXT] [--note TEXT] [--format edn|text]\n"
-       "  pool   --db PATH [--format edn|text]\n"))
+       "  pool   --db PATH [--format edn|text]\n\n"
+       "Options:\n"
+       "  --config PATH   EDN config file (provides :db and :defaults)\n"))
 
 (defn- parse-args [args]
   (loop [opts {:args []
-               :format "edn"}
+               :format nil}
          remaining args]
     (if (empty? remaining)
       opts
@@ -21,13 +24,14 @@
         "--amount" (recur (assoc opts :amount (Double/parseDouble (second remaining))) (nnext remaining))
         "--donor" (recur (assoc opts :donor (second remaining)) (nnext remaining))
         "--note" (recur (assoc opts :note (second remaining)) (nnext remaining))
+        "--config" (recur (assoc opts :config (second remaining)) (nnext remaining))
         "--format" (recur (assoc opts :format (second remaining)) (nnext remaining))
         (recur (update opts :args conj (first remaining)) (next remaining))))))
 
 (defn- ensure-db [db]
   (when (str/blank? (str db))
     (binding [*out* *err*]
-      (println "--db is required")
+      (println "--db is required (or provide --config with :db)")
       (println (usage)))
     (System/exit 2)))
 
@@ -39,8 +43,9 @@
     "0"))
 
 (defn -main [& args]
-  (let [{:keys [args db amount donor note] :as opts} (parse-args args)
-        output-format (:format opts)
+  (let [opts (config/apply-config (parse-args args))
+        {:keys [args db amount donor note]} opts
+        output-format (or (:format opts) "edn")
         cmd (first args)]
     (ensure-db db)
     (case cmd
