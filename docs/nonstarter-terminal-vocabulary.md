@@ -126,6 +126,23 @@ and audited uniformly:
 The adapter should store `:event/type` as the sidecar `event_type` and the
 entire map as the `payload` (EDN string) for lossless auditing.
 
+### Hypotheses / Studies
+
+- `hypothesis/register`
+  - Fields: `:hypothesis/id`, `:hypothesis/title`, `:hypothesis/statement`
+  - Optional: `:hypothesis/context`, `:hypothesis/status`
+
+- `hypothesis/update`
+  - Fields: `:hypothesis/id`, `:hypothesis/status`
+
+- `study/preregister`
+  - Fields: `:study/id`, `:hypothesis/id`, `:study/name`
+  - Optional: `:study/design`, `:study/metrics`, `:study/seeds`, `:study/status`
+
+- `study/result`
+  - Fields: `:study/id`
+  - Optional: `:study/results`, `:study/status`, `:study/notes`
+
 ### Mana (Nonstarter Currency)
 
 - `mana/credit`

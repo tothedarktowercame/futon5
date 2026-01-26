@@ -250,6 +250,97 @@
                  query-opts))
 
 ;; =============================================================================
+;; Hypotheses + study preregistrations
+;; =============================================================================
+
+(defn create-hypothesis!
+  "Create a hypothesis entry."
+  [ds {:keys [title statement context status]}]
+  (when-not (and title statement)
+    (throw (ex-info "Hypothesis requires :title and :statement" {})))
+  (let [id (str (random-uuid))
+        record {:id id
+                :title title
+                :statement statement
+                :context context
+                :status (or status "active")}]
+    (jdbc/execute! ds
+                   ["INSERT INTO hypotheses (id, title, statement, context, status)
+                     VALUES (?, ?, ?, ?, ?)"
+                    id title statement context (:status record)])
+    record))
+
+(defn get-hypothesis
+  "Get hypothesis by id."
+  [ds id]
+  (jdbc/execute-one! ds ["SELECT * FROM hypotheses WHERE id = ?" id] query-opts))
+
+(defn list-hypotheses
+  "List hypotheses, optionally filtered by status."
+  ([ds]
+   (jdbc/execute! ds ["SELECT * FROM hypotheses ORDER BY created_at DESC"] query-opts))
+  ([ds status]
+   (jdbc/execute! ds ["SELECT * FROM hypotheses WHERE status = ? ORDER BY created_at DESC"
+                      (name status)]
+                   query-opts)))
+
+(defn update-hypothesis-status!
+  "Update hypothesis status."
+  [ds id status]
+  (jdbc/execute! ds
+                 ["UPDATE hypotheses SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+                  (name status) id])
+  (get-hypothesis ds id))
+
+(defn register-study!
+  "Create a study preregistration linked to a hypothesis."
+  [ds {:keys [hypothesis-id study-name design metrics seeds status results notes]}]
+  (when-not (and hypothesis-id study-name)
+    (throw (ex-info "Study preregistration requires :hypothesis-id and :study-name" {})))
+  (let [id (str (random-uuid))
+        record {:id id
+                :hypothesis-id hypothesis-id
+                :study-name study-name
+                :design (when design (pr-str design))
+                :metrics (when metrics (pr-str metrics))
+                :seeds (when seeds (pr-str seeds))
+                :status (or status "preregistered")
+                :results (when results (pr-str results))
+                :notes notes}]
+    (jdbc/execute! ds
+                   ["INSERT INTO study_preregistrations
+                     (id, hypothesis_id, study_name, design, metrics, seeds, status, results, notes)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    id hypothesis-id study-name (:design record) (:metrics record) (:seeds record)
+                    (:status record) (:results record) notes])
+    record))
+
+(defn update-study-results!
+  "Attach results and update status for a preregistered study."
+  [ds id {:keys [results status notes]}]
+  (let [results* (when results (pr-str results))
+        status* (when status (name status))]
+    (jdbc/execute! ds
+                   ["UPDATE study_preregistrations
+                     SET results = COALESCE(?, results),
+                         status = COALESCE(?, status),
+                         notes = COALESCE(?, notes),
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = ?"
+                    results* status* notes id])
+    (jdbc/execute-one! ds ["SELECT * FROM study_preregistrations WHERE id = ?" id] query-opts)))
+
+(defn list-studies
+  "List study preregistrations, optionally filtered by hypothesis id."
+  ([ds]
+   (jdbc/execute! ds ["SELECT * FROM study_preregistrations ORDER BY created_at DESC"] query-opts))
+  ([ds hypothesis-id]
+   (jdbc/execute! ds ["SELECT * FROM study_preregistrations
+                       WHERE hypothesis_id = ? ORDER BY created_at DESC"
+                      hypothesis-id]
+                   query-opts)))
+
+;; =============================================================================
 ;; Queries & History
 ;; =============================================================================
 

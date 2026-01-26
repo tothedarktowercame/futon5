@@ -84,6 +84,32 @@
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
+   "-- Hypotheses: statements to be tested in Nonstarter/MMCA"
+   "CREATE TABLE IF NOT EXISTS hypotheses (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      statement TEXT NOT NULL,
+      context TEXT,
+      status TEXT DEFAULT 'active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Study preregistrations: planned tests linked to hypotheses"
+   "CREATE TABLE IF NOT EXISTS study_preregistrations (
+      id TEXT PRIMARY KEY,
+      hypothesis_id TEXT REFERENCES hypotheses(id),
+      study_name TEXT NOT NULL,
+      design TEXT,
+      metrics TEXT,
+      seeds TEXT,
+      status TEXT DEFAULT 'preregistered',
+      results TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
    "-- Xenotypes: counterfactual timelines
     --   Fake people buying nonexistent products
     --   (capitalism's logic, fully explicit)
@@ -131,6 +157,9 @@
     CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status)"
    "CREATE INDEX IF NOT EXISTS idx_votes_proposal ON votes(proposal_id)"
    "CREATE INDEX IF NOT EXISTS idx_funding_proposal ON funding_events(proposal_id)"
+   "CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON hypotheses(status)"
+   "CREATE INDEX IF NOT EXISTS idx_study_hypothesis ON study_preregistrations(hypothesis_id)"
+   "CREATE INDEX IF NOT EXISTS idx_study_status ON study_preregistrations(status)"
    "CREATE INDEX IF NOT EXISTS idx_mana_events_session ON mana_events(session_id)"
    "CREATE INDEX IF NOT EXISTS idx_sidecar_events_session ON sidecar_events(session_id)"
    "CREATE INDEX IF NOT EXISTS idx_xenotypes_simulation ON xenotypes(simulation_id)"
