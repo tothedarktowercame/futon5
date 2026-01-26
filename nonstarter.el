@@ -63,14 +63,16 @@
   :group 'nonstarter)
 
 (defun nonstarter--root ()
-  (or (and (stringp nonstarter-root) (not (nonstarter--blank-p nonstarter-root)) nonstarter-root)
-      (getenv "FUTON5_ROOT")
-      (file-name-directory (or load-file-name buffer-file-name))))
+  (expand-file-name
+   (or (and (stringp nonstarter-root) (not (nonstarter--blank-p nonstarter-root)) nonstarter-root)
+       (getenv "FUTON5_ROOT")
+       (file-name-directory (or load-file-name buffer-file-name)))))
 
 (defun nonstarter--db ()
-  (or (and (stringp nonstarter-db-path) (not (nonstarter--blank-p nonstarter-db-path)) nonstarter-db-path)
-      (getenv "FUTON5_NONSTARTER_DB")
-      (expand-file-name "data/nonstarter.db" (nonstarter--root))))
+  (expand-file-name
+   (or (and (stringp nonstarter-db-path) (not (nonstarter--blank-p nonstarter-db-path)) nonstarter-db-path)
+       (getenv "FUTON5_NONSTARTER_DB")
+       (expand-file-name "data/nonstarter.db" (nonstarter--root)))))
 
 (defun nonstarter--blank-p (s)
   (or (null s)
