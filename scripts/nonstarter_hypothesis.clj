@@ -10,6 +10,7 @@
        "  register --db PATH --title TEXT --statement TEXT [--context TEXT] [--status STATUS]\n"
        "           [--priority N] [--mana N] [--print-id] [--format edn|text]\n"
        "  update   --db PATH --id ID [--status STATUS] [--priority N] [--mana N] [--format edn|text]\n"
+       "  vote     --db PATH --id ID [--voter TEXT] [--weight N] [--note TEXT] [--format edn|text]\n"
        "  list     --db PATH [--status STATUS] [--format edn|text]\n"))
 
 (defn- parse-args [args]
@@ -27,6 +28,9 @@
         "--status" (recur (assoc opts :status (second remaining)) (nnext remaining))
         "--priority" (recur (assoc opts :priority (Long/parseLong (second remaining))) (nnext remaining))
         "--mana" (recur (assoc opts :mana-estimate (Double/parseDouble (second remaining))) (nnext remaining))
+        "--voter" (recur (assoc opts :voter (second remaining)) (nnext remaining))
+        "--weight" (recur (assoc opts :weight (Double/parseDouble (second remaining))) (nnext remaining))
+        "--note" (recur (assoc opts :note (second remaining)) (nnext remaining))
         "--format" (recur (assoc opts :format (second remaining)) (nnext remaining))
         "--print-id" (recur (assoc opts :print-id true) (next remaining))
         (recur (update opts :args conj (first remaining)) (next remaining))))))
@@ -42,9 +46,11 @@
   (println (format "- %s [%s]" (or (:title record) "?") (or (:status record) "?")))
   (let [priority (or (:priority record) "n/a")
         mana (or (:mana_estimate record) (:mana-estimate record) "n/a")
+        votes (or (:vote_score record) 0)
         created (or (:created_at record) (:created-at record))]
     (println (format "  priority: %s" priority))
     (println (format "  mana: %s" mana))
+    (println (format "  votes: %s" votes))
     (when created
       (println (format "  created: %s" created))))
   (when-let [statement (:statement record)]
@@ -77,8 +83,15 @@
               (recur funded (conj unfunded record) (rest remaining) running)))
           (recur funded (conj unfunded record) (rest remaining) running))))))
 
+(defn- order-records [records]
+  (sort-by (juxt (fn [r] (or (:vote_score r) 0))
+                 (fn [r] (or (:priority r) 0))
+                 (fn [r] (or (:created_at r) "")))
+           #(compare %2 %1)
+           records))
+
 (defn -main [& args]
-  (let [{:keys [args db id title statement context status priority mana-estimate print-id]
+  (let [{:keys [args db id title statement context status priority mana-estimate voter weight note print-id]
          :as opts} (parse-args args)
         output-format (:format opts)
         cmd (first args)]
@@ -118,15 +131,35 @@
             (print-record-text record)
             (prn record))))
 
+      "vote"
+      (do
+        (when (str/blank? (str id))
+          (binding [*out* *err*]
+            (println "vote requires --id")
+            (println (usage)))
+          (System/exit 2))
+        (let [ds (schema/connect! db)
+              record (db/vote-hypothesis! ds id :voter voter :weight (or weight 1) :note note)]
+          (if (= "text" output-format)
+            (println (format "vote: %s (+%s)" (:title record) (:weight record)))
+            (prn record))))
+
       "list"
       (let [ds (schema/connect! db)
             records (if (str/blank? (str status))
                       (db/list-hypotheses ds)
-                      (db/list-hypotheses ds status))]
+                      (db/list-hypotheses ds status))
+            vote-sums (->> (db/hypothesis-vote-sums ds)
+                           (map (juxt :hypothesis_id :vote_score))
+                           (into {}))
+            records (->> records
+                         (map (fn [r]
+                                (assoc r :vote_score (get vote-sums (:id r) 0))))
+                         order-records)]
         (if (= "text" output-format)
           (let [donated (or (:total-donated (db/pool-stats ds)) 0.0)
                 {:keys [funded unfunded]} (split-funded records donated)]
-            (println "Order: priority desc (nulls last), created_at desc")
+            (println "Order: votes desc, priority desc, created_at desc")
             (println)
             (doseq [r funded] (print-record-text r))
             (println (format "-------------------- 🔮 %s --------------------" (format-mana donated)))

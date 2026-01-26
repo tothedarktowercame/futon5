@@ -201,6 +201,26 @@
                         args)))
     (nonstarter--show-text "Nonstarter Hypothesis Update" output)))
 
+(defun nonstarter-hypothesis-vote (hypothesis-id &optional voter weight note)
+  "Vote on a hypothesis (precision signal)."
+  (interactive
+   (list (read-string "Hypothesis ID: ")
+         (read-string "Voter (optional): ")
+         (read-string "Weight (default 1): ")
+         (read-string "Note (optional): ")))
+  (let* ((args (list "--db" (nonstarter--db)
+                     "vote"
+                     "--id" hypothesis-id))
+         (args (if (nonstarter--blank-p voter) args (append args (list "--voter" voter))))
+         (args (if (nonstarter--blank-p weight) args (append args (list "--weight" weight))))
+         (args (if (nonstarter--blank-p note) args (append args (list "--note" note))))
+         (args (append args (list "--format" "text")))
+         (output (apply #'nonstarter--run-script
+                        "scripts/nonstarter_hypothesis.clj"
+                        "scripts.nonstarter-hypothesis"
+                        args)))
+    (nonstarter--show-text "Nonstarter Hypothesis Vote" output)))
+
 (defun nonstarter-hypothesis-list (&optional status)
   "List hypotheses from the local Nonstarter DB."
   (interactive (list (read-string "Status (optional): ")))
@@ -280,6 +300,35 @@
                         "scripts.nonstarter-study"
                         args)))
     (nonstarter--show-text "Nonstarter Studies" output)))
+
+(defun nonstarter-mana-donate (amount &optional donor note)
+  "Donate mana to the local Nonstarter pool."
+  (interactive
+   (list (read-string "Amount: ")
+         (read-string "Donor (optional): ")
+         (read-string "Note (optional): ")))
+  (let* ((args (list "--db" (nonstarter--db)
+                     "donate"
+                     "--amount" amount))
+         (args (if (nonstarter--blank-p donor) args (append args (list "--donor" donor))))
+         (args (if (nonstarter--blank-p note) args (append args (list "--note" note))))
+         (args (append args (list "--format" "text")))
+         (output (apply #'nonstarter--run-script
+                        "scripts/nonstarter_mana.clj"
+                        "scripts.nonstarter-mana"
+                        args)))
+    (nonstarter--show-text "Nonstarter Mana Donate" output)))
+
+(defun nonstarter-mana-pool ()
+  "Show mana pool stats."
+  (interactive)
+  (let* ((output (nonstarter--run-script
+                  "scripts/nonstarter_mana.clj"
+                  "scripts.nonstarter-mana"
+                  "--db" (nonstarter--db)
+                  "pool"
+                  "--format" "text")))
+    (nonstarter--show-text "Nonstarter Mana Pool" output)))
 
 (defun nonstarter-ingest-linearized (&optional update)
   "Ingest linearized missions/excursions into the local Nonstarter DB.

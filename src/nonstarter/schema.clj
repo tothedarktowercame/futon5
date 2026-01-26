@@ -51,6 +51,16 @@
       decayed_weight REAL
     )"
 
+   "-- Hypothesis votes: precision signals for mission ordering
+    CREATE TABLE IF NOT EXISTS hypothesis_votes (
+      id TEXT PRIMARY KEY,
+      hypothesis_id TEXT NOT NULL REFERENCES hypotheses(id),
+      voter TEXT DEFAULT 'anonymous',
+      weight REAL DEFAULT 1,
+      note TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
    "-- Funding events: the facts established
     --   'On this date, this much was committed to this desire'
     CREATE TABLE IF NOT EXISTS funding_events (
@@ -160,6 +170,7 @@
    "-- Indexes for common queries
     CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status)"
    "CREATE INDEX IF NOT EXISTS idx_votes_proposal ON votes(proposal_id)"
+   "CREATE INDEX IF NOT EXISTS idx_hypothesis_votes_hypothesis ON hypothesis_votes(hypothesis_id)"
    "CREATE INDEX IF NOT EXISTS idx_funding_proposal ON funding_events(proposal_id)"
    "CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON hypotheses(status)"
    "CREATE INDEX IF NOT EXISTS idx_study_hypothesis ON study_preregistrations(hypothesis_id)"

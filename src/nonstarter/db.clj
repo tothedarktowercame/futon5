@@ -277,6 +277,29 @@
   [ds id]
   (jdbc/execute-one! ds ["SELECT * FROM hypotheses WHERE id = ?" id] query-opts))
 
+(defn vote-hypothesis!
+  "Cast a vote for a hypothesis."
+  [ds hypothesis-id & {:keys [voter weight note] :or {weight 1}}]
+  (when-let [hypothesis (get-hypothesis ds hypothesis-id)]
+    (let [id (str (random-uuid))
+          voter* (or voter "anonymous")]
+      (jdbc/execute! ds ["INSERT INTO hypothesis_votes (id, hypothesis_id, voter, weight, note)
+                         VALUES (?, ?, ?, ?, ?)"
+                         id hypothesis-id voter* weight note])
+      {:id id
+       :hypothesis-id hypothesis-id
+       :voter voter*
+       :weight weight
+       :note note
+       :title (:title hypothesis)})))
+
+(defn hypothesis-vote-sums
+  "Return total vote weights per hypothesis."
+  [ds]
+  (jdbc/execute! ds ["SELECT hypothesis_id, COALESCE(SUM(weight), 0) as vote_score
+                      FROM hypothesis_votes GROUP BY hypothesis_id"]
+                 query-opts))
+
 (defn list-hypotheses
   "List hypotheses, optionally filtered by status."
   ([ds]
