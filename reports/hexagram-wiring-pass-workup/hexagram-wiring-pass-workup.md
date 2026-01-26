@@ -6,6 +6,28 @@ Seed: 352362012 | Generations: 50 | Width: 80
 
 Passing hexagrams: 41
 
+## Learning Loop Annotations (manual notes)
+
+- #3 屯: Rule‑90‑like EoC structure in both genotype and phenotype.
+- #5 需: Barcode‑like overall, but phenotype shows diagonal bands; potential “pre‑glider” behavior.
+- #9 小畜: Different angle of barcode/candycane (phenotype‑level structure still interesting).
+- #10 履: Strong diagonals in genotype + phenotype; exotype looks barcode‑like.
+- #18 蠱: EoC‑like genotype, borderline exotype; candidate for “heat‑up” experiments.
+- #28 大過: Similar to #18 (EoC‑like genotype, borderline exotype).
+- #29 坎: New type; diagonal but EoC‑like across the triptych.
+- #37 家人: EoC similar to #28.
+- #39 蹇: EoC with diagonal direction opposite to #29; pairing could be interesting.
+- #42 益: New EoC type with very strong exotype structure.
+- #44 姤: Like #28 but triangle orientation differs (distinct model).
+- #46 升: Excellent EoC example.
+- #47 困: Similar to #28.
+- #48 井: Similar to #44 (orientation variant).
+- #49 革: EoC in phenotype; diagonals from two directions interact.
+- #57 巽: Similar to #44.
+- #58 兌: Interacting diagonals (like #49).
+- #59 渙: Similar to #28.
+- #63 既濟: Similar to #28.
+
 ## #1 乾
 
 - Lines: ⚊⚊⚊⚊⚊⚊
@@ -456,4 +478,3 @@ Passing hexagrams: 41
 ![Triptych](images/hex-63-triptych.png)
 
 ![Wiring](images/hex-63-wiring.png)
-
