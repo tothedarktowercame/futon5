@@ -255,7 +255,7 @@
 
 (defn create-hypothesis!
   "Create a hypothesis entry."
-  [ds {:keys [title statement context status]}]
+  [ds {:keys [title statement context status priority mana-estimate]}]
   (when-not (and title statement)
     (throw (ex-info "Hypothesis requires :title and :statement" {})))
   (let [id (str (random-uuid))
@@ -263,11 +263,13 @@
                 :title title
                 :statement statement
                 :context context
-                :status (or status "active")}]
+                :status (or status "active")
+                :priority priority
+                :mana_estimate mana-estimate}]
     (jdbc/execute! ds
-                   ["INSERT INTO hypotheses (id, title, statement, context, status)
-                     VALUES (?, ?, ?, ?, ?)"
-                    id title statement context (:status record)])
+                   ["INSERT INTO hypotheses (id, title, statement, context, status, priority, mana_estimate)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    id title statement context (:status record) priority mana-estimate])
     record))
 
 (defn get-hypothesis
@@ -278,23 +280,32 @@
 (defn list-hypotheses
   "List hypotheses, optionally filtered by status."
   ([ds]
-   (jdbc/execute! ds ["SELECT * FROM hypotheses ORDER BY created_at DESC"] query-opts))
+   (jdbc/execute! ds ["SELECT * FROM hypotheses
+                       ORDER BY priority IS NULL, priority DESC, created_at DESC"]
+                  query-opts))
   ([ds status]
-   (jdbc/execute! ds ["SELECT * FROM hypotheses WHERE status = ? ORDER BY created_at DESC"
+   (jdbc/execute! ds ["SELECT * FROM hypotheses WHERE status = ?
+                       ORDER BY priority IS NULL, priority DESC, created_at DESC"
                       (name status)]
                    query-opts)))
 
-(defn update-hypothesis-status!
-  "Update hypothesis status."
-  [ds id status]
-  (jdbc/execute! ds
-                 ["UPDATE hypotheses SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-                  (name status) id])
+(defn update-hypothesis!
+  "Update hypothesis fields."
+  [ds id {:keys [status priority mana-estimate]}]
+  (let [status* (when status (name status))]
+    (jdbc/execute! ds
+                   ["UPDATE hypotheses
+                     SET status = COALESCE(?, status),
+                         priority = COALESCE(?, priority),
+                         mana_estimate = COALESCE(?, mana_estimate),
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = ?"
+                    status* priority mana-estimate id]))
   (get-hypothesis ds id))
 
 (defn register-study!
   "Create a study preregistration linked to a hypothesis."
-  [ds {:keys [hypothesis-id study-name design metrics seeds status results notes]}]
+  [ds {:keys [hypothesis-id study-name design metrics seeds status results notes priority mana-estimate]}]
   (when-not (and hypothesis-id study-name)
     (throw (ex-info "Study preregistration requires :hypothesis-id and :study-name" {})))
   (let [id (str (random-uuid))
@@ -306,18 +317,20 @@
                 :seeds (when seeds (pr-str seeds))
                 :status (or status "preregistered")
                 :results (when results (pr-str results))
-                :notes notes}]
+                :notes notes
+                :priority priority
+                :mana_estimate mana-estimate}]
     (jdbc/execute! ds
                    ["INSERT INTO study_preregistrations
-                     (id, hypothesis_id, study_name, design, metrics, seeds, status, results, notes)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                     (id, hypothesis_id, study_name, design, metrics, seeds, status, results, notes, priority, mana_estimate)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     id hypothesis-id study-name (:design record) (:metrics record) (:seeds record)
-                    (:status record) (:results record) notes])
+                    (:status record) (:results record) notes priority mana-estimate])
     record))
 
 (defn update-study-results!
   "Attach results and update status for a preregistered study."
-  [ds id {:keys [results status notes]}]
+  [ds id {:keys [results status notes priority mana-estimate]}]
   (let [results* (when results (pr-str results))
         status* (when status (name status))]
     (jdbc/execute! ds
@@ -325,18 +338,23 @@
                      SET results = COALESCE(?, results),
                          status = COALESCE(?, status),
                          notes = COALESCE(?, notes),
+                         priority = COALESCE(?, priority),
+                         mana_estimate = COALESCE(?, mana_estimate),
                          updated_at = CURRENT_TIMESTAMP
                      WHERE id = ?"
-                    results* status* notes id])
+                    results* status* notes priority mana-estimate id])
     (jdbc/execute-one! ds ["SELECT * FROM study_preregistrations WHERE id = ?" id] query-opts)))
 
 (defn list-studies
   "List study preregistrations, optionally filtered by hypothesis id."
   ([ds]
-   (jdbc/execute! ds ["SELECT * FROM study_preregistrations ORDER BY created_at DESC"] query-opts))
+   (jdbc/execute! ds ["SELECT * FROM study_preregistrations
+                       ORDER BY priority IS NULL, priority DESC, created_at DESC"]
+                  query-opts))
   ([ds hypothesis-id]
    (jdbc/execute! ds ["SELECT * FROM study_preregistrations
-                       WHERE hypothesis_id = ? ORDER BY created_at DESC"
+                       WHERE hypothesis_id = ?
+                       ORDER BY priority IS NULL, priority DESC, created_at DESC"
                       hypothesis-id]
                    query-opts)))
 

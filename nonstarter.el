@@ -7,6 +7,7 @@
 (require 'json)
 (require 'pp)
 (require 'url)
+(require 'subr-x)
 
 (defcustom nonstarter-base-url "http://127.0.0.1:7778"
   "Base URL for the Nonstarter server."
@@ -90,6 +91,59 @@
       (read-only-mode 1))
     (display-buffer buf)))
 
+(defun nonstarter--parse-edn-lines (text)
+  (let ((forms '()))
+    (dolist (line (split-string (or text "") "\n" t))
+      (when (string-prefix-p "{" line)
+        (condition-case nil
+            (let ((form (car (read-from-string line))))
+              (when (listp form)
+                (push form forms)))
+          (error nil))))
+    (nreverse forms)))
+
+(defun nonstarter--alist-val (key alist)
+  (or (alist-get key alist)
+      (alist-get (intern (format "%s" key)) alist)
+      (alist-get (format "%s" key) alist)))
+
+(defun nonstarter--format-hypotheses (text)
+  (let ((items (nonstarter--parse-edn-lines text)))
+    (if (null items)
+        (or text "")
+      (mapconcat
+       (lambda (h)
+         (let ((title (or (nonstarter--alist-val 'title h) ""))
+               (status (or (nonstarter--alist-val 'status h) ""))
+               (hid (or (nonstarter--alist-val 'id h) ""))
+               (statement (or (nonstarter--alist-val 'statement h) ""))
+               (context (or (nonstarter--alist-val 'context h) "")))
+           (concat
+            (format "- %s [%s]\n" title status)
+            (format "  id: %s\n" hid)
+            (format "  statement: %s\n" statement)
+            (when (not (nonstarter--blank-p context))
+              (format "  context: %s\n" context)))))
+       items
+       "\n"))))
+
+(defun nonstarter--format-studies (text)
+  (let ((items (nonstarter--parse-edn-lines text)))
+    (if (null items)
+        (or text "")
+      (mapconcat
+       (lambda (s)
+         (let ((sid (or (nonstarter--alist-val 'id s) ""))
+               (hyp (or (nonstarter--alist-val 'hypothesis_id s) ""))
+               (name (or (nonstarter--alist-val 'study_name s) ""))
+               (status (or (nonstarter--alist-val 'status s) "")))
+           (concat
+            (format "- %s [%s]\n" name status)
+            (format "  id: %s\n" sid)
+            (format "  hypothesis: %s\n" hyp))))
+       items
+       "\n"))))
+
 (defun nonstarter--run-script (script-path ns &rest args)
   (let* ((default-directory (nonstarter--root))
          (expr (concat "(load-file \"" script-path "\") "
@@ -98,40 +152,53 @@
                        ")"))
          (cmd (mapconcat #'shell-quote-argument
                          (list nonstarter-cli-command "-M" "-e" expr)
-                         " ")))
-    (shell-command-to-string cmd)))
+                         " "))
+         (raw (shell-command-to-string cmd)))
+    (string-trim-left
+     (replace-regexp-in-string "^SLF4J.*\n?" "" raw))))
 
-(defun nonstarter-hypothesis-register (title statement &optional context status)
+(defun nonstarter-hypothesis-register (title statement &optional context status priority mana)
   "Register a hypothesis in the local Nonstarter DB."
   (interactive
    (list (read-string "Title: ")
          (read-string "Statement: ")
          (read-string "Context (optional): ")
-         (read-string "Status (default active): ")))
+         (read-string "Status (default active): ")
+         (read-string "Priority (optional): ")
+         (read-string "Mana estimate (optional): ")))
   (let* ((args (list "--db" (nonstarter--db)
                      "register"
                      "--title" title
                      "--statement" statement))
          (args (if (nonstarter--blank-p context) args (append args (list "--context" context))))
          (args (if (nonstarter--blank-p status) args (append args (list "--status" status))))
+         (args (if (nonstarter--blank-p priority) args (append args (list "--priority" priority))))
+         (args (if (nonstarter--blank-p mana) args (append args (list "--mana" mana))))
+         (args (append args (list "--format" "text")))
          (output (apply #'nonstarter--run-script
                         "scripts/nonstarter_hypothesis.clj"
                         "scripts.nonstarter-hypothesis"
                         args)))
     (nonstarter--show-text "Nonstarter Hypothesis Register" output)))
 
-(defun nonstarter-hypothesis-update (hypothesis-id status)
+(defun nonstarter-hypothesis-update (hypothesis-id status &optional priority mana)
   "Update hypothesis status in the local Nonstarter DB."
   (interactive
    (list (read-string "Hypothesis ID: ")
-         (read-string "Status: ")))
-  (let ((output (nonstarter--run-script
-                 "scripts/nonstarter_hypothesis.clj"
-                 "scripts.nonstarter-hypothesis"
-                 "--db" (nonstarter--db)
-                 "update"
-                 "--id" hypothesis-id
-                 "--status" status)))
+         (read-string "Status (optional): ")
+         (read-string "Priority (optional): ")
+         (read-string "Mana estimate (optional): ")))
+  (let* ((args (list "--db" (nonstarter--db)
+                     "update"
+                     "--id" hypothesis-id))
+         (args (if (nonstarter--blank-p status) args (append args (list "--status" status))))
+         (args (if (nonstarter--blank-p priority) args (append args (list "--priority" priority))))
+         (args (if (nonstarter--blank-p mana) args (append args (list "--mana" mana))))
+         (args (append args (list "--format" "text")))
+         (output (apply #'nonstarter--run-script
+                        "scripts/nonstarter_hypothesis.clj"
+                        "scripts.nonstarter-hypothesis"
+                        args)))
     (nonstarter--show-text "Nonstarter Hypothesis Update" output)))
 
 (defun nonstarter-hypothesis-list (&optional status)
@@ -139,13 +206,14 @@
   (interactive (list (read-string "Status (optional): ")))
   (let* ((args (list "--db" (nonstarter--db) "list"))
          (args (if (nonstarter--blank-p status) args (append args (list "--status" status))))
+         (args (append args (list "--format" "text")))
          (output (apply #'nonstarter--run-script
                         "scripts/nonstarter_hypothesis.clj"
                         "scripts.nonstarter-hypothesis"
                         args)))
     (nonstarter--show-text "Nonstarter Hypotheses" output)))
 
-(defun nonstarter-study-register (hypothesis-id study-name &optional design metrics seeds status results notes)
+(defun nonstarter-study-register (hypothesis-id study-name &optional design metrics seeds status results notes priority mana)
   "Register a study preregistration in the local Nonstarter DB."
   (interactive
    (list (read-string "Hypothesis ID: ")
@@ -155,7 +223,9 @@
          (read-string "Seeds EDN (optional): ")
          (read-string "Status (default preregistered): ")
          (read-string "Results EDN (optional): ")
-         (read-string "Notes (optional): ")))
+         (read-string "Notes (optional): ")
+         (read-string "Priority (optional): ")
+         (read-string "Mana estimate (optional): ")))
   (let* ((args (list "--db" (nonstarter--db)
                      "register"
                      "--hypothesis-id" hypothesis-id
@@ -166,23 +236,31 @@
          (args (if (nonstarter--blank-p status) args (append args (list "--status" status))))
          (args (if (nonstarter--blank-p results) args (append args (list "--results" results))))
          (args (if (nonstarter--blank-p notes) args (append args (list "--notes" notes))))
+         (args (if (nonstarter--blank-p priority) args (append args (list "--priority" priority))))
+         (args (if (nonstarter--blank-p mana) args (append args (list "--mana" mana))))
+         (args (append args (list "--format" "text")))
          (output (apply #'nonstarter--run-script
                         "scripts/nonstarter_study.clj"
                         "scripts.nonstarter-study"
                         args)))
     (nonstarter--show-text "Nonstarter Study Register" output)))
 
-(defun nonstarter-study-update (study-id &optional status results notes)
+(defun nonstarter-study-update (study-id &optional status results notes priority mana)
   "Update a study preregistration in the local Nonstarter DB."
   (interactive
    (list (read-string "Study ID: ")
          (read-string "Status (optional): ")
          (read-string "Results EDN (optional): ")
-         (read-string "Notes (optional): ")))
+         (read-string "Notes (optional): ")
+         (read-string "Priority (optional): ")
+         (read-string "Mana estimate (optional): ")))
   (let* ((args (list "--db" (nonstarter--db) "update" "--id" study-id))
          (args (if (nonstarter--blank-p status) args (append args (list "--status" status))))
          (args (if (nonstarter--blank-p results) args (append args (list "--results" results))))
          (args (if (nonstarter--blank-p notes) args (append args (list "--notes" notes))))
+         (args (if (nonstarter--blank-p priority) args (append args (list "--priority" priority))))
+         (args (if (nonstarter--blank-p mana) args (append args (list "--mana" mana))))
+         (args (append args (list "--format" "text")))
          (output (apply #'nonstarter--run-script
                         "scripts/nonstarter_study.clj"
                         "scripts.nonstarter-study"
@@ -196,6 +274,7 @@
          (args (if (nonstarter--blank-p hypothesis-id)
                    args
                  (append args (list "--hypothesis-id" hypothesis-id))))
+         (args (append args (list "--format" "text")))
          (output (apply #'nonstarter--run-script
                         "scripts/nonstarter_study.clj"
                         "scripts.nonstarter-study"

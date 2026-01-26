@@ -79,7 +79,7 @@
         (if-let [found (get existing title)]
           (do
             (when update
-              (db/update-hypothesis-status! ds (:id found) status))
+              (db/update-hypothesis! ds (:id found) {:status status}))
             (println "SKIP" title "(exists)"))
           (do
             (db/create-hypothesis! ds {:title title

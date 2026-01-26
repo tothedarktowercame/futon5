@@ -91,6 +91,8 @@
       statement TEXT NOT NULL,
       context TEXT,
       status TEXT DEFAULT 'active',
+      priority INTEGER,
+      mana_estimate REAL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
@@ -106,6 +108,8 @@
       status TEXT DEFAULT 'preregistered',
       results TEXT,
       notes TEXT,
+      priority INTEGER,
+      mana_estimate REAL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
@@ -174,6 +178,19 @@
   (doseq [ddl schema-ddl]
     (jdbc/execute! ds [ddl])))
 
+(defn- table-columns
+  [ds table]
+  (->> (jdbc/execute! ds [(str "PRAGMA table_info(" table ")")])
+       (map :name)
+       set))
+
+(defn- ensure-columns!
+  [ds table columns]
+  (let [existing (table-columns ds table)]
+    (doseq [[col type] columns]
+      (when-not (contains? existing col)
+        (jdbc/execute! ds [(format "ALTER TABLE %s ADD COLUMN %s %s" table col type)])))))
+
 (defn db-spec
   "Create a datasource spec for SQLite."
   [path]
@@ -185,4 +202,8 @@
   [path]
   (let [ds (jdbc/get-datasource (db-spec path))]
     (create-schema! ds)
+    (ensure-columns! ds "hypotheses" {"priority" "INTEGER"
+                                      "mana_estimate" "REAL"})
+    (ensure-columns! ds "study_preregistrations" {"priority" "INTEGER"
+                                                  "mana_estimate" "REAL"})
     ds))
