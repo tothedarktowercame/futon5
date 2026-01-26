@@ -53,7 +53,10 @@
     (println (format "  mana: %s" mana))
     (when created
       (println (format "  created: %s" created))))
-  (println (format "  hypothesis: %s" (or (:hypothesis-id record) "?")))
+  (println (format "  hypothesis: %s"
+                   (or (:hypothesis-title record)
+                       (:hypothesis-id record)
+                       "?")))
   (when-let [design (:design record)]
     (println (format "  design: %s" (pr-str design))))
   (when-let [metrics (:metrics record)]
@@ -66,8 +69,34 @@
     (println (format "  notes: %s" notes)))
   (println))
 
+(defn- format-mana [value]
+  (if (number? value)
+    (if (== value (Math/floor (double value)))
+      (format "%.0f" value)
+      (format "%.2f" value))
+    "0"))
+
+(defn- split-funded [records donated]
+  (loop [funded []
+         unfunded []
+         remaining records
+         running 0.0]
+    (if (empty? remaining)
+      {:funded funded
+       :unfunded unfunded}
+      (let [record (first remaining)
+            mana (:mana_estimate record)]
+        (if (number? mana)
+          (let [next-total (+ running mana)]
+            (if (<= next-total donated)
+              (recur (conj funded record) unfunded (rest remaining) next-total)
+              (recur funded (conj unfunded record) (rest remaining) running)))
+          (recur funded (conj unfunded record) (rest remaining) running))))))
+
 (defn -main [& args]
-  (let [{:keys [args db id hypothesis-id study-name design metrics seeds status results notes priority mana-estimate print-id format]} (parse-args args)
+  (let [{:keys [args db id hypothesis-id study-name design metrics seeds status results notes priority mana-estimate print-id]
+         :as opts} (parse-args args)
+        output-format (:format opts)
         cmd (first args)]
     (ensure-db db)
     (case cmd
@@ -91,7 +120,7 @@
                                              :mana-estimate mana-estimate})]
           (cond
             print-id (println (:id record))
-            (= "text" format) (print-record-text record)
+            (= "text" output-format) (print-record-text record)
             :else (prn record))))
 
       "update"
@@ -107,7 +136,7 @@
                                                       :notes notes
                                                       :priority priority
                                                       :mana-estimate mana-estimate})]
-          (if (= "text" format)
+          (if (= "text" output-format)
             (print-record-text record)
             (prn record))))
 
@@ -116,11 +145,20 @@
             records (if (str/blank? (str hypothesis-id))
                       (db/list-studies ds)
                       (db/list-studies ds hypothesis-id))]
-        (if (= "text" format)
-          (do
+        (if (= "text" output-format)
+          (let [donated (or (:total-donated (db/pool-stats ds)) 0.0)
+                {:keys [funded unfunded]} (split-funded records donated)
+                titles (->> (db/list-hypotheses ds)
+                            (map (juxt :id :title))
+                            (into {}))
+                annotate (fn [record]
+                           (assoc record :hypothesis-title (get titles (:hypothesis-id record))))]
             (println "Order: priority desc (nulls last), created_at desc")
             (println)
-            (doseq [r records] (print-record-text r)))
+            (doseq [r funded] (print-record-text (annotate r)))
+            (println (format "-------------------- 🔮 %s --------------------" (format-mana donated)))
+            (println)
+            (doseq [r unfunded] (print-record-text (annotate r))))
           (doseq [r records] (prn r))))
 
       (do
