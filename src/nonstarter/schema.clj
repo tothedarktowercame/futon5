@@ -84,8 +84,8 @@
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
-   "-- Hypotheses: statements to be tested in Nonstarter/MMCA"
-   "CREATE TABLE IF NOT EXISTS hypotheses (
+   "-- Hypotheses: statements to be tested in Nonstarter/MMCA
+    CREATE TABLE IF NOT EXISTS hypotheses (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       statement TEXT NOT NULL,
@@ -95,8 +95,8 @@
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
-   "-- Study preregistrations: planned tests linked to hypotheses"
-   "CREATE TABLE IF NOT EXISTS study_preregistrations (
+   "-- Study preregistrations: planned tests linked to hypotheses
+    CREATE TABLE IF NOT EXISTS study_preregistrations (
       id TEXT PRIMARY KEY,
       hypothesis_id TEXT REFERENCES hypotheses(id),
       study_name TEXT NOT NULL,
