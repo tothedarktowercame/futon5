@@ -7,7 +7,7 @@
    - proposals: memes seeking funding
    - votes: weak arrows of desire
    - funding_events: market clearing moments (the facts established)"
-  (:require [next.jdbc :as jdbc]))
+  (:require [nonstarter.sql :as sql]))
 
 (def schema-ddl
   ["-- Pool state (singleton row)
@@ -187,11 +187,11 @@
   "Initialize the database schema."
   [ds]
   (doseq [ddl schema-ddl]
-    (jdbc/execute! ds [ddl])))
+    (sql/execute! ds [ddl])))
 
 (defn- table-columns
   [ds table]
-  (->> (jdbc/execute! ds [(str "PRAGMA table_info(" table ")")])
+  (->> (sql/query ds [(str "PRAGMA table_info(" table ")")])
        (map :name)
        set))
 
@@ -200,18 +200,12 @@
   (let [existing (table-columns ds table)]
     (doseq [[col type] columns]
       (when-not (contains? existing col)
-        (jdbc/execute! ds [(format "ALTER TABLE %s ADD COLUMN %s %s" table col type)])))))
-
-(defn db-spec
-  "Create a datasource spec for SQLite."
-  [path]
-  {:dbtype "sqlite"
-   :dbname path})
+        (sql/execute! ds [(format "ALTER TABLE %s ADD COLUMN %s %s" table col type)])))))
 
 (defn connect!
   "Connect to database and ensure schema exists."
   [path]
-  (let [ds (jdbc/get-datasource (db-spec path))]
+  (let [ds (sql/datasource path)]
     (create-schema! ds)
     (ensure-columns! ds "hypotheses" {"priority" "INTEGER"
                                       "mana_estimate" "REAL"})

@@ -58,7 +58,7 @@
   :type '(choice (const :tag "Auto" nil) file)
   :group 'nonstarter)
 
-(defcustom nonstarter-cli-command "clj"
+(defcustom nonstarter-cli-command "bb"
   "Command used to run local Clojure scripts."
   :type 'string
   :group 'nonstarter)
@@ -150,8 +150,11 @@
                        "(" ns "/-main "
                        (mapconcat (lambda (s) (format "%S" s)) args " ")
                        ")"))
+         (cli (file-name-nondirectory nonstarter-cli-command))
          (cmd (mapconcat #'shell-quote-argument
-                         (list nonstarter-cli-command "-M" "-e" expr)
+                         (if (string= cli "bb")
+                             (list nonstarter-cli-command "-e" expr)
+                           (list nonstarter-cli-command "-M" "-e" expr))
                          " "))
          (raw (shell-command-to-string cmd)))
     (string-trim-left

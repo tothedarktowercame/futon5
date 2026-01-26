@@ -5,7 +5,7 @@
             [nonstarter.schema :as schema]))
 
 (defn- usage []
-  (str "usage: clj -M -m scripts.nonstarter-hypothesis <command> [opts]\n\n"
+  (str "usage: bb -m scripts.nonstarter-hypothesis <command> [opts]\n\n"
        "Commands:\n"
        "  register --db PATH --title TEXT --statement TEXT --context TEXT --mana N [--status STATUS]\n"
        "           [--print-id] [--format edn|text]\n"

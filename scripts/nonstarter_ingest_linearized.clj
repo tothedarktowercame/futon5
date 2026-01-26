@@ -5,7 +5,7 @@
             [nonstarter.schema :as schema]))
 
 (defn- usage []
-  "usage: clj -M -m scripts.nonstarter-ingest-linearized --db PATH [--update]\n")
+  "usage: bb -m scripts.nonstarter-ingest-linearized --db PATH [--update]\n")
 
 (defn- parse-args [args]
   (loop [opts {:update false}

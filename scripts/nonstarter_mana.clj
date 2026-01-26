@@ -5,7 +5,7 @@
             [nonstarter.schema :as schema]))
 
 (defn- usage []
-  (str "usage: clj -M -m scripts.nonstarter-mana <command> [opts]\n\n"
+  (str "usage: bb -m scripts.nonstarter-mana <command> [opts]\n\n"
        "Commands:\n"
        "  donate --db PATH --amount N [--donor TEXT] [--note TEXT] [--format edn|text]\n"
        "  pool   --db PATH [--format edn|text]\n"))
@@ -39,7 +39,8 @@
     "0"))
 
 (defn -main [& args]
-  (let [{:keys [args db amount donor note format]} (parse-args args)
+  (let [{:keys [args db amount donor note] :as opts} (parse-args args)
+        output-format (:format opts)
         cmd (first args)]
     (ensure-db db)
     (case cmd
@@ -52,7 +53,7 @@
           (System/exit 2))
         (let [ds (schema/connect! db)
               record (db/donate! ds amount :donor donor :note note)]
-          (if (= "text" format)
+          (if (= "text" output-format)
             (do
               (println (format "donation: 🔮 %s (%s)" (format-mana amount) (or donor "anonymous")))
               (when (and note (not (str/blank? note)))
@@ -62,7 +63,7 @@
       "pool"
       (let [ds (schema/connect! db)
             stats (db/pool-stats ds)]
-        (if (= "text" format)
+        (if (= "text" output-format)
           (println (format "pool: 🔮 %s (donated %s, funded %s)"
                            (format-mana (:balance stats))
                            (format-mana (:total-donated stats))
