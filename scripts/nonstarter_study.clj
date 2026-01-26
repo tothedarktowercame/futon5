@@ -72,8 +72,8 @@
 (defn- format-mana [value]
   (if (number? value)
     (if (== value (Math/floor (double value)))
-      (format "%.0f" value)
-      (format "%.2f" value))
+      (format "%.0f" (double value))
+      (format "%.2f" (double value)))
     "0"))
 
 (defn- split-funded [records donated]
