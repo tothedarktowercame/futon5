@@ -505,6 +505,30 @@ With prefix arg PRUNE, remove DB entries not present in the file."
                   "--format" "text")))
     (nonstarter--show-text "Nonstarter Mana Pool" output)))
 
+(defun nonstarter-mana-sospeso (action confidence cost &optional session)
+  "Give sospeso for a lower-confidence action.
+
+Donates (1-CONFIDENCE)*COST to the pool (pure dana).
+CONFIDENCE must be one of: 0.3, 0.6, 0.8, 0.95
+COST is the estimated mana cost of the action."
+  (interactive
+   (list (read-string "Action (1 sentence): ")
+         (completing-read "Confidence: " '("0.3" "0.6" "0.8" "0.95") nil t)
+         (read-string "Cost (mana): ")
+         (read-string "Session ID (optional): ")))
+  (let* ((args (list "--db" (nonstarter--db)
+                     "sospeso"
+                     "--action" action
+                     "--confidence" confidence
+                     "--cost" cost))
+         (args (if (nonstarter--blank-p session) args (append args (list "--session" session))))
+         (args (append args (list "--format" "text")))
+         (output (apply #'nonstarter--run-script
+                        "scripts/nonstarter_mana.clj"
+                        "scripts.nonstarter-mana"
+                        args)))
+    (nonstarter--show-text "Nonstarter Sospeso" output)))
+
 (defun nonstarter-ingest-linearized (&optional update)
   "Ingest linearized missions/excursions into the local Nonstarter DB.
 
