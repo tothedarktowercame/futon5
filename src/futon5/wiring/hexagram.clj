@@ -112,7 +112,7 @@
 
         ;; Build edges based on structure
         edges
-        (cond->
+        (cond->>
             [;; Line 1 inputs → Line 2 op
              {:from :ctx-a :to :op1 :to-port :a}
              {:from :ctx-b :to :op1 :to-port :b}

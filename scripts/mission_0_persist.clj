@@ -179,7 +179,7 @@
             runs (filter #(= :run (:event %)) entries)
             by-window (group-by #(window-index (:run/id %) update-every) runs)
             windows (->> (keys by-window) sort vec)
-            windows (cond-> windows
+            windows (cond->> windows
                       window-start (filter #(>= % window-start))
                       window-end (filter #(<= % window-end)))]
         (doseq [window windows]

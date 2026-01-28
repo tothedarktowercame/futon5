@@ -26,7 +26,7 @@
     "  --change-center P      Envelope change center (default 0.2)."
     "  --change-width P       Envelope change width (default 0.15)."
     "  --no-change            Ignore avg-change in envelope score."
-    "  --help                 Show this message."])))
+    "  --help                 Show this message."]))
 
 (defn- parse-double [s]
   (try (Double/parseDouble s) (catch Exception _ nil)))
