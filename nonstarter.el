@@ -25,6 +25,11 @@
   :type '(choice (const :tag "Auto" nil) directory)
   :group 'nonstarter)
 
+(defcustom nonstarter-personal-config nil
+  "Optional path to a personal config file with category settings."
+  :type '(choice (const :tag "Auto" nil) file)
+  :group 'nonstarter)
+
 (defcustom nonstarter-personal-db-path nil
   "Path to personal Nonstarter SQLite DB. If nil, uses data/nonstarter.db under futon5a."
   :type '(choice (const :tag "Auto" nil) file)
@@ -42,35 +47,25 @@
   "Port for the personal API server.")
 
 (defcustom nonstarter-category-descriptions
-  '(("q1" . "Keep-alive / retainer")
-    ("q2" . "Throughput / delivery")
-    ("q3" . "Low-latency / relational")
-    ("q4" . "Offline / speculative")
-    ("job-search" . "Job search")
-    ("consulting" . "VSAT")
-    ("meetings" . "Meetings (fixed)")
-    ("lnl" . "Local Network Lead tasks")
-    ("orpm" . "Open Research Project Manager tasks")
-    ("creative" . "Creative practice")
-    ("systems" . "Systems")
-    ("maintenance" . "Maintenance / life admin")
-    ("sleep" . "Sleep")
-    ("slack" . "Slack / buffer"))
-  "Descriptions for personal categories."
+  '(("q1" . "Quadrant 1")
+    ("q2" . "Quadrant 2")
+    ("q3" . "Quadrant 3")
+    ("q4" . "Quadrant 4"))
+  "Descriptions for dashboard categories."
   :type '(alist :key-type string :value-type string)
   :group 'nonstarter)
 
 (defcustom nonstarter-category-groups
-  '(("q1" . ("lnl"))
-    ("q2" . ("job-search" "consulting"))
-    ("q3" . ("meetings" "orpm"))
-    ("q4" . ("creative" "systems")))
+  '(("q1" . ("q1"))
+    ("q2" . ("q2"))
+    ("q3" . ("q3"))
+    ("q4" . ("q4")))
   "Nested category groupings shown in the dashboard."
   :type '(alist :key-type string :value-type (repeat string))
   :group 'nonstarter)
 
 (defcustom nonstarter-category-subitems
-  '(("systems" . ("futon0" "futon1" "futon2" "futon3" "futon4" "futon5" "futon6" "futon7")))
+  nil
   "Extra nested items shown under specific categories."
   :type '(alist :key-type string :value-type (repeat string))
   :group 'nonstarter)
@@ -101,17 +96,13 @@
   :group 'nonstarter)
 
 (defcustom nonstarter-quadrant-mana-estimates
-  '(("q1" . 300)
-    ("q2" . 600)
-    ("q3" . 750)
-    ("q4" . 1350))
+  nil
   "Estimated mana allocation for quadrant group headings."
   :type '(alist :key-type string :value-type number)
   :group 'nonstarter)
 
 (defcustom nonstarter-biocompatibility-hold
-  '(("sleep" . 1.0)
-    ("maintenance" . 0.5))
+  nil
   "Category weights used to compute biocompatibility burn/hold from bids."
   :type '(alist :key-type string :value-type number)
   :group 'nonstarter)
@@ -122,61 +113,16 @@
   :group 'nonstarter)
 
 (defcustom nonstarter-deliverable-category-map
-  '(("LNL" . "lnl")
-    ("Evaluation" . "lnl")
-    ("Transition" . "orpm")
-    ("Teaching" . "orpm")
-    ("Research" . "orpm"))
+  nil
   "Map deliverable areas to dashboard categories."
   :type '(alist :key-type string :value-type string)
   :group 'nonstarter)
 
 (defcustom nonstarter-default-weekly-bids
-  '(("meetings" . 8)
-    ("lnl" . 5)
-    ("orpm" . 10))
+  nil
   "Default weekly bids to apply."
   :type '(alist :key-type string :value-type number)
   :group 'nonstarter)
-
-(defun nonstarter--ensure-category-descriptions ()
-  "Ensure newer categories exist in `nonstarter-category-descriptions`."
-  (dolist (entry '(("consulting" . "VSAT")
-                   ("systems" . "Systems")))
-    (unless (assoc (car entry) nonstarter-category-descriptions)
-      (setq nonstarter-category-descriptions
-            (append nonstarter-category-descriptions (list entry))))))
-
-(defun nonstarter--ensure-category-groups ()
-  "Ensure newer categories appear in `nonstarter-category-groups`."
-  (dolist (update '(("q2" . "consulting")
-                    ("q4" . "systems")))
-    (let* ((group (car update))
-           (member (cdr update))
-           (entry (assoc group nonstarter-category-groups)))
-      (cond
-       (entry
-        (let ((members (cdr entry)))
-          (unless (member member members)
-            (setcdr entry (append members (list member))))))
-       (t
-        (setq nonstarter-category-groups
-              (append nonstarter-category-groups (list (cons group (list member))))))))))
-
-(defun nonstarter--ensure-category-subitems ()
-  "Ensure nested subitems are up to date."
-  (let ((systems-items '("futon0" "futon1" "futon2" "futon3" "futon4" "futon5" "futon6" "futon7"))
-        (entry (assoc "systems" nonstarter-category-subitems)))
-    (if entry
-        (setcdr entry systems-items)
-      (setq nonstarter-category-subitems
-            (append nonstarter-category-subitems (list (cons "systems" systems-items))))))
-  (setq nonstarter-category-subitems
-        (assoc-delete-all "job-search" nonstarter-category-subitems)))
-
-(nonstarter--ensure-category-descriptions)
-(nonstarter--ensure-category-groups)
-(nonstarter--ensure-category-subitems)
 
 ;;; ---------------------------------------------------------------------------
 ;;; Local prototype (futon5) helpers
@@ -217,6 +163,20 @@
        (getenv "FUTON5A_ROOT")
        (let ((base (file-name-directory (or load-file-name buffer-file-name default-directory))))
          (expand-file-name "../futon5a" base)))))
+
+(defun nonstarter--personal-config-path ()
+  (or nonstarter-personal-config
+      (getenv "NONSTARTER_PERSONAL_CONFIG")
+      (let ((root (nonstarter--personal-root)))
+        (when root
+          (expand-file-name "config/nonstarter-personal.el" root)))))
+
+(defun nonstarter--load-personal-config ()
+  (let ((path (nonstarter--personal-config-path)))
+    (when (and path (file-exists-p path))
+      (load-file path))))
+
+(nonstarter--load-personal-config)
 
 (defun nonstarter--personal-db ()
   (expand-file-name
