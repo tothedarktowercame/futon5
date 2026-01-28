@@ -8,6 +8,7 @@
 (require 'pp)
 (require 'url)
 (require 'subr-x)
+(require 'seq)
 
 (defcustom nonstarter-base-url "http://127.0.0.1:7778"
   "Base URL for the Nonstarter server."
@@ -19,20 +20,114 @@
   :type 'integer
   :group 'nonstarter)
 
+(defcustom nonstarter-personal-root nil
+  "Path to futon5a repo. If nil, derived from FUTON5A_ROOT or sibling of futon5."
+  :type '(choice (const :tag "Auto" nil) directory)
+  :group 'nonstarter)
+
+(defcustom nonstarter-personal-db-path nil
+  "Path to personal Nonstarter SQLite DB. If nil, uses data/nonstarter.db under futon5a."
+  :type '(choice (const :tag "Auto" nil) file)
+  :group 'nonstarter)
+
+(defcustom nonstarter-personal-autostart t
+  "When non-nil, auto-start the personal API server if needed."
+  :type 'boolean
+  :group 'nonstarter)
+
+(defvar nonstarter-personal-server-process nil
+  "Process handle for the personal API server.")
+
+(defvar nonstarter-personal-server-port 7778
+  "Port for the personal API server.")
+
 (defcustom nonstarter-category-descriptions
   '(("q1" . "Keep-alive / retainer")
     ("q2" . "Throughput / delivery")
     ("q3" . "Low-latency / relational")
     ("q4" . "Offline / speculative")
     ("job-search" . "Job search")
+    ("consulting" . "VSAT")
     ("meetings" . "Meetings (fixed)")
     ("lnl" . "Local Network Lead tasks")
     ("orpm" . "Open Research Project Manager tasks")
     ("creative" . "Creative practice")
+    ("systems" . "Systems")
     ("maintenance" . "Maintenance / life admin")
     ("sleep" . "Sleep")
     ("slack" . "Slack / buffer"))
   "Descriptions for personal categories."
+  :type '(alist :key-type string :value-type string)
+  :group 'nonstarter)
+
+(defcustom nonstarter-category-groups
+  '(("q1" . ("lnl"))
+    ("q2" . ("job-search" "consulting"))
+    ("q3" . ("meetings" "orpm"))
+    ("q4" . ("creative" "systems")))
+  "Nested category groupings shown in the dashboard."
+  :type '(alist :key-type string :value-type (repeat string))
+  :group 'nonstarter)
+
+(defcustom nonstarter-category-subitems
+  '(("systems" . ("futon0" "futon1" "futon2" "futon3" "futon4" "futon5" "futon6" "futon7")))
+  "Extra nested items shown under specific categories."
+  :type '(alist :key-type string :value-type (repeat string))
+  :group 'nonstarter)
+
+(defcustom nonstarter-show-deliverable-meta t
+  "When non-nil, show deliverable due dates and status in the dashboard."
+  :type 'boolean
+  :group 'nonstarter)
+
+(defcustom nonstarter-show-deliverable-mana t
+  "When non-nil, show deliverable mana estimates and votes in the dashboard."
+  :type 'boolean
+  :group 'nonstarter)
+
+(defface nonstarter-mana-face
+  '((t :foreground "#7B4DFF"))
+  "Face for mana annotations."
+  :group 'nonstarter)
+
+(defface nonstarter-mana-estimate-face
+  '((t :foreground "#2E8B57"))
+  "Face for mana estimate annotations."
+  :group 'nonstarter)
+
+(defface nonstarter-mana-flow-face
+  '((t :foreground "#3FAF70"))
+  "Face for flowed mana estimate annotations."
+  :group 'nonstarter)
+
+(defcustom nonstarter-quadrant-mana-estimates
+  '(("q1" . 300)
+    ("q2" . 600)
+    ("q3" . 750)
+    ("q4" . 1350))
+  "Estimated mana allocation for quadrant group headings."
+  :type '(alist :key-type string :value-type number)
+  :group 'nonstarter)
+
+(defcustom nonstarter-biocompatibility-hold
+  '(("sleep" . 1.0)
+    ("maintenance" . 0.5))
+  "Category weights used to compute biocompatibility burn/hold from bids."
+  :type '(alist :key-type string :value-type number)
+  :group 'nonstarter)
+
+(defcustom nonstarter-show-average-day t
+  "When non-nil, show the average-day SVG in the dashboard."
+  :type 'boolean
+  :group 'nonstarter)
+
+(defcustom nonstarter-deliverable-category-map
+  '(("LNL" . "lnl")
+    ("Evaluation" . "lnl")
+    ("Transition" . "orpm")
+    ("Teaching" . "orpm")
+    ("Research" . "orpm"))
+  "Map deliverable areas to dashboard categories."
   :type '(alist :key-type string :value-type string)
   :group 'nonstarter)
 
@@ -43,6 +138,45 @@
   "Default weekly bids to apply."
   :type '(alist :key-type string :value-type number)
   :group 'nonstarter)
+
+(defun nonstarter--ensure-category-descriptions ()
+  "Ensure newer categories exist in `nonstarter-category-descriptions`."
+  (dolist (entry '(("consulting" . "VSAT")
+                   ("systems" . "Systems")))
+    (unless (assoc (car entry) nonstarter-category-descriptions)
+      (setq nonstarter-category-descriptions
+            (append nonstarter-category-descriptions (list entry))))))
+
+(defun nonstarter--ensure-category-groups ()
+  "Ensure newer categories appear in `nonstarter-category-groups`."
+  (dolist (update '(("q2" . "consulting")
+                    ("q4" . "systems")))
+    (let* ((group (car update))
+           (member (cdr update))
+           (entry (assoc group nonstarter-category-groups)))
+      (cond
+       (entry
+        (let ((members (cdr entry)))
+          (unless (member member members)
+            (setcdr entry (append members (list member))))))
+       (t
+        (setq nonstarter-category-groups
+              (append nonstarter-category-groups (list (cons group (list member))))))))))
+
+(defun nonstarter--ensure-category-subitems ()
+  "Ensure nested subitems are up to date."
+  (let ((systems-items '("futon0" "futon1" "futon2" "futon3" "futon4" "futon5" "futon6" "futon7"))
+        (entry (assoc "systems" nonstarter-category-subitems)))
+    (if entry
+        (setcdr entry systems-items)
+      (setq nonstarter-category-subitems
+            (append nonstarter-category-subitems (list (cons "systems" systems-items))))))
+  (setq nonstarter-category-subitems
+        (assoc-delete-all "job-search" nonstarter-category-subitems)))
+
+(nonstarter--ensure-category-descriptions)
+(nonstarter--ensure-category-groups)
+(nonstarter--ensure-category-subitems)
 
 ;;; ---------------------------------------------------------------------------
 ;;; Local prototype (futon5) helpers
@@ -67,13 +201,93 @@
   (expand-file-name
    (or (and (stringp nonstarter-root) (not (nonstarter--blank-p nonstarter-root)) nonstarter-root)
        (getenv "FUTON5_ROOT")
-       (file-name-directory (or load-file-name buffer-file-name)))))
+       (file-name-directory (or load-file-name buffer-file-name default-directory)))))
 
 (defun nonstarter--db ()
   (expand-file-name
    (or (and (stringp nonstarter-db-path) (not (nonstarter--blank-p nonstarter-db-path)) nonstarter-db-path)
        (getenv "FUTON5_NONSTARTER_DB")
        (expand-file-name "data/nonstarter.db" (nonstarter--root)))))
+
+(defun nonstarter--personal-root ()
+  (expand-file-name
+   (or (and (stringp nonstarter-personal-root)
+            (not (nonstarter--blank-p nonstarter-personal-root))
+            nonstarter-personal-root)
+       (getenv "FUTON5A_ROOT")
+       (let ((base (file-name-directory (or load-file-name buffer-file-name default-directory))))
+         (expand-file-name "../futon5a" base)))))
+
+(defun nonstarter--personal-db ()
+  (expand-file-name
+   (or (and (stringp nonstarter-personal-db-path)
+            (not (nonstarter--blank-p nonstarter-personal-db-path))
+            nonstarter-personal-db-path)
+       (expand-file-name "data/nonstarter.db" (nonstarter--personal-root)))))
+
+(defun nonstarter-personal-server-running-p ()
+  (and nonstarter-personal-server-process
+       (process-live-p nonstarter-personal-server-process)))
+
+(defun nonstarter-personal-server-start (&optional port db)
+  "Start the personal API server in Emacs."
+  (interactive)
+  (let* ((port (or port nonstarter-personal-server-port))
+         (db (or db (nonstarter--personal-db)))
+         (default-directory (nonstarter--personal-root)))
+    (setq nonstarter-personal-server-port port)
+    (unless (nonstarter-personal-server-running-p)
+      (setq nonstarter-personal-server-process
+            (make-process :name "nonstarter-personal-api"
+                          :buffer "*nonstarter-personal-api*"
+                          :command (list "bb" "-m" "personal.api"
+                                         "--port" (number-to-string port)
+                                         "--db" db)
+                          :noquery t))
+      (setq nonstarter-base-url (format "http://127.0.0.1:%s" port))
+      (message "Nonstarter personal API started on %s (db %s)" port db))
+    nonstarter-personal-server-process))
+
+(defun nonstarter-personal-server-stop ()
+  "Stop the personal API server."
+  (interactive)
+  (when (nonstarter-personal-server-running-p)
+    (kill-process nonstarter-personal-server-process)
+    (setq nonstarter-personal-server-process nil)
+    (message "Nonstarter personal API stopped.")))
+
+(defun nonstarter-personal-chart-refresh ()
+  "Regenerate the average-day SVG."
+  (interactive)
+  (let ((default-directory (nonstarter--personal-root)))
+    (make-process :name "nonstarter-day-chart"
+                  :buffer "*nonstarter-day-chart*"
+                  :command (list "python3" "scripts/nonstarter_day_chart.py")
+                  :noquery t)
+    (message "Regenerating average-day SVG...")))
+
+(defun nonstarter-personal-deliverables-ingest (&optional prune)
+  "Re-ingest personal deliverables from EDN and refresh the dashboard.
+With prefix arg PRUNE, remove DB entries not present in the file."
+  (interactive "P")
+  (let ((default-directory (nonstarter--personal-root)))
+    (make-process
+     :name "nonstarter-deliverables-ingest"
+     :buffer "*nonstarter-deliverables*"
+     :command (append (list "bb" "scripts/personal_ingest_deliverables.clj")
+                      (when prune (list "--prune")))
+     :noquery t
+     :sentinel (lambda (proc _event)
+                 (when (and (eq (process-status proc) 'exit)
+                            (= (process-exit-status proc) 0))
+                   (message "Deliverables ingested.")
+                   (nonstarter-dashboard)))))
+  (message "Ingesting deliverables..."))
+
+(defun nonstarter--maybe-start-personal-server ()
+  (when (and nonstarter-personal-autostart
+             (string-match-p "127\\.0\\.0\\.1" nonstarter-base-url))
+    (nonstarter-personal-server-start)))
 
 (defun nonstarter--blank-p (s)
   (or (null s)
@@ -381,6 +595,27 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
           (error
            (json-read)))))))
 
+(defun nonstarter--request-body (method path &optional data headers)
+  (let* ((raw-data (nonstarter--json-encode data))
+         (payload (when raw-data (encode-coding-string raw-data 'utf-8)))
+         (url-request-method method)
+         (url-request-extra-headers (append headers
+                                            '(("Content-Type" . "application/json")
+                                              ("Accept" . "*/*"))))
+         (url-request-data payload)
+         (url (nonstarter--url path)))
+    (let ((buffer (url-retrieve-synchronously url t t nonstarter-timeout)))
+      (unless buffer
+        (error "Nonstarter request failed: no response from %s" url))
+      (with-current-buffer buffer
+        (goto-char (point-min))
+        (re-search-forward "^$" nil 'move)
+        (let ((body (if (>= (point) (point-max))
+                        nil
+                      (buffer-substring-no-properties (point) (point-max)))))
+          (kill-buffer (current-buffer))
+          body)))))
+
 (defun nonstarter--request (method path &optional data)
   (let* ((raw-data (nonstarter--json-encode data))
          (payload (when raw-data (encode-coding-string raw-data 'utf-8)))
@@ -406,16 +641,358 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
       (pp payload (current-buffer))
       (goto-char (point-min))
       (read-only-mode 1))
-    (display-buffer buf)))
+    (display-buffer (get-buffer "*Nonstarter Dashboard*"))))
 
 (defun nonstarter--format-kv (label value)
   (format "%s: %s" label value))
 
-(defun nonstarter--format-map (label alist)
+(defvar nonstarter--category-face-cache (make-hash-table :test 'equal)
+  "Cache of faces keyed by hex color for category display.")
+
+(defun nonstarter--category-face (color)
+  (when (and (stringp color) (not (string= color "")))
+    (or (gethash color nonstarter--category-face-cache)
+        (let* ((name (format "nonstarter-category-%s" (substring (md5 color) 0 8)))
+               (face (make-face (intern name))))
+          (set-face-attribute face nil :foreground color)
+          (puthash color face nonstarter--category-face-cache)
+          face))))
+
+(defun nonstarter--svg-legend-colors (svg-body)
+  "Extract (label . color) pairs from the SVG legend."
+  (when (and (stringp svg-body) (not (string= svg-body "")))
+    (let ((pos 0)
+          (pairs '()))
+      (while (string-match "<rect[^>]*width='14'[^>]*height='14'[^>]*fill='\\([^']+\\)'" svg-body pos)
+        (let ((color (match-string 1 svg-body)))
+          (setq pos (match-end 0))
+          (when (string-match "<text[^>]*>\\([^:<]+\\):" svg-body pos)
+            (let ((label (string-trim (match-string 1 svg-body))))
+              (push (cons label color) pairs)
+              (setq pos (match-end 0))))))
+      (nreverse pairs))))
+
+(defun nonstarter--propertize-category (label color-map &optional display)
+  (let* ((color (cdr (assoc label color-map)))
+         (face (nonstarter--category-face color))
+         (text (or display label)))
+    (if face
+        (propertize text 'face face)
+      text)))
+
+(defun nonstarter--parse-number (value)
+  (cond
+   ((numberp value) (float value))
+   ((stringp value)
+    (condition-case nil
+        (string-to-number value)
+      (error nil)))
+   (t nil)))
+
+(defun nonstarter--hold-from-bids (bids)
+  (let ((out nil))
+    (dolist (entry nonstarter-biocompatibility-hold)
+      (let* ((cat (car entry))
+             (weight (cdr entry))
+             (raw (alist-get cat bids nil nil #'string=))
+             (hours (nonstarter--parse-number raw)))
+        (when (and (numberp hours) (numberp weight))
+          (push (cons cat (* hours weight)) out))))
+    (nreverse out)))
+
+(defun nonstarter--hold-total (hold)
+  (apply #'+ 0.0 (mapcar (lambda (entry) (float (cdr entry))) hold)))
+
+(defun nonstarter--hold-amount (hold key)
+  (cdr (assoc key hold)))
+
+(defun nonstarter--hold-weight (category)
+  (let ((value (alist-get category nonstarter-biocompatibility-hold nil nil #'string=)))
+    (when (numberp value) value)))
+
+(defun nonstarter--category-funding-note (category hold epoch-weeks)
+  (let* ((weight (nonstarter--hold-weight category))
+         (per-week (cdr (assoc category hold))))
+    (when (and (numberp weight) (numberp per-week) (numberp epoch-weeks))
+      (let* ((total (* per-week epoch-weeks))
+             (label (if (= weight 1.0)
+                        "fully funded"
+                      (format "%.0f%% funded" (* 100.0 weight))))
+             (text (format " (%s %s)" label (nonstarter--format-amount total))))
+        (propertize text 'face 'nonstarter-mana-face)))))
+
+(defun nonstarter--category-key (category)
+  (format "%s" (or category "")))
+
+(defun nonstarter--normalize-budget-map (raw)
+  (when (and raw (listp raw))
+    (let ((out nil))
+      (dolist (pair raw)
+        (when (consp pair)
+          (let* ((key (nonstarter--category-key (car pair)))
+                 (val (nonstarter--parse-number (cdr pair))))
+            (when (and (not (string= key "")) (numberp val))
+              (push (cons key val) out)))))
+      (nreverse out))))
+
+(defun nonstarter--budget-lookup (budgets category)
+  (let ((key (nonstarter--category-key category)))
+    (cdr (assoc key budgets))))
+
+(defun nonstarter--remaining-total (remaining)
+  (cond
+   ((numberp remaining) remaining)
+   ((listp remaining)
+    (apply #'+ 0.0 (mapcar (lambda (pair)
+                             (let ((v (cdr pair)))
+                               (if (numberp v) v 0.0)))
+                           remaining)))
+   (t 0.0)))
+
+(defun nonstarter--category-budget-note (category budgets remaining)
+  (let ((budget (nonstarter--budget-lookup budgets category)))
+    (when (numberp budget)
+      (let* ((rem (or (nonstarter--budget-lookup remaining category) budget))
+             (text (format " (budget %s / remaining %s)"
+                           (nonstarter--format-amount budget)
+                           (nonstarter--format-amount rem))))
+        (propertize text 'face 'nonstarter-mana-face)))))
+
+(defun nonstarter--titleize (s)
+  (let ((parts (split-string (format "%s" s) "-" t)))
+    (mapconcat #'capitalize parts " ")))
+
+(defun nonstarter--hold-items (hold week-id)
+  (let ((items nil)
+        (week (or week-id "week")))
+    (dolist (entry hold)
+      (let* ((cat (car entry))
+             (hours (cdr entry)))
+        (push `((id . ,(format "hold:%s:%s" cat week))
+                (category . ,cat)
+                (title . ,(format "%s hold" (nonstarter--titleize cat)))
+                (status . "hold")
+                (hold . t)
+                (mana . ,hours)
+                (votes . 0))
+              items)))
+    (nreverse items)))
+
+(defun nonstarter--deliverable-mana (item)
+  (nonstarter--parse-number (alist-get 'mana item)))
+
+(defun nonstarter--deliverable-votes (item)
+  (or (nonstarter--parse-number (alist-get 'votes item))
+      0.0))
+
+(defun nonstarter--deliverable-due-key (item)
+  (or (alist-get 'due item) "9999-12-31"))
+
+(defun nonstarter--order-deliverables (items)
+  (sort (copy-sequence items)
+        (lambda (a b)
+          (let ((va (nonstarter--deliverable-votes a))
+                (vb (nonstarter--deliverable-votes b)))
+            (if (/= va vb)
+                (> va vb)
+              (string< (nonstarter--deliverable-due-key a)
+                       (nonstarter--deliverable-due-key b)))))))
+
+(defun nonstarter--award-deliverables (items budget)
+  (let ((awarded (make-hash-table :test 'equal))
+        (remaining (if (numberp budget) budget 0.0)))
+    (dolist (item (nonstarter--order-deliverables
+                   (seq-remove (lambda (it) (alist-get 'hold it)) items)))
+      (let ((mana (nonstarter--deliverable-mana item)))
+        (when (and (numberp mana) (<= mana remaining))
+          (puthash (alist-get 'id item) t awarded)
+          (setq remaining (- remaining mana)))))
+    (list awarded remaining)))
+
+(defun nonstarter--award-deliverables-by-category (items budgets)
+  (let ((awarded (make-hash-table :test 'equal))
+        (remaining budgets)
+        (groups (make-hash-table :test 'equal)))
+    (dolist (item items)
+      (unless (alist-get 'hold item)
+        (let ((cat (nonstarter--category-key (alist-get 'category item))))
+          (puthash cat (cons item (gethash cat groups)) groups))))
+    (dolist (pair budgets)
+      (let* ((cat (car pair))
+             (budget (cdr pair))
+             (items* (gethash cat groups)))
+        (when (and (numberp budget) items*)
+          (dolist (item (nonstarter--order-deliverables items*))
+            (let ((mana (nonstarter--deliverable-mana item)))
+              (when (and (numberp mana) (<= mana budget))
+                (puthash (alist-get 'id item) t awarded)
+                (setq budget (- budget mana))))))
+        (setq remaining (assq-delete-all cat remaining))
+        (when (numberp budget)
+          (push (cons cat budget) remaining))))
+    (list awarded remaining)))
+
+(defun nonstarter--deliverable-tag (item awarded)
+  (let ((mana (nonstarter--deliverable-mana item)))
+    (cond
+     ((alist-get 'hold item) "burned")
+     ((numberp mana) (if (and awarded (gethash (alist-get 'id item) awarded)) "awarded" "gated"))
+     (t "unestimated"))))
+
+(defun nonstarter--deliverable-tag-with-estimate (item awarded estimate)
+  (let ((mana (nonstarter--deliverable-mana item)))
+    (cond
+     ((alist-get 'hold item) "burned")
+     ((numberp mana) (if (and awarded (gethash (alist-get 'id item) awarded)) "awarded" "gated"))
+     ((numberp estimate) "estimated")
+     (t "unestimated"))))
+
+(defun nonstarter--format-estimate (value)
+  (if (and (numberp value) (= (floor value) value))
+      (format "%.0f" value)
+    (format "%.1f" value)))
+
+(defun nonstarter--format-estimate-note (value &optional face)
+  (when (numberp value)
+    (concat " (estimate "
+            (propertize (nonstarter--format-estimate value)
+                        'face (or face 'nonstarter-mana-estimate-face))
+            ")")))
+
+(defun nonstarter--read-hours (prompt &optional default allow-blank)
+  (let* ((prompt (if (numberp default)
+                     (format "%s[%s] " prompt (nonstarter--format-hours default))
+                   prompt))
+         (value nil))
+    (while (eq value :retry)
+      (setq value nil))
+    (while (null value)
+      (let ((input (read-string prompt)))
+        (cond
+         ((string= input "")
+          (setq value (if allow-blank
+                          nil
+                        (or default 0.0))))
+         (t
+          (let ((parsed (nonstarter--parse-number input)))
+            (if (numberp parsed)
+                (setq value parsed)
+              (message "Please enter a number.")
+              (sit-for 0.2)))))))
+    value))
+
+(defun nonstarter--add-total (totals category hours)
+  (let ((current (gethash category totals 0.0)))
+    (puthash category (+ current hours) totals)))
+
+(defun nonstarter--deliverable-key (item)
+  (list (alist-get 'area item) (alist-get 'title item) (alist-get 'due item)))
+
+(defun nonstarter--compute-leaf-estimates (deliverables-by-category)
+  (let ((category-estimates (make-hash-table :test 'equal))
+        (subitem-estimates (make-hash-table :test 'equal))
+        (deliverable-estimates (make-hash-table :test 'equal)))
+    (dolist (group nonstarter-category-groups)
+      (let* ((group-key (car group))
+             (members (cdr group))
+             (group-est (cdr (assoc group-key nonstarter-quadrant-mana-estimates)))
+             (leaves '()))
+        (dolist (cat members)
+          (let ((items (gethash cat deliverables-by-category))
+                (subitems (cdr (assoc cat nonstarter-category-subitems))))
+            (cond
+             ((and items (> (length items) 0))
+              (dolist (item items)
+                (push (list :kind 'deliverable :item item) leaves)))
+             ((and subitems (> (length subitems) 0))
+              (dolist (sub subitems)
+                (push (list :kind 'subitem :cat cat :name sub) leaves)))
+             (t
+              (push (list :kind 'category :cat cat) leaves)))))
+        (let ((count (length leaves)))
+          (when (and (numberp group-est) (> count 0))
+            (let ((per (/ (float group-est) count)))
+              (dolist (leaf leaves)
+                (pcase (plist-get leaf :kind)
+                  ('category (puthash (plist-get leaf :cat) per category-estimates))
+                  ('subitem (puthash (cons (plist-get leaf :cat)
+                                           (plist-get leaf :name))
+                                     per subitem-estimates))
+                  ('deliverable (puthash (nonstarter--deliverable-key (plist-get leaf :item))
+                                         per deliverable-estimates)))))))))
+    (list :category category-estimates
+          :subitem subitem-estimates
+          :deliverable deliverable-estimates)))
+
+(defun nonstarter--format-deliverable-line (item awarded &optional indent title estimate)
+  (let* ((title (or title (alist-get 'title item) "?"))
+         (due (alist-get 'due item))
+         (status (alist-get 'status item))
+         (mana (nonstarter--deliverable-mana item))
+         (mana-str (cond
+                    ((numberp mana) (format "%.1f" mana))
+                    ((numberp estimate)
+                     (propertize (format "%.1f" estimate)
+                                 'face 'nonstarter-mana-flow-face))
+                    (t "?")))
+         (votes (nonstarter--deliverable-votes item))
+         (tag (nonstarter--deliverable-tag-with-estimate item awarded estimate))
+         (meta-parts (delq nil (list tag
+                                    (when nonstarter-show-deliverable-mana
+                                      (if (alist-get 'hold item)
+                                          (format "mana %s, fiat 1"
+                                                  mana-str)
+                                        (format "mana %s, votes %s"
+                                                mana-str
+                                                (format "%.0f" votes)))))))
+         (meta (if meta-parts (format " [%s]" (string-join meta-parts "; ")) ""))
+         (tail (if nonstarter-show-deliverable-meta
+                   (concat (if due (format " (due %s)" due) "")
+                           (if status (format " [%s]" status) ""))
+                 "")))
+    (format "%s- %s%s%s\n" (or indent "") title meta tail)))
+
+(defun nonstarter--funded-item-p (item awarded)
+  (or (alist-get 'hold item)
+      (and awarded (gethash (alist-get 'id item) awarded))))
+
+(defun nonstarter--funded-items (items awarded)
+  (let ((hold-items (seq-filter (lambda (it) (alist-get 'hold it)) items))
+        (awarded-items (seq-filter (lambda (it)
+                                     (and (not (alist-get 'hold it))
+                                          (gethash (alist-get 'id it) awarded)))
+                                   items)))
+    (append hold-items (nonstarter--order-deliverables awarded-items))))
+
+(defun nonstarter--deliverable-done-p (item)
+  (let ((status (downcase (format "%s" (alist-get 'status item)))))
+    (member status '("done" "complete" "closed"))))
+
+(defun nonstarter--deliverables-by-category (items)
+  (let ((acc (make-hash-table :test 'equal)))
+    (dolist (item items)
+      (unless (nonstarter--deliverable-done-p item)
+        (let* ((area (alist-get 'area item))
+               (explicit (alist-get 'category item))
+               (cat (or (and explicit (format "%s" explicit))
+                        (cdr (assoc area nonstarter-deliverable-category-map))
+                        (cdr (assoc (format "%s" area) nonstarter-deliverable-category-map)))))
+          (when cat
+            (push item (gethash cat acc))))))
+    (maphash (lambda (k v)
+               (puthash k (nreverse v) acc))
+             acc)
+    acc))
+
+(defun nonstarter--format-map (label alist &optional color-map)
   (concat label ": "
           (if (and alist (listp alist))
               (mapconcat (lambda (pair)
-                           (format "%s=%s" (car pair) (cdr pair)))
+                           (let* ((key (format "%s" (car pair)))
+                                  (key-display (if color-map
+                                                   (nonstarter--propertize-category key color-map)
+                                                 key)))
+                             (concat key-display "=" (format "%s" (cdr pair)))))
                          alist ", ")
             "none")))
 
@@ -429,10 +1006,18 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
       (format "%.1f" hours)
     "n/a"))
 
+(defun nonstarter--format-amount (value)
+  (if (numberp value)
+      (if (= value (floor (float value)))
+          (format "%.0f" (float value))
+        (format "%.1f" (float value)))
+    "n/a"))
+
 (defvar nonstarter-dashboard-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "g") #'nonstarter-dashboard)
     (define-key map (kbd "b") #'nonstarter-personal-bid)
+    (define-key map (kbd "B") #'nonstarter-personal-bid-form)
     (define-key map (kbd "c") #'nonstarter-personal-clear)
     (define-key map (kbd "v") #'nonstarter-personal-verdict)
     (define-key map (kbd "e") #'nonstarter-personal-epoch-create)
@@ -446,125 +1031,302 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
     (define-key map (kbd "H") #'nonstarter-personal-goals)
     (define-key map (kbd "M-h") #'nonstarter-personal-goal-update)
     (define-key map (kbd "d") #'nonstarter-personal-apply-default-bids)
+    (define-key map (kbd "t") #'nonstarter-toggle-deliverable-meta)
     map)
   "Keymap for nonstarter dashboard.")
 
 (define-derived-mode nonstarter-dashboard-mode special-mode "Nonstarter"
   "Dashboard for Nonstarter.")
 
+(defun nonstarter-toggle-average-day ()
+  "Toggle the average-day SVG display in the dashboard."
+  (interactive)
+  (setq nonstarter-show-average-day (not nonstarter-show-average-day))
+  (message "Average day %s" (if nonstarter-show-average-day "shown" "hidden"))
+  (nonstarter-dashboard))
+
+(defun nonstarter-toggle-deliverable-meta ()
+  "Toggle deliverable due/status display in the dashboard."
+  (interactive)
+  (setq nonstarter-show-deliverable-meta (not nonstarter-show-deliverable-meta))
+  (message "Deliverable metadata %s"
+           (if nonstarter-show-deliverable-meta "shown" "hidden"))
+  (nonstarter-dashboard))
+
 (defun nonstarter-dashboard ()
   "Show a dashboard for the current personal week."
   (interactive)
+  (nonstarter--maybe-start-personal-server)
   (let* ((status (nonstarter--request "GET" "/api/personal/status"))
          (week (nonstarter--request "GET" "/api/personal/week"))
          (epoch (nonstarter--request "GET" "/api/personal/epoch"))
          (history (nonstarter--request "GET" "/api/personal/history?n=6"))
-         (buf (get-buffer-create "*Nonstarter Dashboard*")))
-    (with-current-buffer buf
-      (read-only-mode -1)
-      (erase-buffer)
-      (insert "Nonstarter Dashboard\n\n")
-      (insert (nonstarter--format-kv "Base URL" nonstarter-base-url) "\n")
-      (insert (nonstarter--format-kv "Week" (alist-get 'week-id status)) "\n")
-      (insert (nonstarter--format-kv "Bid total" (alist-get 'bid-total status)) "\n")
-      (insert (nonstarter--format-kv "Clear total" (alist-get 'clear-total status)) "\n")
-      (insert (nonstarter--format-kv "Unallocated" (alist-get 'unallocated status)) "\n\n")
-      (insert "Epoch\n")
-      (if (and epoch (listp epoch) (alist-get 'start-week epoch))
-          (progn
-            (insert (nonstarter--format-kv "Name" (alist-get 'name epoch)) "\n")
-            (insert (nonstarter--format-kv "Start week" (alist-get 'start-week epoch)) "\n")
-            (insert (nonstarter--format-kv "Weeks" (alist-get 'weeks epoch)) "\n")
-            (insert (nonstarter--format-kv "Week index" (alist-get 'week-index epoch)) "\n")
-            (insert (nonstarter--format-map "Epoch bids" (alist-get 'bids epoch)) "\n")
-            (insert (nonstarter--format-map "Epoch meta" (alist-get 'meta epoch)) "\n")
-            (let* ((meta (alist-get 'meta epoch))
-                   (hours-week (alist-get 'hours-week meta))
-                   (util-max (or (alist-get 'utilization-max meta)
-                                 (alist-get 'utilization meta))))
-              (when (and (numberp hours-week) (numberp util-max))
-                (let* ((effective (* hours-week util-max))
-                       (slack (- hours-week effective)))
-                  (insert (format "Observed work cap: %.1f h/week (slack %.1f h)\n"
-                                  effective slack)))))
-            (insert "\n"))
-        (insert "No epoch configured.\n\n"))
-      (insert "Week bids\n")
-      (insert (nonstarter--format-map "Bids" (alist-get 'bids week)) "\n")
-      (insert (nonstarter--format-map "Clears" (alist-get 'clears week)) "\n\n")
-      (insert "Categories\n")
-      (if nonstarter-category-descriptions
-          (dolist (entry nonstarter-category-descriptions)
-            (insert (format "- %s: %s\n" (car entry) (cdr entry))))
-        (insert "No category descriptions configured.\n"))
-      (insert "\n")
-      (insert "Engagements (Q2)\n")
-      (let ((engagements (nonstarter--request "GET" "/api/personal/engagements")))
-        (if (and engagements (listp engagements))
-            (let ((any nil))
-              (dolist (eng engagements)
-                (when (string= (alist-get 'category eng) "q2")
-                  (setq any t)
-                  (let* ((name (alist-get 'name eng))
-                         (eid (alist-get 'id eng))
-                         (rate (alist-get 'rate_hour eng))
-                         (cap (alist-get 'budget_cap eng))
-                         (billed (alist-get 'billed_total eng))
-                         (remaining (when (and (numberp cap) (numberp billed)) (- cap billed)))
-                         (hours-remaining (when (and (numberp remaining) (numberp rate) (not (= rate 0)))
-                                            (/ remaining rate))))
-                    (insert (format "- %s (rate %s, cap %s, billed %s)\n"
-                                    name
-                                    (nonstarter--format-money rate)
-                                    (nonstarter--format-money cap)
-                                    (nonstarter--format-money billed)))
-                    (when remaining
-                      (insert (format "  remaining %s (~%s h)\n"
-                                      (nonstarter--format-money remaining)
-                                      (nonstarter--format-hours hours-remaining))))
-                    (when eid
-                      (let ((items (nonstarter--request "GET"
-                                                        (concat "/api/personal/engagement/items?id=" eid))))
-                        (when (and items (listp items))
-                          (let ((count (length items)))
-                            (insert (format "  items: %d\n" count)))
-                          (dolist (item items)
-                            (let ((title (alist-get 'title item))
-                                  (status (alist-get 'status item))
-                                  (hours (alist-get 'hours item)))
-                              (insert (format "    - %s [%s%s]\n"
-                                              title
-                                              (or status "unknown")
-                                              (if (numberp hours)
-                                                  (format ", %s h" (nonstarter--format-hours hours))
-                                                "")))))))))))
-              (unless any
-                (insert "No Q2 engagements.\n")))
-          (insert "No engagements.\n")))
-      (insert "\n")
-      (insert "Goals\n")
-      (let ((goals (nonstarter--request "GET" "/api/personal/goals")))
-        (if (and goals (listp goals) (> (length goals) 0))
-            (dolist (goal goals)
-              (insert (format "- %s [%s] %s/%s\n"
-                              (alist-get 'title goal)
-                              (alist-get 'status goal)
-                              (nonstarter--format-hours (alist-get 'actual_count goal))
-                              (nonstarter--format-hours (alist-get 'target_count goal)))))
-          (insert "No goals.\n")))
-      (insert "\n")
-      (insert "Recent verdicts\n")
-      (if (and history (listp history))
-          (dolist (entry history)
-            (insert (format "- %s %s (bid %.1f / clear %.1f)\n"
-                            (alist-get 'week-id entry)
-                            (alist-get 'verdict entry)
-                            (alist-get 'bid-total entry)
-                            (alist-get 'clear-total entry))))
-        (insert "No history.\n"))
-      (goto-char (point-min))
-      (nonstarter-dashboard-mode))
-    (display-buffer buf)))
+         (mana (nonstarter--request "GET" "/api/personal/mana"))
+         (dash (nonstarter--request "GET" "/api/personal/dashboard"))
+         (svg (alist-get 'svg dash))
+         (bids (alist-get 'bids week))
+         (hold (nonstarter--hold-from-bids bids))
+         (epoch-meta (alist-get 'meta epoch))
+         (raw-budgets (and (listp epoch-meta)
+                           (or (alist-get 'category-budgets epoch-meta)
+                               (alist-get 'category_budgets epoch-meta))))
+         (category-budgets (nonstarter--normalize-budget-map raw-budgets))
+         (epoch-weeks (let ((w (alist-get 'weeks epoch)))
+                        (when (numberp w) w)))
+         (hold-items (nonstarter--hold-items hold (alist-get 'week-id status)))
+         (items (append hold-items (alist-get 'outstanding dash)))
+         (use-budgets (and category-budgets (> (length category-budgets) 0)))
+         (awards (if use-budgets
+                     (nonstarter--award-deliverables-by-category items category-budgets)
+                   (nonstarter--award-deliverables items (alist-get 'balance mana))))
+         (awarded (car awards))
+         (remaining (cadr awards))
+         (remaining-total (nonstarter--remaining-total remaining))
+         (funded-items (nonstarter--funded-items items awarded))
+         (backlog-items (seq-remove (lambda (it) (nonstarter--funded-item-p it awarded)) items))
+         (svg-body (when (and (stringp svg) (not (string= svg "")))
+                     (nonstarter--request-body "GET" svg
+                                               nil
+                                               '(("Accept" . "image/svg+xml")))))
+         (category-colors (nonstarter--svg-legend-colors svg-body)))
+    (let ((buf (get-buffer-create "*Nonstarter Dashboard*")))
+      (with-current-buffer buf
+        (let ((inhibit-read-only t))
+          (read-only-mode -1)
+          (erase-buffer)
+          (insert "Nonstarter Dashboard\n\n")
+          (insert (nonstarter--format-kv "Base URL" nonstarter-base-url) "\n")
+          (insert (nonstarter--format-kv "Week" (alist-get 'week-id status)) "\n")
+          (let* ((bid-total (alist-get 'bid-total status))
+                 (burn (nonstarter--hold-total hold))
+                 (discretionary (when (numberp bid-total) (- bid-total burn)))
+                 (sleep-hold (nonstarter--hold-amount hold "sleep"))
+                 (maintenance-hold (nonstarter--hold-amount hold "maintenance")))
+            (insert (nonstarter--format-kv "Bid total" bid-total) "\n")
+            (when (and (numberp burn) (> burn 0))
+              (insert (format "Biocompatibility burn: %.1f%s\n"
+                              burn
+                              (if (numberp discretionary)
+                                  (format " (discretionary %.1f)" discretionary)
+                                "")))))
+          (insert (nonstarter--format-kv "Clear total" (alist-get 'clear-total status)) "\n")
+          (insert (nonstarter--format-kv "Unallocated" (alist-get 'unallocated status)) "\n")
+          (when (and mana (listp mana))
+            (insert (format "🔮 Mana (week %s): balance %s (earned %s / spent %s / budget %s, remaining %s)\n"
+                            (or (alist-get 'week-id mana) "?")
+                            (nonstarter--format-hours (alist-get 'balance mana))
+                            (nonstarter--format-hours (alist-get 'earned mana))
+                            (nonstarter--format-hours (alist-get 'spent mana))
+                            (nonstarter--format-hours (alist-get 'budget mana))
+                            (nonstarter--format-hours remaining-total))))
+          (insert "\n")
+          (insert "Epoch\n")
+          (if (and epoch (listp epoch) (alist-get 'start-week epoch))
+              (progn
+                (insert (nonstarter--format-kv "Name" (alist-get 'name epoch)) "\n")
+                (insert (nonstarter--format-kv "Start week" (alist-get 'start-week epoch)) "\n")
+                (insert (nonstarter--format-kv "Weeks" (alist-get 'weeks epoch)) "\n")
+                (insert (nonstarter--format-kv "Week index" (alist-get 'week-index epoch)) "\n")
+                (insert (nonstarter--format-map "Epoch bids" (alist-get 'bids epoch) category-colors) "\n")
+                (insert (nonstarter--format-map "Epoch meta" (alist-get 'meta epoch)) "\n")
+                (let* ((meta (alist-get 'meta epoch))
+                       (hours-week (alist-get 'hours-week meta))
+                       (util-max (or (alist-get 'utilization-max meta)
+                                     (alist-get 'utilization meta))))
+                  (when (and (numberp hours-week) (numberp util-max))
+                    (let* ((effective (* hours-week util-max))
+                           (slack (- hours-week effective)))
+                      (insert (format "Observed work cap: %.1f h/week (slack %.1f h)\n"
+                                      effective slack)))))
+                (insert "\n"))
+            (insert "No epoch configured.\n\n"))
+          (insert "Default bids\n")
+          (insert (nonstarter--format-map "Bids" (alist-get 'bids week) category-colors) "\n")
+          (when (seq hold)
+            (insert (nonstarter--format-map "Hold" hold category-colors) "\n"))
+          (insert (nonstarter--format-map "Clears" (alist-get 'clears week) category-colors) "\n\n")
+          (insert "Average day ")
+          (insert-text-button (if nonstarter-show-average-day "[hide]" "[show]")
+                              'follow-link t
+                              'help-echo "Toggle average-day SVG"
+                              'action (lambda (_btn) (nonstarter-toggle-average-day)))
+          (insert "\n")
+          (when (and nonstarter-show-average-day svg-body (image-type-available-p 'svg))
+            (let ((img (create-image svg-body 'svg t)))
+              (when img
+                (insert-image img)
+                (insert "\n"))))
+          (when (and (stringp svg) (not (string= svg "")))
+            (insert (nonstarter--format-kv "SVG" svg) "\n"))
+          (insert "\n")
+          (insert "Funded\n")
+          (if (and funded-items (> (length funded-items) 0))
+              (dolist (item funded-items)
+                (let* ((cat (alist-get 'category item))
+                       (title (alist-get 'title item))
+                       (hold-weight (and (alist-get 'hold item)
+                                         (nonstarter--hold-weight cat)))
+                       (label (cond
+                               ((and cat hold-weight)
+                                (concat (nonstarter--propertize-category cat category-colors)
+                                        (format "(%.0f%%)" (* 100.0 hold-weight))))
+                               ((and cat title)
+                                (concat (nonstarter--propertize-category cat category-colors)
+                                        ": "
+                                        title))
+                               (title title)
+                               (t "?"))))
+                  (insert (nonstarter--format-deliverable-line item awarded "  " label))))
+            (insert "  none\n"))
+          (insert "──────────────────── funded above / backlog below ────────────────────\n\n")
+          (insert "Categories\n")
+          (if nonstarter-category-descriptions
+              (let* ((used (make-hash-table :test 'equal))
+                     (others '())
+                     (deliverables-by-category (nonstarter--deliverables-by-category backlog-items))
+                     (leaf-estimates (nonstarter--compute-leaf-estimates deliverables-by-category))
+                     (category-estimates (plist-get leaf-estimates :category))
+                     (subitem-estimates (plist-get leaf-estimates :subitem))
+                     (deliverable-estimates (plist-get leaf-estimates :deliverable)))
+                (dolist (group nonstarter-category-groups)
+                  (let* ((key (car group))
+                         (members (cdr group))
+                         (desc (cdr (assoc key nonstarter-category-descriptions))))
+                    (puthash key t used)
+                    (let* ((estimate (cdr (assoc key nonstarter-quadrant-mana-estimates)))
+                           (estimate-note (nonstarter--format-estimate-note estimate)))
+                      (insert (format "%s%s%s\n"
+                                      (nonstarter--propertize-category key category-colors (upcase key))
+                                      (if desc (format ": %s" desc) "")
+                                      (or estimate-note ""))))
+                    (dolist (cat members)
+                      (let ((cdesc (cdr (assoc cat nonstarter-category-descriptions))))
+                        (when cdesc
+                          (puthash cat t used)
+                          (let ((note (nonstarter--category-funding-note cat hold epoch-weeks))
+                                (budget-note (when use-budgets
+                                               (nonstarter--category-budget-note cat category-budgets remaining)))
+                                (estimate-note (nonstarter--format-estimate-note
+                                                (and category-estimates
+                                                     (gethash cat category-estimates))
+                                                'nonstarter-mana-flow-face)))
+                            (insert (format "  - %s: %s%s\n"
+                                            (nonstarter--propertize-category cat category-colors)
+                                            cdesc
+                                            (concat (or note "") (or budget-note "") (or estimate-note "")))))
+                          (let ((subitems (cdr (assoc cat nonstarter-category-subitems))))
+                            (dolist (sub subitems)
+                              (let* ((label (if (consp sub) (car sub) sub))
+                                     (desc (if (consp sub) (cdr sub) nil))
+                                     (estimate (and subitem-estimates
+                                                    (gethash (cons cat label) subitem-estimates)))
+                                     (estimate-note (nonstarter--format-estimate-note
+                                                     estimate
+                                                     'nonstarter-mana-flow-face)))
+                                (insert (format "    - %s%s%s\n"
+                                                label
+                                                (if (and desc (not (string= desc "")))
+                                                    (format ": %s" desc)
+                                                  "")
+                                                (or estimate-note ""))))))
+                          (dolist (item (gethash cat deliverables-by-category))
+                            (let ((estimate (and deliverable-estimates
+                                                 (gethash (nonstarter--deliverable-key item)
+                                                          deliverable-estimates))))
+                              (insert (nonstarter--format-deliverable-line item awarded "    " nil estimate))))))))))
+                (dolist (entry nonstarter-category-descriptions)
+                  (unless (gethash (car entry) used)
+                    (push entry others)))
+                (setq others (nreverse others))
+                (when others
+                  (dolist (entry others)
+                    (let ((cat (car entry)))
+                      (let ((note (nonstarter--category-funding-note cat hold epoch-weeks))
+                            (budget-note (when use-budgets
+                                           (nonstarter--category-budget-note cat category-budgets remaining)))
+                            (estimate-note (nonstarter--format-estimate-note
+                                            (and category-estimates
+                                                 (gethash cat category-estimates))
+                                            'nonstarter-mana-flow-face)))
+                        (insert (format "- %s: %s%s\n"
+                                        (nonstarter--propertize-category cat category-colors)
+                                        (cdr entry)
+                                        (concat (or note "") (or budget-note "") (or estimate-note "")))))
+                      (dolist (item (gethash cat deliverables-by-category))
+                        (let ((estimate (and deliverable-estimates
+                                             (gethash (nonstarter--deliverable-key item)
+                                                      deliverable-estimates))))
+                          (insert (nonstarter--format-deliverable-line item awarded "    " nil estimate)))))))
+                (insert "\n"))
+            (insert "No category descriptions configured.\n"))
+          (insert "\n")
+          (insert "Engagements (Q2)\n")
+          (let ((engagements (nonstarter--request "GET" "/api/personal/engagements")))
+            (if (and engagements (listp engagements))
+                (let ((any nil))
+                  (dolist (eng engagements)
+                    (when (string= (alist-get 'category eng) "q2")
+                      (setq any t)
+                      (let* ((name (alist-get 'name eng))
+                             (eid (alist-get 'id eng))
+                             (rate (alist-get 'rate_hour eng))
+                             (cap (alist-get 'budget_cap eng))
+                             (billed (alist-get 'billed_total eng))
+                             (remaining (when (and (numberp cap) (numberp billed)) (- cap billed)))
+                             (hours-remaining (when (and (numberp remaining) (numberp rate) (not (= rate 0)))
+                                                (/ remaining rate))))
+                        (insert (format "- %s (rate %s, cap %s, billed %s)\n"
+                                        name
+                                        (nonstarter--format-money rate)
+                                        (nonstarter--format-money cap)
+                                        (nonstarter--format-money billed)))
+                        (when remaining
+                          (insert (format "  remaining %s (~%s h)\n"
+                                          (nonstarter--format-money remaining)
+                                          (nonstarter--format-hours hours-remaining))))
+                        (when eid
+                          (let ((items (nonstarter--request "GET"
+                                                            (concat "/api/personal/engagement/items?id=" eid))))
+                            (when (and items (listp items))
+                              (let ((count (length items)))
+                                (insert (format "  items: %d\n" count)))
+                              (dolist (item items)
+                                (let ((title (alist-get 'title item))
+                                      (status (alist-get 'status item))
+                                      (hours (alist-get 'hours item)))
+                                  (insert (format "    - %s [%s%s]\n"
+                                                  title
+                                                  (or status "unknown")
+                                                  (if (numberp hours)
+                                                      (format ", %s h" (nonstarter--format-hours hours))
+                                                    "")))))))))))
+                  (unless any
+                    (insert "No Q2 engagements.\n")))
+              (insert "No engagements.\n")))
+          (insert "\n")
+          (insert "Goals\n")
+          (let ((goals (nonstarter--request "GET" "/api/personal/goals")))
+            (if (and goals (listp goals) (> (length goals) 0))
+                (dolist (goal goals)
+                  (insert (format "- %s [%s] %s/%s\n"
+                                  (alist-get 'title goal)
+                                  (alist-get 'status goal)
+                                  (nonstarter--format-hours (alist-get 'actual_count goal))
+                                  (nonstarter--format-hours (alist-get 'target_count goal)))))
+              (insert "No goals.\n")))
+          (insert "\n")
+          (insert "Recent verdicts\n")
+          (if (and history (listp history))
+              (dolist (entry history)
+                (insert (format "- %s %s (bid %.1f / clear %.1f)\n"
+                                (alist-get 'week-id entry)
+                                (alist-get 'verdict entry)
+                                (alist-get 'bid-total entry)
+                                (alist-get 'clear-total entry))))
+            (insert "No history.\n"))
+          (goto-char (point-min))
+          (nonstarter-dashboard-mode))
+      (display-buffer buf))))
 
 ;;; Public API
 
@@ -656,6 +1418,99 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                    (week-id . ,(unless (string= week-id "") week-id)))))
     (nonstarter--show "Personal bid"
                       (nonstarter--request "POST" "/api/personal/bid" payload))))
+
+(defun nonstarter-personal-bid-form (&optional week-id)
+  "Prompt for weekly bids using the category tree."
+  (interactive (list (read-string "Week ID (YYYY-MM-DD, optional): " nil nil "")))
+  (let* ((week-id (unless (string= week-id "") week-id))
+         (status (nonstarter--request "GET" "/api/personal/status"))
+         (week (nonstarter--request "GET"
+                                    (if week-id
+                                        (concat "/api/personal/week?week-id=" week-id)
+                                      "/api/personal/week")))
+         (dash (nonstarter--request "GET" "/api/personal/dashboard"))
+         (deliverables-by-category
+          (nonstarter--deliverables-by-category (alist-get 'outstanding dash)))
+         (bids (alist-get 'bids week))
+         (totals (make-hash-table :test 'equal))
+         (used (make-hash-table :test 'equal))
+         (prompt-week (or week-id (alist-get 'week-id status))))
+    (dolist (group nonstarter-category-groups)
+      (let* ((group-key (car group))
+             (members (cdr group)))
+        (dolist (cat members)
+          (puthash cat t used)
+          (let* ((desc (cdr (assoc cat nonstarter-category-descriptions)))
+                 (items (gethash cat deliverables-by-category))
+                 (subitems (cdr (assoc cat nonstarter-category-subitems)))
+                 (base-label (format "%s / %s%s"
+                                     (upcase group-key)
+                                     cat
+                                     (if desc (format " (%s)" desc) ""))))
+            (cond
+             ((and items (> (length items) 0))
+              (dolist (item items)
+                (let* ((title (alist-get 'title item))
+                       (due (alist-get 'due item))
+                       (leaf-label (format "%s / %s%s"
+                                           base-label
+                                           title
+                                           (if due (format " (due %s)" due) "")))
+                       (hours (nonstarter--read-hours (concat leaf-label " hours: ")
+                                                      nil t)))
+                  (when (numberp hours)
+                    (nonstarter--add-total totals cat hours)))))
+             ((and subitems (> (length subitems) 0))
+              (dolist (sub subitems)
+                (let* ((label (if (consp sub) (car sub) sub))
+                       (desc* (if (consp sub) (cdr sub) nil))
+                       (leaf-label (format "%s / %s%s"
+                                           base-label
+                                           label
+                                           (if desc* (format " (%s)" desc*) "")))
+                       (hours (nonstarter--read-hours (concat leaf-label " hours: ")
+                                                      nil t)))
+                  (when (numberp hours)
+                    (nonstarter--add-total totals cat hours)))))
+             (t
+              (let* ((current (nonstarter--parse-number
+                               (alist-get cat bids nil nil #'string=)))
+                     (hours (nonstarter--read-hours (concat base-label " hours: ")
+                                                    current nil)))
+                (when (numberp hours)
+                  (puthash cat hours totals)))))))))
+    (dolist (entry nonstarter-category-descriptions)
+      (let ((cat (car entry)))
+        (unless (gethash cat used)
+          (let* ((desc (cdr entry))
+                 (current (nonstarter--parse-number
+                           (alist-get cat bids nil nil #'string=)))
+                 (label (format "Other / %s%s"
+                                cat
+                                (if desc (format " (%s)" desc) "")))
+                 (hours (nonstarter--read-hours (concat label " hours: ")
+                                                current nil)))
+            (when (numberp hours)
+              (puthash cat hours totals)))))))
+    (let ((summary
+           (mapconcat
+            (lambda (cat)
+              (let ((hours (gethash cat totals)))
+                (format "- %s: %.1f" cat (or hours 0.0))))
+            (sort (hash-table-keys totals) #'string<)
+            "\n")))
+      (nonstarter--show-text "Bid form summary"
+                             (format "Week: %s\n\n%s\n" (or prompt-week "?") summary))
+      (when (y-or-n-p "Submit these bids? ")
+        (maphash
+         (lambda (cat hours)
+           (when (numberp hours)
+             (nonstarter--request "POST" "/api/personal/bid"
+                                  `((category . ,cat)
+                                    (hours . ,hours)
+                                    (week-id . ,(unless (null week-id) week-id))))))
+         totals)
+        (nonstarter-dashboard))))
 
 (defun nonstarter-personal-clear (category hours &optional week-id)
   "Record a personal clear."
