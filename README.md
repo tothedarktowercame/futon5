@@ -1,4 +1,16 @@
-# futon5
+# futon5 — Meta-Pattern Operators
+
+futon5 is the meta-evolution layer of the futon stack. It runs cellular automata
+experiments (MMCA) that search for edge-of-chaos dynamics, evolves "exotypes"
+(kernel contexts) and "xenotypes" (evaluator populations), and maps discoveries
+back onto futon3 patterns via sigils. This is where pattern *selection pressure*
+gets studied computationally.
+
+> **Stack context**: futon5 consumes patterns from futon3, runs meta-evolution,
+> and proposes pattern refinements. See `../futon0/README.md` for the full stack
+> diagram.
+
+---
 
 Concentration layer for meta-pattern operators. Patterns are lifted from
 Futon3 flexiarg entries, mapped onto sigils, and executed via operators that
