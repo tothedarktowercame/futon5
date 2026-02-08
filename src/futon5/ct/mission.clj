@@ -186,9 +186,43 @@
 ;;; Validation: Type Safety
 ;;; ============================================================
 
+(defn- node-can-produce?
+  "Can this node produce the given type?
+   - Ports: edge type must be compatible with port :type
+   - Components: edge type must be in :produces set (if declared),
+     otherwise unchecked (permissive for early-stage diagrams)"
+  [node edge-type]
+  (if (= :component (:role node))
+    (if-let [produces (:produces node)]
+      (some #(types-compatible? % edge-type) produces)
+      true) ; no :produces declared → permissive
+    ;; Port: check :type
+    (if (:type node)
+      (types-compatible? (:type node) edge-type)
+      true)))
+
+(defn- node-can-accept?
+  "Can this node accept the given type?
+   - Ports: edge type must be compatible with port :type
+   - Components: edge type must be in :accepts set (if declared),
+     otherwise unchecked (permissive for early-stage diagrams)"
+  [node edge-type]
+  (if (= :component (:role node))
+    (if-let [accepts (:accepts node)]
+      (some #(types-compatible? edge-type %) accepts)
+      true) ; no :accepts declared → permissive
+    ;; Port: check :type
+    (if (:type node)
+      (types-compatible? edge-type (:type node))
+      true)))
+
 (defn validate-type-safety
   "Every edge with a declared type must match the port types at both ends.
    Edges without types are unchecked (permissive for early-stage diagrams).
+
+   Components are morphisms — they have :accepts (domain) and :produces
+   (codomain) type sets, separate from their identity :type. If a component
+   declares neither, its edges are unchecked.
 
    Returns {:valid bool :type-errors [...]}"
   [diagram]
@@ -198,26 +232,28 @@
       (let [from-node (get node-map (:from edge))
             to-node   (get node-map (:to edge))
             edge-type (:type edge)]
-        ;; Check edge type against source's output type
-        (when (and edge-type (:type from-node))
-          (when-not (types-compatible? (:type from-node) edge-type)
+        ;; Check edge type against source's output capability
+        (when (and edge-type from-node)
+          (when-not (node-can-produce? from-node edge-type)
             (swap! errors conj
                    {:edge edge
                     :problem :source-type-mismatch
-                    :source-type (:type from-node)
+                    :produces (:produces from-node)
                     :edge-type edge-type
-                    :message (str (:id from-node) " outputs " (:type from-node)
+                    :message (str (:id from-node) " produces "
+                                  (or (:produces from-node) (:type from-node))
                                   " but edge declares " edge-type)})))
-        ;; Check edge type against destination's expected input type
-        (when (and edge-type (:type to-node))
-          (when-not (types-compatible? edge-type (:type to-node))
+        ;; Check edge type against destination's input capability
+        (when (and edge-type to-node)
+          (when-not (node-can-accept? to-node edge-type)
             (swap! errors conj
                    {:edge edge
                     :problem :dest-type-mismatch
                     :edge-type edge-type
-                    :dest-type (:type to-node)
+                    :accepts (:accepts to-node)
                     :message (str "Edge carries " edge-type
-                                  " but " (:id to-node) " expects " (:type to-node))})))))
+                                  " but " (:id to-node) " accepts "
+                                  (or (:accepts to-node) (:type to-node)))})))))
     {:valid (empty? @errors)
      :check :type-safety
      :type-errors @errors}))
