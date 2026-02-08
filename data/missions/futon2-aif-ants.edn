@@ -5,6 +5,10 @@
 ;;
 ;; The ant AIF loop: observe → perceive → policy → act → world → observe
 ;; with preferences and patterns as slow/glacial constraints.
+;;
+;; Fixed: added C-default-mode as a pre-deliberative path from observation
+;; to action (tropisms, gradients), so C-policy is no longer a SPOF.
+;; See Chapter 0 § 6 — Default Mode Network pattern.
 
 {:mission/id :futon2-aif-ants
  :mission/state :complete     ; futon2 is built and running
@@ -91,6 +95,15 @@
    :produces #{:http-request :xtdb-entity}  ; action + diagnostics
    :timescale :fast}
 
+  ;; Default mode — pre-deliberative baseline behavior
+  ;; Tropisms, gradients, cached habits. Provides I6 compositional
+  ;; closure: if C-policy fails, this path keeps the ant behaving.
+  {:id :C-default-mode :name "Default mode (tropisms)"
+   :type :clj-namespace :ref "ants.aif.default-mode"
+   :accepts #{:xtdb-entity}                    ; observations only — no preferences
+   :produces #{:http-request :xtdb-entity}     ; baseline action + diagnostics
+   :timescale :fast}
+
   ;; Pattern sense — epistatic constraint checking
   {:id :C-pattern  :name "Pattern sense/EFE"
    :type :clj-namespace :ref "ants.aif.pattern-sense"
@@ -128,6 +141,12 @@
   {:from :C-affect    :to :C-policy   :type :xtdb-entity}
   {:from :C-policy    :to :C-execute  :type :http-request}
   {:from :C-execute   :to :I-world    :type :xtdb-entity}  ; loop closes
+
+  ;; === DEFAULT MODE PATH (parallel to deliberative) ===
+  {:from :C-observe      :to :C-default-mode :type :xtdb-entity}  ; observations → tropisms
+  {:from :C-default-mode :to :C-execute      :type :http-request} ; baseline action → execute
+  {:from :C-default-mode :to :O-actions      :type :http-request} ; baseline → output
+  {:from :C-default-mode :to :O-diagnostics  :type :xtdb-entity}  ; baseline telemetry
 
   ;; === CONSTRAINT INPUTS (slow → fast) ===
   {:from :I-preferences :to :C-policy  :type :config}  ; preferences → EFE risk term

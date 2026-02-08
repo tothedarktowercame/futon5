@@ -688,7 +688,151 @@ structure, validate the result against I1–I6.
 
 ---
 
-## 6. Toward a Diagram Calculus
+## 6. The Default Mode: Architectural Tiers and the SPOF Problem
+
+### 6.1 The Policy Bottleneck
+
+Validating the futon2 AIF ant diagram against I6 (compositional closure)
+reveals a structural finding: **C-policy is a single point of failure.**
+Removing the policy component disconnects all five outputs from all four
+inputs. No actions, no pheromone, no scores, no diagnostics, no
+termination signal.
+
+This is not a bug in the ant implementation. It is inherent to the
+standard AIF diagram. The policy node is the sole coupling between the
+perceptual chain (observe → perceive → affect) and the motor chain
+(execute → world). There is no alternative path. If the deliberative
+process fails, the entire system goes dark.
+
+### 6.2 Three Tiers: Reflex, Default Mode, Deliberative
+
+Neuroscience offers a structural insight here. The brain does not have
+a single "policy" node. It has at least three tiers of behavioral
+organization:
+
+| Tier | Timescale | Example | What it provides |
+|------|-----------|---------|-----------------|
+| **Reflex** | Fastest (~ms) | Spinal reflexes, brainstem | Immediate survival responses, no deliberation |
+| **Default mode** | Medium (~s) | Default Mode Network (DMN) | Baseline activity when task-specific processing is offline |
+| **Deliberative** | Slow (~s–min) | Prefrontal, task-positive networks | Goal-directed planning, EFE-like evaluation |
+
+The critical insight is the **default mode tier.** When the deliberative
+system is not engaged — between tasks, after a goal is achieved, when
+the current plan fails — the system does not go silent. It falls back
+to a default pattern of activity. The DMN is not "doing nothing." It is
+maintaining baseline cognition: self-referential processing, future
+simulation, social modeling.
+
+### 6.3 Why This Matters for Wiring Diagrams
+
+In diagram terms, the default mode is a **parallel path** from
+observation to action that does not pass through the deliberative
+policy. It provides:
+
+1. **Compositional closure (I6).** If the deliberative path fails, the
+   default path keeps *some* outputs alive. The diagram survives
+   component failure.
+
+2. **Graceful degradation.** Instead of binary (deliberative works /
+   system dead), the system has a fallback: simpler behavior, but still
+   behavior. The ant doesn't freeze — it follows pheromone gradients,
+   returns toward the nest, maintains basic survival responses.
+
+3. **Inter-task continuity.** Between deliberative episodes, the system
+   has somewhere to go. It doesn't stall waiting for the next goal to
+   be assigned.
+
+The standard AIF diagram lacks this tier. It has the deliberative
+policy and nothing else. Adding a default mode component is not
+"adding a feature" — it is fixing a structural deficiency (I6
+violation) that makes the diagram fragile.
+
+### 6.4 Architectural Pattern
+
+The fix is a `C-default-mode` component wired in parallel with
+`C-policy`:
+
+```
+                    ┌─→ C-perceive → C-affect → C-policy ──→ C-execute
+I-world → C-observe │                                              │
+                    └─→ C-default-mode ──────────────────→ C-execute
+                              │
+                              └──→ O-actions, O-diagnostics
+```
+
+Properties of C-default-mode:
+
+- **Accepts:** observations (same as the perceptual chain's input)
+- **Produces:** baseline actions + diagnostics
+- **Timescale:** fast (same as perception and action)
+- **Does NOT accept:** preferences or EFE weights (those are
+  deliberative concerns — the default mode is pre-deliberative)
+- **Simpler than policy:** no EFE evaluation, no planning horizon.
+  Tropisms, gradients, cached habits.
+
+When C-policy is present and functioning, both paths produce candidate
+actions. The execution layer selects or blends them. When C-policy
+fails, the default mode path alone sustains behavior.
+
+### 6.5 The Fulab Agent Parallel
+
+This finding transfers directly to fulab agents. Consider the current
+fulab agent architecture:
+
+| Tier | Fulab equivalent | Behavior |
+|------|-----------------|----------|
+| **Reflex** | Error handlers, watchdogs | Crash recovery, timeout handling |
+| **Default mode** | *"Wait for user input"* | **The current baseline** |
+| **Deliberative** | AIF controller, task execution | Mission-directed work |
+
+The problem: the current default mode is **interactive chat.** When a
+deliberative episode ends (task complete, context exhausted, run
+finishes), the agent reverts to waiting for human input. This is the
+correct default mode for a *tool* but not for an *autonomous agent.*
+
+An autonomous agent's default mode should be:
+
+1. Check mission queue for pending work
+2. Read handoff notes from previous sessions
+3. Generate a Post-Action Review (PAR) for the completed episode
+4. Signal availability to peer agents
+5. If nothing pending, enter low-power monitoring
+
+This is structurally identical to the ant fix. The ant's default mode
+is "follow pheromone gradients toward the nest" — a simple, robust
+behavior that keeps the ant alive and useful between deliberative
+episodes. The fulab agent's default mode should be "check for work,
+process handoffs, maintain readiness" — a simple, robust behavior
+that keeps the agent productive between task-directed episodes.
+
+**The ant diagram and the fulab agent diagram are instances of the
+same diagram family.** Fixing the SPOF in one informs the fix in
+the other.
+
+### 6.6 Implications for I6
+
+Compositional closure (I6) should be understood as requiring not just
+"no SPOF" but specifically: **the diagram must have at least two
+independent paths from observation to action.** One deliberative, one
+pre-deliberative. This is what makes the system robust to component
+failure — not redundancy in the trivial sense (two copies of the same
+thing) but structural redundancy (two different *kinds* of response
+generation).
+
+The invariant dependency graph extends:
+
+```
+I1 (boundary) ← I6 (closure) depends on
+                 I6 ← requires multi-tier action generation
+I2 (obs-action) ← I5 (adequacy) depends on
+I3 (timescales) ← I4 (exogeneity) depends on
+                   I3 ← default mode is a distinct (faster) timescale
+```
+
+
+---
+
+## 7. Toward a Diagram Calculus
 
 ### 6.1 What Would It Be?
 
@@ -778,7 +922,7 @@ If futon5 is to be the workbench for this calculus, it needs:
 
 ---
 
-## 7. Summary of Claims
+## 8. Summary of Claims
 
 1. AIF is an existence proof for inference-action-constraint coupling,
    not a universal theory of agency.
@@ -806,7 +950,14 @@ If futon5 is to be the workbench for this calculus, it needs:
    analysis (invariant → failure mode mapping), and compositional
    guarantees (when does A ∘ B preserve certification?).
 
-7. The tools already built in futon5 (CT DSL, wiring composition,
+7. The standard AIF diagram has an inherent SPOF: the policy node is
+   the sole coupling between perception and action. Fixing this
+   requires a default mode tier — a pre-deliberative path from
+   observation to action that sustains behavior when deliberation
+   fails. This is the Default Mode Network pattern, and it applies
+   equally to AIF ants and fulab agents.
+
+8. The tools already built in futon5 (CT DSL, wiring composition,
    type-checked mission diagrams) are the prototype of such a
    discipline. Extending them to agent diagrams with timescale
    annotations, exogeneity checking, and projection functors is
