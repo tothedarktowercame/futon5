@@ -1,0 +1,156 @@
+;; Static analysis of the futon2 AIF ant simulation as a wiring diagram.
+;;
+;; This is NOT a mission spec — it's a structural model of an existing
+;; system, validated against the Chapter 0 invariants (I1-I6).
+;;
+;; The ant AIF loop: observe → perceive → policy → act → world → observe
+;; with preferences and patterns as slow/glacial constraints.
+
+{:mission/id :futon2-aif-ants
+ :mission/state :complete     ; futon2 is built and running
+
+ :ports
+ {:input
+  [;; The world state — the environment the ants inhabit
+   {:id :I-world       :name "World state"        :type :xtdb-entity
+    :source "simulation grid" :note "cells, food, pher, ants, reserves"
+    :timescale :fast}
+
+   ;; Preferences — the homeostatic setpoints that define viability
+   {:id :I-preferences :name "Preferences"         :type :config
+    :source "config[:aif][:preferences]"
+    :note "hunger μ=0.40 σ=0.08, ingest μ=0.70 σ=0.20"
+    :timescale :glacial
+    :constraint true}      ; ← THE core preference; never written by fast dynamics
+
+   ;; EFE weights — how to balance competing goals
+   {:id :I-efe-weights :name "EFE λ weights"       :type :config
+    :source "config[:aif][:efe][:lambda]"
+    :note "pragmatic=1.0 ambiguity=0.5 info=0.4 colony=0.4 survival=1.2"
+    :timescale :glacial
+    :constraint true}
+
+   ;; Patterns — epistatic behavioral constraints from futon3
+   {:id :I-patterns    :name "Cyber patterns"       :type :config
+    :source "futon3 library" :note "cargo-return, hunger-coupling, etc."
+    :timescale :glacial
+    :constraint true}]
+
+  :output
+  [;; The observable behavior: actions taken in the world
+   {:id :O-actions     :name "Agent actions"        :type :http-request
+    :consumer "environment" :spec-ref "aif.policy"
+    :timescale :fast}
+
+   ;; Pheromone trails — emergent communication medium
+   {:id :O-pheromone   :name "Pheromone trails"     :type :xtdb-entity
+    :consumer "other ants" :spec-ref "aif.war"
+    :timescale :fast}
+
+   ;; Colony scores — deposited food, the ultimate fitness measure
+   {:id :O-scores      :name "Colony scores"        :type :xtdb-entity
+    :consumer "evaluation" :spec-ref "aif.war"
+    :timescale :medium}
+
+   ;; Diagnostics — rich telemetry for understanding behavior
+   {:id :O-diagnostics :name "Diagnostics"          :type :xtdb-entity
+    :consumer "futon5 meta-learning" :spec-ref "aif.core"
+    :timescale :fast}
+
+   ;; Termination — death, queen starvation, etc.
+   {:id :O-termination :name "Termination signal"   :type :error-response
+    :consumer "simulation runner" :spec-ref "aif.war"
+    :timescale :slow}]}
+
+ :components
+ [;; Sensory surface — transduces world into normalized observations
+  {:id :C-observe  :name "Observe (g-observe)"
+   :type :clj-namespace :ref "ants.aif.observe"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}     ; observation vector
+   :timescale :fast}
+
+  ;; Belief updating — predictive coding (5 micro-steps)
+  {:id :C-perceive :name "Perceive (predictive coding)"
+   :type :clj-namespace :ref "ants.aif.perceive"
+   :accepts #{:xtdb-entity}      ; observation + prior beliefs
+   :produces #{:xtdb-entity}     ; converged beliefs (mu, prec)
+   :timescale :fast}
+
+  ;; Affective regulation — hunger→precision→temperature coupling
+  {:id :C-affect   :name "Affect (precision modulation)"
+   :type :clj-namespace :ref "ants.aif.affect"
+   :accepts #{:xtdb-entity :config}  ; beliefs + precision config
+   :produces #{:xtdb-entity}         ; modulated precisions, tau
+   :timescale :fast}
+
+  ;; Policy selection — EFE evaluation over 4 actions
+  {:id :C-policy   :name "Policy (EFE minimization)"
+   :type :clj-namespace :ref "ants.aif.policy"
+   :accepts #{:xtdb-entity :config}  ; beliefs + preferences + weights
+   :produces #{:http-request :xtdb-entity}  ; action + diagnostics
+   :timescale :fast}
+
+  ;; Pattern sense — epistatic constraint checking
+  {:id :C-pattern  :name "Pattern sense/EFE"
+   :type :clj-namespace :ref "ants.aif.pattern-sense"
+   :accepts #{:xtdb-entity :config}  ; observations + pattern config
+   :produces #{:xtdb-entity}         ; pattern-efe contribution
+   :timescale :fast}
+
+  ;; Action execution — the ONLY component that mutates the world
+  {:id :C-execute  :name "Execute (apply-action)"
+   :type :clj-namespace :ref "ants.war"
+   :accepts #{:http-request :xtdb-entity}  ; action + world
+   :produces #{:xtdb-entity :error-response}  ; mutated world + possible death
+   :timescale :fast}
+
+  ;; Colony metabolism — reserve consumption, starvation checks
+  {:id :C-colony   :name "Colony metabolism"
+   :type :clj-namespace :ref "ants.war"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity :error-response}  ; reserves + termination
+   :timescale :medium}
+
+  ;; World physics — pheromone evaporation, food (no regen)
+  {:id :C-physics  :name "World physics"
+   :type :clj-namespace :ref "ants.war"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :fast}]
+
+ :edges
+ [;; === OBSERVATION-ACTION LOOP ===
+  ;; World → Observe → Perceive → Affect → Policy → Execute → World
+  {:from :I-world     :to :C-observe  :type :xtdb-entity}
+  {:from :C-observe   :to :C-perceive :type :xtdb-entity}
+  {:from :C-perceive  :to :C-affect   :type :xtdb-entity}
+  {:from :C-affect    :to :C-policy   :type :xtdb-entity}
+  {:from :C-policy    :to :C-execute  :type :http-request}
+  {:from :C-execute   :to :I-world    :type :xtdb-entity}  ; loop closes
+
+  ;; === CONSTRAINT INPUTS (slow → fast) ===
+  {:from :I-preferences :to :C-policy  :type :config}  ; preferences → EFE risk term
+  {:from :I-efe-weights :to :C-policy  :type :config}  ; λ weights → EFE balance
+  {:from :I-efe-weights :to :C-affect  :type :config}  ; precision gains → affect
+  {:from :I-patterns    :to :C-pattern :type :config}  ; pattern constraints
+
+  ;; === PATTERN INTEGRATION ===
+  {:from :C-observe  :to :C-pattern :type :xtdb-entity}  ; observations → pattern check
+  {:from :C-pattern  :to :C-policy  :type :xtdb-entity}  ; pattern-efe → policy
+
+  ;; === WORLD PHYSICS ===
+  {:from :C-execute :to :C-physics  :type :xtdb-entity}  ; post-action → evaporation
+  {:from :C-physics :to :I-world    :type :xtdb-entity}  ; physics → world
+
+  ;; === COLONY DYNAMICS ===
+  {:from :C-execute :to :C-colony   :type :xtdb-entity}  ; deposits → reserves
+  {:from :C-colony  :to :I-world    :type :xtdb-entity}  ; reserves → world
+
+  ;; === OUTPUTS ===
+  {:from :C-policy   :to :O-actions     :type :http-request}
+  {:from :C-execute  :to :O-pheromone   :type :xtdb-entity}
+  {:from :C-colony   :to :O-scores      :type :xtdb-entity}
+  {:from :C-policy   :to :O-diagnostics :type :xtdb-entity}
+  {:from :C-colony   :to :O-termination :type :error-response}
+  {:from :C-execute  :to :O-termination :type :error-response}]}
