@@ -1,0 +1,208 @@
+;; Mission diagram: futon3 agent coordination system
+;;
+;; This is a SPECIFICATION — what futon3 should be, not what it currently is.
+;; Compare with futon3-agent-loop.edn (static analysis of what exists).
+;;
+;; Architecture: six mandatory gates for every agent action, analogous
+;; to futon1a's L0-L4 for writes. No gate is optional. Fail fast.
+;;
+;; The recursive property: this diagram specifies a system that enforces
+;; the same method used to construct it (spec → diagram → gates → code).
+;;
+;; Gate ordering (outer to inner, cheap to expensive):
+;;   G5 Task Specification → G4 Agent Authorization → G3 Pattern Reference
+;;   → G2 Execution → G1 Validation → G0 Evidence Durability
+
+{:mission/id :futon3-coordination
+ :mission/state :greenfield
+
+ :ports
+ {:input
+  [;; Incoming work — from human, mission queue, or peer agent
+   {:id :I-task        :name "Task request"         :type :http-request
+    :source "human / mission queue / peer agent"
+    :note "natural language + mission context"
+    :timescale :fast}
+
+   ;; The target environment — codebase, project, running services
+   {:id :I-environment :name "Environment"           :type :xtdb-entity
+    :source "codebase + project state"
+    :note "files, git history, running services, other agents"
+    :timescale :fast}
+
+   ;; Mission specifications — what counts as "done"
+   ;; CONSTRAINT: defines the goal; agents cannot rewrite missions mid-run
+   {:id :I-missions    :name "Mission specs"         :type :config
+    :source "M-*.md / mission-diagram.edn"
+    :note "goals, success criteria, typed I/O, scope boundaries"
+    :timescale :slow
+    :constraint true}
+
+   ;; Pattern library — how to do things well
+   ;; CONSTRAINT: defines the method; agents USE patterns, don't rewrite them
+   {:id :I-patterns    :name "Pattern library"       :type :config
+    :source "library/**/*.flexiarg"
+    :note "~400 patterns, sigils, evidence, maturity phases"
+    :timescale :glacial
+    :constraint true}
+
+   ;; Agent registry — who can do what
+   ;; CONSTRAINT: defines capabilities; agents can't self-promote
+   {:id :I-registry    :name "Agent registry"        :type :config
+    :source "agency/registry"
+    :note "registered agents, capabilities, session state"
+    :timescale :slow
+    :constraint true}]
+
+  :output
+  [;; Artifacts — code, documents, changes produced by agents
+   {:id :O-artifacts   :name "Artifacts"             :type :xtdb-entity
+    :consumer "codebase / human review"
+    :spec-ref "hx.api"
+    :timescale :fast}
+
+   ;; Evidence — PUR/PSR/PAR records documenting pattern use and outcomes
+   {:id :O-evidence    :name "Evidence records"      :type :xtdb-entity
+    :consumer "pattern library / meta-learning"
+    :spec-ref "fulab.pattern-competence"
+    :timescale :medium}
+
+   ;; Proof path — audit trail for every agent action
+   {:id :O-proof-path  :name "Proof path"            :type :proof-path
+    :consumer "audit / diagnostics"
+    :spec-ref "diag.proof-path"
+    :timescale :fast}
+
+   ;; Session events — observable telemetry
+   {:id :O-events      :name "Session events"        :type :xtdb-entity
+    :consumer "monitoring / PARs / forum"
+    :spec-ref "f2.router"
+    :timescale :fast}
+
+   ;; Errors — structured failures from any gate, with layer attribution
+   {:id :O-errors      :name "Errors"                :type :error-response
+    :consumer "human / monitoring / retry logic"
+    :spec-ref "error-hierarchy"
+    :timescale :fast}]}
+
+ :components
+ [;; === GATE 5: TASK SPECIFICATION ===
+  ;; "Is the task well-defined?"
+  ;; Analogous to futon1a L4 (model validation).
+  ;; Rejects: missing mission context, untyped I/O, no success criteria.
+  {:id :G5-spec      :name "G5 Task Specification"
+   :type :clj-namespace :ref "futon3.gate.specification"
+   :accepts #{:http-request :config}      ; task + mission specs
+   :produces #{:http-request :error-response}
+   :timescale :fast}
+
+  ;; === GATE 4: AGENT AUTHORIZATION ===
+  ;; "Is this agent registered, capable, and assigned?"
+  ;; Analogous to futon1a L3 (penholder authorization).
+  ;; Rejects: unregistered agent, capability mismatch, no assignment.
+  {:id :G4-auth      :name "G4 Agent Authorization"
+   :type :clj-namespace :ref "futon3.gate.authorization"
+   :accepts #{:http-request :config}      ; task + agent registry
+   :produces #{:http-request :error-response}
+   :timescale :fast}
+
+  ;; === GATE 3: PATTERN REFERENCE ===
+  ;; "Has a pattern been selected (or gap declared)?"
+  ;; UNIQUE TO FUTON3 — no analogue in futon1a.
+  ;; This is the gate that makes patterns mandatory, not optional.
+  ;; Creates PSR. If no pattern found, declares gap (not silent skip).
+  ;; Rejects: no PSR created, pattern search not attempted.
+  {:id :G3-pattern   :name "G3 Pattern Reference"
+   :type :clj-namespace :ref "futon3.gate.pattern-reference"
+   :accepts #{:http-request :config}      ; task + pattern library
+   :produces #{:http-request :xtdb-entity :error-response}  ; task + PSR
+   :timescale :fast}
+
+  ;; === GATE 2: EXECUTION ===
+  ;; "Do the work."
+  ;; The agent subprocess (Claude/Codex/human). This is the interior —
+  ;; the only component that touches the environment.
+  ;; Must emit events and register artifacts during execution.
+  {:id :G2-execute   :name "G2 Execution (agent)"
+   :type :clj-namespace :ref "futon3.gate.execution"
+   :accepts #{:http-request :xtdb-entity :config}  ; task + PSR + environment
+   :produces #{:xtdb-entity :http-request :error-response}
+   :timescale :fast}
+
+  ;; === GATE 1: VALIDATION ===
+  ;; "Does the output satisfy the pattern's criteria?"
+  ;; Creates PUR. Cross-validates where applicable.
+  ;; Analogous to futon1a L1 (identity — is the result correct?).
+  ;; Rejects: no PUR, criteria not met, validation not attempted.
+  {:id :G1-validate  :name "G1 Validation"
+   :type :clj-namespace :ref "futon3.gate.validation"
+   :accepts #{:xtdb-entity :config}       ; execution output + pattern criteria
+   :produces #{:xtdb-entity :error-response}
+   :timescale :fast}
+
+  ;; === GATE 0: EVIDENCE DURABILITY ===
+  ;; "Is everything persisted and resumable?"
+  ;; Creates PAR. Persists session events. Emits proof path.
+  ;; Analogous to futon1a L0 (durability).
+  ;; Rejects: session not durable, PAR not created.
+  {:id :G0-evidence  :name "G0 Evidence Durability"
+   :type :clj-namespace :ref "futon3.gate.evidence"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity :proof-path :error-response}
+   :timescale :fast}
+
+  ;; === DEFAULT MODE ===
+  ;; What agents do between tasks: check mission queue, process handoffs,
+  ;; generate PARs, signal availability. NOT "wait for user input."
+  ;; Provides I6 compositional closure: if G2 fails, this sustains the system.
+  {:id :C-default-mode :name "Default mode (inter-task)"
+   :type :clj-namespace :ref "futon3.gate.default-mode"
+   :accepts #{:xtdb-entity :config}       ; environment + registry
+   :produces #{:http-request :xtdb-entity}  ; next task or status
+   :timescale :fast}]
+
+ :edges
+ [;; === GATE PIPELINE (sequential, mandatory) ===
+  ;; Task → G5 → G4 → G3 → G2 → G1 → G0
+  {:from :I-task        :to :G5-spec     :type :http-request}
+  {:from :G5-spec       :to :G4-auth     :type :http-request}
+  {:from :G4-auth       :to :G3-pattern  :type :http-request}
+  {:from :G3-pattern    :to :G2-execute  :type :http-request}
+  {:from :G2-execute    :to :G1-validate :type :xtdb-entity}
+  {:from :G1-validate   :to :G0-evidence :type :xtdb-entity}
+
+  ;; === CONSTRAINT INPUTS (slow → fast gates) ===
+  {:from :I-missions    :to :G5-spec     :type :config}   ; missions define what's valid
+  {:from :I-registry    :to :G4-auth     :type :config}   ; registry defines who's authorized
+  {:from :I-patterns    :to :G3-pattern  :type :config}   ; library defines available patterns
+  {:from :I-patterns    :to :G1-validate :type :config}   ; patterns define success criteria
+
+  ;; === EXECUTION ENVIRONMENT ===
+  {:from :I-environment :to :G2-execute  :type :xtdb-entity}  ; agent reads codebase
+  {:from :G2-execute    :to :I-environment :type :xtdb-entity} ; agent writes to codebase
+
+  ;; === PSR FLOWS TO EXECUTION AND VALIDATION ===
+  {:from :G3-pattern    :to :G2-execute  :type :xtdb-entity}  ; PSR guides execution
+  {:from :G3-pattern    :to :G1-validate :type :xtdb-entity}  ; PSR criteria for validation
+
+  ;; === DEFAULT MODE (parallel path, provides I6 closure) ===
+  {:from :I-environment :to :C-default-mode :type :xtdb-entity}  ; observe state
+  {:from :I-registry    :to :C-default-mode :type :config}       ; check what's available
+  {:from :C-default-mode :to :I-task        :type :http-request}  ; generate next task
+  {:from :C-default-mode :to :O-events      :type :xtdb-entity}  ; emit status events
+
+  ;; === OUTPUTS ===
+  {:from :G2-execute   :to :O-artifacts  :type :xtdb-entity}   ; produced code/docs
+  {:from :G2-execute   :to :O-events     :type :xtdb-entity}   ; execution telemetry
+  {:from :G1-validate  :to :O-evidence   :type :xtdb-entity}   ; PUR records
+  {:from :G0-evidence  :to :O-evidence   :type :xtdb-entity}   ; PAR records
+  {:from :G0-evidence  :to :O-proof-path :type :proof-path}    ; audit trail
+  {:from :G0-evidence  :to :O-events     :type :xtdb-entity}   ; session persistence events
+
+  ;; === ERROR PROPAGATION (all gates can reject) ===
+  {:from :G5-spec      :to :O-errors     :type :error-response}
+  {:from :G4-auth      :to :O-errors     :type :error-response}
+  {:from :G3-pattern   :to :O-errors     :type :error-response}
+  {:from :G2-execute   :to :O-errors     :type :error-response}
+  {:from :G1-validate  :to :O-errors     :type :error-response}
+  {:from :G0-evidence  :to :O-errors     :type :error-response}]}

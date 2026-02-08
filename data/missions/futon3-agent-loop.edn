@@ -1,0 +1,164 @@
+;; Static analysis of the futon3 agent coordination system as a wiring diagram.
+;;
+;; This is NOT a mission spec — it's a structural model of the existing
+;; system, validated against the Chapter 0 invariants (I1-I6).
+;;
+;; The agent AIF loop: sense → pattern-match → deliberate → act → environment
+;; with mission specs and pattern library as slow/glacial constraints.
+;;
+;; Structural analogy to futon2 ants:
+;;   ants       → agents (Claude/Codex subprocesses)
+;;   pheromone  → patterns (flexiarg library, sigils, PSR/PUR)
+;;   world      → environment (codebase, mission queue, other agents)
+;;   preferences → mission specs (what counts as "done")
+
+{:mission/id :futon3-agent-loop
+ :mission/state :complete     ; futon3 is built and running
+
+ :ports
+ {:input
+  [;; Human instructions — the primary driver of agent behavior
+   {:id :I-user-prompt   :name "User prompt"          :type :http-request
+    :source "human (CLI, Emacs, IRC)" :note "natural language instructions"
+    :timescale :fast}
+
+   ;; The target environment — code, files, project state
+   {:id :I-environment   :name "Environment"           :type :xtdb-entity
+    :source "codebase + project state" :note "files, git, running services"
+    :timescale :fast}
+
+   ;; Mission specifications — what the system should accomplish
+   {:id :I-mission-specs :name "Mission specs"         :type :config
+    :source "holes/missions/M-*.md" :note "goals, success criteria, scope"
+    :timescale :slow
+    :constraint true}
+
+   ;; Pattern library — how to accomplish things well
+   {:id :I-pattern-lib   :name "Pattern library"       :type :config
+    :source "library/**/*.flexiarg" :note "~400 patterns, sigils, evidence"
+    :timescale :glacial
+    :constraint true}]
+
+  :output
+  [;; Artifacts — code, documents, changes produced by agents
+   {:id :O-artifacts     :name "Artifacts"             :type :xtdb-entity
+    :consumer "codebase / human review" :spec-ref "hx.api"
+    :timescale :fast}
+
+   ;; Evidence — PUR/PSR/PAR records documenting pattern use
+   {:id :O-evidence      :name "Evidence records"      :type :xtdb-entity
+    :consumer "pattern library / meta-learning" :spec-ref "fulab.pattern-competence"
+    :timescale :medium}
+
+   ;; Session events — telemetry of what agents did
+   {:id :O-events        :name "Session events"        :type :xtdb-entity
+    :consumer "monitoring / PARs" :spec-ref "f2.router"
+    :timescale :fast}
+
+   ;; Forum threads — multi-agent discussion and coordination
+   {:id :O-forum         :name "Forum threads"         :type :xtdb-entity
+    :consumer "other agents / human" :spec-ref "forum"
+    :timescale :fast}
+
+   ;; Error/termination — session failures, agent crashes
+   {:id :O-errors        :name "Errors"                :type :error-response
+    :consumer "human / monitoring" :spec-ref "agency"
+    :timescale :fast}]}
+
+ :components
+ [;; CLI bridge — transduces human input into agent requests
+  {:id :C-drawbridge :name "Drawbridge (CLI bridge)"
+   :type :clj-namespace :ref "futon3.drawbridge"
+   :accepts #{:http-request}
+   :produces #{:http-request :error-response}
+   :timescale :fast}
+
+  ;; Agent registry — session management, lifecycle, routing
+  {:id :C-agency     :name "Agency (registry + routing)"
+   :type :clj-namespace :ref "futon3.agency.registry"
+   :accepts #{:http-request :xtdb-entity}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :fast}
+
+  ;; Agent invocation — the LLM subprocess (Claude/Codex)
+  ;; This is the "internal states + policy" in AIF terms
+  {:id :C-invoke     :name "Agent invoke (LLM subprocess)"
+   :type :clj-namespace :ref "futon3.agency.invokes"
+   :accepts #{:xtdb-entity :http-request :config}
+   :produces #{:xtdb-entity :http-request :error-response}
+   :timescale :fast}
+
+  ;; Pattern search — find relevant patterns for the task
+  ;; Analogous to "perceive" in AIF: matching observations to known structures
+  {:id :C-pattern-search :name "Pattern search (sigil match + triage)"
+   :type :clj-namespace :ref "futon3.pattern-hints"
+   :accepts #{:xtdb-entity :config}       ; query + library
+   :produces #{:xtdb-entity}              ; recommendation or gap
+   :timescale :fast}
+
+  ;; MUSN transport — session event bus, protocol dispatch
+  {:id :C-musn       :name "MUSN (transport + events)"
+   :type :clj-namespace :ref "f2.router"
+   :accepts #{:http-request :xtdb-entity}
+   :produces #{:xtdb-entity :http-request}
+   :timescale :fast}
+
+  ;; Forum — multi-agent communication
+  {:id :C-forum      :name "Forum (agent collaboration)"
+   :type :clj-namespace :ref "futon3.forum"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :fast}
+
+  ;; HX — hypertext exchange (artifacts, anchors, links)
+  {:id :C-hx         :name "HX (hypertext exchange)"
+   :type :clj-namespace :ref "futon3.hx.api"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :fast}
+
+  ;; FuLab — session control, pattern competence, PUR/PSR/PAR
+  {:id :C-fulab      :name "FuLab (session + competence)"
+   :type :clj-namespace :ref "futon3.fulab.pattern-competence"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :medium}]
+
+ :edges
+ [;; === MAIN AGENT LOOP ===
+  ;; User → Drawbridge → Agency → Invoke → (produce output) → Environment
+  {:from :I-user-prompt  :to :C-drawbridge     :type :http-request}
+  {:from :C-drawbridge   :to :C-agency         :type :http-request}
+  {:from :C-agency       :to :C-invoke         :type :xtdb-entity}  ; agent record + session
+  {:from :I-environment  :to :C-invoke         :type :xtdb-entity}  ; codebase context
+  {:from :C-invoke       :to :I-environment    :type :xtdb-entity}  ; agent writes to codebase
+
+  ;; === PATTERN INTEGRATION (analogous to ants' C-pattern) ===
+  {:from :I-pattern-lib    :to :C-pattern-search :type :config}     ; library → search
+  {:from :C-invoke         :to :C-pattern-search :type :xtdb-entity} ; agent queries patterns
+  {:from :C-pattern-search :to :C-invoke         :type :xtdb-entity} ; recommendation → agent
+
+  ;; === CONSTRAINT INPUTS (slow → fast) ===
+  {:from :I-mission-specs :to :C-invoke        :type :config}  ; missions constrain agent behavior
+
+  ;; === TRANSPORT & EVENTS ===
+  {:from :C-invoke  :to :C-musn   :type :xtdb-entity}  ; agent emits session events
+  {:from :C-musn    :to :C-forum  :type :xtdb-entity}  ; events relayed to forum
+  {:from :C-forum   :to :C-invoke :type :xtdb-entity}  ; messages from other agents
+
+  ;; === ARTIFACT & EVIDENCE TRACKING ===
+  {:from :C-invoke  :to :C-hx    :type :xtdb-entity}   ; agent registers artifacts
+  {:from :C-invoke  :to :C-fulab :type :xtdb-entity}   ; clock-in/out, pattern use
+  {:from :C-fulab   :to :C-hx    :type :xtdb-entity}   ; PUR/PSR → HX artifacts
+
+  ;; === OUTPUTS ===
+  {:from :C-invoke  :to :O-artifacts :type :xtdb-entity}  ; code/docs produced
+  {:from :C-hx      :to :O-artifacts :type :xtdb-entity}  ; registered artifacts
+  {:from :C-fulab   :to :O-evidence  :type :xtdb-entity}  ; PUR/PSR/PAR records
+  {:from :C-musn    :to :O-events    :type :xtdb-entity}  ; session telemetry
+  {:from :C-forum   :to :O-forum     :type :xtdb-entity}  ; discussion threads
+
+  ;; === ERROR PROPAGATION ===
+  {:from :C-drawbridge :to :O-errors :type :error-response}
+  {:from :C-agency     :to :O-errors :type :error-response}
+  {:from :C-invoke     :to :O-errors :type :error-response}]}
