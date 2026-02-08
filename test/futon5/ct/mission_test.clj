@@ -175,6 +175,118 @@
       (is (some #{:O-nospec} (:unspecified-outputs result))))))
 
 ;;; ============================================================
+;;; Invariant I3: Timescale Ordering
+;;; ============================================================
+
+(deftest test-timescale-ordering-passes
+  (testing "futon1a has no fast→constraint violations"
+    (let [annotated-spec
+          (-> futon1a-diagram-spec
+              (assoc-in [:ports :input 0 :timescale] :medium)    ; futon1-data
+              (assoc-in [:ports :input 1 :timescale] :fast)      ; write-request
+              (assoc-in [:ports :input 2 :timescale] :fast)      ; ingest-batch
+              (assoc-in [:ports :input 3 :timescale] :slow)      ; model-descriptor
+              (assoc-in [:ports :input 3 :constraint] true))     ; ← preference
+          diagram (mission/mission-diagram annotated-spec)
+          result (mission/validate-timescale-ordering diagram)]
+      (is (:valid result)
+          (str "violations: " (:violations result))))))
+
+(deftest test-timescale-detects-fast-writing-constraint
+  (testing "detects fast component writing to slow constraint"
+    (let [bad-spec
+          {:mission/id :bad-timescale
+           :ports {:input  [{:id :I-req :name "request" :type :http-request
+                             :timescale :fast}
+                            {:id :I-pref :name "preferences" :type :edn-document
+                             :timescale :glacial :constraint true}]
+                   :output [{:id :O-out :name "output" :type :http-endpoint
+                             :spec-ref "1" :timescale :fast}]}
+           :components [{:id :C-proc :name "Processor" :timescale :fast
+                         :accepts #{:http-request} :produces #{:http-endpoint}}
+                        {:id :C-hack :name "Preference Hacker" :timescale :fast
+                         :accepts #{:http-endpoint} :produces #{:edn-document}}]
+           :edges [{:from :I-req  :to :C-proc :type :http-request}
+                   {:from :C-proc :to :O-out  :type :http-endpoint}
+                   ;; This is the violation: fast component → glacial constraint
+                   {:from :C-hack :to :I-pref :type :edn-document}
+                   {:from :I-req  :to :C-hack :type :http-request}]}
+          diagram (mission/mission-diagram bad-spec)
+          result (mission/validate-timescale-ordering diagram)]
+      (is (not (:valid result))
+          "fast→constraint should be flagged")
+      (is (= 1 (count (:violations result)))))))
+
+;;; ============================================================
+;;; Invariant I4: Exogeneity
+;;; ============================================================
+
+(deftest test-exogeneity-passes
+  (testing "futon1a has no output→constraint paths"
+    (let [annotated-spec
+          (-> futon1a-diagram-spec
+              (assoc-in [:ports :input 3 :constraint] true))     ; model-descriptor
+          diagram (mission/mission-diagram annotated-spec)
+          result (mission/validate-exogeneity diagram)]
+      (is (:valid result)
+          (str "vulnerable paths: " (:vulnerable-paths result))))))
+
+(deftest test-exogeneity-detects-wireheading
+  (testing "detects output→constraint path (wireheading)"
+    (let [bad-spec
+          {:mission/id :wireheaded
+           :ports {:input  [{:id :I-req  :name "request" :type :http-request}
+                            {:id :I-pref :name "prefs"   :type :edn-document
+                             :constraint true}]
+                   :output [{:id :O-out  :name "output"  :type :http-endpoint
+                             :spec-ref "1"}]}
+           :components [{:id :C-proc :name "Processor"
+                         :accepts #{:http-request :edn-document}
+                         :produces #{:http-endpoint}}]
+           :edges [{:from :I-req  :to :C-proc :type :http-request}
+                   {:from :I-pref :to :C-proc :type :edn-document}
+                   {:from :C-proc :to :O-out  :type :http-endpoint}
+                   ;; Wireheading: output feeds back to constraint
+                   {:from :O-out  :to :I-pref :type :edn-document}]}
+          diagram (mission/mission-diagram bad-spec)
+          result (mission/validate-exogeneity diagram)]
+      (is (not (:valid result))
+          "output→constraint path should be flagged")
+      (is (some #(= :O-out (:output %)) (:vulnerable-paths result))))))
+
+;;; ============================================================
+;;; Invariant I6: Compositional Closure
+;;; ============================================================
+
+(deftest test-closure-passes
+  (testing "futon1a has no single point of failure"
+    (let [result (mission/validate-closure futon1a-diagram)]
+      (is (:valid result)
+          (str "SPOFs: " (:single-points-of-failure result))))))
+
+(deftest test-closure-detects-spof
+  (testing "detects single point of failure"
+    (let [;; Everything goes through one bottleneck
+          bad-spec
+          {:mission/id :bottleneck
+           :ports {:input  [{:id :I-a :name "A" :type :http-request}
+                            {:id :I-b :name "B" :type :http-request}]
+                   :output [{:id :O-x :name "X" :type :http-endpoint :spec-ref "1"}
+                            {:id :O-y :name "Y" :type :http-endpoint :spec-ref "2"}]}
+           :components [{:id :C-funnel :name "Bottleneck"
+                         :accepts #{:http-request} :produces #{:http-endpoint}}]
+           :edges [{:from :I-a :to :C-funnel :type :http-request}
+                   {:from :I-b :to :C-funnel :type :http-request}
+                   {:from :C-funnel :to :O-x :type :http-endpoint}
+                   {:from :C-funnel :to :O-y :type :http-endpoint}]}
+          diagram (mission/mission-diagram bad-spec)
+          result (mission/validate-closure diagram)]
+      (is (not (:valid result))
+          "single bottleneck should be flagged as SPOF")
+      (is (some #(= :C-funnel (:component %))
+                (:single-points-of-failure result))))))
+
+;;; ============================================================
 ;;; Validate All
 ;;; ============================================================
 

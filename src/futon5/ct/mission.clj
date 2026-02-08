@@ -6,12 +6,19 @@
    - Morphisms = components (internal transformations)
    - Composition = connecting outputs of mission A to inputs of mission B
 
-   Validates:
+   Validates (structural):
    - Completeness: every output port reachable from some input
    - Coverage: every component reaches at least one output (no dead components)
    - Type safety: wire types match at connection points
    - No orphan inputs: every input connects to something
-   - Composition: mission A → mission B requires matching port types
+   - Spec coverage: every output has a spec-ref
+
+   Validates (invariant — from Chapter 0 meta-theory):
+   - I3 Timescale ordering: slow constrains fast, never fast→slow
+   - I4 Exogeneity: no path from outputs to constraint inputs
+   - I6 Compositional closure: no single-point-of-failure components
+
+   Composition: mission A → mission B requires matching port types
 
    EDN format:
    {:mission/id :futon1a-rebuild
@@ -65,6 +72,25 @@
       (get type-coercions [from-type to-type] false)))
 
 ;;; ============================================================
+;;; Timescales (Invariant I3)
+;;; ============================================================
+
+(def timescale-order
+  "Ordered timescales from fastest to slowest.
+   Index = speed rank. Higher rank = slower."
+  [:fast :medium :slow :glacial])
+
+(def timescale-rank
+  "Map timescale keyword to numeric rank for comparison."
+  (into {} (map-indexed (fn [i ts] [ts i]) timescale-order)))
+
+(defn timescale-<=
+  "Is timescale a the same speed or faster than timescale b?"
+  [a b]
+  (<= (get timescale-rank a 0)
+      (get timescale-rank b 0)))
+
+;;; ============================================================
 ;;; Mission Diagram Construction
 ;;; ============================================================
 
@@ -88,9 +114,9 @@
                      :comp-ids   comp-ids
                      :all-ids    all-ids
                      :node-map   (into {} (concat
-                                           (map (fn [p] [(:id p) (assoc p :role :input)]) (:input ports))
-                                           (map (fn [p] [(:id p) (assoc p :role :output)]) (:output ports))
-                                           (map (fn [c] [(:id c) (assoc c :role :component)]) components)))}}))
+                                           (map (fn [p] [(:id p) (merge p {:role :input})]) (:input ports))
+                                           (map (fn [p] [(:id p) (merge p {:role :output})]) (:output ports))
+                                           (map (fn [c] [(:id c) (merge c {:role :component})]) components)))}}))
 
 ;;; ============================================================
 ;;; Graph Traversal
@@ -276,18 +302,131 @@
      :unspecified-outputs (vec (map :id unspecified))}))
 
 ;;; ============================================================
+;;; Invariant I3: Timescale Ordering
+;;; ============================================================
+
+(defn validate-timescale-ordering
+  "Invariant I3: timescale separation.
+
+   For edges where both endpoints declare :timescale:
+   - Normal data edges: any direction is fine (fast→medium→slow is
+     normal data flow, e.g., request → storage)
+   - Edges TO a :constraint node: source must be same-or-slower
+     than target. Fast dynamics must not write to constraint nodes.
+
+   Returns {:valid bool :violations [...]}"
+  [diagram]
+  (let [node-map (get-in diagram [:index :node-map])
+        violations (atom [])]
+    (doseq [edge (:edges diagram)]
+      (let [from-node (get node-map (:from edge))
+            to-node   (get node-map (:to edge))
+            from-ts   (:timescale from-node)
+            to-ts     (:timescale to-node)]
+        ;; Only flag: fast node writing to a constraint node
+        (when (and from-ts to-ts
+                   (timescale-rank from-ts) (timescale-rank to-ts)
+                   (:constraint to-node)
+                   (< (get timescale-rank from-ts 0)
+                      (get timescale-rank to-ts 0)))
+          (swap! violations conj
+                 {:edge edge
+                  :from-timescale from-ts
+                  :to-timescale to-ts
+                  :message (str (:from edge) " (" (name from-ts) ") writing to constraint "
+                                (:to edge) " (" (name to-ts) ")"
+                                " — fast dynamics must not write to slow constraints")}))))
+    {:valid (empty? @violations)
+     :check :timescale-ordering
+     :violations @violations}))
+
+;;; ============================================================
+;;; Invariant I4: Preference Exogeneity
+;;; ============================================================
+
+(defn validate-exogeneity
+  "Invariant I4: no directed path from any output port to any input
+   port marked :role :constraint. If such a path exists, the system's
+   fast dynamics can influence its own constraints — wireheading.
+
+   Input ports with :constraint true are 'preferences' that must only
+   be writable from outside the diagram (exogenous).
+
+   Returns {:valid bool :vulnerable-paths [...]}"
+  [diagram]
+  (let [node-map    (get-in diagram [:index :node-map])
+        output-ids  (get-in diagram [:index :output-ids])
+        constraint-ids (set (keep (fn [[id node]]
+                                    (when (:constraint node) id))
+                                  node-map))
+        ;; Build reverse adjacency to find what can reach constraint nodes
+        rev-adj (build-reverse-adjacency (:edges diagram))
+        ;; Find everything that can reach any constraint node
+        reaches-constraint (reachable-backwards rev-adj constraint-ids)
+        ;; Any output port that can reach a constraint is a vulnerability
+        vulnerable (filter reaches-constraint output-ids)]
+    {:valid (empty? vulnerable)
+     :check :exogeneity
+     :vulnerable-paths (vec (map (fn [out-id]
+                                   {:output out-id
+                                    :message (str out-id " has a path to constraint input(s) "
+                                                  (vec (filter constraint-ids
+                                                               (reachable-from
+                                                                 (build-adjacency (:edges diagram))
+                                                                 #{out-id}))))})
+                                 vulnerable))}))
+
+;;; ============================================================
+;;; Invariant I6: Compositional Closure (Single Point of Failure)
+;;; ============================================================
+
+(defn validate-closure
+  "Invariant I6: no single component failure should make ALL outputs
+   unreachable. If removing one component disconnects every output
+   from every input, that component is a single point of failure and
+   the diagram lacks compositional closure.
+
+   Returns {:valid bool :single-points-of-failure [...]}"
+  [diagram]
+  (let [{:keys [input-ids output-ids comp-ids]} (:index diagram)
+        edges (:edges diagram)
+        spofs (atom [])]
+    (doseq [comp-id comp-ids]
+      ;; Remove this component and all its edges
+      (let [edges-without (filterv (fn [e]
+                                     (and (not= (:from e) comp-id)
+                                          (not= (:to e) comp-id)))
+                                   edges)
+            adj (build-adjacency edges-without)
+            reachable (reachable-from adj input-ids)
+            reachable-outputs (filter reachable output-ids)]
+        (when (empty? reachable-outputs)
+          (swap! spofs conj
+                 {:component comp-id
+                  :message (str "Removing " comp-id
+                                " disconnects ALL outputs from inputs")}))))
+    {:valid (empty? @spofs)
+     :check :compositional-closure
+     :single-points-of-failure @spofs}))
+
+;;; ============================================================
 ;;; Validate All
 ;;; ============================================================
 
 (defn validate
   "Run all validations on a mission diagram.
+   Structural checks (completeness, coverage, orphans, types, spec)
+   plus invariant checks (I3 timescale, I4 exogeneity, I6 closure).
    Returns {:all-valid bool :checks [...]}"
   [diagram]
   (let [checks [(validate-completeness diagram)
                 (validate-coverage diagram)
                 (validate-no-orphan-inputs diagram)
                 (validate-type-safety diagram)
-                (validate-spec-coverage diagram)]]
+                (validate-spec-coverage diagram)
+                (validate-timescale-ordering diagram)
+                (validate-exogeneity diagram)
+                (validate-closure diagram)]]
     {:all-valid (every? :valid checks)
      :checks checks
      :mission/id (:mission/id diagram)}))
