@@ -1,7 +1,7 @@
 ;; Mission diagram: futon3 agent coordination system
 ;;
-;; This is a SPECIFICATION — what futon3 should be, not what it currently is.
-;; Compare with futon3-agent-loop.edn (static analysis of what exists).
+;; Level 0 concrete diagram — the gate pipeline as implemented in futon3b.
+;; Component :ref values match actual Clojure namespaces in futon3b/src/.
 ;;
 ;; Architecture: six mandatory gates for every agent action, analogous
 ;; to futon1a's L0-L4 for writes. No gate is optional. Fail fast.
@@ -14,7 +14,7 @@
 ;;   → G2 Execution → G1 Validation → G0 Evidence Durability
 
 {:mission/id :futon3-coordination
- :mission/state :greenfield
+ :mission/state :active
 
  :ports
  {:input
@@ -91,7 +91,7 @@
   ;; Analogous to futon1a L4 (model validation).
   ;; Rejects: missing mission context, untyped I/O, no success criteria.
   {:id :G5-spec      :name "G5 Task Specification"
-   :type :clj-namespace :ref "futon3.gate.specification"
+   :type :clj-namespace :ref "futon3.gate.task"
    :accepts #{:http-request :config}      ; task + mission specs
    :produces #{:http-request :error-response}
    :timescale :fast}
@@ -101,7 +101,7 @@
   ;; Analogous to futon1a L3 (penholder authorization).
   ;; Rejects: unregistered agent, capability mismatch, no assignment.
   {:id :G4-auth      :name "G4 Agent Authorization"
-   :type :clj-namespace :ref "futon3.gate.authorization"
+   :type :clj-namespace :ref "futon3.gate.auth"
    :accepts #{:http-request :config}      ; task + agent registry
    :produces #{:http-request :error-response}
    :timescale :fast}
@@ -113,7 +113,7 @@
   ;; Creates PSR. If no pattern found, declares gap (not silent skip).
   ;; Rejects: no PSR created, pattern search not attempted.
   {:id :G3-pattern   :name "G3 Pattern Reference"
-   :type :clj-namespace :ref "futon3.gate.pattern-reference"
+   :type :clj-namespace :ref "futon3.gate.pattern"
    :accepts #{:http-request :config}      ; task + pattern library
    :produces #{:http-request :xtdb-entity :error-response}  ; task + PSR
    :timescale :fast}
@@ -124,7 +124,7 @@
   ;; the only component that touches the environment.
   ;; Must emit events and register artifacts during execution.
   {:id :G2-execute   :name "G2 Execution (agent)"
-   :type :clj-namespace :ref "futon3.gate.execution"
+   :type :clj-namespace :ref "futon3.gate.exec"
    :accepts #{:http-request :xtdb-entity :config}  ; task + PSR + environment
    :produces #{:xtdb-entity :http-request :error-response}
    :timescale :fast}
@@ -135,7 +135,7 @@
   ;; Analogous to futon1a L1 (identity — is the result correct?).
   ;; Rejects: no PUR, criteria not met, validation not attempted.
   {:id :G1-validate  :name "G1 Validation"
-   :type :clj-namespace :ref "futon3.gate.validation"
+   :type :clj-namespace :ref "futon3.gate.validate"
    :accepts #{:xtdb-entity :config}       ; execution output + pattern criteria
    :produces #{:xtdb-entity :error-response}
    :timescale :fast}
@@ -156,7 +156,7 @@
   ;; generate PARs, signal availability. NOT "wait for user input."
   ;; Provides I6 compositional closure: if G2 fails, this sustains the system.
   {:id :C-default-mode :name "Default mode (inter-task)"
-   :type :clj-namespace :ref "futon3.gate.default-mode"
+   :type :clj-namespace :ref "futon3.gate.default"
    :accepts #{:xtdb-entity :config}       ; environment + registry
    :produces #{:http-request :xtdb-entity}  ; next task or status
    :timescale :fast}]
