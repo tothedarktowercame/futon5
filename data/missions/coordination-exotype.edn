@@ -1,78 +1,330 @@
-{:diagram/id :coordination-exotype
- :version 1
+;; Abstract coordination diagram — the exotype.
+;;
+;; This is NOT a mission spec. It is the abstract wiring diagram that
+;; specifies what any coordination system must look like to be coherent.
+;; A concrete mission (futon3-coordination.edn) is valid iff it projects
+;; onto this diagram — mapping its components to these roles while
+;; preserving structure, types, and invariants.
+;;
+;; 玄之又玄，眾妙之門
+;;
+;; The diagram encodes two nested AIF loops:
+;;   Level 0 (fast):    Task execution through the gate pipeline
+;;   Level 1 (glacial): Library evolution through canonicalization
+;;
+;; Both loops share the same boundary (the gate pipeline) and the same
+;; constraint inputs. The six Chapter 0 invariants (I1-I6) are structural
+;; properties of this diagram, checkable by ct/mission.clj.
+;;
+;; STRUCTURAL FINDING TO WATCH:
+;; L1-canonicalize writes to I-patterns (a constraint input). This is
+;; the glacial loop closing — library evolution modifying the constraints
+;; that govern task execution. The I3 check allows this (glacial → glacial).
+;; The I4 check (exogeneity) should flag it or not depending on whether
+;; an output port can reach I-patterns through the Level 1 path. If it
+;; does, that's the honest structural tension: library evolution IS the
+;; legitimate channel for outputs to influence constraints, but only at
+;; glacial timescale. Fast dynamics must never reach this path.
 
- ;; Profiles let us validate Prototype 0 (Level 0 only) vs the full two-loop
- ;; coordination system (Level 0 + Level 1).
- :profiles {:prototype0 {:required-levels #{:L0}}
-            :complete {:required-levels #{:L0 :L1}}}
+{:mission/id :coordination-exotype
+ :mission/state :active
 
- :nodes
- {:I-request {:kind :input :type :http-request :timescale :fast :constraint? false}
-  :I-environment {:kind :input :type :xtdb-entity :timescale :fast :constraint? false}
-  :I-missions {:kind :input :type :config :timescale :slow :constraint? true}
-  :I-patterns {:kind :input :type :config :timescale :glacial :constraint? true}
-  :I-registry {:kind :input :type :config :timescale :slow :constraint? true}
-  :I-tensions {:kind :input :type :xtdb-entity :timescale :glacial :constraint? false}
+ :ports
+ {:input
+  [;; === LEVEL 0 INPUTS (fast loop) ===
 
-  :G5 {:kind :gate :gate/id :g5 :timescale :fast}
-  :G4 {:kind :gate :gate/id :g4 :timescale :fast}
-  :G3 {:kind :gate :gate/id :g3 :timescale :fast}
-  :G2 {:kind :gate :gate/id :g2 :timescale :fast}
-  :G1 {:kind :gate :gate/id :g1 :timescale :fast}
-  :G0 {:kind :gate :gate/id :g0 :timescale :fast}
+   ;; Raw work request — the thing to be coordinated
+   {:id :I-request     :name "Work request"
+    :type :http-request
+    :source "human / mission queue / peer agent"
+    :timescale :fast}
 
-  :C-default {:kind :control :timescale :fast}
+   ;; Environment — what agents observe and act upon
+   ;; NOT a constraint: the world is mutable, like I-world in ants
+   {:id :I-environment :name "Environment"
+    :type :xtdb-entity
+    :source "codebase / project state / running services"
+    :timescale :fast}
 
-  :L1-observe {:kind :l1 :timescale :glacial}
-  :L1-canon {:kind :l1 :timescale :glacial}
+   ;; === CONSTRAINT INPUTS (slow/glacial) ===
+   ;; These define what-to-maintain. I4 requires: no fast-timescale
+   ;; internal path from outputs back to these.
 
-  :O-artifacts {:kind :output :type :xtdb-entity :timescale :fast}
-  :O-evidence {:kind :output :type :xtdb-entity :timescale :fast}
-  :O-proof-path {:kind :output :type :proof-path :timescale :fast}
-  :O-events {:kind :output :type :xtdb-entity :timescale :fast}
-  :O-errors {:kind :output :type :error-response :timescale :fast}
-  :O-canonizations {:kind :output :type :xtdb-entity :timescale :glacial}}
+   ;; Mission specs — what counts as success
+   {:id :I-missions    :name "Mission specifications"
+    :type :config
+    :source "mission specs / devmap"
+    :timescale :slow
+    :constraint true}
+
+   ;; Pattern library — how to do things well
+   ;; DUAL ROLE: constraint for Level 0, environment for Level 1.
+   ;; L1-canonicalize writes here (glacial → glacial, allowed by I3).
+   {:id :I-patterns    :name "Pattern library"
+    :type :config
+    :source "library/**/*.flexiarg"
+    :timescale :glacial
+    :constraint true}
+
+   ;; Agent registry — who can do what
+   {:id :I-registry    :name "Agent registry"
+    :type :config
+    :source "agent registry / capability declarations"
+    :timescale :slow
+    :constraint true}
+
+   ;; === LEVEL 1 INPUT (glacial loop) ===
+
+   ;; Structural tensions — accumulated across many task executions.
+   ;; This is the observation vector for library evolution:
+   ;; 1. Structural irritation (recurring gap-PSRs)
+   ;; 2. Pre-symbolic pressure (tasks hard to scope/match/validate)
+   ;; 3. Trans-situational reappearance (same fix in different contexts)
+   {:id :I-tensions    :name "Structural tensions"
+    :type :xtdb-entity
+    :source "accumulated gap-PSRs / PARs / cross-repo evidence"
+    :timescale :glacial}]
+
+  :output
+  [;; === LEVEL 0 OUTPUTS ===
+
+   ;; Artifacts — what the coordinated work produced
+   {:id :O-artifacts      :name "Artifacts"
+    :type :xtdb-entity
+    :consumer "codebase / review"
+    :spec-ref "coordination/artifact-registration"
+    :timescale :fast}
+
+   ;; Evidence — PSR/PUR/PAR records documenting pattern use
+   {:id :O-evidence       :name "Evidence records"
+    :type :xtdb-entity
+    :consumer "pattern library / meta-learning"
+    :spec-ref "coordination/par-as-obligation"
+    :timescale :medium}
+
+   ;; Proof path — audit trail: when you cross the gate, there is
+   ;; still a path to replay
+   {:id :O-proof-path     :name "Proof path"
+    :type :proof-path
+    :consumer "audit / replay / reconstruction"
+    :spec-ref "coordination/session-durability-check"
+    :timescale :fast}
+
+   ;; Events — observable telemetry
+   {:id :O-events         :name "Session events"
+    :type :xtdb-entity
+    :consumer "monitoring / diagnostics / forum"
+    :spec-ref "futon-theory/event-protocol"
+    :timescale :fast}
+
+   ;; Errors — structured gate rejections with layer attribution
+   {:id :O-errors         :name "Errors"
+    :type :error-response
+    :consumer "human / retry / monitoring"
+    :spec-ref "futon-theory/error-hierarchy"
+    :timescale :fast}
+
+   ;; === LEVEL 1 OUTPUT ===
+
+   ;; Canonization events — library evolution actions
+   {:id :O-canonizations  :name "Canonization events"
+    :type :xtdb-entity
+    :consumer "pattern library / genealogy graph"
+    :spec-ref "futon-theory/retroactive-canonicalization"
+    :timescale :glacial}]}
+
+ :components
+ [;; ================================================================
+  ;; LEVEL 0: THE GATE PIPELINE
+  ;; Six mandatory gates in sequence. Each is a BHK arrow.
+  ;; The pipeline IS the boundary (I1).
+  ;; ================================================================
+
+  ;; G5: Task Specification — is the task well-defined?
+  ;; Arrow: (raw-request) → (validated-task)
+  {:id :G5           :name "G5 Task Specification"
+   :type :abstract-role
+   :ref "coordination/task-shape-validation"
+   :accepts #{:http-request :config}
+   :produces #{:http-request :error-response}
+   :timescale :fast}
+
+  ;; G4: Agent Authorization — is the agent capable and assigned?
+  ;; Arrow: (validated-task) → (authorized-task)
+  {:id :G4           :name "G4 Agent Authorization"
+   :type :abstract-role
+   :ref "coordination/capability-gate"
+   :accepts #{:http-request :config}
+   :produces #{:http-request :error-response}
+   :timescale :fast}
+
+  ;; G3: Pattern Reference — has a pattern been selected?
+  ;; Arrow: (authorized-task) → (pattern-guided-task + PSR)
+  ;; UNIQUE TO COORDINATION: no analogue in futon1a.
+  {:id :G3           :name "G3 Pattern Reference"
+   :type :abstract-role
+   :ref "coordination/mandatory-psr"
+   :accepts #{:http-request :config}
+   :produces #{:http-request :xtdb-entity :error-response}
+   :timescale :fast}
+
+  ;; G2: Execution — do the work.
+  ;; Arrow: (pattern-guided-task) → (executed-task + artifacts)
+  ;; The ONLY component that touches the environment (I2).
+  {:id :G2           :name "G2 Execution"
+   :type :abstract-role
+   :ref "coordination/bounded-execution"
+   :accepts #{:http-request :xtdb-entity :config}
+   :produces #{:xtdb-entity :http-request :error-response}
+   :timescale :fast}
+
+  ;; G1: Validation — does the output satisfy criteria?
+  ;; Arrow: (executed-task) → (validated-output + PUR)
+  {:id :G1           :name "G1 Validation"
+   :type :abstract-role
+   :ref "coordination/mandatory-pur"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :fast}
+
+  ;; G0: Evidence Durability — is everything persisted and replayable?
+  ;; Arrow: (validated-output) → (durable-evidence + PAR + proof-path)
+  {:id :G0           :name "G0 Evidence Durability"
+   :type :abstract-role
+   :ref "coordination/session-durability-check"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity :proof-path :error-response}
+   :timescale :fast}
+
+  ;; ================================================================
+  ;; DEFAULT MODE (I6 compositional closure)
+  ;; Parallel path from observation to action. Pre-deliberative.
+  ;; If the gate pipeline fails, this sustains the system.
+  ;; ================================================================
+
+  {:id :C-default    :name "Default mode (inter-task)"
+   :type :abstract-role
+   :ref "chapter0/default-mode-network"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:http-request :xtdb-entity}
+   :timescale :fast}
+
+  ;; ================================================================
+  ;; LEVEL 1: LIBRARY EVOLUTION (glacial loop)
+  ;; The Baldwin cycle: observe tensions → canonicalize → update library
+  ;; ================================================================
+
+  ;; Tension observer — perceive structural tensions from accumulated
+  ;; evidence. Observation vector: irritation, pressure, reappearance.
+  {:id :L1-observe   :name "Tension observer"
+   :type :abstract-role
+   :ref "futon-theory/structural-tension-as-observation"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :glacial}
+
+  ;; Canonicalizer — the Baldwin cycle action:
+  ;; NAMING → SELECTION → CANALIZATION
+  ;; Reads current library + observed tensions, produces canonization
+  ;; events and writes to the library (glacial → glacial).
+  {:id :L1-canon     :name "Canonicalizer (Baldwin cycle)"
+   :type :abstract-role
+   :ref "futon-theory/retroactive-canonicalization"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:xtdb-entity :config}
+   :timescale :glacial}]
 
  :edges
- [{:id :e-ir-g5 :from :I-request :to :G5 :level :L0}
-  {:id :e-im-g5 :from :I-missions :to :G5 :level :L0}
-  {:id :e-g5-g4 :from :G5 :to :G4 :level :L0}
+ [;; ================================================================
+  ;; LEVEL 0: GATE PIPELINE (sequential, mandatory)
+  ;; BHK arrow composition: G0 ∘ G1 ∘ G2 ∘ G3 ∘ G4 ∘ G5
+  ;; ================================================================
 
-  {:id :e-irg-g4 :from :I-registry :to :G4 :level :L0}
-  {:id :e-g4-g3 :from :G4 :to :G3 :level :L0}
+  {:from :I-request     :to :G5        :type :http-request}
+  {:from :G5            :to :G4        :type :http-request}
+  {:from :G4            :to :G3        :type :http-request}
+  {:from :G3            :to :G2        :type :http-request}
+  {:from :G2            :to :G1        :type :xtdb-entity}
+  {:from :G1            :to :G0        :type :xtdb-entity}
 
-  {:id :e-ip-g3 :from :I-patterns :to :G3 :level :L0}
-  {:id :e-g3-g2 :from :G3 :to :G2 :level :L0}
+  ;; ================================================================
+  ;; CONSTRAINT INPUTS (slow/glacial → fast gates)
+  ;; I3: slow constrains fast. I4: no fast→constraint path.
+  ;; ================================================================
 
-  {:id :e-ie-g2 :from :I-environment :to :G2 :level :L0}
-  {:id :e-g2-ie :from :G2 :to :I-environment :level :L0} ;; only G2 mutates environment
-  {:id :e-g2-g1 :from :G2 :to :G1 :level :L0}
+  {:from :I-missions    :to :G5        :type :config}
+  {:from :I-registry    :to :G4        :type :config}
+  {:from :I-patterns    :to :G3        :type :config}
+  {:from :I-patterns    :to :G1        :type :config}
 
-  {:id :e-ip-g1 :from :I-patterns :to :G1 :level :L0}
-  {:id :e-g1-g0 :from :G1 :to :G0 :level :L0}
+  ;; ================================================================
+  ;; ENVIRONMENT (I2: observation-action asymmetry)
+  ;; G2 is the ONLY component that reads and writes the environment.
+  ;; ================================================================
 
-  {:id :e-g2-oa :from :G2 :to :O-artifacts :level :L0}
-  {:id :e-g0-oe :from :G0 :to :O-evidence :level :L0}
-  {:id :e-g0-op :from :G0 :to :O-proof-path :level :L0}
-  {:id :e-g0-ov :from :G0 :to :O-events :level :L0}
+  {:from :I-environment :to :G2        :type :xtdb-entity}   ; observation
+  {:from :G2            :to :I-environment :type :xtdb-entity} ; action
 
-  {:id :e-g5-oer :from :G5 :to :O-errors :level :L0}
-  {:id :e-g4-oer :from :G4 :to :O-errors :level :L0}
-  {:id :e-g3-oer :from :G3 :to :O-errors :level :L0}
-  {:id :e-g2-oer :from :G2 :to :O-errors :level :L0}
-  {:id :e-g1-oer :from :G1 :to :O-errors :level :L0}
-  {:id :e-g0-oer :from :G0 :to :O-errors :level :L0}
+  ;; ================================================================
+  ;; PSR FLOW (pattern guides execution and validation)
+  ;; ================================================================
 
-  ;; Default-mode network (Level 0, but separate from the gate pipeline)
-  {:id :e-ie-cd :from :I-environment :to :C-default :level :L0}
-  {:id :e-irg-cd :from :I-registry :to :C-default :level :L0}
-  {:id :e-cd-ir :from :C-default :to :I-request :level :L0}
-  {:id :e-cd-ov :from :C-default :to :O-events :level :L0}
+  {:from :G3            :to :G2        :type :xtdb-entity}   ; PSR → execution
+  {:from :G3            :to :G1        :type :xtdb-entity}   ; PSR → validation
 
-  ;; Level 1: library evolution (glacial loop)
-  {:id :e-it-l1o :from :I-tensions :to :L1-observe :level :L1}
-  {:id :e-l1o-l1c :from :L1-observe :to :L1-canon :level :L1}
-  {:id :e-ip-l1c :from :I-patterns :to :L1-canon :level :L1}
-  {:id :e-l1c-ip :from :L1-canon :to :I-patterns :level :L1}
-  {:id :e-l1c-oc :from :L1-canon :to :O-canonizations :level :L1}]}
+  ;; ================================================================
+  ;; DEFAULT MODE (I6: compositional closure)
+  ;; Parallel path: observation → baseline action.
+  ;; Does NOT receive preferences (pre-deliberative).
+  ;; ================================================================
 
+  {:from :I-environment :to :C-default :type :xtdb-entity}
+  {:from :I-registry    :to :C-default :type :config}
+  {:from :C-default     :to :I-request :type :http-request}  ; generate next task
+  {:from :C-default     :to :O-events  :type :xtdb-entity}   ; status telemetry
+
+  ;; ================================================================
+  ;; LEVEL 0 OUTPUTS
+  ;; ================================================================
+
+  {:from :G2            :to :O-artifacts  :type :xtdb-entity}
+  {:from :G2            :to :O-events     :type :xtdb-entity}
+  {:from :G1            :to :O-evidence   :type :xtdb-entity}
+  {:from :G0            :to :O-evidence   :type :xtdb-entity}
+  {:from :G0            :to :O-proof-path :type :proof-path}
+  {:from :G0            :to :O-events     :type :xtdb-entity}
+
+  ;; ================================================================
+  ;; ERROR PROPAGATION (all gates can reject)
+  ;; ================================================================
+
+  {:from :G5            :to :O-errors     :type :error-response}
+  {:from :G4            :to :O-errors     :type :error-response}
+  {:from :G3            :to :O-errors     :type :error-response}
+  {:from :G2            :to :O-errors     :type :error-response}
+  {:from :G1            :to :O-errors     :type :error-response}
+  {:from :G0            :to :O-errors     :type :error-response}
+
+  ;; ================================================================
+  ;; LEVEL 1: LIBRARY EVOLUTION (glacial loop)
+  ;; ================================================================
+
+  ;; Tension observer reads accumulated tensions
+  {:from :I-tensions    :to :L1-observe   :type :xtdb-entity}
+
+  ;; Observer → canonicalizer
+  {:from :L1-observe    :to :L1-canon     :type :xtdb-entity}
+
+  ;; Canonicalizer reads current library state
+  {:from :I-patterns    :to :L1-canon     :type :config}
+
+  ;; Canonicalizer produces canonization events (output)
+  {:from :L1-canon      :to :O-canonizations :type :xtdb-entity}
+
+  ;; THE GLACIAL LOOP CLOSES: canonicalization updates the library.
+  ;; This is analogous to C-execute → I-world in the ant diagram.
+  ;; I-patterns is both a constraint (for Level 0) and the environment
+  ;; (for Level 1). I3 allows this: glacial → glacial.
+  ;; I4 should NOT flag this (no output port reaches I-patterns),
+  ;; but the structural dual role of I-patterns is worth noting.
+  {:from :L1-canon      :to :I-patterns   :type :config}]}
