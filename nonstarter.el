@@ -9,6 +9,7 @@
 (require 'url)
 (require 'subr-x)
 (require 'seq)
+(require 'wid-edit)
 
 (defcustom nonstarter-base-url "http://127.0.0.1:7778"
   "Base URL for the Nonstarter server."
@@ -122,6 +123,12 @@
   nil
   "Default weekly bids to apply."
   :type '(alist :key-type string :value-type number)
+  :group 'nonstarter)
+
+(defcustom nonstarter-bid-wizard-mode 'fast
+  "Default detail level for the personal bid wizard."
+  :type '(choice (const :tag "Fast (category totals)" fast)
+                 (const :tag "Detailed (deliverables/subitems)" detailed))
   :group 'nonstarter)
 
 ;;; ---------------------------------------------------------------------------
@@ -819,6 +826,22 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                         'face (or face 'nonstarter-mana-estimate-face))
             ")")))
 
+(defun nonstarter--format-estimate-note-per-week (value &optional face)
+  (when (numberp value)
+    (concat " (estimate "
+            (propertize (format "%s/w" (nonstarter--format-estimate value))
+                        'face (or face 'nonstarter-mana-estimate-face))
+            ")")))
+
+(defun nonstarter--scale-estimates-per-week (estimates epoch-weeks)
+  (when (and (listp estimates) (numberp epoch-weeks) (> epoch-weeks 0))
+    (let ((out nil))
+      (dolist (pair estimates)
+        (let ((value (nonstarter--parse-number (cdr pair))))
+          (when (numberp value)
+            (push (cons (car pair) (/ (float value) epoch-weeks)) out))))
+      (nreverse out))))
+
 (defun nonstarter--read-hours (prompt &optional default allow-blank)
   (let* ((prompt (if (numberp default)
                      (format "%s[%s] " prompt (nonstarter--format-hours default))
@@ -978,6 +1001,7 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
     (define-key map (kbd "g") #'nonstarter-dashboard)
     (define-key map (kbd "b") #'nonstarter-personal-bid)
     (define-key map (kbd "B") #'nonstarter-personal-bid-form)
+    (define-key map (kbd "W") #'nonstarter-personal-bid-wizard)
     (define-key map (kbd "c") #'nonstarter-personal-clear)
     (define-key map (kbd "v") #'nonstarter-personal-verdict)
     (define-key map (kbd "e") #'nonstarter-personal-epoch-create)
@@ -1451,7 +1475,7 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                  (hours (nonstarter--read-hours (concat label " hours: ")
                                                 current nil)))
             (when (numberp hours)
-              (puthash cat hours totals)))))))
+              (puthash cat hours totals))))))
     (let ((summary
            (mapconcat
             (lambda (cat)
@@ -1470,8 +1494,518 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                                     (hours . ,hours)
                                     (week-id . ,(unless (null week-id) week-id))))))
          totals)
-        (nonstarter-dashboard))))
+        (nonstarter-dashboard)))))
 
+(defun nonstarter--bid-wizard-categories (bids)
+  (let ((ordered '())
+        (used (make-hash-table :test 'equal)))
+    (dolist (group nonstarter-category-groups)
+      (dolist (cat (cdr group))
+        (puthash cat t used)
+        (push cat ordered)))
+    (dolist (entry nonstarter-category-descriptions)
+      (let ((cat (car entry)))
+        (unless (gethash cat used)
+          (push cat ordered))))
+    (append (nreverse ordered)
+            (seq-filter (lambda (k)
+                          (and (stringp k) (not (member k ordered))))
+                        (mapcar (lambda (pair) (format "%s" (car pair)))
+                                (or bids '()))))))
+
+(defun nonstarter--bid-wizard-read (label current &optional allow-blank)
+  (nonstarter--read-hours (concat label " hours: ") current allow-blank))
+
+(defun nonstarter--bid-wizard-summary (totals week-id)
+  (let* ((cats (sort (hash-table-keys totals) #'string<))
+         (rows (mapcar (lambda (cat)
+                         (let ((hours (gethash cat totals)))
+                           (format "- %s: %.1f" cat (or hours 0.0))))
+                       cats))
+         (total (seq-reduce #'+
+                            (mapcar (lambda (cat) (or (gethash cat totals) 0.0)) cats)
+                            0.0))
+         (remaining (- 168.0 total))
+         (header (format "Week: %s\nTotal: %.1f (remaining %.1f)\n\n"
+                         (or week-id "?") total remaining)))
+    (concat header (string-join rows "\n") "\n")))
+
+
+(defvar nonstarter-bid-wizard-buffer "*Nonstarter Bid Wizard*"
+  "Buffer name for the bid wizard.")
+
+(defvar-local nonstarter--bid-wizard-fields nil)
+(defvar-local nonstarter--bid-wizard-week-widget nil)
+(defvar-local nonstarter--bid-wizard-prompt-week nil)
+(defvar-local nonstarter--bid-wizard-mode nil)
+(defvar-local nonstarter--bid-wizard-category-overlays nil)
+(defvar-local nonstarter--bid-wizard-group-overlays nil)
+(defvar-local nonstarter--bid-wizard-discretionary-overlay nil)
+
+(defvar nonstarter-bid-wizard-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map widget-keymap)
+    (define-key map (kbd "q") #'nonstarter-bid-wizard-quit)
+    map)
+  "Keymap for the bid wizard buffer.")
+
+(defcustom nonstarter-bid-wizard-discretionary 100.0
+  "Discretionary mana budget used by the bid wizard summary."
+  :type 'number
+  :group 'nonstarter)
+
+(define-derived-mode nonstarter-bid-wizard-mode special-mode "Bid-Wizard"
+  "Major mode for the bid wizard buffer."
+  (setq truncate-lines t)
+  (read-only-mode -1)
+  (setq-local buffer-read-only nil))
+
+(defun nonstarter-bid-wizard-quit ()
+  "Quit the bid wizard buffer."
+  (interactive)
+  (quit-window t))
+
+(defun nonstarter--bid-wizard-add-field (category label &optional value kind)
+  (let* ((val (if (numberp value) (nonstarter--format-hours value) (or value "")))
+         (widget (widget-create 'editable-field :size 6 :format "%v" :value val)))
+    (push (list :category category :widget widget :kind kind :label label)
+          nonstarter--bid-wizard-fields)
+    widget))
+
+(defun nonstarter--bid-wizard-field-value (widget)
+  (let* ((raw (widget-value widget))
+         (text (string-trim (or raw ""))))
+    (unless (nonstarter--blank-p text)
+      (nonstarter--parse-number text))))
+
+(defun nonstarter--bid-wizard-enable-editing ()
+  (read-only-mode -1)
+  (setq-local buffer-read-only nil))
+
+(defun nonstarter--bid-wizard-register-category-overlay (category &optional estimate pos)
+  (let* ((pos (or pos (point)))
+         (ov (make-overlay pos pos)))
+    (overlay-put ov 'category category)
+    (overlay-put ov 'estimate estimate)
+    (overlay-put ov 'after-string "")
+    (puthash category ov nonstarter--bid-wizard-category-overlays)))
+
+(defun nonstarter--bid-wizard-register-group-overlay (group &optional estimate pos)
+  (let* ((pos (or pos (point)))
+         (ov (make-overlay pos pos)))
+    (overlay-put ov 'group group)
+    (overlay-put ov 'estimate estimate)
+    (overlay-put ov 'after-string "")
+    (puthash group ov nonstarter--bid-wizard-group-overlays)))
+
+(defun nonstarter--bid-wizard-update-sums (&rest _ignore)
+  (when (eq major-mode 'nonstarter-bid-wizard-mode)
+    (let ((totals (make-hash-table :test 'equal)))
+      (dolist (field nonstarter--bid-wizard-fields)
+        (let* ((cat (plist-get field :category))
+               (widget (plist-get field :widget))
+               (kind (plist-get field :kind))
+               (value (nonstarter--bid-wizard-field-value widget)))
+          (when (numberp value)
+            (if (eq kind 'category)
+                (puthash cat value totals)
+              (nonstarter--add-total totals cat value)))))
+      (maphash
+       (lambda (cat ov)
+         (let* ((sum (gethash cat totals))
+                (weight (nonstarter--hold-weight cat))
+                (burn (when (and (numberp weight) (numberp sum))
+                        (* (float sum) weight)))
+                (estimate (overlay-get ov 'estimate))
+                (sum-text (propertize (format "  Σ %.1f" (or sum 0.0))
+                                      'face 'nonstarter-mana-flow-face))
+                (surplus (when (and (numberp estimate) (numberp sum))
+                           (- (float estimate) sum)))
+                (surplus-text (when (numberp surplus)
+                                (propertize (format "  surplus %.1f" surplus)
+                                            'face 'nonstarter-mana-face)))
+                (burn-text (when (numberp burn)
+                             (propertize (format "  burn %.1f" burn)
+                                         'face 'nonstarter-mana-face)))
+                (text (if surplus-text
+                          (concat sum-text surplus-text)
+                        sum-text))
+                (text (if burn-text
+                          (concat text burn-text)
+                        text)))
+           (overlay-put ov 'after-string text)))
+       nonstarter--bid-wizard-category-overlays)
+      (when nonstarter--bid-wizard-discretionary-overlay
+        (let ((excluded (make-hash-table :test 'equal))
+              (used 0.0)
+              (bids '()))
+          (dolist (entry nonstarter-biocompatibility-hold)
+            (puthash (format "%s" (car entry)) t excluded))
+          (dolist (cat '("sleep" "maintenance" "slack"))
+            (puthash cat t excluded))
+          (maphash (lambda (cat val)
+                     (when (numberp val)
+                       (push (cons (format "%s" cat) val) bids)
+                       (when (not (gethash (format "%s" cat) excluded))
+                         (setq used (+ used val)))))
+                   totals)
+          (setq bids (nreverse bids))
+          (let* ((hold (nonstarter--hold-from-bids bids))
+                 (burn (nonstarter--hold-total hold))
+                 (remaining (- (float nonstarter-bid-wizard-discretionary)
+                               (or burn 0.0)
+                               used))
+                 (burn-parts (mapcar (lambda (entry)
+                                       (format "%s %.1f" (car entry) (cdr entry)))
+                                     hold))
+                 (burn-note (if burn-parts
+                                (format " [%s]" (string-join burn-parts ", "))
+                              ""))
+                 (text (format "Discretionary mana: %.1f remaining (of %.1f, burn %.1f%s)"
+                               remaining
+                               (float nonstarter-bid-wizard-discretionary)
+                               (or burn 0.0)
+                               burn-note)))
+            (overlay-put nonstarter--bid-wizard-discretionary-overlay
+                         'after-string
+                         (propertize text 'face 'nonstarter-mana-face)))))
+      (dolist (group nonstarter-category-groups)
+        (let* ((key (car group))
+               (members (cdr group))
+               (sum 0.0)
+               (any nil)
+               (ov (gethash key nonstarter--bid-wizard-group-overlays)))
+          (dolist (cat members)
+            (let ((val (gethash cat totals)))
+              (when (numberp val)
+                (setq any t)
+                (setq sum (+ sum val)))))
+          (when ov
+            (let* ((estimate (overlay-get ov 'estimate))
+                   (sum-text (propertize (format "  Σ %.1f" (if any sum 0.0))
+                                         'face 'nonstarter-mana-flow-face))
+                   (surplus (when (and any (numberp estimate))
+                              (- (float estimate) sum)))
+                   (surplus-text (when (numberp surplus)
+                                   (propertize (format "  surplus %.1f" surplus)
+                                               'face 'nonstarter-mana-face)))
+                   (text (if surplus-text
+                             (concat sum-text surplus-text)
+                           sum-text)))
+              (overlay-put ov 'after-string text))))))))
+
+(defun nonstarter--bid-wizard-submit (&rest _ignore)
+  (let* ((week-id (widget-value nonstarter--bid-wizard-week-widget))
+         (week-id (unless (nonstarter--blank-p week-id) week-id))
+         (totals (make-hash-table :test 'equal)))
+    (dolist (field nonstarter--bid-wizard-fields)
+      (let* ((cat (plist-get field :category))
+             (widget (plist-get field :widget))
+             (kind (plist-get field :kind))
+             (value (nonstarter--bid-wizard-field-value widget)))
+        (when (numberp value)
+          (if (eq kind 'category)
+              (puthash cat value totals)
+            (nonstarter--add-total totals cat value)))))
+    (nonstarter--show-text "Bid wizard summary"
+                           (nonstarter--bid-wizard-summary totals
+                                                           (or week-id
+                                                               nonstarter--bid-wizard-prompt-week)))
+    (when (y-or-n-p "Submit these bids? ")
+      (maphash
+       (lambda (cat hours)
+         (when (numberp hours)
+           (nonstarter--request "POST" "/api/personal/bid"
+                                `((category . ,cat)
+                                  (hours . ,hours)
+                                  (week-id . ,(unless (null week-id) week-id))))))
+       totals)
+      (nonstarter-dashboard)
+      (nonstarter-bid-wizard-quit))))
+
+(defun nonstarter--bid-wizard-insert-category (cat desc items subitems bids
+                                                   category-estimates subitem-estimates
+                                                   deliverable-estimates mode estimate-note-fn)
+  (let* ((has-leaves (and (eq mode 'detailed)
+                          (or (and items (> (length items) 0))
+                              (and subitems (> (length subitems) 0)))))
+         (current (nonstarter--parse-number
+                   (alist-get cat bids nil nil #'string=)))
+         (estimate-value (and category-estimates (gethash cat category-estimates)))
+         (estimate-note (funcall estimate-note-fn
+                                 estimate-value
+                                 'nonstarter-mana-flow-face)))
+    (widget-insert (format "  - %s%s%s"
+                           cat
+                           (if (and desc (not (string= desc "")))
+                               (format ": %s" desc)
+                             "")
+                           (or estimate-note "")))
+    (if has-leaves
+        (widget-insert "
+")
+      (widget-insert "  ")
+      (nonstarter--bid-wizard-add-field cat desc current 'category)
+      (widget-insert "
+"))
+    (let ((line-end (save-excursion
+                      (forward-line -1)
+                      (end-of-line)
+                      (point))))
+      (nonstarter--bid-wizard-register-category-overlay cat estimate-value line-end))
+    (when (and (eq mode 'detailed) subitems (> (length subitems) 0))
+      (dolist (sub subitems)
+        (let* ((label (if (consp sub) (car sub) sub))
+               (desc* (if (consp sub) (cdr sub) nil))
+               (estimate (and subitem-estimates
+                              (gethash (cons cat label) subitem-estimates)))
+               (estimate-note (funcall estimate-note-fn
+                                       estimate
+                                       'nonstarter-mana-flow-face)))
+          (widget-insert (format "    - %s%s%s"
+                                 label
+                                 (if (and desc* (not (string= desc* "")))
+                                     (format ": %s" desc*)
+                                   "")
+                                 (or estimate-note "")))
+          (widget-insert "  ")
+          (nonstarter--bid-wizard-add-field cat label nil 'subitem)
+          (widget-insert "
+"))))
+    (when (and (eq mode 'detailed) items (> (length items) 0))
+      (dolist (item items)
+        (let* ((estimate (and deliverable-estimates
+                              (gethash (nonstarter--deliverable-key item)
+                                       deliverable-estimates)))
+               (line (string-trim-right
+                      (nonstarter--format-deliverable-line item nil "    " nil estimate))))
+          (widget-insert line)
+          (widget-insert "  ")
+          (nonstarter--bid-wizard-add-field cat (alist-get 'title item) nil 'deliverable)
+          (widget-insert "
+"))))))
+
+(defun nonstarter--bid-wizard-render (week-id mode)
+  (nonstarter--maybe-start-personal-server)
+  (let* ((week-id (unless (nonstarter--blank-p week-id) week-id))
+         (status (nonstarter--request "GET" "/api/personal/status"))
+         (week (nonstarter--request "GET"
+                                    (if week-id
+                                        (concat "/api/personal/week?week-id=" week-id)
+                                      "/api/personal/week")))
+         (epoch (nonstarter--request "GET" "/api/personal/epoch"))
+         (epoch-weeks (let ((w (alist-get 'weeks epoch)))
+                        (when (numberp w) w)))
+         (scaled-estimates (nonstarter--scale-estimates-per-week
+                            nonstarter-quadrant-mana-estimates
+                            epoch-weeks))
+         (wizard-estimates (or scaled-estimates nonstarter-quadrant-mana-estimates))
+         (estimate-note-fn (if scaled-estimates
+                               #'nonstarter--format-estimate-note-per-week
+                             #'nonstarter--format-estimate-note))
+         (dash (nonstarter--request "GET" "/api/personal/dashboard"))
+         (deliverables-by-category
+          (nonstarter--deliverables-by-category (alist-get 'outstanding dash)))
+         (leaf-estimates (let ((nonstarter-quadrant-mana-estimates wizard-estimates))
+                           (nonstarter--compute-leaf-estimates deliverables-by-category)))
+         (category-estimates (plist-get leaf-estimates :category))
+         (subitem-estimates (plist-get leaf-estimates :subitem))
+         (deliverable-estimates (plist-get leaf-estimates :deliverable))
+         (bids (alist-get 'bids week))
+         (prompt-week (or week-id (alist-get 'week-id status)))
+         (buf (get-buffer-create nonstarter-bid-wizard-buffer)))
+    (with-current-buffer buf
+      (nonstarter-bid-wizard-mode)
+      (setq nonstarter--bid-wizard-fields nil
+            nonstarter--bid-wizard-week-widget nil
+            nonstarter--bid-wizard-prompt-week prompt-week
+            nonstarter--bid-wizard-mode mode
+            nonstarter--bid-wizard-category-overlays (make-hash-table :test 'equal)
+            nonstarter--bid-wizard-group-overlays (make-hash-table :test 'equal))
+      (let ((inhibit-read-only t))
+        (remove-overlays (point-min) (point-max))
+        (setq widget-field-list nil)
+        (erase-buffer)
+        (widget-insert "Nonstarter Bid Wizard
+")
+        (let ((ov (make-overlay (point) (point))))
+          (overlay-put ov 'after-string "")
+          (setq nonstarter--bid-wizard-discretionary-overlay ov))
+        (widget-insert "\n")
+        (widget-insert "Fill in hours; blank means skip. Detailed mode sums subitems/deliverables.
+
+")
+        (widget-insert (format "Mode: %s
+" (symbol-name mode)))
+        (widget-insert "Week ID: ")
+        (setq nonstarter--bid-wizard-week-widget
+              (widget-create 'editable-field
+                             :size 12
+                             :format "%v"
+                             :value (or prompt-week "")))
+        (widget-insert "
+
+Categories
+")
+        (let ((used (make-hash-table :test 'equal))
+              (others '()))
+          (dolist (group nonstarter-category-groups)
+            (let* ((key (car group))
+                   (members (cdr group))
+                   (desc (cdr (assoc key nonstarter-category-descriptions))))
+              (puthash key t used)
+              (let* ((estimate (cdr (assoc key wizard-estimates)))
+                     (estimate-note (funcall estimate-note-fn estimate)))
+                (widget-insert (format "%s%s%s
+"
+                                       (upcase key)
+                                       (if desc (format ": %s" desc) "")
+                                       (or estimate-note "")))
+                (let ((line-end (save-excursion
+                                  (forward-line -1)
+                                  (end-of-line)
+                                  (point))))
+                  (nonstarter--bid-wizard-register-group-overlay key estimate line-end)))
+              (dolist (cat members)
+                (puthash cat t used)
+                (let ((cdesc (cdr (assoc cat nonstarter-category-descriptions)))
+                      (items (gethash cat deliverables-by-category))
+                      (subitems (cdr (assoc cat nonstarter-category-subitems))))
+                  (nonstarter--bid-wizard-insert-category
+                   cat cdesc items subitems bids
+                   category-estimates subitem-estimates deliverable-estimates mode estimate-note-fn)))))
+          (dolist (entry nonstarter-category-descriptions)
+            (unless (gethash (car entry) used)
+              (push entry others)))
+          (setq others (nreverse others))
+          (when others
+            (widget-insert "Other
+")
+            (dolist (entry others)
+              (let ((cat (car entry))
+                    (desc (cdr entry))
+                    (items (gethash (car entry) deliverables-by-category))
+                    (subitems (cdr (assoc (car entry) nonstarter-category-subitems))))
+                (nonstarter--bid-wizard-insert-category
+                 cat desc items subitems bids
+                 category-estimates subitem-estimates deliverable-estimates mode estimate-note-fn)))))
+        (widget-insert "
+")
+        (widget-create 'push-button :notify #'nonstarter--bid-wizard-submit "Submit bids")
+        (widget-insert "  ")
+        (widget-create 'push-button :notify (lambda (&rest _ignore)
+                                              (nonstarter-bid-wizard-quit))
+                       "Cancel")
+        (widget-insert "
+")
+        (widget-setup)
+        (nonstarter--bid-wizard-enable-editing)
+        (remove-hook 'after-change-functions #'nonstarter--bid-wizard-update-sums t)
+        (add-hook 'after-change-functions #'nonstarter--bid-wizard-update-sums nil t)
+        (nonstarter--bid-wizard-update-sums)
+        (goto-char (point-min))))
+    (display-buffer buf)))
+
+(defun nonstarter-personal-bid-wizard (&optional week-id mode)
+  "Open the bid wizard in a buffer."
+  (interactive
+   (list nil
+         (if current-prefix-arg
+             (intern (completing-read "Wizard mode: "
+                                      '("fast" "detailed")
+                                      nil t nil nil
+                                      (symbol-name nonstarter-bid-wizard-mode)))
+           nonstarter-bid-wizard-mode)))
+  (nonstarter--bid-wizard-render week-id (or mode nonstarter-bid-wizard-mode)))
+
+(defun nonstarter-personal-bid-wizard-minibuffer (&optional week-id mode)
+  "Guided weekly bid wizard in the minibuffer."
+  (interactive
+   (list (read-string "Week ID (YYYY-MM-DD, optional): " nil nil "")
+         (intern (completing-read "Wizard mode: "
+                                  '("fast" "detailed")
+                                  nil t nil nil
+                                  (symbol-name nonstarter-bid-wizard-mode)))))
+  (nonstarter--maybe-start-personal-server)
+  (let* ((week-id (unless (string= week-id "") week-id))
+         (status (nonstarter--request "GET" "/api/personal/status"))
+         (week (nonstarter--request "GET"
+                                    (if week-id
+                                        (concat "/api/personal/week?week-id=" week-id)
+                                      "/api/personal/week")))
+         (dash (nonstarter--request "GET" "/api/personal/dashboard"))
+         (deliverables-by-category
+          (nonstarter--deliverables-by-category (alist-get 'outstanding dash)))
+         (bids (alist-get 'bids week))
+         (totals (make-hash-table :test 'equal))
+         (used (make-hash-table :test 'equal))
+         (prompt-week (or week-id (alist-get 'week-id status)))
+         (mode (or mode nonstarter-bid-wizard-mode)))
+    (dolist (group nonstarter-category-groups)
+      (let* ((group-key (car group))
+             (members (cdr group)))
+        (dolist (cat members)
+          (puthash cat t used)
+          (let* ((desc (cdr (assoc cat nonstarter-category-descriptions)))
+                 (items (gethash cat deliverables-by-category))
+                 (subitems (cdr (assoc cat nonstarter-category-subitems)))
+                 (base-label (format "%s / %s%s"
+                                     (upcase group-key)
+                                     cat
+                                     (if desc (format " (%s)" desc) ""))))
+            (cond
+             ((and (eq mode 'detailed) items (> (length items) 0))
+              (dolist (item items)
+                (let* ((title (alist-get 'title item))
+                       (due (alist-get 'due item))
+                       (leaf-label (format "%s / %s%s"
+                                           base-label
+                                           title
+                                           (if due (format " (due %s)" due) "")))
+                       (hours (nonstarter--bid-wizard-read leaf-label nil t)))
+                  (when (numberp hours)
+                    (nonstarter--add-total totals cat hours)))))
+             ((and (eq mode 'detailed) subitems (> (length subitems) 0))
+              (dolist (sub subitems)
+                (let* ((label (if (consp sub) (car sub) sub))
+                       (desc* (if (consp sub) (cdr sub) nil))
+                       (leaf-label (format "%s / %s%s"
+                                           base-label
+                                           label
+                                           (if desc* (format " (%s)" desc*) "")))
+                       (hours (nonstarter--bid-wizard-read leaf-label nil t)))
+                  (when (numberp hours)
+                    (nonstarter--add-total totals cat hours)))))
+             (t
+              (let* ((current (nonstarter--parse-number
+                               (alist-get cat bids nil nil #'string=)))
+                     (hours (nonstarter--bid-wizard-read base-label current nil)))
+                (when (numberp hours)
+                  (puthash cat hours totals)))))))))
+    (dolist (entry nonstarter-category-descriptions)
+      (let ((cat (car entry)))
+        (unless (gethash cat used)
+          (let* ((desc (cdr entry))
+                 (current (nonstarter--parse-number
+                           (alist-get cat bids nil nil #'string=)))
+                 (label (format "Other / %s%s"
+                                cat
+                                (if desc (format " (%s)" desc) "")))
+                 (hours (nonstarter--bid-wizard-read label current nil)))
+            (when (numberp hours)
+              (puthash cat hours totals))))))
+    (nonstarter--show-text "Bid wizard summary"
+                           (nonstarter--bid-wizard-summary totals prompt-week))
+    (when (y-or-n-p "Submit these bids? ")
+      (maphash
+       (lambda (cat hours)
+         (when (numberp hours)
+           (nonstarter--request "POST" "/api/personal/bid"
+                                `((category . ,cat)
+                                  (hours . ,hours)
+                                  (week-id . ,(unless (null week-id) week-id))))))
+       totals)
+      (nonstarter-dashboard))))
 (defun nonstarter-personal-clear (category hours &optional week-id)
   "Record a personal clear."
   (interactive
