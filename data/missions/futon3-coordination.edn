@@ -1,6 +1,6 @@
 ;; Mission diagram: futon3 agent coordination system
 ;;
-;; Level 0 concrete diagram — the gate pipeline as implemented in futon3b.
+;; Two-level concrete diagram — the gate pipeline as implemented in futon3b.
 ;; Component :ref values match actual Clojure namespaces in futon3b/src/.
 ;;
 ;; Architecture: six mandatory gates for every agent action, analogous
@@ -52,7 +52,12 @@
     :source "agency/registry"
     :note "registered agents, capabilities, session state"
     :timescale :slow
-    :constraint true}]
+    :constraint true}
+
+   ;; Accumulated structural tensions — Level 1 observation vector
+   {:id :I-tensions    :name "Structural tensions"    :type :xtdb-entity
+    :source "accumulated gap-PSRs / PARs"
+    :timescale :glacial}]
 
   :output
   [;; Artifacts — code, documents, changes produced by agents
@@ -83,7 +88,13 @@
    {:id :O-errors      :name "Errors"                :type :error-response
     :consumer "human / monitoring / retry logic"
     :spec-ref "error-hierarchy"
-    :timescale :fast}]}
+    :timescale :fast}
+
+   ;; Canonization events — library evolution actions from Level 1
+   {:id :O-canonizations :name "Canonization events"  :type :xtdb-entity
+    :consumer "pattern library / genealogy graph"
+    :spec-ref "futon-theory/retroactive-canonicalization"
+    :timescale :glacial}]}
 
  :components
  [;; === GATE 5: TASK SPECIFICATION ===
@@ -159,7 +170,23 @@
    :type :clj-namespace :ref "futon3.gate.default"
    :accepts #{:xtdb-entity :config}       ; environment + registry
    :produces #{:http-request :xtdb-entity}  ; next task or status
-   :timescale :fast}]
+   :timescale :fast}
+
+  ;; === LEVEL 1: LIBRARY EVOLUTION (glacial loop) ===
+  ;; L1-observe watches accumulated evidence for structural tensions.
+  ;; L1-canon turns observed tensions into library patterns (Baldwin cycle).
+
+  {:id :L1-observe    :name "Tension observer"
+   :type :clj-namespace :ref "futon3.gate.observe"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :glacial}
+
+  {:id :L1-canon      :name "Canonicalizer (Baldwin cycle)"
+   :type :clj-namespace :ref "futon3.gate.canon"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:xtdb-entity :config}
+   :timescale :glacial}]
 
  :edges
  [;; === GATE PIPELINE (sequential, mandatory) ===
@@ -205,4 +232,11 @@
   {:from :G3-pattern   :to :O-errors     :type :error-response}
   {:from :G2-execute   :to :O-errors     :type :error-response}
   {:from :G1-validate  :to :O-errors     :type :error-response}
-  {:from :G0-evidence  :to :O-errors     :type :error-response}]}
+  {:from :G0-evidence  :to :O-errors     :type :error-response}
+
+  ;; === LEVEL 1: LIBRARY EVOLUTION (glacial loop) ===
+  {:from :I-tensions   :to :L1-observe       :type :xtdb-entity}
+  {:from :L1-observe   :to :L1-canon         :type :xtdb-entity}
+  {:from :I-patterns   :to :L1-canon         :type :config}
+  {:from :L1-canon     :to :O-canonizations  :type :xtdb-entity}
+  {:from :L1-canon     :to :I-patterns       :type :config}]}
