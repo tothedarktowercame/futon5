@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
-            [futon5.cyber-mmca.core :as core]))
+            [futon5.cyber-mmca.core :as core]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -127,10 +128,11 @@
       opts)))
 
 (defn- rows->csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join "\n" (map #(str/join "," %) rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn- ensure-resources! []
   (when-not (io/resource "futon5/sigils.edn")

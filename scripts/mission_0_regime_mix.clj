@@ -8,7 +8,8 @@
             [futon5.mmca.filament :as filament]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.register-shift :as register-shift]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -159,7 +160,7 @@
                                       (str rfil)
                                       (str vote-count)])))
                    entries)]
-    (spit path (str header "\n" (str/join "\n" lines) "\n"))))
+    (out/spit-text! path (str header "\n" (str/join "\n" lines) "\n"))))
 
 (defn -main [& args]
   (let [{:keys [help unknown regimes runs seed length generations out-dir log scores inputs]} (parse-args args)]
@@ -179,6 +180,8 @@
             scores (or scores (format "/tmp/mission-0-regime-mix-%d-scores.csv" ts))
             inputs (or inputs (format "/tmp/mission-0-regime-mix-%d-inputs.txt" ts))
             rng (java.util.Random. seed)]
+        (out/warn-overwrite-dir! out-dir)
+        (out/warn-append-file! log)
         (.mkdirs (io/file out-dir))
         (let [entries
               (mapv
@@ -203,6 +206,7 @@
                        run-id (inc idx)
                        base (format "regime-mix-%02d-%s-seed-%d" run-id (:name regime) run-seed)
                        path (str (io/file out-dir (str base ".edn")))]
+                   (out/warn-overwrite-file! path)
                    (spit path (pr-str (assoc run
                                              :hit/meta {:label base
                                                         :seed run-seed
@@ -231,11 +235,11 @@
                      :shift (rank-map entries :shift)
                      :filament (rank-map entries :filament)}]
           (write-csv! scores entries ranks)
-          (spit inputs (str/join "\n" (map :run/path entries)))
-          (println "Log:" log)
-          (println "Scores:" scores)
-          (println "Inputs:" inputs)
-          (println "Runs:" out-dir))))))
+          (out/spit-text! inputs (str/join "\n" (map :run/path entries)))
+          (println "Log:" (out/abs-path log))
+          (println "Scores:" (out/abs-path scores))
+          (println "Inputs:" (out/abs-path inputs))
+          (println "Runs:" (out/abs-path out-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

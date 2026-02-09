@@ -5,7 +5,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.render :as render]
-            [futon5.mmca.runtime :as runtime]))
+            [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -111,8 +112,10 @@
         _ (.mkdirs dir)
         edn-path (io/file dir (str name ".edn"))
         ppm-path (io/file dir (str name ".ppm"))]
+    (out/warn-overwrite-file! (.getPath edn-path))
     (spit edn-path (pr-str run))
     (when render?
+      (out/warn-overwrite-file! (.getPath ppm-path))
       (render/render-run->file! run (.getPath ppm-path) {:exotype? true}))
     {:edn (.getPath edn-path)
      :ppm (when render? (.getPath ppm-path))}))
@@ -313,6 +316,7 @@
               mutation-rate (double (or mutation-rate 0.05))
               template-strictness (double (or template-strictness 0.5))
               manifest (atom [])]
+          (out/warn-overwrite-dir! out-dir)
           (println "Generating A inline runs...")
           (dotimes [i runs]
             (let [seed (+ seed-base i)
@@ -426,8 +430,10 @@
                                             files)))))
           (let [manifest-path (io/file out-dir "manifest.edn")]
             (.mkdirs (.getParentFile manifest-path))
+            (out/warn-overwrite-file! (.getPath manifest-path))
             (spit manifest-path (pr-str @manifest))
-            (println "Wrote" (count @manifest) "entries to" (.getPath manifest-path))))))))
+            (println "Wrote" (count @manifest) "entries to" (out/abs-path (.getPath manifest-path)))
+            (println "Outputs saved to" (out/abs-path out-dir))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

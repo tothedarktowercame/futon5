@@ -10,7 +10,8 @@
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.register-shift :as register-shift]
             [futon5.mmca.render :as render]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (def ^:private default-scale 250)
 
@@ -171,6 +172,7 @@
                                    (double (or update-prob (:update-prob exo-params)))
                                    (double (or match-threshold (:match-threshold exo-params))))
                            "mission-17a-compare")]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (let [rows
               (mapv
@@ -225,8 +227,8 @@
                                      (double (or (:filament exotic) 0.0))))
                            rows)
                 table (str/join "\n" (concat [header sep] lines))]
-            (spit out-table table)
-            (println "Wrote" out-table)))))))
+            (out/spit-text! out-table table)
+            (println "Images:" (out/abs-path out-dir))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

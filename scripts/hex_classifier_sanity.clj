@@ -1,6 +1,7 @@
 (ns hex-classifier-sanity
   (:require [clojure.string :as str]
-            [futon5.hexagram.metrics :as hex]))
+            [futon5.hexagram.metrics :as hex]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -49,14 +50,15 @@
       (recur (+ v step) (conj out v)))))
 
 (defn- grid-csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join
-              "\n"
-              (map (fn [row]
-                     (str/join "," row))
-                   rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join
+         "\n"
+         (map (fn [row]
+                (str/join "," row))
+              rows)))))
 
 (defn -main [& args]
   (let [{:keys [help unknown step rank out-prefix]} (parse-args args)]
@@ -94,9 +96,7 @@
         (grid-csv sig-rows ["alpha" "gap" "rank" "class"] sig-out)
         (grid-csv params-rows ["update_prob" "match_threshold" "class"] params-out)
         (println "Signature grid counts:" sig-counts)
-        (println "Params grid counts:" params-counts)
-        (println "Wrote" sig-out)
-        (println "Wrote" params-out)))))
+        (println "Params grid counts:" params-counts))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

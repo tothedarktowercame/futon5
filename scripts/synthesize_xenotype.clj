@@ -1,7 +1,8 @@
 (ns synthesize-xenotype
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
-            [futon5.xenotype.wiring :as wiring]))
+            [futon5.xenotype.wiring :as wiring]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -218,13 +219,12 @@
             templates (get (edn/read-string (slurp templates-path)) :templates)
             lib (edn/read-string (slurp components-path))
             candidates (generate-candidates rng lib templates n mutations mix)]
-        (spit out (pr-str {:seed seed
-                           :count (count candidates)
-                           :mutations mutations
-                           :mutation-mix mix
-                           :templates (map :name templates)
-                           :candidates candidates}))
-        (println "Wrote" out)))))
+        (out/spit-text! out (pr-str {:seed seed
+                                     :count (count candidates)
+                                     :mutations mutations
+                                     :mutation-mix mix
+                                     :templates (map :name templates)
+                                     :candidates candidates})))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

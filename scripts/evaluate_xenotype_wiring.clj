@@ -1,7 +1,8 @@
 (ns evaluate-xenotype-wiring
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
-            [futon5.xenotype.interpret :as interpret]))
+            [futon5.xenotype.interpret :as interpret]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -99,6 +100,7 @@
             components (or components "futon5/resources/xenotype-evaluation-components.edn")
             diagram (resolve-diagram diagram index)
             paths (read-lines inputs)]
+        (out/warn-append-file! out)
         (doseq [path paths]
           (let [run (edn/read-string (slurp path))
                 {:keys [output node-values]} (interpret/evaluate-run-diagram
@@ -112,7 +114,7 @@
                        :output output
                        :node-values node-values}]
             (append-entry! out entry)))
-        (println "Wrote" out)))))
+        (println "Wrote" (out/abs-path out)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))
