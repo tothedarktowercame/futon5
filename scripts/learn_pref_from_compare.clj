@@ -1,6 +1,7 @@
 (ns learn-pref-from-compare
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -195,14 +196,13 @@
             conf (confusion preds eps)
             cv-scores (loocv xs-n ys epochs lr)
             cv-acc (accuracy cv-scores ys)]
-        (spit out (pr-str {:features [:delta-short :delta-envelope :delta-triad :delta-shift :delta-filament]
-                           :means means
-                           :stds stds
-                           :model model
-                           :epochs epochs
-                           :lr lr
-                           :eps eps}))
-        (println "Weights written to" out)
+        (out/spit-text! out (pr-str {:features [:delta-short :delta-envelope :delta-triad :delta-shift :delta-filament]
+                                     :means means
+                                     :stds stds
+                                     :model model
+                                     :epochs epochs
+                                     :lr lr
+                                     :eps eps}))
         (println "Model weights:" (:w model))
         (println "Bias:" (:b model))
         (println "LOOCV accuracy:" (:correct cv-acc) "/" (:total cv-acc))

@@ -5,7 +5,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -217,8 +218,7 @@
                             :generations generations
                             :envelope envelope-opts}
                      :candidates scored}]
-        (spit out (pr-str payload))
-        (println "Wrote" out)))))
+        (out/spit-text! out (pr-str payload)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

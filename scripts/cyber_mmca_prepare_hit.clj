@@ -8,6 +8,7 @@
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.render :as render]
             [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]
             [futon5.xenotype.interpret :as interpret]
             [futon5.xenotype.wiring :as wiring]))
 
@@ -467,6 +468,7 @@
                         :generations generations
                         :controller controller
                         :note "replayed from Cyber-MMCA controller loop"}}]
+    (out/warn-overwrite-file! path)
     (spit path (pr-str run))
     path))
 
@@ -534,8 +536,10 @@
             inputs (or inputs "/tmp/cyber-mmca-hit-inputs.txt")
             label (or label "cyber-mmca-hit")
             wiring-index (or wiring-index 0)]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (when render-dir
+          (out/warn-overwrite-dir! render-dir)
           (.mkdirs (io/file render-dir)))
         (let [run-plan (vec (for [controller controllers
                                   seed seeds]
@@ -597,11 +601,10 @@
                                                    :windows (:windows result)
                                                    :elapsed-seconds elapsed}))
                           (recur (inc idx) (rest plans) (conj paths path)))))]
-          (spit inputs (str/join "\n" paths))
-          (println "Wrote" inputs)
-          (println "Runs saved to" out-dir)
+          (out/spit-text! inputs (str/join "\n" paths))
+          (println "Runs saved to" (out/abs-path out-dir))
           (when render-dir
-            (println "Renders saved to" render-dir)))))))
+            (println "Renders saved to" (out/abs-path render-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

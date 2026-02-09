@@ -8,7 +8,8 @@
             [futon5.mmca.filament :as filament]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.register-shift :as register-shift]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -171,7 +172,7 @@
                                    (double (or (:filament scores) 0.0))
                                    (double (or (get-in scores [:hex :score]) 0.0))))
                          rows))]
-    (spit path (str/join "\n" lines))))
+    (out/spit-text! path (str/join "\n" lines))))
 
 (defn -main [& args]
   (let [{:keys [help unknown seeds arms length generations out-dir scores inputs]} (parse-args args)]
@@ -187,6 +188,7 @@
             out-dir (or out-dir "/tmp/excursion-1-stage-2")
             scores (or scores (str (io/file out-dir "scores.csv")))
             inputs (or inputs (str (io/file out-dir "inputs.txt")))]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (let [rows
               (mapcat
@@ -195,14 +197,14 @@
                         (let [result (run-arm seed arm {:length length :generations generations})
                               base (format "excursion-1-stage-2-%s-seed-%d" (name arm-name) (long seed))
                               out-path (str (io/file out-dir (str base ".edn")))]
+                          (out/warn-overwrite-file! out-path)
                           (spit out-path (pr-str (:run result)))
                           (assoc result :arm arm-name :path out-path)))
                       arms))
                seeds)]
           (write-csv scores rows)
-          (spit inputs (str/join "\n" (map :path rows)))
-          (println "Wrote" scores)
-          (println "Wrote" inputs))))))
+          (out/spit-text! inputs (str/join "\n" (map :path rows)))
+          (println "Runs saved to" (out/abs-path out-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

@@ -2,7 +2,8 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [futon5.mmca.metrics :as metrics]))
+            [futon5.mmca.metrics :as metrics]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -73,10 +74,11 @@
     :else nil))
 
 (defn- rows->csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join "\n" (map #(str/join "," %) rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn -main [& args]
   (let [{:keys [help unknown log out W S limit]} (parse-args args)]
@@ -124,7 +126,7 @@
                     "structure" "activity" "regime"]
                    out-path)
         (println "Regime counts:" counts)
-        (println "Wrote" out-path)))))
+        nil)))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

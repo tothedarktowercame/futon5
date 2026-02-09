@@ -5,6 +5,7 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.render :as render]
             [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]
             [futon5.xenotype.mermaid :as mermaid]
             [futon5.xenotype.wiring :as wiring]))
 
@@ -288,7 +289,9 @@
             gen-wiring-index (or gen-wiring-index wiring-index)
             gen-wiring-out (or gen-wiring-out wiring-out (str out-dir "/xenotype-generator.mmd"))
             score-wiring-out (or score-wiring-out (str out-dir "/xenotype-scorer.mmd"))
-            _ (.mkdirs (io/file out-dir))
+            _ (do
+                (out/warn-overwrite-dir! out-dir)
+                (.mkdirs (io/file out-dir)))
             {:keys [result fresh?]}
             (if input
               {:result (load-run input)
@@ -318,6 +321,7 @@
                            no-operators (assoc :operators []))]
                 {:result (mmca/run-mmca opts)
                  :fresh? true}))]
+        (out/warn-overwrite-file! out)
         (render/render-run->file! result out {:exotype? true})
         (let [gen-wiring (resolve-wiring {:wiring-path gen-wiring-path
                                           :wiring-index gen-wiring-index
@@ -325,14 +329,12 @@
               score-wiring (resolve-wiring {:wiring-path score-wiring-path
                                             :wiring-index score-wiring-index
                                             :default-path default-score-wiring-path})]
-          (spit gen-wiring-out (wiring->mermaid-text gen-wiring (wiring-title gen-wiring "generator")))
-          (spit score-wiring-out (wiring->mermaid-text score-wiring (wiring-title score-wiring "scorer"))))
+          (out/spit-text! gen-wiring-out (wiring->mermaid-text gen-wiring (wiring-title gen-wiring "generator")))
+          (out/spit-text! score-wiring-out (wiring->mermaid-text score-wiring (wiring-title score-wiring "scorer"))))
         (when (and save-run (or fresh? input))
-          (spit save-run (pr-str result))
-          (println "Saved run" save-run))
-        (println "Wrote" out)
-        (println "Wrote" gen-wiring-out)
-        (println "Wrote" score-wiring-out)))))
+          (out/spit-text! save-run (pr-str result)))
+        (out/announce-wrote! out)
+        (println "Outputs saved to" (out/abs-path out-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

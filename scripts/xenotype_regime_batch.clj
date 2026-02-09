@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (def ^:private default-config "data/xenotype-regime-batch-20.edn")
 
@@ -76,8 +77,9 @@
 
 (defn- write-run! [out-dir label result meta]
   (let [path (io/file out-dir (str label ".edn"))]
-    (spit path (pr-str (assoc (dissoc result :kernel-fn) :meta meta)))
-    path))
+    (out/spit-text! (.getPath path)
+                    (pr-str (assoc (dissoc result :kernel-fn) :meta meta)))
+    (.getPath path)))
 
 (defonce ^:private nomination-cache (atom {}))
 
@@ -128,6 +130,7 @@
           seeds (if seed [seed] (or (:seeds config) [4242]))
           models (or (:models config) [])
           out-dir (or out-dir (format "/tmp/futon5-xenotype-batch-%d" (System/currentTimeMillis)))]
+      (out/warn-overwrite-dir! out-dir)
       (.mkdirs (io/file out-dir))
       (doseq [model models]
         (let [model-seeds (if seed
@@ -186,9 +189,9 @@
                         :exotype-mode (or exotype-mode (when (:lock-mode model) :nominate))
                         :exotype-context-mode exotype-context-mode
                         :lock-mode (:lock-mode model)}]
-              (write-run! out-dir label result meta)
-              (println "Wrote" label)))))
-      (println "Done."))))
+              (write-run! out-dir label result meta)))))
+      (println "Done.")
+      (println "Outputs saved to" (out/abs-path out-dir))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

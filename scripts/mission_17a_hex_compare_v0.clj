@@ -4,7 +4,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as mmca-metrics]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -249,29 +250,29 @@
             header ["seed" "variant" "summary_scope" "window_size" "window_idx"
                     "pressure" "selectivity" "structure" "entropy" "class"
                     "dominant" "dominance_margin" "stability" "transitions" "hist"]]
-        (spit out
-              (str (csv-row header)
-                   "\n"
-                   (str/join
-                    "\n"
-                    (map (fn [row]
-                           (csv-row [(get row :seed)
-                                     (name (:variant row))
-                                     (name (:summary-scope row))
-                                     (get row :window-size)
-                                     (get row :window-idx)
-                                     (get row :pressure "")
-                                     (get row :selectivity "")
-                                     (get row :structure "")
-                                     (get row :entropy "")
-                                     (get row :class "")
-                                     (get row :dominant "")
-                                     (get row :dominance-margin "")
-                                     (get row :stability "")
-                                     (get row :transitions "")
-                                     (get row :hist "")]))
-                         rows))))
-        (println "Wrote" out)))))
+        (out/spit-text!
+         out
+         (str (csv-row header)
+              "\n"
+              (str/join
+               "\n"
+               (map (fn [row]
+                      (csv-row [(get row :seed)
+                                (name (:variant row))
+                                (name (:summary-scope row))
+                                (get row :window-size)
+                                (get row :window-idx)
+                                (get row :pressure "")
+                                (get row :selectivity "")
+                                (get row :structure "")
+                                (get row :entropy "")
+                                (get row :class "")
+                                (get row :dominant "")
+                                (get row :dominance-margin "")
+                                (get row :stability "")
+                                (get row :transitions "")
+                                (get row :hist "")]))
+                    rows)))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

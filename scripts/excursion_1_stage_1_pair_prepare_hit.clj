@@ -6,7 +6,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.runtime :as mmca]
-            [futon5.mmca.render :as render]))
+            [futon5.mmca.render :as render]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -120,17 +121,17 @@
             out-dir (or out-dir "/tmp/excursion-1-stage-1-pairs")
             inputs (or inputs (str (io/file out-dir "inputs.txt")))
             pairs-path (str (io/file out-dir "pairs.edn"))]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (loop [remaining seeds
                acc []
                processed 0]
           (if (or (empty? remaining) (>= (count acc) target-count))
             (do
-              (spit inputs (str/join "\n" (map :image acc)))
-              (spit pairs-path (str/join "\n" (map pr-str acc)))
-              (println "Wrote" inputs)
-              (println "Wrote" pairs-path)
-              (println "Pairs" (count acc)))
+              (out/spit-text! inputs (str/join "\n" (map :image acc)))
+              (out/spit-text! pairs-path (str/join "\n" (map pr-str acc)))
+              (println "Pairs" (count acc))
+              (println "Outputs saved to" (out/abs-path out-dir)))
             (let [seed (first remaining)
                   result (run-pair seed length generations)]
               (println (format "seed %d processed=%d accepted=%d mutations=%d"
@@ -148,7 +149,9 @@
                       tai-png (str (io/file out-dir (str base "-tai.png")))
                       base-png (str (io/file out-dir (str base "-baseline.png")))
                       pair-png (str (io/file out-dir (str base "-pair.png")))]
+                  (out/warn-overwrite-file! tai-edn)
                   (spit tai-edn (pr-str (:tai-run result)))
+                  (out/warn-overwrite-file! base-edn)
                   (spit base-edn (pr-str (:baseline result)))
                   (render-run! (:tai-run result) tai-ppm tai-png scale)
                   (render-run! (:baseline result) base-ppm base-png scale)

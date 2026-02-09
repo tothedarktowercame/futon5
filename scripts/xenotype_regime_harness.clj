@@ -5,6 +5,7 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]
             [futon5.xenotype.interpret :as interpret]))
 
 (def ^:private default-config "data/xenotype-regime-harness.edn")
@@ -203,8 +204,8 @@
   [{:keys [out-dir label result meta]}]
   (let [path (io/file out-dir (str label ".edn"))
         payload (assoc result :meta meta :summary (metrics/summarize-run result))]
-    (spit path (pr-str payload))
-    path))
+    (out/spit-text! (.getPath path) (pr-str payload))
+    (.getPath path)))
 
 (defn -main [& args]
   (let [{:keys [help unknown config out-dir length generations seed]} (parse-args args)]
@@ -221,6 +222,7 @@
             seeds (if seed [seed] (or (:seeds config) [4242]))
             models (or (:models config) [])
             out-dir (or out-dir (format "/tmp/futon5-xenotype-harness-%d" (System/currentTimeMillis)))]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (doseq [seed seeds]
           (let [rng (java.util.Random. (long seed))
@@ -252,8 +254,9 @@
                              :label label
                              :result result
                              :meta meta})
-                (println "Wrote" label)))))
-        (println "Done.")))))
+                nil))))
+        (println "Done.")
+        (println "Outputs saved to" (out/abs-path out-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

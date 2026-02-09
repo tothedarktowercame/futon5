@@ -10,6 +10,18 @@ gets studied computationally.
 > and proposes pattern refinements. See `../futon0/README.md` for the full stack
 > diagram.
 
+### Healthcheck (ratchet)
+
+Run a conservative healthcheck that verifies required files/deps and runs a tiny
+deterministic MMCA smoke run:
+
+```
+clj -M -m futon5.healthcheck
+```
+
+The settled-state invariants that this healthcheck is intended to protect live
+in `docs/technote-settled-state.md`.
+
 ---
 
 Concentration layer for meta-pattern operators. Patterns are lifted from
