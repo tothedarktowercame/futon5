@@ -1,0 +1,66 @@
+{:diagram/id :futon3-coordination
+ :version 1
+ :exotype/ref "futon5/data/missions/coordination-exotype.edn"
+
+ ;; Prototype 0 instantiates Level 0 only.
+ :profile :prototype0
+
+ ;; Edges implemented by this instantiation.
+ :edges
+ #{:e-ir-g5 :e-im-g5 :e-g5-g4
+   :e-irg-g4 :e-g4-g3
+   :e-ip-g3 :e-g3-g2
+   :e-ie-g2 :e-g2-ie :e-g2-g1
+   :e-ip-g1 :e-g1-g0
+   :e-g2-oa :e-g0-oe :e-g0-op :e-g0-ov
+   :e-g5-oer :e-g4-oer :e-g3-oer :e-g2-oer :e-g1-oer :e-g0-oer
+   :e-ie-cd :e-irg-cd :e-cd-ir :e-cd-ov}
+
+ ;; Gate implementations (Part II).
+ :gates
+ {:g5 {:ns futon3.gate.task
+       :patterns ["coordination/task-shape-validation"
+                  "coordination/intent-to-mission-binding"]
+       :tests ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :g4 {:ns futon3.gate.auth
+       :patterns ["coordination/capability-gate"
+                  "coordination/assignment-binding"]
+       :tests ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :g3 {:ns futon3.gate.pattern
+       :patterns ["coordination/mandatory-psr"
+                  "coordination/pattern-search-protocol"]
+       :tests ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :g2 {:ns futon3.gate.exec
+       :patterns ["coordination/bounded-execution"
+                  "coordination/artifact-registration"]
+       :tests ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :g1 {:ns futon3.gate.validate
+       :patterns ["coordination/mandatory-pur"
+                  "coordination/cross-validation-protocol"]
+       :tests ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :g0 {:ns futon3.gate.evidence
+       :patterns ["coordination/session-durability-check"
+                  "coordination/par-as-obligation"]
+       :tests ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :c-default {:ns futon3.gate.default
+              :patterns []
+              :tests []}}
+
+ ;; Output port spec coverage (stop-the-line: every port must be specified, implemented, tested, traceable).
+ :outputs
+ {:O-artifacts {:spec-ref "coordination/artifact-registration"
+                :implemented-by :g2
+                :tested-by ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :O-evidence {:spec-ref "coordination/session-durability-check"
+               :implemented-by :g0
+               :tested-by ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :O-proof-path {:spec-ref "coordination/session-durability-check"
+                 :implemented-by :g0
+                 :tested-by ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :O-events {:spec-ref "futon-theory/event-protocol"
+             :implemented-by :g0
+             :tested-by ["futon3b/test/futon3/gate/pipeline_test.clj"]}
+  :O-errors {:spec-ref "futon-theory/error-hierarchy"
+             :implemented-by :g0
+             :tested-by ["futon3b/test/futon3/gate/pipeline_test.clj"]}}}
+

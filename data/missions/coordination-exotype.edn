@@ -1,0 +1,78 @@
+{:diagram/id :coordination-exotype
+ :version 1
+
+ ;; Profiles let us validate Prototype 0 (Level 0 only) vs the full two-loop
+ ;; coordination system (Level 0 + Level 1).
+ :profiles {:prototype0 {:required-levels #{:L0}}
+            :complete {:required-levels #{:L0 :L1}}}
+
+ :nodes
+ {:I-request {:kind :input :type :http-request :timescale :fast :constraint? false}
+  :I-environment {:kind :input :type :xtdb-entity :timescale :fast :constraint? false}
+  :I-missions {:kind :input :type :config :timescale :slow :constraint? true}
+  :I-patterns {:kind :input :type :config :timescale :glacial :constraint? true}
+  :I-registry {:kind :input :type :config :timescale :slow :constraint? true}
+  :I-tensions {:kind :input :type :xtdb-entity :timescale :glacial :constraint? false}
+
+  :G5 {:kind :gate :gate/id :g5 :timescale :fast}
+  :G4 {:kind :gate :gate/id :g4 :timescale :fast}
+  :G3 {:kind :gate :gate/id :g3 :timescale :fast}
+  :G2 {:kind :gate :gate/id :g2 :timescale :fast}
+  :G1 {:kind :gate :gate/id :g1 :timescale :fast}
+  :G0 {:kind :gate :gate/id :g0 :timescale :fast}
+
+  :C-default {:kind :control :timescale :fast}
+
+  :L1-observe {:kind :l1 :timescale :glacial}
+  :L1-canon {:kind :l1 :timescale :glacial}
+
+  :O-artifacts {:kind :output :type :xtdb-entity :timescale :fast}
+  :O-evidence {:kind :output :type :xtdb-entity :timescale :fast}
+  :O-proof-path {:kind :output :type :proof-path :timescale :fast}
+  :O-events {:kind :output :type :xtdb-entity :timescale :fast}
+  :O-errors {:kind :output :type :error-response :timescale :fast}
+  :O-canonizations {:kind :output :type :xtdb-entity :timescale :glacial}}
+
+ :edges
+ [{:id :e-ir-g5 :from :I-request :to :G5 :level :L0}
+  {:id :e-im-g5 :from :I-missions :to :G5 :level :L0}
+  {:id :e-g5-g4 :from :G5 :to :G4 :level :L0}
+
+  {:id :e-irg-g4 :from :I-registry :to :G4 :level :L0}
+  {:id :e-g4-g3 :from :G4 :to :G3 :level :L0}
+
+  {:id :e-ip-g3 :from :I-patterns :to :G3 :level :L0}
+  {:id :e-g3-g2 :from :G3 :to :G2 :level :L0}
+
+  {:id :e-ie-g2 :from :I-environment :to :G2 :level :L0}
+  {:id :e-g2-ie :from :G2 :to :I-environment :level :L0} ;; only G2 mutates environment
+  {:id :e-g2-g1 :from :G2 :to :G1 :level :L0}
+
+  {:id :e-ip-g1 :from :I-patterns :to :G1 :level :L0}
+  {:id :e-g1-g0 :from :G1 :to :G0 :level :L0}
+
+  {:id :e-g2-oa :from :G2 :to :O-artifacts :level :L0}
+  {:id :e-g0-oe :from :G0 :to :O-evidence :level :L0}
+  {:id :e-g0-op :from :G0 :to :O-proof-path :level :L0}
+  {:id :e-g0-ov :from :G0 :to :O-events :level :L0}
+
+  {:id :e-g5-oer :from :G5 :to :O-errors :level :L0}
+  {:id :e-g4-oer :from :G4 :to :O-errors :level :L0}
+  {:id :e-g3-oer :from :G3 :to :O-errors :level :L0}
+  {:id :e-g2-oer :from :G2 :to :O-errors :level :L0}
+  {:id :e-g1-oer :from :G1 :to :O-errors :level :L0}
+  {:id :e-g0-oer :from :G0 :to :O-errors :level :L0}
+
+  ;; Default-mode network (Level 0, but separate from the gate pipeline)
+  {:id :e-ie-cd :from :I-environment :to :C-default :level :L0}
+  {:id :e-irg-cd :from :I-registry :to :C-default :level :L0}
+  {:id :e-cd-ir :from :C-default :to :I-request :level :L0}
+  {:id :e-cd-ov :from :C-default :to :O-events :level :L0}
+
+  ;; Level 1: library evolution (glacial loop)
+  {:id :e-it-l1o :from :I-tensions :to :L1-observe :level :L1}
+  {:id :e-l1o-l1c :from :L1-observe :to :L1-canon :level :L1}
+  {:id :e-ip-l1c :from :I-patterns :to :L1-canon :level :L1}
+  {:id :e-l1c-ip :from :L1-canon :to :I-patterns :level :L1}
+  {:id :e-l1c-oc :from :L1-canon :to :O-canonizations :level :L1}]}
+
