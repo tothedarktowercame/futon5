@@ -1,0 +1,268 @@
+;; Wiring diagram for M-f6-ingest: StackExchange corpus → annotated knowledge base.
+;;
+;; This is a data pipeline, not a service architecture. The objects flowing
+;; through are data files at progressive stages of enrichment. Unlike the
+;; futon2 AIF loop (continuous) or futon3 agent loop (event-driven), this
+;; is a batch pipeline: parse once, enrich in parallel, bootstrap, emit.
+;;
+;; Topology:
+;;
+;;                         ┌→ C-embed → C-cluster → O-clusters
+;;                         │              ↓
+;;   I-se-dump → C-parse ──┼→ C-tag ──────────────→ O-pattern-tags
+;;                         │
+;;                         ├→ C-ner ──────────────→ O-ner-terms
+;;                         │     ↓
+;;                         ├→ C-scope ────────────→ O-scopes
+;;                         │     ↓
+;;                         ├→ C-bootstrap ────────→ O-expanded-kernel
+;;                         │
+;;                         └→ C-manifest ─────────→ O-manifest
+;;
+;; Stages 2-5 are parallelizable (they all consume C-parse output).
+;; C-cluster depends on C-embed (needs embedding vectors).
+;; C-bootstrap depends on C-ner (needs term hits to identify kernel gaps).
+;; C-manifest depends on all stages (aggregates stats).
+;;
+;; Invariant analysis:
+;;   I3 (timescale): Models and pattern library are glacial constraints.
+;;       NER kernel is slow (updated by bootstrap, not per-entity).
+;;       Bootstrap writes to slow kernel from fast outputs — controlled,
+;;       post-pipeline, not real-time fast→slow feedback.
+;;   I4 (exogeneity): Pattern library, embedding model, and LLM model are
+;;       exogenous constraints. No output feeds back to these. The NER kernel
+;;       IS updated by bootstrap, but is intentionally mutable (not a
+;;       preference — it's a knowledge base designed to grow).
+;;   I6 (closure): C-parse is a SPOF — removing it disconnects everything.
+;;       This is inherent to any pipeline with a single data source. The
+;;       mitigation is Outpost O-1 (dry run on existing physics.SE data),
+;;       which validates parsing before committing superpod time.
+;;
+;; New port types required (not yet in futon5.ct.mission/port-types):
+;;   :xml-corpus       — raw XML data dump (streaming, multi-GB)
+;;   :json-corpus      — processed JSON output files (entities, annotations)
+;;   :embedding-tensor — dense vector arrays (numpy .npy format)
+;;   :ner-kernel       — term dictionary (TSV) + scope patterns (EDN)
+
+{:mission/id :f6-ingest
+ :mission/state :active
+
+ :ports
+ {:input
+  [;; The raw data — math.SE XML dump
+   {:id :I-se-dump       :name "Math.SE XML dump"      :type :xml-corpus
+    :source "data.stackexchange.com"
+    :note "Posts.xml, ~200K+ QA pairs, 3.4GB compressed"
+    :timescale :glacial}
+
+   ;; NER kernel — term dictionary that drives entity recognition
+   ;; NOT a constraint: intentionally mutable via bootstrap loop
+   {:id :I-ner-kernel    :name "NER kernel"             :type :ner-kernel
+    :source "data/ner-kernel/terms.tsv"
+    :note "19,236 terms from 63 PlanetMath MSC repos + SE tags"
+    :timescale :slow}
+
+   ;; Scope patterns — regex + structural patterns for Let/Define/Assume
+   {:id :I-scope-patterns :name "Scope patterns"        :type :config
+    :source "data/ner-kernel/scope-patterns.edn"
+    :note "Let, Define, Assume, Consider + LaTeX binding syntax"
+    :timescale :slow}
+
+   ;; The 25 math-informal reasoning patterns with hotword lists
+   {:id :I-pattern-lib   :name "Pattern library"        :type :config
+    :source "library/math-informal/*.flexiarg"
+    :note "25 Pólya-derived patterns: try-a-simpler-case, argue-by-contradiction, etc."
+    :timescale :glacial
+    :constraint true}
+
+   ;; Embedding model specification — determines the vector space
+   {:id :I-embed-model   :name "Embedding model"        :type :config
+    :source "bge-large-en-v1.5"
+    :note "1024d, Hugging Face; GPU-accelerated on superpod"
+    :timescale :glacial
+    :constraint true}
+
+   ;; LLM for pattern tagging — the pattern classifier
+   {:id :I-llm-model     :name "LLM model"              :type :config
+    :source "meta-llama/Meta-Llama-3-8B-Instruct"
+    :note "Local on superpod; 8B params, instruction-tuned"
+    :timescale :glacial
+    :constraint true}]
+
+  :output
+  [;; Entities — QA pairs in structured entity format
+   {:id :O-entities        :name "Entities"              :type :json-corpus
+    :consumer "M-f6-eval, M-f6-agents"
+    :spec-ref "M-f6-ingest/entities"
+    :note "~200K+ QA pairs, ~1GB"
+    :timescale :fast}
+
+   ;; Relations — structural + annotation relations
+   {:id :O-relations       :name "Relations"             :type :json-corpus
+    :consumer "M-f6-eval graph queries"
+    :spec-ref "M-f6-ingest/relations"
+    :note "answer→question, tag→entity, score, ~200MB"
+    :timescale :fast}
+
+   ;; Embeddings — dense vector representations
+   {:id :O-embeddings      :name "Embeddings"            :type :embedding-tensor
+    :consumer "M-f6-eval similarity, M-f6-agents retrieval"
+    :spec-ref "M-f6-ingest/embeddings"
+    :note "bge-large 1024d per entity, ~800MB .npy"
+    :timescale :fast}
+
+   ;; Pattern tags — LLM-assigned informal reasoning patterns
+   {:id :O-pattern-tags    :name "Pattern tags"          :type :json-corpus
+    :consumer "M-f6-eval Task 4, M-f6-agents strategy"
+    :spec-ref "M-f6-ingest/pattern-tags"
+    :note "25 patterns × 200K+ entities, ~100MB"
+    :timescale :fast}
+
+   ;; Clusters — topic groupings from embedding space
+   {:id :O-clusters        :name "Clusters"              :type :json-corpus
+    :consumer "M-f6-eval stratified sampling"
+    :spec-ref "M-f6-ingest/clusters"
+    :note "HDBSCAN assignments, ~20MB"
+    :timescale :fast}
+
+   ;; NER term hits — per-entity term annotations
+   {:id :O-ner-terms       :name "NER term hits"         :type :json-corpus
+    :consumer "M-f6-eval graph, M-f6-agents knowledge base"
+    :spec-ref "M-f6-ingest/ner-terms"
+    :note "Classical term spotting, >95% entity coverage, ~200MB"
+    :timescale :fast}
+
+   ;; Scope records — variable binding annotations
+   {:id :O-scopes          :name "Scope records"         :type :json-corpus
+    :consumer "M-f6-eval graph, M-f6-agents scope chains"
+    :spec-ref "M-f6-ingest/scopes"
+    :note "Let/Define openers, LaTeX symbol bindings, ~50MB"
+    :timescale :fast}
+
+   ;; Manifest — run metadata, stats, config snapshot
+   {:id :O-manifest        :name "Manifest"              :type :json-corpus
+    :consumer "validation, audit, reproducibility"
+    :spec-ref "M-f6-ingest/manifest"
+    :note "Entity counts, pattern distribution, coverage stats"
+    :timescale :medium}
+
+   ;; Expanded kernel — NER kernel after bootstrap loop
+   {:id :O-expanded-kernel :name "Expanded NER kernel"   :type :ner-kernel
+    :consumer "M-f6-arxiv, future pipeline runs"
+    :spec-ref "M-f6-ingest/bootstrap"
+    :note "19K+ terms → expected 20K+ after math.SE tag absorption"
+    :timescale :slow}]}
+
+ :components
+ [;; Stage 1: XML streaming parser — constant-memory, handles multi-GB dumps
+  {:id :C-parse     :name "Parse (XML streaming)"
+   :type :clj-namespace :ref "futon6.stackexchange"
+   :accepts #{:xml-corpus}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Constant-memory streaming; emits QA pairs + structural relations"}
+
+  ;; Stage 2: Embedding generation — GPU-accelerated dense vectors
+  {:id :C-embed     :name "Embed (bge-large-en-v1.5)"
+   :type :clj-namespace :ref "superpod-job/embed"
+   :accepts #{:json-corpus :config}
+   :produces #{:embedding-tensor}
+   :timescale :fast
+   :note "GPU batch processing; 1024d per entity"}
+
+  ;; Stage 3: LLM pattern tagging — 25 math-informal patterns
+  {:id :C-tag       :name "Tag (LLM pattern classification)"
+   :type :clj-namespace :ref "superpod-job/tag-patterns"
+   :accepts #{:json-corpus :config}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Llama-3 classifies each answer against 25 Pólya patterns"}
+
+  ;; Stage 4: Clustering — HDBSCAN on embedding vectors
+  {:id :C-cluster   :name "Cluster (HDBSCAN)"
+   :type :clj-namespace :ref "superpod-job/cluster"
+   :accepts #{:embedding-tensor}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Density-based clustering in 1024d space; topic groupings"}
+
+  ;; Stage 5a: NER term spotting — classical, no GPU required
+  {:id :C-ner       :name "NER (classical term spotting)"
+   :type :clj-namespace :ref "scripts/spot-terms.bb"
+   :accepts #{:json-corpus :ner-kernel}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "CPU-bound; exact + fuzzy matching against 19K terms"}
+
+  ;; Stage 5b: Scope detection — structural pattern matching
+  {:id :C-scope     :name "Scope (Let/Define/Assume detection)"
+   :type :clj-namespace :ref "superpod-job/scope-detect"
+   :accepts #{:json-corpus :config}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Regex + LaTeX parsing for variable bindings and scope openers"}
+
+  ;; Post-processing: Bootstrap loop — kernel expansion
+  {:id :C-bootstrap :name "Bootstrap (kernel expansion)"
+   :type :clj-namespace :ref "scripts/build-ner-kernel.bb"
+   :accepts #{:json-corpus :ner-kernel}
+   :produces #{:ner-kernel}
+   :timescale :medium
+   :note "Absorbs math.SE tags → kernel; re-runs term spotter for coverage gain"}
+
+  ;; Post-processing: Manifest generation
+  {:id :C-manifest  :name "Manifest (validation + stats)"
+   :type :clj-namespace :ref "superpod-job/manifest"
+   :accepts #{:json-corpus :embedding-tensor}
+   :produces #{:json-corpus}
+   :timescale :medium
+   :note "Aggregates coverage stats, pattern distribution, entity counts"}]
+
+ :edges
+ [;; === STAGE 1: PARSE ===
+  ;; XML dump → parser → entities + structural relations
+  {:from :I-se-dump      :to :C-parse      :type :xml-corpus}
+
+  ;; === STAGE 2: EMBED (parallel with 3, 5a, 5b) ===
+  {:from :C-parse        :to :C-embed      :type :json-corpus}      ; entities → embedder
+  {:from :I-embed-model  :to :C-embed      :type :config}           ; model spec (constraint → fast)
+
+  ;; === STAGE 3: TAG (parallel with 2, 5a, 5b) ===
+  {:from :C-parse        :to :C-tag        :type :json-corpus}      ; entities → tagger
+  {:from :I-pattern-lib  :to :C-tag        :type :config}           ; 25 patterns (constraint → fast)
+  {:from :I-llm-model    :to :C-tag        :type :config}           ; LLM model (constraint → fast)
+
+  ;; === STAGE 4: CLUSTER (depends on Stage 2) ===
+  {:from :C-embed        :to :C-cluster    :type :embedding-tensor} ; embeddings → clusterer
+
+  ;; === STAGE 5a: NER (parallel with 2, 3, 5b) ===
+  {:from :C-parse        :to :C-ner        :type :json-corpus}      ; entities → NER spotter
+  {:from :I-ner-kernel   :to :C-ner        :type :ner-kernel}       ; term dictionary → NER
+
+  ;; === STAGE 5b: SCOPE (parallel with 2, 3, 5a) ===
+  {:from :C-parse        :to :C-scope      :type :json-corpus}      ; entities → scope detector
+  {:from :I-scope-patterns :to :C-scope    :type :config}           ; scope patterns → detector
+
+  ;; === BOOTSTRAP LOOP (post-pipeline) ===
+  {:from :C-ner          :to :C-bootstrap  :type :json-corpus}      ; NER hits → expansion
+  {:from :C-parse        :to :C-bootstrap  :type :json-corpus}      ; entities (SE tags) → expansion
+  {:from :I-ner-kernel   :to :C-bootstrap  :type :ner-kernel}       ; current kernel → expansion
+
+  ;; === MANIFEST (post-pipeline, aggregates all stats) ===
+  {:from :C-parse        :to :C-manifest   :type :json-corpus}      ; entity count
+  {:from :C-embed        :to :C-manifest   :type :embedding-tensor} ; embedding shape
+  {:from :C-tag          :to :C-manifest   :type :json-corpus}      ; pattern distribution
+  {:from :C-ner          :to :C-manifest   :type :json-corpus}      ; NER coverage
+  {:from :C-scope        :to :C-manifest   :type :json-corpus}      ; scope coverage
+  {:from :C-cluster      :to :C-manifest   :type :json-corpus}      ; cluster count
+
+  ;; === OUTPUTS ===
+  {:from :C-parse        :to :O-entities        :type :json-corpus}
+  {:from :C-parse        :to :O-relations       :type :json-corpus}
+  {:from :C-embed        :to :O-embeddings      :type :embedding-tensor}
+  {:from :C-tag          :to :O-pattern-tags    :type :json-corpus}
+  {:from :C-cluster      :to :O-clusters        :type :json-corpus}
+  {:from :C-ner          :to :O-ner-terms       :type :json-corpus}
+  {:from :C-scope        :to :O-scopes          :type :json-corpus}
+  {:from :C-manifest     :to :O-manifest        :type :json-corpus}
+  {:from :C-bootstrap    :to :O-expanded-kernel :type :ner-kernel}]}
