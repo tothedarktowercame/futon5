@@ -7,7 +7,8 @@ constraints.
 
 ## Status
 
-Active — triggered by M-social-exotype Part II (futon3c).
+Complete — compose-parallel implemented (feat/compose-parallel), all 8 checks
+pass standalone and composed.
 
 ## Owner
 
@@ -87,7 +88,7 @@ Serial composition can't express this because:
    C-default, but the composed system's resilience depends on whether they
    can cover for each other.
 
-## What's Needed
+## What Was Needed
 
 ### compose-parallel (or compose-shared)
 
@@ -103,10 +104,9 @@ A new composition function that:
    input ports in diagram B (the serial composition already finds these).
 
 4. **Validates cross-diagram invariants**:
-   - **I3 (timescale ordering)**: social components (`:fast` in social diagram,
-     but semantically `:social`) must not bypass task timescale to reach glacial
-     constraints. Need extended timescale ordering: `:social < :fast < :medium
-     < :slow < :glacial`.
+   - **I3 (timescale ordering)**: social components (`:social`) must not bypass
+     task timescale to reach glacial constraints. Extended timescale ordering:
+     `:social < :fast < :medium < :slow < :glacial`.
    - **I4 (exogeneity)**: no social output port has a path to shared constraint
      inputs through the composed graph.
    - **I6 (compositional closure)**: removing any single component from the
@@ -114,14 +114,53 @@ A new composition function that:
 
 ### Timescale extension
 
-Add `:social` to `timescale-order`:
+Added `:social` to `timescale-order`:
 ```clojure
 (def timescale-order [:social :fast :medium :slow :glacial])
 ```
 
 This is backward-compatible: existing diagrams using `:fast` through `:glacial`
-are unaffected. The social exotype can then use `:social` instead of `:fast`
-for its components, making cross-diagram I3 checks precise.
+are unaffected. The social exotype uses `:social` for its components, making
+cross-diagram I3 checks precise.
+
+## Implementation Notes
+
+### compose-parallel
+
+Composes two diagrams by:
+
+- Merging shared *constraint input* ports that have the same `:id` and `:type`
+  and are `:constraint true` in both diagrams.
+- Prefixing all other IDs with the mission ID (to avoid collisions).
+- Adding cross-diagram edges for type-compatible output→input pairs (A to B).
+- Treating connected ports as internal wires:
+  - Outputs in A that feed cross-diagram edges are removed from the composed
+    boundary outputs.
+  - Inputs in B that are satisfied by cross-diagram edges are removed from the
+    composed boundary inputs.
+
+### Shared Constraint Contract
+
+If a port is shared as a constraint input, the core attributes must match
+between diagrams:
+
+- `:id`
+- `:type`
+- `:constraint` (must be true)
+- `:timescale`
+
+If they differ, `compose-parallel` throws: this mismatch indicates drift in the
+shared boundary contract.
+
+### Composition Result (social || coordination)
+
+Composed `social-exotype || coordination-exotype`:
+- 5 inputs, 7 outputs, 16 components, 69 edges
+- All 8 checks pass
+- Cross-diagram edges include:
+  - O-task-submissions → I-request (social→task boundary)
+  - O-coordination-evidence → I-environment, I-tensions (evidence feedback)
+  - O-social-events → I-environment, I-tensions (telemetry feedback)
 
 ## Isomorphism: fast-social-glacial ≅ pheno-geno-exo
 
@@ -147,13 +186,13 @@ free.
 
 ## Success Criteria
 
-- [ ] `compose-parallel` function implemented
-- [ ] Shared-port deduplication works (I-patterns appears once in composed diagram)
-- [ ] Cross-diagram I3 passes (social→fast→glacial ordering respected)
-- [ ] Cross-diagram I4 passes (no social output→constraint path)
-- [ ] Cross-diagram I6 passes (composed default modes provide resilience)
-- [ ] social-exotype + coordination-exotype compose with all 8 checks passing
-- [ ] Existing serial composition unaffected (regression test)
+- [x] `compose-parallel` function implemented
+- [x] Shared-port deduplication works (I-patterns appears once in composed diagram)
+- [x] Cross-diagram I3 passes (social→fast→glacial ordering respected)
+- [x] Cross-diagram I4 passes (no social output→constraint path)
+- [x] Cross-diagram I6 passes (composed default modes provide resilience)
+- [x] social-exotype + coordination-exotype compose with all 8 checks passing
+- [x] Existing serial composition unaffected (regression test)
 
 ## Connects To
 

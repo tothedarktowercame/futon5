@@ -7,7 +7,7 @@
 ;; while preserving structure, types, and invariants.
 ;;
 ;; Derived from: library/social/ARGUMENT.flexiarg
-;; Requirements: R1-R10 (from agency + realtime patterns via futon-theory)
+;; Requirements: R1-R11 (from agency + realtime patterns via futon-theory)
 ;; Convergence: C6 (each component is the agency reading of a gate)
 ;;
 ;; The social exotype is the THIRD AIF loop in the futon stack:
@@ -19,11 +19,11 @@
 ;; Social outputs feed into Level 0 (task submissions through gates).
 ;; Social evidence feeds into Level 1 (L1-observe scans for tensions).
 ;;
-;; TIMESCALE NOTE:
-;; Components use :fast because ct/mission.clj's I3 check does not yet
-;; know :social. Within this diagram, :fast means "the fastest timescale"
-;; — i.e., the social timescale (~seconds). Part II of M-social-exotype
-;; extends the timescale ordering for cross-diagram composition.
+;; TIMESCALE:
+;; Components use :social — the fastest timescale in the stack (~seconds).
+;; Timescale order: [:social :fast :medium :slow :glacial]
+;; Constraint inputs (:glacial, :slow) constrain social components (I3).
+;; No social output reaches any constraint input (I4).
 ;;
 ;; STRUCTURAL FINDING:
 ;; Each social component is the agency reading of a gate (ARGUMENT C6):
@@ -47,7 +47,7 @@
    {:id :I-connections   :name "Agent connections"
     :type :http-request
     :source "agent / transport layer / peripheral wrapper"
-    :timescale :fast}
+    :timescale :social}
 
    ;; Session environment — existing session state, connected agent set,
    ;; routing tables. The social loop's equivalent of I-environment.
@@ -55,7 +55,7 @@
    {:id :I-session-state :name "Session state"
     :type :xtdb-entity
     :source "session store / connected agent set / routing tables"
-    :timescale :fast}
+    :timescale :social}
 
    ;; === CONSTRAINT INPUTS (slow/glacial) ===
    ;; SHARED with coordination-exotype. I4 requires: no fast-timescale
@@ -87,7 +87,7 @@
     :type :http-request
     :consumer "futon3b gate pipeline (G5 entry point)"
     :spec-ref "futon-theory/agent-contract"
-    :timescale :fast}
+    :timescale :social}
 
    ;; Coordination evidence — typed social coordination records.
    ;; Presence logs, routing decisions, delivery receipts, handoff records.
@@ -97,7 +97,7 @@
     :type :xtdb-entity
     :consumer "proof-path store / L1 observer"
     :spec-ref "futon-theory/proof-path"
-    :timescale :fast}
+    :timescale :social}
 
    ;; Social events — observable telemetry at the social timescale.
    ;; Connection, disconnection, routing, liveness, handoffs.
@@ -105,7 +105,7 @@
     :type :xtdb-entity
     :consumer "monitoring / diagnostics / forum"
     :spec-ref "futon-theory/event-protocol"
-    :timescale :fast}
+    :timescale :social}
 
    ;; Social errors — structured coordination failures with component
    ;; attribution. Dropped messages, routing conflicts, identity failures.
@@ -113,7 +113,7 @@
     :type :error-response
     :consumer "human / retry / monitoring"
     :spec-ref "futon-theory/error-hierarchy"
-    :timescale :fast}]}
+    :timescale :social}]}
 
  :components
  [;; ================================================================
@@ -133,7 +133,7 @@
    :ref "social/ARGUMENT:R7"
    :accepts #{:http-request :config}
    :produces #{:xtdb-entity :error-response}
-   :timescale :fast}
+   :timescale :social}
 
   ;; S-authenticate: Identity resolution.
   ;; Transport ID → typed agent identity. IDs must be typed and distinct
@@ -146,7 +146,7 @@
    :ref "social/ARGUMENT:R6"
    :accepts #{:xtdb-entity :config}
    :produces #{:xtdb-entity :error-response}
-   :timescale :fast}
+   :timescale :social}
 
   ;; S-mode: Mode classification.
   ;; Incoming messages → typed coordination events vs action events.
@@ -159,7 +159,7 @@
    :ref "social/ARGUMENT:R10"
    :accepts #{:xtdb-entity :config}
    :produces #{:xtdb-entity :error-response}
-   :timescale :fast}
+   :timescale :social}
 
   ;; S-dispatch: Message dispatch.
   ;; Route typed coordination events to recipients with delivery receipts.
@@ -174,7 +174,7 @@
    :ref "social/ARGUMENT:R1+R2"
    :accepts #{:xtdb-entity}
    :produces #{:xtdb-entity :http-request :error-response}
-   :timescale :fast}
+   :timescale :social}
 
   ;; S-validate: Coordination outcome validation.
   ;; Validates that coordination produced a well-formed outcome.
@@ -187,7 +187,7 @@
    :ref "social/ARGUMENT:R5"
    :accepts #{:xtdb-entity :config}
    :produces #{:xtdb-entity :error-response}
-   :timescale :fast}
+   :timescale :social}
 
   ;; S-persist: Session continuity.
   ;; Persist session state so it's recoverable. One transcript is
@@ -200,7 +200,7 @@
    :ref "social/ARGUMENT:R8+R9"
    :accepts #{:xtdb-entity}
    :produces #{:xtdb-entity :error-response}
-   :timescale :fast}
+   :timescale :social}
 
   ;; ================================================================
   ;; DEFAULT MODE (I6 compositional closure)
@@ -214,7 +214,7 @@
    :ref "chapter0/default-mode-network"
    :accepts #{:xtdb-entity :config}
    :produces #{:http-request :xtdb-entity}
-   :timescale :fast}]
+   :timescale :social}]
 
  :edges
  [;; ================================================================
@@ -231,8 +231,8 @@
   {:from :S-validate     :to :S-persist       :type :xtdb-entity}
 
   ;; ================================================================
-  ;; CONSTRAINT INPUTS (slow/glacial → fast social components)
-  ;; I3: slow constrains fast. I4: no fast→constraint path.
+  ;; CONSTRAINT INPUTS (slow/glacial → social components)
+  ;; I3: slow constrains fast. I4: no social→constraint path.
   ;; ================================================================
 
   ;; Registry constrains presence (who should be here?)
