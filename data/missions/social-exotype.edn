@@ -1,0 +1,125 @@
+;; Social layer exotype (abstract role diagram).
+;;
+;; This diagram is intended to be composable with `coordination-exotype`:
+;; - It shares slow constraint inputs: I-patterns, I-registry
+;; - It emits task submissions (http-request) that can feed I-request
+;;
+;; Timescale note:
+;; Components in this diagram operate at :social timescale (faster than :fast),
+;; but must not write to constraint inputs (I3) and must not have any output ->
+;; constraint path (I4).
+
+{:mission/id :social-exotype
+ :mission/state :active
+
+ :ports
+ {:input
+  [;; Social context / observed activity.
+   {:id :I-social-context :name "Social context"
+    :type :xtdb-entity
+    :source "forum / chat / observation log"
+    :timescale :social}
+
+   ;; Shared constraints (must match coordination-exotype).
+   {:id :I-patterns :name "Pattern library"
+    :type :config
+    :source "library/**/*.flexiarg"
+    :timescale :glacial
+    :constraint true}
+
+   {:id :I-registry :name "Agent registry"
+    :type :config
+    :source "agent registry / capability declarations"
+    :timescale :slow
+    :constraint true}]
+
+  :output
+  [;; Task submissions that can be fed directly into the coordination request port.
+   {:id :O-task-submissions :name "Task submissions"
+    :type :http-request
+    :consumer "coordination gate pipeline"
+    :spec-ref "social/task-submission"
+    :timescale :social}
+
+   ;; Evidence emitted by the social layer itself.
+   {:id :O-social-evidence :name "Social evidence"
+    :type :xtdb-entity
+    :consumer "coordination / pattern library / analysis"
+    :spec-ref "social/evidence"
+    :timescale :social}
+
+   {:id :O-errors :name "Social errors"
+    :type :error-response
+    :consumer "human"
+    :spec-ref "social/errors"
+    :timescale :social}]}
+
+ :components
+ [;; Default mode provides a redundant path to produce outputs (I6).
+  {:id :S-default :name "Default mode (social)"
+   :type :abstract-role
+   :accepts #{:xtdb-entity :config}
+   :produces #{:http-request :xtdb-entity}
+   :timescale :social}
+
+  {:id :S-intake :name "Intake / normalize"
+   :type :abstract-role
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :social}
+
+  {:id :S-model :name "Situation model / draft request"
+   :type :abstract-role
+   :accepts #{:xtdb-entity :config}
+   :produces #{:http-request :xtdb-entity}
+   :timescale :social}
+
+  {:id :S-authorize :name "Authorization / routing"
+   :type :abstract-role
+   :accepts #{:http-request :config}
+   :produces #{:http-request :error-response}
+   :timescale :social}
+
+  {:id :S-package :name "Package / emit request + evidence"
+   :type :abstract-role
+   :accepts #{:http-request :config}
+   :produces #{:http-request :xtdb-entity}
+   :timescale :social}
+
+  {:id :S-log :name "Evidence logging"
+   :type :abstract-role
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity}
+   :timescale :social}
+
+  {:id :S-error :name "Error adapter"
+   :type :abstract-role
+   :accepts #{:error-response}
+   :produces #{:error-response}
+   :timescale :social}]
+
+ :edges
+ [;; Inputs -> default mode (redundant output path)
+  {:from :I-social-context :to :S-default :type :xtdb-entity}
+  {:from :I-patterns :to :S-default :type :config}
+  {:from :S-default :to :O-task-submissions :type :http-request}
+  {:from :S-default :to :O-social-evidence :type :xtdb-entity}
+
+  ;; Main path: context -> intake -> model -> authorize -> package
+  {:from :I-social-context :to :S-intake :type :xtdb-entity}
+  {:from :S-intake :to :S-model :type :xtdb-entity}
+  {:from :I-patterns :to :S-model :type :config}
+  {:from :S-model :to :S-authorize :type :http-request}
+  {:from :I-registry :to :S-authorize :type :config}
+  {:from :S-authorize :to :S-package :type :http-request}
+  {:from :I-patterns :to :S-package :type :config}
+
+  ;; Outputs
+  {:from :S-package :to :O-task-submissions :type :http-request}
+  {:from :S-package :to :S-log :type :xtdb-entity}
+  {:from :S-log :to :O-social-evidence :type :xtdb-entity}
+
+  ;; Error emission path (no output->constraint edges)
+  {:from :S-authorize :to :S-error :type :error-response}
+  {:from :S-error :to :O-errors :type :error-response}]}
+

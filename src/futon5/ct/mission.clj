@@ -78,7 +78,7 @@
 (def timescale-order
   "Ordered timescales from fastest to slowest.
    Index = speed rank. Higher rank = slower."
-  [:fast :medium :slow :glacial])
+  [:social :fast :medium :slow :glacial])
 
 (def timescale-rank
   "Map timescale keyword to numeric rank for comparison."
@@ -435,6 +435,51 @@
 ;;; Mission Composition
 ;;; ============================================================
 
+(defn- prefixed-id
+  [mission-id id]
+  (keyword (str (name mission-id) "." (name id))))
+
+(defn- shared-constraint-ports
+  "Return a map of port-id -> merged port definition for shared constraint inputs.
+
+  A shared constraint input is defined as:
+  - present in both missions' :ports :input
+  - :constraint true in both
+  - same :id and same :type
+
+  If core attributes differ, throw: shared constraints are intended as a stable
+  contract between diagrams."
+  [diagram-a diagram-b]
+  (let [a-ports (->> (get-in diagram-a [:ports :input])
+                     (filter :constraint)
+                     (map (juxt :id identity))
+                     (into {}))
+        b-ports (->> (get-in diagram-b [:ports :input])
+                     (filter :constraint)
+                     (map (juxt :id identity))
+                     (into {}))
+        shared-ids (clojure.set/intersection (set (keys a-ports))
+                                             (set (keys b-ports)))]
+    (reduce
+      (fn [m id]
+        (let [a (get a-ports id)
+              b (get b-ports id)]
+          (when-not (= (:type a) (:type b))
+            (throw (ex-info "Shared constraint input has mismatched :type."
+                            {:port/id id
+                             :diagram-a/type (:type a)
+                             :diagram-b/type (:type b)})))
+          (let [a-core (select-keys a [:id :type :constraint :timescale])
+                b-core (select-keys b [:id :type :constraint :timescale])]
+            (when-not (= a-core b-core)
+              (throw (ex-info "Shared constraint input has mismatched core attributes."
+                              {:port/id id
+                               :diagram-a a-core
+                               :diagram-b b-core}))))
+          (assoc m id a)))
+      {}
+      shared-ids)))
+
 (defn composable?
   "Can mission-a's outputs feed mission-b's inputs?
    Returns the set of matching port pairs, or empty if not composable."
@@ -466,24 +511,25 @@
                                         (get-in diagram-a [:ports :output]))
             remaining-b-inputs  (remove #(matched-b-ports (:id %))
                                         (get-in diagram-b [:ports :input]))
+            prefix-port (fn [mission-id p]
+                          (update p :id (fn [id] (prefixed-id mission-id id))))
             ;; All components from both missions
             all-components (concat
-                            (map #(update % :id (fn [id] (keyword (str (name (:mission/id diagram-a)) "." (name id)))))
+                            (map #(update % :id (fn [id] (prefixed-id (:mission/id diagram-a) id)))
                                  (:components diagram-a))
-                            (map #(update % :id (fn [id] (keyword (str (name (:mission/id diagram-b)) "." (name id)))))
+                            (map #(update % :id (fn [id] (prefixed-id (:mission/id diagram-b) id)))
                                  (:components diagram-b)))
             ;; Prefix edges
             prefix-edge (fn [mission-id edge]
-                          (let [pfx (name mission-id)]
-                            (-> edge
-                                (update :from (fn [id] (keyword (str pfx "." (name id)))))
-                                (update :to   (fn [id] (keyword (str pfx "." (name id))))))))
+                          (-> edge
+                              (update :from (fn [id] (prefixed-id mission-id id)))
+                              (update :to   (fn [id] (prefixed-id mission-id id)))))
             a-edges (map (partial prefix-edge (:mission/id diagram-a)) (:edges diagram-a))
             b-edges (map (partial prefix-edge (:mission/id diagram-b)) (:edges diagram-b))
             ;; Composition edges (a-output → b-input)
             comp-edges (map (fn [{:keys [from-port to-port from-type]}]
-                              {:from (keyword (str (name (:mission/id diagram-a)) "." (name from-port)))
-                               :to   (keyword (str (name (:mission/id diagram-b)) "." (name to-port)))
+                              {:from (prefixed-id (:mission/id diagram-a) from-port)
+                               :to   (prefixed-id (:mission/id diagram-b) to-port)
                                :type from-type})
                             port-matches)]
         (mission-diagram
@@ -491,12 +537,84 @@
                                      "→"
                                      (name (:mission/id diagram-b))))
            :mission/state :composed
-           :ports {:input  (concat (get-in diagram-a [:ports :input])
-                                   (vec remaining-b-inputs))
-                   :output (concat (vec remaining-a-outputs)
-                                   (get-in diagram-b [:ports :output]))}
+           :ports {:input  (concat (map (partial prefix-port (:mission/id diagram-a))
+                                        (get-in diagram-a [:ports :input]))
+                                   (map (partial prefix-port (:mission/id diagram-b))
+                                        (vec remaining-b-inputs)))
+                   :output (concat (map (partial prefix-port (:mission/id diagram-a))
+                                        (vec remaining-a-outputs))
+                                   (map (partial prefix-port (:mission/id diagram-b))
+                                        (get-in diagram-b [:ports :output])))}
            :components (vec all-components)
            :edges (vec (concat a-edges b-edges comp-edges))})))))
+
+(defn compose-parallel
+  "Compose diagram-a and diagram-b \"in parallel\" by:
+  - merging shared constraint inputs (same :id, :type, :constraint true)
+  - prefixing all other ids with the mission id
+  - adding cross-diagram edges where output types in A match input types in B
+
+  Returns a composed mission diagram, or nil if there are no shared constraints
+  and no type-compatible cross-diagram connections."
+  [diagram-a diagram-b]
+  (let [a-id (:mission/id diagram-a)
+        b-id (:mission/id diagram-b)
+        shared (shared-constraint-ports diagram-a diagram-b)
+        shared-ids (set (keys shared))
+        matches (composable? diagram-a diagram-b)]
+    (when (or (seq shared-ids) (seq matches))
+      (let [shared-ports (->> (keys shared) sort (map shared) vec)
+            matched-a-outputs (set (map :from-port matches))
+            matched-b-inputs  (set (map :to-port matches))
+            prefix-endpoint (fn [mission-id id]
+                              (if (shared-ids id)
+                                id
+                                (prefixed-id mission-id id)))
+            prefix-port (fn [mission-id p]
+                          (if (shared-ids (:id p))
+                            (get shared (:id p))
+                            (update p :id (fn [id] (prefixed-id mission-id id)))))
+            prefix-component (fn [mission-id c]
+                               (update c :id (fn [id] (prefixed-id mission-id id))))
+            prefix-edge (fn [mission-id e]
+                          (-> e
+                              (update :from (fn [id] (prefix-endpoint mission-id id)))
+                              (update :to   (fn [id] (prefix-endpoint mission-id id)))))
+            inputs (vec (concat shared-ports
+                                (->> (get-in diagram-a [:ports :input])
+                                     (remove (fn [p] (shared-ids (:id p))))
+                                     (map (partial prefix-port a-id)))
+                                (->> (get-in diagram-b [:ports :input])
+                                     (remove (fn [p]
+                                               (or (shared-ids (:id p))
+                                                   ;; Inputs satisfied by cross-diagram wiring become internal.
+                                                   (and (matched-b-inputs (:id p))
+                                                        (not (shared-ids (:id p)))))))
+                                     (map (partial prefix-port b-id)))))
+            ;; Outputs that feed cross-diagram connections become internal wires,
+            ;; not boundary outputs. Keeping them as outputs would create
+            ;; output->constraint paths (violating I4) in composed diagrams.
+            outputs (vec (concat (->> (get-in diagram-a [:ports :output])
+                                      (remove (fn [p] (matched-a-outputs (:id p))))
+                                      (map (partial prefix-port a-id)))
+                                 (map (partial prefix-port b-id) (get-in diagram-b [:ports :output]))))
+            components (vec (concat (map (partial prefix-component a-id) (:components diagram-a))
+                                    (map (partial prefix-component b-id) (:components diagram-b))))
+            comp-edges (map (fn [{:keys [from-port to-port from-type]}]
+                              {:from (prefix-endpoint a-id from-port)
+                               :to   (prefix-endpoint b-id to-port)
+                               :type from-type})
+                            matches)
+            edges (vec (concat (map (partial prefix-edge a-id) (:edges diagram-a))
+                               (map (partial prefix-edge b-id) (:edges diagram-b))
+                               comp-edges))]
+        (mission-diagram
+          {:mission/id (keyword (str (name a-id) "||" (name b-id)))
+           :mission/state :composed
+           :ports {:input inputs
+                   :output outputs}
+           :components components
+           :edges edges})))))
 
 ;;; ============================================================
 ;;; Rendering (EDN → Mermaid for human review)
