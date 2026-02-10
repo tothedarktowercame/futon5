@@ -4,7 +4,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
-            [futon5.mmca.runtime :as runtime]))
+            [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -282,10 +283,11 @@
      :regime-classes (count (set regimes))}))
 
 (defn- rows->csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join "\n" (map #(str/join "," %) rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn -main [& args]
   (let [{:keys [help unknown seeds windows W S length kernel sigil sigil-count out
@@ -364,7 +366,7 @@
                    out)
         (doseq [[controller windows] grouped]
           (println (format "%s stats: %s" (name controller) (stats-for-controller windows))))
-        (println "Wrote" out)))))
+        nil)))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

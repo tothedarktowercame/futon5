@@ -28,6 +28,7 @@ run_one() {
   local ch_width="$5"
   local tag="env-${mode}-e${ent_center}-w${ent_width}-c${ch_center}-cw${ch_width}"
   local log_path="$log_root/mission-0-${tag}-${timestamp}.edn"
+  local psr_pur_path="$log_root/psr-pur-${tag}-${timestamp}.edn"
 
   bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
     --runs 50 \
@@ -40,10 +41,12 @@ run_one() {
     --envelope-width "$ent_width" \
     --envelope-change-center "$ch_center" \
     --envelope-change-width "$ch_width" \
-    --hexagram-log "$log_root/psr-pur-${tag}-${timestamp}.edn" \
+    --hexagram-log "$psr_pur_path" \
     --log "$log_path"
 
-  echo "Log: $log_path"
+  echo "Outputs:"
+  echo "  Log:     $log_path"
+  echo "  PSR/PUR: $psr_pur_path"
 }
 
 for entry in "${regimes[@]}"; do

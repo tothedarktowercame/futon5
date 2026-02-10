@@ -15,7 +15,8 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [futon5.adapters.cyberant :as cyber]))
+            [futon5.adapters.cyberant :as cyber]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -68,8 +69,7 @@
        vec))
 
 (defn- write-edn [path data]
-  (spit path (pr-str data))
-  (println "Wrote:" path))
+  (out/spit-text! path (pr-str data)))
 
 (defn- config-summary [config]
   (select-keys config [:species :wiring-pattern :default-mode
@@ -95,6 +95,7 @@
         (println)
 
         ;; Ensure output directory exists
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
 
         ;; Convert wiring to cyberant
@@ -142,8 +143,8 @@
               (println)
               (println "Run in futon2:")
               (println (format "  clj -M -m ants.compare \\"))
-              (println (format "    --hex %s \\" wiring-path))
-              (println (format "    --sigil %s \\" sigil-path))
+              (println (format "    --hex %s \\" (out/abs-path wiring-path)))
+              (println (format "    --sigil %s \\" (out/abs-path sigil-path)))
               (println "    --runs 20 --ticks 200"))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))

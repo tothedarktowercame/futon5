@@ -1,125 +1,301 @@
-;; Social layer exotype (abstract role diagram).
+;; Abstract social coordination diagram — the social exotype.
 ;;
-;; This diagram is intended to be composable with `coordination-exotype`:
-;; - It shares slow constraint inputs: I-patterns, I-registry
-;; - It emits task submissions (http-request) that can feed I-request
+;; This is NOT a mission spec. It is the abstract wiring diagram that
+;; specifies what any social coordination system must look like to be
+;; coherent. A concrete mission (futon3c implementation) is valid iff
+;; it projects onto this diagram — mapping its components to these roles
+;; while preserving structure, types, and invariants.
 ;;
-;; Timescale note:
-;; Components in this diagram operate at :social timescale (faster than :fast),
-;; but must not write to constraint inputs (I3) and must not have any output ->
-;; constraint path (I4).
+;; Derived from: library/social/ARGUMENT.flexiarg
+;; Requirements: R1-R11 (from agency + realtime patterns via futon-theory)
+;; Convergence: C6 (each component is the agency reading of a gate)
+;;
+;; The social exotype is the THIRD AIF loop in the futon stack:
+;;   Level 0 fast:    Task execution through the gate pipeline (coordination-exotype)
+;;   Level 1 glacial: Library evolution through canonicalization (coordination-exotype)
+;;   Social:          Agent coordination at real-time timescale (THIS DIAGRAM)
+;;
+;; The three loops share constraint inputs (I-patterns, I-registry).
+;; Social outputs feed into Level 0 (task submissions through gates).
+;; Social evidence feeds into Level 1 (L1-observe scans for tensions).
+;;
+;; TIMESCALE:
+;; Components use :social — the fastest timescale in the stack (~seconds).
+;; Timescale order: [:social :fast :medium :slow :glacial]
+;; Constraint inputs (:glacial, :slow) constrain social components (I3).
+;; No social output reaches any constraint input (I4).
+;;
+;; STRUCTURAL FINDING:
+;; Each social component is the agency reading of a gate (ARGUMENT C6):
+;;   S-presence    ↔ G5 (Is the agent present and ready?)
+;;   S-authenticate ↔ G4 (Is this agent who they claim to be?)
+;;   S-mode        ↔ G3 (Is this coordination or action?)
+;;   S-dispatch    ↔ G2 (Route within constraints)
+;;   S-validate    ↔ G1 (Is the coordination outcome valid?)
+;;   S-persist     ↔ G0 (Is the session state durable?)
+;; This is not analogy — it is the unimplemented half of the duality table.
 
 {:mission/id :social-exotype
  :mission/state :active
 
  :ports
  {:input
-  [;; Social context / observed activity.
-   {:id :I-social-context :name "Social context"
-    :type :xtdb-entity
-    :source "forum / chat / observation log"
+  [;; === SOCIAL-TIMESCALE INPUTS ===
+
+   ;; Agent connection events — WebSocket opens, IRC joins, peripheral hops.
+   ;; The raw input that triggers the social pipeline.
+   {:id :I-connections   :name "Agent connections"
+    :type :http-request
+    :source "agent / transport layer / peripheral wrapper"
     :timescale :social}
 
-   ;; Shared constraints (must match coordination-exotype).
-   {:id :I-patterns :name "Pattern library"
+   ;; Session environment — existing session state, connected agent set,
+   ;; routing tables. The social loop's equivalent of I-environment.
+   ;; NOT a constraint: session state is mutable, like the codebase.
+   {:id :I-session-state :name "Session state"
+    :type :xtdb-entity
+    :source "session store / connected agent set / routing tables"
+    :timescale :social}
+
+   ;; === CONSTRAINT INPUTS (slow/glacial) ===
+   ;; SHARED with coordination-exotype. I4 requires: no fast-timescale
+   ;; internal path from outputs back to these.
+
+   ;; Pattern library — constrains how coordination is done.
+   ;; At the social timescale: mode classification, protocol selection.
+   ;; SHARED: same I-patterns as coordination-exotype and L1-canon.
+   {:id :I-patterns      :name "Pattern library"
     :type :config
     :source "library/**/*.flexiarg"
     :timescale :glacial
     :constraint true}
 
-   {:id :I-registry :name "Agent registry"
+   ;; Agent registry — who can connect, what they can do.
+   ;; At the social timescale: presence verification, identity resolution.
+   ;; SHARED: same I-registry as coordination-exotype G4.
+   {:id :I-registry      :name "Agent registry"
     :type :config
     :source "agent registry / capability declarations"
     :timescale :slow
     :constraint true}]
 
   :output
-  [;; Task submissions that can be fed directly into the coordination request port.
-   {:id :O-task-submissions :name "Task submissions"
+  [;; Task submissions — coordination outcomes formatted as gate pipeline
+   ;; inputs. This is the social→task boundary: where agent coordination
+   ;; produces work requests that enter the gate pipeline at G5.
+   {:id :O-task-submissions     :name "Task submissions"
     :type :http-request
-    :consumer "coordination gate pipeline"
-    :spec-ref "social/task-submission"
+    :consumer "futon3b gate pipeline (G5 entry point)"
+    :spec-ref "futon-theory/agent-contract"
     :timescale :social}
 
-   ;; Evidence emitted by the social layer itself.
-   {:id :O-social-evidence :name "Social evidence"
+   ;; Coordination evidence — typed social coordination records.
+   ;; Presence logs, routing decisions, delivery receipts, handoff records.
+   ;; These are the social-timescale proof-path entries (ARGUMENT C3):
+   ;; the L1 observer can scan these for social-timescale tensions.
+   {:id :O-coordination-evidence :name "Coordination evidence"
     :type :xtdb-entity
-    :consumer "coordination / pattern library / analysis"
-    :spec-ref "social/evidence"
+    :consumer "proof-path store / L1 observer"
+    :spec-ref "futon-theory/proof-path"
     :timescale :social}
 
-   {:id :O-errors :name "Social errors"
+   ;; Social events — observable telemetry at the social timescale.
+   ;; Connection, disconnection, routing, liveness, handoffs.
+   {:id :O-social-events        :name "Social events"
+    :type :xtdb-entity
+    :consumer "monitoring / diagnostics / forum"
+    :spec-ref "futon-theory/event-protocol"
+    :timescale :social}
+
+   ;; Social errors — structured coordination failures with component
+   ;; attribution. Dropped messages, routing conflicts, identity failures.
+   {:id :O-social-errors        :name "Social errors"
     :type :error-response
-    :consumer "human"
-    :spec-ref "social/errors"
+    :consumer "human / retry / monitoring"
+    :spec-ref "futon-theory/error-hierarchy"
     :timescale :social}]}
 
  :components
- [;; Default mode provides a redundant path to produce outputs (I6).
-  {:id :S-default :name "Default mode (social)"
+ [;; ================================================================
+  ;; THE SOCIAL PIPELINE
+  ;; Six components in sequence, each the agency reading of a gate.
+  ;; The pipeline IS the social boundary (I1).
+  ;; ================================================================
+
+  ;; S-presence: Presence verification.
+  ;; Is the agent connected AND ready? (not just TCP-open)
+  ;; Connection must be followed by explicit readiness handshake.
+  ;; Agency reading of G5: "Is the agent present and ready?"
+  ;; Requirement: R7 (rendezvous-handshake)
+  ;; Grounding: futon-theory/event-protocol (OBSERVE before PROPOSE_CLAIM)
+  {:id :S-presence     :name "S-presence: Presence verification"
    :type :abstract-role
+   :ref "social/ARGUMENT:R7"
+   :accepts #{:http-request :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; S-authenticate: Identity resolution.
+  ;; Transport ID → typed agent identity. IDs must be typed and distinct
+  ;; (transport, continuity, protocol are different namespaces).
+  ;; Agency reading of G4: "Is this agent who they claim to be?"
+  ;; Requirement: R6 (identifier-separation)
+  ;; Grounding: futon-theory/single-source-of-truth (I1)
+  {:id :S-authenticate :name "S-authenticate: Identity resolution"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R6"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; S-mode: Mode classification.
+  ;; Incoming messages → typed coordination events vs action events.
+  ;; Coordination talk and action talk must be distinguishable.
+  ;; Agency reading of G3: "Is this coordination or action?"
+  ;; Requirement: R10 (mode-gate)
+  ;; Grounding: futon-theory/agent-contract (observe before act)
+  {:id :S-mode         :name "S-mode: Mode classification"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R10"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; S-dispatch: Message dispatch.
+  ;; Route typed coordination events to recipients with delivery receipts.
+  ;; Exactly one routing authority per agent-id at any time.
+  ;; The ONLY component that mutates session state (I2).
+  ;; Agency reading of G2: "Route within constraints"
+  ;; Requirements: R1 (delivery-receipt), R2 (single-routing-authority)
+  ;; Grounding: futon-theory/proof-path (auditable chains),
+  ;;            futon-theory/single-source-of-truth (I1)
+  {:id :S-dispatch     :name "S-dispatch: Message dispatch"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R1+R2"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity :http-request :error-response}
+   :timescale :social}
+
+  ;; S-validate: Coordination outcome validation.
+  ;; Validates that coordination produced a well-formed outcome.
+  ;; Bounded lifecycle: all transient resources have deterministic bounds.
+  ;; Agency reading of G1: "Is the coordination outcome valid?"
+  ;; Requirement: R5 (bounded-lifecycle)
+  ;; Grounding: futon-theory/agent-contract (respect invariants)
+  {:id :S-validate     :name "S-validate: Coordination validation"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R5"
+   :accepts #{:xtdb-entity :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; S-persist: Session continuity.
+  ;; Persist session state so it's recoverable. One transcript is
+  ;; authoritative. Events are structured and machine-parseable.
+  ;; Agency reading of G0: "Is the session state durable?"
+  ;; Requirements: R8 (authoritative-transcript), R9 (structured-events)
+  ;; Grounding: futon-theory/durability-first (I0)
+  {:id :S-persist      :name "S-persist: Session continuity"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R8+R9"
+   :accepts #{:xtdb-entity}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; ================================================================
+  ;; DEFAULT MODE (I6 compositional closure)
+  ;; What the social loop does between coordination events:
+  ;; liveness checks, reconnection, keepalive, session persistence.
+  ;; If the social pipeline stalls, this sustains the system.
+  ;; ================================================================
+
+  {:id :S-default      :name "Default mode (inter-coordination)"
+   :type :abstract-role
+   :ref "chapter0/default-mode-network"
    :accepts #{:xtdb-entity :config}
    :produces #{:http-request :xtdb-entity}
-   :timescale :social}
-
-  {:id :S-intake :name "Intake / normalize"
-   :type :abstract-role
-   :accepts #{:xtdb-entity}
-   :produces #{:xtdb-entity}
-   :timescale :social}
-
-  {:id :S-model :name "Situation model / draft request"
-   :type :abstract-role
-   :accepts #{:xtdb-entity :config}
-   :produces #{:http-request :xtdb-entity}
-   :timescale :social}
-
-  {:id :S-authorize :name "Authorization / routing"
-   :type :abstract-role
-   :accepts #{:http-request :config}
-   :produces #{:http-request :error-response}
-   :timescale :social}
-
-  {:id :S-package :name "Package / emit request + evidence"
-   :type :abstract-role
-   :accepts #{:http-request :config}
-   :produces #{:http-request :xtdb-entity}
-   :timescale :social}
-
-  {:id :S-log :name "Evidence logging"
-   :type :abstract-role
-   :accepts #{:xtdb-entity}
-   :produces #{:xtdb-entity}
-   :timescale :social}
-
-  {:id :S-error :name "Error adapter"
-   :type :abstract-role
-   :accepts #{:error-response}
-   :produces #{:error-response}
    :timescale :social}]
 
  :edges
- [;; Inputs -> default mode (redundant output path)
-  {:from :I-social-context :to :S-default :type :xtdb-entity}
-  {:from :I-patterns :to :S-default :type :config}
-  {:from :S-default :to :O-task-submissions :type :http-request}
-  {:from :S-default :to :O-social-evidence :type :xtdb-entity}
+ [;; ================================================================
+  ;; SOCIAL PIPELINE (sequential)
+  ;; I-connections → S-presence → S-authenticate → S-mode →
+  ;; S-dispatch → S-validate → S-persist
+  ;; ================================================================
 
-  ;; Main path: context -> intake -> model -> authorize -> package
-  {:from :I-social-context :to :S-intake :type :xtdb-entity}
-  {:from :S-intake :to :S-model :type :xtdb-entity}
-  {:from :I-patterns :to :S-model :type :config}
-  {:from :S-model :to :S-authorize :type :http-request}
-  {:from :I-registry :to :S-authorize :type :config}
-  {:from :S-authorize :to :S-package :type :http-request}
-  {:from :I-patterns :to :S-package :type :config}
+  {:from :I-connections  :to :S-presence      :type :http-request}
+  {:from :S-presence     :to :S-authenticate  :type :xtdb-entity}
+  {:from :S-authenticate :to :S-mode          :type :xtdb-entity}
+  {:from :S-mode         :to :S-dispatch      :type :xtdb-entity}
+  {:from :S-dispatch     :to :S-validate      :type :xtdb-entity}
+  {:from :S-validate     :to :S-persist       :type :xtdb-entity}
 
-  ;; Outputs
-  {:from :S-package :to :O-task-submissions :type :http-request}
-  {:from :S-package :to :S-log :type :xtdb-entity}
-  {:from :S-log :to :O-social-evidence :type :xtdb-entity}
+  ;; ================================================================
+  ;; CONSTRAINT INPUTS (slow/glacial → social components)
+  ;; I3: slow constrains fast. I4: no social→constraint path.
+  ;; ================================================================
 
-  ;; Error emission path (no output->constraint edges)
-  {:from :S-authorize :to :S-error :type :error-response}
-  {:from :S-error :to :O-errors :type :error-response}]}
+  ;; Registry constrains presence (who should be here?)
+  ;; and authentication (who is this agent?)
+  {:from :I-registry     :to :S-presence      :type :config}
+  {:from :I-registry     :to :S-authenticate  :type :config}
 
+  ;; Patterns constrain mode classification (how to classify messages)
+  ;; and coordination validation (what counts as valid coordination)
+  {:from :I-patterns     :to :S-mode          :type :config}
+  {:from :I-patterns     :to :S-validate      :type :config}
+
+  ;; ================================================================
+  ;; SESSION STATE (I2: observation-action asymmetry)
+  ;; S-dispatch is the ONLY component that reads and writes session state.
+  ;; ================================================================
+
+  {:from :I-session-state :to :S-dispatch     :type :xtdb-entity}  ; read routing tables
+  {:from :S-dispatch     :to :I-session-state :type :xtdb-entity}  ; update routing tables
+
+  ;; ================================================================
+  ;; MODE CLASSIFICATION FLOWS (analogous to PSR flow in coordination)
+  ;; S-mode's classification guides dispatch and validation,
+  ;; like G3's PSR guides G2 execution and G1 validation.
+  ;; ================================================================
+
+  {:from :S-mode         :to :S-dispatch      :type :xtdb-entity}  ; mode guides routing
+  {:from :S-mode         :to :S-validate      :type :xtdb-entity}  ; mode criteria for validation
+
+  ;; ================================================================
+  ;; DEFAULT MODE (I6: compositional closure)
+  ;; Parallel path: session observation → liveness action.
+  ;; Does NOT receive pattern constraints (pre-deliberative).
+  ;; ================================================================
+
+  {:from :I-session-state :to :S-default      :type :xtdb-entity}  ; observe session state
+  {:from :I-registry     :to :S-default       :type :config}        ; check who's expected
+  {:from :S-default      :to :I-connections   :type :http-request}  ; generate reconnection/keepalive
+  {:from :S-default      :to :O-social-events :type :xtdb-entity}   ; emit liveness telemetry
+
+  ;; ================================================================
+  ;; OUTPUTS
+  ;; ================================================================
+
+  ;; Task submissions: coordination outcomes → gate pipeline entry
+  ;; THIS IS THE SOCIAL → TASK BOUNDARY
+  {:from :S-dispatch     :to :O-task-submissions      :type :http-request}
+
+  ;; Coordination evidence: typed social records → proof-path store
+  {:from :S-validate     :to :O-coordination-evidence :type :xtdb-entity}
+  {:from :S-persist      :to :O-coordination-evidence :type :xtdb-entity}
+
+  ;; Social events: telemetry from dispatch and persistence
+  {:from :S-dispatch     :to :O-social-events         :type :xtdb-entity}
+  {:from :S-persist      :to :O-social-events         :type :xtdb-entity}
+
+  ;; ================================================================
+  ;; ERROR PROPAGATION (all social components can reject)
+  ;; ================================================================
+
+  {:from :S-presence     :to :O-social-errors :type :error-response}
+  {:from :S-authenticate :to :O-social-errors :type :error-response}
+  {:from :S-mode         :to :O-social-errors :type :error-response}
+  {:from :S-dispatch     :to :O-social-errors :type :error-response}
+  {:from :S-validate     :to :O-social-errors :type :error-response}
+  {:from :S-persist      :to :O-social-errors :type :error-response}]}

@@ -5,7 +5,8 @@
             [futon5.hexagram.metrics :as hex]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as mmca-metrics]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -334,88 +335,91 @@
           window-sizes))
 
 (defn- write-windows [path rows]
-  (spit path
-        (str (csv-row ["seed" "variant" "signal" "window_size" "window_idx"
-                       "alpha" "gap" "rank" "class" "fitness"
-                       "activity" "entropy" "change" "motif"])
-             "\n"
-             (str/join
-              "\n"
-              (map (fn [row]
-                     (csv-row [(get row :seed)
-                               (name (:variant row))
-                               (name (:signal row))
-                               (get row :window-size)
-                               (get row :window-idx)
-                               (get row :alpha)
-                               (get row :gap)
-                               (get row :rank)
-                               (get row :class)
-                               (get row :fitness)
-                               (get row :activity "")
-                               (get row :entropy "")
-                               (get row :change "")
-                               (get row :motif "")]))
-                   rows)))))
+  (out/spit-text!
+   path
+   (str (csv-row ["seed" "variant" "signal" "window_size" "window_idx"
+                  "alpha" "gap" "rank" "class" "fitness"
+                  "activity" "entropy" "change" "motif"])
+        "\n"
+        (str/join
+         "\n"
+         (map (fn [row]
+                (csv-row [(get row :seed)
+                          (name (:variant row))
+                          (name (:signal row))
+                          (get row :window-size)
+                          (get row :window-idx)
+                          (get row :alpha)
+                          (get row :gap)
+                          (get row :rank)
+                          (get row :class)
+                          (get row :fitness)
+                          (get row :activity "")
+                          (get row :entropy "")
+                          (get row :change "")
+                          (get row :motif "")]))
+              rows)))))
 
 (defn- write-summary [path rows]
   (let [stat (fn [m k] (if (map? m) (get m k "") ""))]
-    (spit path
-          (str (csv-row ["seed" "variant" "signal" "window_size" "window_count"
-                         "alpha_mean" "alpha_std" "alpha_min" "alpha_max"
-                         "gap_mean" "gap_std" "gap_min" "gap_max"
-                         "rank_mean" "rank_std" "rank_min" "rank_max"
-                         "activity_mean" "activity_std" "activity_min" "activity_max"
-                         "entropy_mean" "entropy_std" "entropy_min" "entropy_max"
-                         "change_mean" "change_std" "change_min" "change_max"
-                         "motif_mean" "motif_std" "motif_min" "motif_max"
-                         "dominant_class" "dominance_margin" "stability" "class_hist"])
-               "\n"
-               (str/join
-                "\n"
-                (map (fn [row]
-                       (let [alpha (:alpha row)
-                             gap (:gap row)
-                             rank (:rank row)
-                             activity (:activity row)
-                             entropy (:entropy row)
-                             change (:change row)
-                             motif (:motif row)
-                             {:keys [dominant dominance-margin stability freqs]} (:class-stats row)]
-                         (csv-row [(get row :seed)
-                                   (name (:variant row))
-                                   (name (:signal row))
-                                   (get row :window-size)
-                                   (get row :window-count)
-                                   (stat alpha :mean) (stat alpha :std) (stat alpha :min) (stat alpha :max)
-                                   (stat gap :mean) (stat gap :std) (stat gap :min) (stat gap :max)
-                                   (stat rank :mean) (stat rank :std) (stat rank :min) (stat rank :max)
-                                   (stat activity :mean) (stat activity :std) (stat activity :min) (stat activity :max)
-                                   (stat entropy :mean) (stat entropy :std) (stat entropy :min) (stat entropy :max)
-                                   (stat change :mean) (stat change :std) (stat change :min) (stat change :max)
-                                   (stat motif :mean) (stat motif :std) (stat motif :min) (stat motif :max)
-                                   dominant dominance-margin stability (pr-str freqs)])))
-                     rows))))))
+    (out/spit-text!
+     path
+     (str (csv-row ["seed" "variant" "signal" "window_size" "window_count"
+                    "alpha_mean" "alpha_std" "alpha_min" "alpha_max"
+                    "gap_mean" "gap_std" "gap_min" "gap_max"
+                    "rank_mean" "rank_std" "rank_min" "rank_max"
+                    "activity_mean" "activity_std" "activity_min" "activity_max"
+                    "entropy_mean" "entropy_std" "entropy_min" "entropy_max"
+                    "change_mean" "change_std" "change_min" "change_max"
+                    "motif_mean" "motif_std" "motif_min" "motif_max"
+                    "dominant_class" "dominance_margin" "stability" "class_hist"])
+          "\n"
+          (str/join
+           "\n"
+           (map (fn [row]
+                  (let [alpha (:alpha row)
+                        gap (:gap row)
+                        rank (:rank row)
+                        activity (:activity row)
+                        entropy (:entropy row)
+                        change (:change row)
+                        motif (:motif row)
+                        {:keys [dominant dominance-margin stability freqs]} (:class-stats row)]
+                    (csv-row [(get row :seed)
+                              (name (:variant row))
+                              (name (:signal row))
+                              (get row :window-size)
+                              (get row :window-count)
+                              (stat alpha :mean) (stat alpha :std) (stat alpha :min) (stat alpha :max)
+                              (stat gap :mean) (stat gap :std) (stat gap :min) (stat gap :max)
+                              (stat rank :mean) (stat rank :std) (stat rank :min) (stat rank :max)
+                              (stat activity :mean) (stat activity :std) (stat activity :min) (stat activity :max)
+                              (stat entropy :mean) (stat entropy :std) (stat entropy :min) (stat entropy :max)
+                              (stat change :mean) (stat change :std) (stat change :min) (stat change :max)
+                              (stat motif :mean) (stat motif :std) (stat motif :min) (stat motif :max)
+                              dominant dominance-margin stability (pr-str freqs)])))
+                rows)))))))
 
 (defn- write-selection [path rows]
-  (spit path
-        (str (csv-row ["seed" "variant" "window_size" "selector" "window_idx"
-                       "class" "fitness" "activity" "entropy" "change"])
-             "\n"
-             (str/join
-              "\n"
-              (map (fn [row]
-                     (csv-row [(get row :seed)
-                               (name (:variant row))
-                               (get row :window-size)
-                               (name (:selector row))
-                               (get row :window-idx)
-                               (get row :class)
-                               (get row :fitness)
-                               (get row :activity)
-                               (get row :entropy)
-                               (get row :change)]))
-                   rows)))))
+  (out/spit-text!
+   path
+   (str (csv-row ["seed" "variant" "window_size" "selector" "window_idx"
+                  "class" "fitness" "activity" "entropy" "change"])
+        "\n"
+        (str/join
+         "\n"
+         (map (fn [row]
+                (csv-row [(get row :seed)
+                          (name (:variant row))
+                          (get row :window-size)
+                          (name (:selector row))
+                          (get row :window-idx)
+                          (get row :class)
+                          (get row :fitness)
+                          (get row :activity)
+                          (get row :entropy)
+                          (get row :change)]))
+              rows)))))
 
 (defn -main [& args]
   (let [{:keys [help unknown out-prefix] :as opts} (parse-args args)]
@@ -446,9 +450,7 @@
         (write-windows windows-out (:window-rows results))
         (write-summary summary-out (:summary-rows results))
         (write-selection selection-out (:selection-rows results))
-        (println "Wrote" windows-out)
-        (println "Wrote" summary-out)
-        (println "Wrote" selection-out)))))
+        (println "Outputs prefix:" (out/abs-path out-prefix)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

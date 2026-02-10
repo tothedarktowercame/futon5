@@ -19,8 +19,11 @@
     (catch Throwable _ fallback)))
 
 (defn- ensure-dir! [path]
-  (.mkdirs (io/file path))
-  path)
+  (let [dir (io/file path)]
+    (when (and (.exists dir) (.isDirectory dir) (seq (.listFiles dir)))
+      (println "NOTE: writing into existing non-empty directory:" (.getAbsolutePath dir)))
+    (.mkdirs dir)
+    (.getAbsolutePath dir)))
 
 (defn- write-edn! [path data]
   (spit path (pr-str data))
@@ -52,8 +55,8 @@
         width (env-int "HEX_WIDTH" default-width)
         run-dir (or (System/getenv "HEX_RUN_DIR") default-run-dir)
         wiring-dir (or (System/getenv "HEX_WIRING_DIR") default-wiring-dir)
-        _ (ensure-dir! run-dir)
-        _ (ensure-dir! wiring-dir)]
+        run-dir (ensure-dir! run-dir)
+        wiring-dir (ensure-dir! wiring-dir)]
     (println "Generating hexagram runs...")
     (doseq [n (range 1 65)]
       (when (zero? (mod n 8))

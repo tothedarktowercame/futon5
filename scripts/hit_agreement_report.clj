@@ -1,6 +1,7 @@
 (ns hit-agreement-report
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -172,20 +173,20 @@
                                  scorers [:short :envelope :triad :shift :filament]
                                  results (map #(score-scorer % labeled run-id->scores) scorers)]
                              results))]
-        (spit out
-              (str "count " (count labeled) "\n"
-                   "labels " labels "\n"
-                   "by-controller " by-controller "\n"
-                   (when scores-table
-                     (str "\n| scorer | exact | ordinal | spearman |\n"
-                          "|--------+-------+---------+----------|\n"
-                          (str/join "\n"
-                                    (map (fn [{:keys [scorer accuracy ordinal spearman]}]
-                                           (format "| %s | %.3f | %.3f | %.3f |"
-                                                   (name scorer) accuracy ordinal spearman))
-                                         scores-table))
-                          "\n"))))
-        (println "Wrote" out)))))
+        (out/spit-text!
+         out
+         (str "count " (count labeled) "\n"
+              "labels " labels "\n"
+              "by-controller " by-controller "\n"
+              (when scores-table
+                (str "\n| scorer | exact | ordinal | spearman |\n"
+                     "|--------+-------+---------+----------|\n"
+                     (str/join "\n"
+                               (map (fn [{:keys [scorer accuracy ordinal spearman]}]
+                                      (format "| %s | %.3f | %.3f | %.3f |"
+                                              (name scorer) accuracy ordinal spearman))
+                                    scores-table))
+                     "\n")))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

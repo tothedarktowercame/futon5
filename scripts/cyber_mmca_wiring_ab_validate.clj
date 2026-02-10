@@ -13,6 +13,7 @@
             [futon5.mmca.render :as render]
             [futon5.mmca.runtime :as runtime]
             [futon5.hexagram.logging :as hex-log]
+            [futon5.scripts.output :as out]
             [futon5.xenotype.interpret :as interpret]
             [futon5.xenotype.wiring :as wiring]))
 
@@ -504,6 +505,7 @@
                         :generations generations
                         :controller :wiring
                         :note "replayed from Cyber-MMCA wiring AB validation"}}]
+    (out/warn-overwrite-file! path)
     (spit path (pr-str run))
     path))
 
@@ -683,7 +685,9 @@
             seeds (if (seq seeds)
                     seeds
                     (mapv (fn [_] (rng-int rng Integer/MAX_VALUE)) (range n)))]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
+        (out/warn-overwrite-dir! render-dir)
         (.mkdirs (io/file render-dir))
         (let [rows
               (vec
@@ -883,7 +887,7 @@
                                             (format "%.3f" (double (or (:score-a ants) 0.0)))
                                             (format "%.3f" (double (or (:score-b ants) 0.0)))]))
                            rows)]
-            (spit scores (str header "\n" (str/join "\n" lines) "\n")))
+            (out/spit-text! scores (str header "\n" (str/join "\n" lines) "\n"))))
           (let [table-header "| seed | A | B | ctrl A | ctrl B | short A | short B | env A | env B | triad A | triad B | shift A | shift B | filament A | filament B | vote | ants | final |"
                 table-sep "|-"
                 table-lines (map (fn [{:keys [seed image-a image-b controller-a controller-b scores-a scores-b vote-winner ants final-winner]}]
@@ -908,18 +912,19 @@
                                            (name final-winner)))
                                  rows)
                 table (str/join "\n" (concat [table-header table-sep] table-lines))]
-            (spit out-table table))
-          (spit pairs (pr-str (mapv (fn [{:keys [seed path-a path-b image-a image-b]}]
-                                      {:seed seed
-                                       :a {:path path-a :image image-a}
-                                       :b {:path path-b :image image-b}})
-                                    rows)))
-          (spit inputs (str/join "\n" (mapcat (fn [{:keys [path-a path-b]}] [path-a path-b]) rows)))
-          (println "Runs:" out-dir)
-          (println "Scores:" scores)
-          (println "Table:" out-table)
-          (println "Pairs:" pairs)
-          (println "Inputs:" inputs))))))
+            (out/spit-text! out-table table))
+          (out/spit-text! pairs (pr-str (mapv (fn [{:keys [seed path-a path-b image-a image-b]}]
+                                               {:seed seed
+                                                :a {:path path-a :image image-a}
+                                                :b {:path path-b :image image-b}})
+                                             rows)))
+          (out/spit-text! inputs (str/join "\n" (mapcat (fn [{:keys [path-a path-b]}] [path-a path-b]) rows)))
+          (println "Runs:" (out/abs-path out-dir))
+          (println "Images:" (out/abs-path render-dir))
+          (println "Scores:" (out/abs-path scores))
+          (println "Table:" (out/abs-path out-table))
+          (println "Pairs:" (out/abs-path pairs))
+          (println "Inputs:" (out/abs-path inputs)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))
