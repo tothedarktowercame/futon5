@@ -1,0 +1,65 @@
+;; Grounding Functor: F6 Mission Types → nLab Free Category
+;;
+;; This functor maps the abstract port types and components of the
+;; F6 mission diagrams (f6-ingest, f6-eval) to concrete mathematical
+;; concepts in the nLab knowledge base. 100% grounding — every mission
+;; type corresponds to an actual nLab page with outgoing morphisms.
+;;
+;; The functor validates that our type vocabulary is categorically
+;; coherent: the engineering concepts we use have mathematical backing.
+;;
+;; Generated from: data/hyperreal.json (20,401 objects, 312,854 morphisms)
+;;
+;; Notable groundings:
+;;   C-parse → free functor       (parsing = free construction from data)
+;;   C-tag   → subobject classifier  (classification = Ω in a topos)
+;;   C-cluster → quotient space   (clustering = quotienting by similarity)
+;;   C-bootstrap → colimit        (kernel expansion = iterative completion)
+;;   C-agent-b → modal logic      (graph-enhanced = modal accessibility)
+
+{:functor/name :f6-grounding
+ :functor/source :f6-missions       ;; combined ingest+eval mission category
+ :functor/target :nlab/hyperreal    ;; nLab free category
+
+ ;; Object map: port types → nLab concepts
+ :functor/object-map
+ {:xml-corpus          "string (computer science)"   ;; nLab page 19613, 15 outgoing
+  :json-corpus         "tree"                         ;; nLab page 835, 40 outgoing
+  :embedding-tensor    "tensor"                       ;; nLab page 2174, 28 outgoing
+  :ner-kernel          "formal grammar"               ;; nLab page 14665, 19 outgoing
+  :config              "context"                      ;; nLab page 1327, 24 outgoing
+  :eval-scores         "metric space"                 ;; nLab page 765, 75 outgoing
+  :eval-report         "evaluation map"}              ;; nLab page 7753, 20 outgoing
+
+ ;; Morphism map: components → nLab morphisms (each component is a
+ ;; morphism in the mission category; the grounding maps it to a
+ ;; corresponding nLab concept, which defines a morphism in the
+ ;; free category via its outgoing wiki-links)
+ :functor/morphism-map
+ {:C-parse             "free functor"                 ;; nLab page 2047, 46 outgoing
+  :C-embed             "embedding"                    ;; nLab page 606, 19 outgoing
+  :C-tag               "subobject classifier"         ;; nLab page 274, 113 outgoing (!)
+  :C-cluster           "quotient space"               ;; nLab page 1000, 37 outgoing
+  :C-ner               "formal grammar"               ;; nLab page 14665, 19 outgoing
+  :C-scope             "local homeomorphism"           ;; nLab page 939, 17 outgoing
+  :C-bootstrap         "colimit"                      ;; nLab page 262, 31 outgoing
+  :C-manifest          "evaluation map"               ;; nLab page 7753, 20 outgoing
+  :C-graph-adapter     "database"                     ;; nLab page 10960, 5 outgoing
+  :C-question-select   "sampling theory"              ;; nLab page 13447, 9 outgoing
+  :C-agent-a           "logic"                        ;; nLab page 93, 82 outgoing
+  :C-agent-b           "modal logic"                  ;; nLab page 1204, 76 outgoing
+  :C-judge             "evaluation map"               ;; nLab page 7753, 20 outgoing
+  :C-metrics           "metric space"}                ;; nLab page 765, 75 outgoing
+
+ ;; Morphism preservation evidence: edges in the mission that
+ ;; correspond to paths in the nLab category
+ :functor/preservation-evidence
+ [{:mission-edge [:C-ner :json-corpus]
+   :nlab-path    ["formal grammar" "tree"]
+   :shared-vocab ["derivation" "grammar" "language" "string" "symbol"]}
+  {:mission-edge [:C-agent-a :C-agent-b]
+   :nlab-path    ["logic" "modal logic"]
+   :shared-vocab ["axiom" "logic" "model" "possible" "semantics"]}
+  {:mission-edge [:config :C-agent-a]
+   :nlab-path    ["context" "logic"]
+   :shared-vocab ["category" "context" "interpretation" "structure"]}]}

@@ -1,0 +1,203 @@
+;; Wiring diagram for M-f6-eval: Graph-Enhanced Mathematical Q&A Evaluation.
+;;
+;; This is an evaluation pipeline. M-f6-ingest outputs flow in as inputs,
+;; get assembled into a graph query layer (MathKnowledgeGraph), then two
+;; agents answer the same questions — one bare, one graph-enhanced — and
+;; a judge scores them blind.
+;;
+;; Topology:
+;;
+;;   I-entities ──┐
+;;   I-ner-terms ─┤
+;;   I-patterns ──┼→ C-graph-adapter ──→ C-agent-B ──┐
+;;   I-scopes ────┤       ↓                           │
+;;   I-embeddings ┤  C-question-select                ├→ C-judge → O-scores
+;;   I-clusters ──┘       ↓                           │
+;;                   C-agent-A ───────────────────────┘
+;;                                                     ↓
+;;                                               C-metrics → O-report
+;;
+;; C-graph-adapter (O-2a) composes futon3a/3b query primitives into the
+;; MathKnowledgeGraph interface. This is where the hyperreal dictionary
+;; provides categorical grounding: port types map to nLab concepts via
+;; a grounding functor.
+;;
+;; C-question-select samples 20 (O-2) or 200 (full) questions stratified
+;; by difficulty using cluster and score data.
+;;
+;; Invariant analysis:
+;;   I3 (timescale): Ingest outputs are glacial (frozen after superpod run).
+;;       Question selection is medium. Agent responses and scoring are fast.
+;;       No fast→glacial feedback: evaluation doesn't modify the corpus.
+;;   I4 (exogeneity): LLM model and question set are exogenous constraints.
+;;       Agent outputs do NOT feed back to modify the graph or question pool.
+;;       The judge does NOT see which agent is which (blinded).
+;;   I6 (closure): C-graph-adapter is a SPOF for Agent B's advantage.
+;;       Mitigation: Agent A provides the baseline if adapter fails.
+;;       C-question-select is shared SPOF. Mitigation: pre-computed question
+;;       set can be supplied manually as fallback.
+
+{:mission/id :f6-eval
+ :mission/state :active
+
+ :ports
+ {:input
+  [;; === Outputs from M-f6-ingest (frozen corpus) ===
+   {:id :I-entities     :name "Entities (from ingest)"    :type :json-corpus
+    :source "M-f6-ingest/O-entities"
+    :timescale :glacial}
+
+   {:id :I-ner-terms    :name "NER term hits"             :type :json-corpus
+    :source "M-f6-ingest/O-ner-terms"
+    :timescale :glacial}
+
+   {:id :I-patterns     :name "Pattern tags"              :type :json-corpus
+    :source "M-f6-ingest/O-pattern-tags"
+    :timescale :glacial}
+
+   {:id :I-scopes       :name "Scope records"             :type :json-corpus
+    :source "M-f6-ingest/O-scopes"
+    :note "Futon4-compatible hyperedges (hx/ends with roles)"
+    :timescale :glacial}
+
+   {:id :I-embeddings   :name "Embeddings"                :type :embedding-tensor
+    :source "M-f6-ingest/O-embeddings"
+    :timescale :glacial}
+
+   {:id :I-clusters     :name "Clusters"                  :type :json-corpus
+    :source "M-f6-ingest/O-clusters"
+    :timescale :glacial}
+
+   ;; === Exogenous constraints ===
+   {:id :I-llm          :name "LLM (Claude API)"          :type :config
+    :note "Same model for both agents and judge"
+    :timescale :glacial
+    :constraint true}
+
+   {:id :I-questions     :name "Question set"             :type :config
+    :note "20 (O-2) or 200 (full) stratified questions"
+    :timescale :glacial
+    :constraint true}
+
+   ;; === Hyperreal grounding ===
+   {:id :I-hyperreal    :name "Hyperreal dictionary"       :type :config
+    :source "data/hyperreal.json"
+    :note "nLab free category: 20K objects, 312K morphisms. Provides categorical grounding for graph adapter."
+    :timescale :glacial
+    :constraint true}]
+
+  :output
+  [{:id :O-scores       :name "Judge scores"              :type :json-corpus
+    :consumer "analysis, publication"
+    :spec-ref "M-f6-eval/scores"
+    :note "Per-question: {agent_a_score, agent_b_score, judge_rationale}"
+    :timescale :fast}
+
+   {:id :O-report       :name "Evaluation report"         :type :json-corpus
+    :consumer "mission completion, devmap evidence"
+    :spec-ref "M-f6-eval/report"
+    :note "Aggregate: win rates, stratified analysis, statistical tests"
+    :timescale :medium}
+
+   {:id :O-contexts     :name "Graph contexts (debug)"    :type :json-corpus
+    :consumer "analysis, prompt engineering"
+    :spec-ref "M-f6-eval/contexts"
+    :note "Per-question: the assembled graph context Agent B received"
+    :timescale :fast}]}
+
+ :components
+ [;; === Graph Query Adapter (O-2a) ===
+  ;; Composes futon3a/3b query primitives + futon6 data into a single
+  ;; MathKnowledgeGraph interface. This is the categorical composition:
+  ;; NER + patterns + scopes + embeddings → typed query interface.
+  {:id :C-graph-adapter :name "MathKnowledgeGraph adapter"
+   :type :clj-namespace :ref "O-2a/graph-adapter"
+   :accepts #{:json-corpus :embedding-tensor :config}
+   :produces #{:json-corpus}
+   :timescale :medium
+   :note "Composes lookup_terms, lookup_patterns, lookup_scopes, similar_qa, term_definition"}
+
+  ;; === Question Selection ===
+  ;; Stratified sampling from the entity pool: easy/medium/hard by score.
+  ;; Uses cluster assignments for topic diversity.
+  {:id :C-question-select :name "Question selection"
+   :type :clj-namespace :ref "eval/question-select"
+   :accepts #{:json-corpus :config}
+   :produces #{:json-corpus}
+   :timescale :medium
+   :note "Stratified by difficulty; cluster-aware for topic spread"}
+
+  ;; === Agent A (Bare) ===
+  ;; Receives only raw question text. No graph, no annotations.
+  {:id :C-agent-a       :name "Agent A (bare LLM)"
+   :type :clj-namespace :ref "eval/agent-a"
+   :accepts #{:json-corpus :config}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Claude + raw question → answer. No structured context."}
+
+  ;; === Agent B (Graph-Enhanced) ===
+  ;; Receives question + full graph context from adapter.
+  {:id :C-agent-b       :name "Agent B (graph-enhanced)"
+   :type :clj-namespace :ref "eval/agent-b"
+   :accepts #{:json-corpus :config}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Claude + question + {terms, patterns, scopes, similar_qa} → answer"}
+
+  ;; === Judge ===
+  ;; Scores both answers blind, randomised order.
+  {:id :C-judge         :name "Judge (blind scorer)"
+   :type :clj-namespace :ref "eval/judge"
+   :accepts #{:json-corpus :config}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "Claude rates: clarity, accuracy, completeness, depth. Does not know which is A/B."}
+
+  ;; === Automated Metrics ===
+  ;; ROUGE/BERTScore against held-out answers + pattern recall.
+  {:id :C-metrics       :name "Automated metrics"
+   :type :clj-namespace :ref "eval/metrics"
+   :accepts #{:json-corpus}
+   :produces #{:json-corpus}
+   :timescale :fast
+   :note "ROUGE, BERTScore, pattern recall, scope coverage. Stratified."}]
+
+ :edges
+ [;; === GRAPH ADAPTER INPUTS (all M-f6-ingest outputs) ===
+  {:from :I-entities    :to :C-graph-adapter  :type :json-corpus}
+  {:from :I-ner-terms   :to :C-graph-adapter  :type :json-corpus}
+  {:from :I-patterns    :to :C-graph-adapter  :type :json-corpus}
+  {:from :I-scopes      :to :C-graph-adapter  :type :json-corpus}
+  {:from :I-embeddings  :to :C-graph-adapter  :type :embedding-tensor}
+  {:from :I-clusters    :to :C-graph-adapter  :type :json-corpus}
+  {:from :I-hyperreal   :to :C-graph-adapter  :type :config}
+
+  ;; === QUESTION SELECTION ===
+  {:from :I-entities    :to :C-question-select :type :json-corpus}
+  {:from :I-clusters    :to :C-question-select :type :json-corpus}
+  {:from :I-questions   :to :C-question-select :type :config}
+
+  ;; === AGENT A (bare) ===
+  {:from :C-question-select :to :C-agent-a    :type :json-corpus}
+  {:from :I-llm             :to :C-agent-a    :type :config}
+
+  ;; === AGENT B (graph-enhanced) ===
+  {:from :C-question-select :to :C-agent-b    :type :json-corpus}
+  {:from :C-graph-adapter   :to :C-agent-b    :type :json-corpus}
+  {:from :I-llm             :to :C-agent-b    :type :config}
+
+  ;; === JUDGE ===
+  {:from :C-agent-a         :to :C-judge      :type :json-corpus}
+  {:from :C-agent-b         :to :C-judge      :type :json-corpus}
+  {:from :I-llm             :to :C-judge      :type :config}
+
+  ;; === METRICS ===
+  {:from :C-agent-a         :to :C-metrics    :type :json-corpus}
+  {:from :C-agent-b         :to :C-metrics    :type :json-corpus}
+  {:from :C-judge           :to :C-metrics    :type :json-corpus}
+
+  ;; === OUTPUTS ===
+  {:from :C-judge           :to :O-scores     :type :json-corpus}
+  {:from :C-metrics         :to :O-report     :type :json-corpus}
+  {:from :C-graph-adapter   :to :O-contexts   :type :json-corpus}]}
