@@ -224,12 +224,66 @@
       tpg-graph)))
 
 ;; =============================================================================
+;; TEMPORAL SCHEDULE MUTATION
+;; =============================================================================
+
+(defn- all-operator-ids
+  "All operator IDs (exotype + wiring) available in config."
+  [config]
+  (into (mapv :operator-id tpg/operator-table)
+        (keys (:wiring-operators config))))
+
+(defn- random-schedule
+  "Generate a random temporal schedule with 2-5 entries."
+  [^java.util.Random rng config]
+  (let [n (+ 2 (rng-int rng 4))
+        ids (all-operator-ids config)]
+    (vec (repeatedly n
+           (fn []
+             {:operator (rng-choice rng ids)
+              :steps (+ 1 (rng-int rng 8))})))))
+
+(defn- mutate-schedule
+  "Mutate a temporal schedule.
+   Operations: change operator, change steps, add entry, remove entry, swap."
+  [^java.util.Random rng schedule config]
+  (let [n (count schedule)
+        op (rng-int rng 5)
+        ids (all-operator-ids config)]
+    (case (int op)
+      ;; change one operator
+      0 (let [idx (rng-int rng n)]
+          (assoc-in (vec schedule) [idx :operator] (rng-choice rng ids)))
+      ;; change one step count
+      1 (let [idx (rng-int rng n)]
+          (assoc-in (vec schedule) [idx :steps] (+ 1 (rng-int rng 8))))
+      ;; add entry (max 8)
+      2 (if (< n 8)
+          (conj (vec schedule) {:operator (rng-choice rng ids)
+                                :steps (+ 1 (rng-int rng 8))})
+          schedule)
+      ;; remove entry (min 2)
+      3 (if (> n 2)
+          (let [idx (rng-int rng n)]
+            (vec (concat (subvec (vec schedule) 0 idx)
+                         (subvec (vec schedule) (inc idx)))))
+          schedule)
+      ;; swap adjacent entries
+      4 (if (> n 1)
+          (let [idx (rng-int rng (dec n))
+                s (vec schedule)]
+            (assoc s idx (nth s (inc idx))
+                     (inc idx) (nth s idx)))
+          schedule))))
+
+;; =============================================================================
 ;; TOP-LEVEL TPG MUTATION
 ;; =============================================================================
 
 (defn mutate-tpg
   "Mutate a TPG. Selects mutation level randomly:
-   70% program/team level, 20% graph add, 10% graph delete.
+   55% program/team, 15% add team, 8% delete team,
+   12% schedule mutation, 10% remove schedule.
 
    Always validates the result; retries on invalid mutations."
   [^java.util.Random rng tpg-graph config]
@@ -241,8 +295,8 @@
               r (rng-double rng)
               candidate
               (cond
-                ;; 70%: program/team mutation
-                (< r 0.7)
+                ;; 55%: program/team mutation
+                (< r 0.55)
                 (let [team-idx (rng-int rng (count (:teams tpg-graph)))
                       mutated-team (mutate-team rng
                                                 (nth (:teams tpg-graph) team-idx)
@@ -250,13 +304,25 @@
                   (assoc tpg-graph :teams
                          (assoc (vec (:teams tpg-graph)) team-idx mutated-team)))
 
-                ;; 20%: add team
-                (< r 0.9)
+                ;; 15%: add team
+                (< r 0.70)
                 (mutate-graph-add-team rng tpg-graph config)
 
-                ;; 10%: delete team
+                ;; 8%: delete team
+                (< r 0.78)
+                (mutate-graph-delete-team rng tpg-graph)
+
+                ;; 12%: mutate or add temporal schedule
+                (< r 0.90)
+                (if (:temporal-schedule tpg-graph)
+                  (assoc tpg-graph :temporal-schedule
+                         (mutate-schedule rng (:temporal-schedule tpg-graph) config))
+                  (assoc tpg-graph :temporal-schedule
+                         (random-schedule rng config)))
+
+                ;; 10%: remove schedule (force routing mode)
                 :else
-                (mutate-graph-delete-team rng tpg-graph))
+                (dissoc tpg-graph :temporal-schedule))
 
               extra-ops (set (keys (:wiring-operators config)))
               validation (tpg/validate-tpg candidate {:extra-operator-ids extra-ops})]
@@ -283,47 +349,66 @@
         ids-a (set (map :team/id teams-a))
         ids-b (set (map :team/id teams-b))
         shared (seq (set/intersection ids-a ids-b))]
-    (if shared
-      ;; Swap programs within a shared team
-      (let [swap-id (rng-choice rng shared)
-            team-a (first (filter #(= swap-id (:team/id %)) teams-a))
-            team-b (first (filter #(= swap-id (:team/id %)) teams-b))
-            ;; Take a random program from team-b
-            donor-prog (rng-choice rng (:programs team-b))
-            ;; Rewrite donor's action to only reference teams that exist in parent-a
-            safe-action (let [{:keys [type target]} (:action donor-prog)]
-                          (if (and (= type :team) (not (ids-a target)))
-                            ;; Target team doesn't exist in parent-a, redirect to operator
-                            {:type :operator :target (rng-choice rng (mapv :operator-id tpg/operator-table))}
-                            (:action donor-prog)))
-            safe-donor (assoc donor-prog :action safe-action)
-            ;; Replace a random program in team-a with the donor
-            replace-idx (rng-int rng (count (:programs team-a)))
-            updated-progs (assoc (vec (:programs team-a)) replace-idx safe-donor)
-            updated-team (assoc team-a :programs updated-progs)
-            updated-teams (mapv (fn [t]
-                                  (if (= swap-id (:team/id t))
-                                    updated-team t))
-                                teams-a)]
-        (assoc parent-a :teams updated-teams))
-      ;; No shared teams: transplant weights from parent-b root programs
-      ;; into parent-a root programs (keeps parent-a's structure intact)
-      (let [root-a (first teams-a)
-            root-b (first teams-b)
-            progs-a (:programs root-a)
-            progs-b (:programs root-b)]
-        (if (and (seq progs-a) (seq progs-b))
-          (let [;; Pick a random program from each, copy weights from b to a
-                target-idx (rng-int rng (count progs-a))
-                source-prog (rng-choice rng progs-b)
-                updated-prog (assoc (nth progs-a target-idx)
-                                    :weights (:weights source-prog)
-                                    :bias (:bias source-prog))
-                updated-root (assoc root-a :programs
-                                    (assoc (vec progs-a) target-idx updated-prog))
-                updated-teams (assoc (vec teams-a) 0 updated-root)]
-            (assoc parent-a :teams updated-teams))
-          parent-a)))))
+    (let [;; Graph crossover
+          child
+          (if shared
+            ;; Swap programs within a shared team
+            (let [swap-id (rng-choice rng shared)
+                  team-a (first (filter #(= swap-id (:team/id %)) teams-a))
+                  team-b (first (filter #(= swap-id (:team/id %)) teams-b))
+                  donor-prog (rng-choice rng (:programs team-b))
+                  safe-action (let [{:keys [type target]} (:action donor-prog)]
+                                (if (and (= type :team) (not (ids-a target)))
+                                  {:type :operator :target (rng-choice rng (mapv :operator-id tpg/operator-table))}
+                                  (:action donor-prog)))
+                  safe-donor (assoc donor-prog :action safe-action)
+                  replace-idx (rng-int rng (count (:programs team-a)))
+                  updated-progs (assoc (vec (:programs team-a)) replace-idx safe-donor)
+                  updated-team (assoc team-a :programs updated-progs)
+                  updated-teams (mapv (fn [t]
+                                        (if (= swap-id (:team/id t))
+                                          updated-team t))
+                                      teams-a)]
+              (assoc parent-a :teams updated-teams))
+            ;; No shared teams: transplant weights
+            (let [root-a (first teams-a)
+                  root-b (first teams-b)
+                  progs-a (:programs root-a)
+                  progs-b (:programs root-b)]
+              (if (and (seq progs-a) (seq progs-b))
+                (let [target-idx (rng-int rng (count progs-a))
+                      source-prog (rng-choice rng progs-b)
+                      updated-prog (assoc (nth progs-a target-idx)
+                                          :weights (:weights source-prog)
+                                          :bias (:bias source-prog))
+                      updated-root (assoc root-a :programs
+                                          (assoc (vec progs-a) target-idx updated-prog))
+                      updated-teams (assoc (vec teams-a) 0 updated-root)]
+                  (assoc parent-a :teams updated-teams))
+                parent-a)))
+
+          ;; Schedule crossover
+          sched-a (:temporal-schedule parent-a)
+          sched-b (:temporal-schedule parent-b)]
+      (cond
+        ;; Both have schedules: segment crossover
+        (and sched-a sched-b)
+        (let [cut-a (rng-int rng (count sched-a))
+              cut-b (rng-int rng (count sched-b))
+              new-sched (vec (concat (take (inc cut-a) sched-a)
+                                     (drop cut-b sched-b)))]
+          (assoc child :temporal-schedule
+                 (if (and (seq new-sched) (<= (count new-sched) 8))
+                   new-sched
+                   sched-a)))
+        ;; One has schedule: 50% inherit
+        sched-a (if (< (rng-double rng) 0.5)
+                  (assoc child :temporal-schedule sched-a)
+                  child)
+        sched-b (if (< (rng-double rng) 0.5)
+                  (assoc child :temporal-schedule sched-b)
+                  child)
+        :else child))))
 
 ;; =============================================================================
 ;; EVALUATION
@@ -335,14 +420,16 @@
    Returns the TPG augmented with :satisfaction-vector and :overall-satisfaction."
   [tpg-graph config ^java.util.Random rng]
   (let [{:keys [eval-runs eval-generations genotype-length verifier-spec
-                wiring-operators]} config
+                wiring-operators spatial-coupling? coupling-stability?]} config
         batch-result (runner/run-tpg-batch
                       (cond-> {:tpg tpg-graph
                                :n-runs eval-runs
                                :generations eval-generations
                                :verifier-spec verifier-spec
                                :base-seed (rng-int rng Integer/MAX_VALUE)}
-                        wiring-operators (assoc :wiring-operators wiring-operators)))
+                        wiring-operators (assoc :wiring-operators wiring-operators)
+                        spatial-coupling? (assoc :spatial-coupling? true)
+                        coupling-stability? (assoc :coupling-stability? true)))
         mean-sat (:mean-satisfaction batch-result)
         overall (:overall-mean batch-result)]
     (assoc tpg-graph
@@ -401,9 +488,12 @@
                                                         #(random-program rng team-ids config)))]
                         (tpg/make-team tid (into [anchor] rest-progs))))
                     team-ids)]
-    (tpg/make-tpg (str "random-" (rng-int rng 10000))
-                  teams
-                  {:root-team (first team-ids)})))
+    (cond-> (tpg/make-tpg (str "random-" (rng-int rng 10000))
+                          teams
+                          {:root-team (first team-ids)})
+      ;; 30% chance of starting with a random temporal schedule
+      (< (rng-double rng) 0.3)
+      (assoc :temporal-schedule (random-schedule rng config)))))
 
 (defn initial-population
   "Generate initial population: mix of seed TPGs and random TPGs."
@@ -427,6 +517,53 @@
 ;; =============================================================================
 ;; MAIN EVOLUTION LOOP
 ;; =============================================================================
+
+(defn evolve-one-generation
+  "Produce the next generation from current population.
+
+   Generates lambda offspring via mutation/crossover, evaluates them,
+   and selects mu survivors from the combined pool.
+
+   Returns {:population survivors :gen-record {...}}"
+  [population gen config ^java.util.Random rng]
+  (let [{:keys [mu lambda]} config
+        ;; Generate offspring
+        offspring
+        (loop [acc []
+               attempts 0]
+          (if (or (>= (count acc) lambda) (> attempts (* 3 lambda)))
+            (vec (take lambda acc))
+            (let [parent (rng-choice rng population)
+                  child (if (< (rng-double rng) 0.8)
+                          (mutate-tpg rng parent config)
+                          (let [other (rng-choice rng population)
+                                crossed (crossover-tpg rng parent other)]
+                            (mutate-tpg rng crossed config)))
+                  extra-ops (set (keys (:wiring-operators config)))
+                  valid? (:valid? (tpg/validate-tpg child {:extra-operator-ids extra-ops}))]
+              (recur (if valid? (conj acc child) acc)
+                     (inc attempts)))))
+
+        ;; Evaluate offspring
+        evaluated-offspring (mapv #(evaluate-tpg % config rng) offspring)
+
+        ;; Select survivors from parents + offspring
+        combined (vec (concat population evaluated-offspring))
+        survivors (select-survivors combined mu)
+
+        ;; Record history
+        best (first (sort-by (comp - :overall-satisfaction) survivors))
+        mean-overall (/ (reduce + 0.0 (map :overall-satisfaction survivors))
+                        (double (count survivors)))
+        front-size (count (filter #(= 0 (:pareto-rank %)) survivors))
+        gen-record {:generation gen
+                    :best-overall (:overall-satisfaction best)
+                    :best-satisfaction (:satisfaction-vector best)
+                    :best-id (:tpg/id best)
+                    :mean-overall mean-overall
+                    :front-size front-size
+                    :pop-size (count survivors)}]
+    {:population survivors :gen-record gen-record}))
 
 (defn evolve
   "Run TPG evolution.
@@ -476,55 +613,19 @@
           (if (>= gen evo-generations)
             {:population population :history history}
 
-            (let [;; Generate offspring
-                  offspring
-                  (loop [acc []
-                         attempts 0]
-                    (if (or (>= (count acc) lambda) (> attempts (* 3 lambda)))
-                      (vec (take lambda acc))
-                      (let [;; Select parent
-                            parent (rng-choice rng population)
-                            ;; 80% mutation, 20% crossover + mutation
-                            child (if (< (rng-double rng) 0.8)
-                                    (mutate-tpg rng parent config)
-                                    (let [other (rng-choice rng population)
-                                          crossed (crossover-tpg rng parent other)]
-                                      (mutate-tpg rng crossed config)))
-                            extra-ops (set (keys (:wiring-operators config)))
-                            valid? (:valid? (tpg/validate-tpg child {:extra-operator-ids extra-ops}))]
-                        (recur (if valid? (conj acc child) acc)
-                               (inc attempts)))))
-
-                  ;; Evaluate offspring
-                  evaluated-offspring (mapv #(evaluate-tpg % config rng) offspring)
-
-                  ;; Select survivors from parents + offspring
-                  combined (vec (concat population evaluated-offspring))
-                  survivors (select-survivors combined mu)
-
-                  ;; Record history
-                  best (first (sort-by (comp - :overall-satisfaction) survivors))
-                  mean-overall (/ (reduce + 0.0 (map :overall-satisfaction survivors))
-                                  (double (count survivors)))
-                  front-size (count (filter #(= 0 (:pareto-rank %)) survivors))
-                  gen-record {:generation gen
-                              :best-overall (:overall-satisfaction best)
-                              :best-satisfaction (:satisfaction-vector best)
-                              :best-id (:tpg/id best)
-                              :mean-overall mean-overall
-                              :front-size front-size
-                              :pop-size (count survivors)}]
+            (let [{:keys [population gen-record]}
+                  (evolve-one-generation population gen config rng)]
 
               (when verbose?
                 (printf "Gen %2d | best %.3f | mean %.3f | front %d | teams %d\n"
                         gen
                         (double (:best-overall gen-record))
-                        (double mean-overall)
-                        front-size
-                        (count (:teams best)))
+                        (double (:mean-overall gen-record))
+                        (:front-size gen-record)
+                        (count (:teams (first (sort-by (comp - :overall-satisfaction) population)))))
                 (flush))
 
-              (recur survivors (inc gen) (conj history gen-record)))))]
+              (recur population (inc gen) (conj history gen-record)))))]
 
     (let [best (first (sort-by (comp - :overall-satisfaction) (:population result)))]
       (when verbose?

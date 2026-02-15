@@ -162,42 +162,58 @@
   "Extended diagnostic dimensions beyond the core 6D vector.
    These are run-level features (not per-generation) computed once per run."
   [:compression-cv :domain-fraction :particle-count :diag-autocorr-max
-   :mean-coupling :coupling-cv])
+   :mean-coupling :coupling-cv
+   ;; Spatial coupling keys (only populated when spatial?=true)
+   :hotspot-fraction :spatial-coupling-mean])
 
 (defn compute-extended-diagnostic
   "Compute extended diagnostic features from run history.
    These require full history and are computed once per run, not per generation.
 
+   opts:
+   - :spatial? (default false) — when true, includes hotspot-fraction
+     and spatial-coupling-mean (3-5x slower coupling computation)
+
    Returns a map from extended-diagnostic-keys to [0,1] normalized values."
-  [{:keys [gen-history phe-history] :as run-result}]
-  (let [history (or gen-history phe-history)
-        ;; Compression variance (bursty complexity)
-        cv-result (metrics/compression-variance history)
-        cv (or (:cv cv-result) 0.0)
-        ;; Domain fraction (periodic background)
-        domain-result (domain/analyze-domain history)
-        domain-frac (or (:domain-fraction domain-result) 0.0)
-        ;; Particle count
-        particle-result (particle/analyze-particles history)
-        raw-count (or (:particle-count particle-result) 0)
-        particle-norm (Math/tanh (/ (double raw-count) 10.0))
-        ;; Diagonal autocorrelation (already in metrics but not in 6D vector)
-        autocorr (metrics/autocorr-metrics history)
-        diag-ac (or (:diag-autocorr autocorr) 0.0)
-        ;; Coupling spectrum (skip spatial/temporal for speed)
-        coupling (bitplane/coupling-spectrum history {:spatial? false :temporal? false})
-        mean-mi (or (:mean-coupling coupling) 0.0)
-        c-cv (or (:coupling-cv coupling) 0.0)]
-    {:compression-cv (clamp01 cv)
-     :domain-fraction (clamp01 domain-frac)
-     :particle-count (clamp01 particle-norm)
-     :diag-autocorr-max (clamp01 diag-ac)
-     :mean-coupling (clamp01 (* 4.0 mean-mi))      ;; normalize: MI maxes ~0.25
-     :coupling-cv (clamp01 (/ c-cv 3.0))            ;; normalize CV to [0,1]
-     ;; Pass through raw results for downstream use
-     :domain-result domain-result
-     :particle-result particle-result
-     :coupling-result coupling}))
+  ([run-result] (compute-extended-diagnostic run-result {}))
+  ([{:keys [gen-history phe-history] :as run-result} opts]
+   (let [history (or gen-history phe-history)
+         spatial? (get opts :spatial? false)
+         ;; Compression variance (bursty complexity)
+         cv-result (metrics/compression-variance history)
+         cv (or (:cv cv-result) 0.0)
+         ;; Domain fraction (periodic background)
+         domain-result (domain/analyze-domain history)
+         domain-frac (or (:domain-fraction domain-result) 0.0)
+         ;; Particle count
+         particle-result (particle/analyze-particles history)
+         raw-count (or (:particle-count particle-result) 0)
+         particle-norm (Math/tanh (/ (double raw-count) 10.0))
+         ;; Diagonal autocorrelation (already in metrics but not in 6D vector)
+         autocorr (metrics/autocorr-metrics history)
+         diag-ac (or (:diag-autocorr autocorr) 0.0)
+         ;; Coupling spectrum
+         coupling (bitplane/coupling-spectrum history
+                    {:spatial? spatial? :temporal? false})
+         mean-mi (or (:mean-coupling coupling) 0.0)
+         c-cv (or (:coupling-cv coupling) 0.0)]
+     (cond->
+       {:compression-cv (clamp01 cv)
+        :domain-fraction (clamp01 domain-frac)
+        :particle-count (clamp01 particle-norm)
+        :diag-autocorr-max (clamp01 diag-ac)
+        :mean-coupling (clamp01 (* 4.0 mean-mi))      ;; normalize: MI maxes ~0.25
+        :coupling-cv (clamp01 (/ c-cv 3.0))            ;; normalize CV to [0,1]
+        ;; Pass through raw results for downstream use
+        :domain-result domain-result
+        :particle-result particle-result
+        :coupling-result coupling}
+       ;; Spatial coupling keys when spatial? is true
+       spatial?
+       (merge (let [sp (:spatial-profile coupling)]
+                {:hotspot-fraction (clamp01 (or (:hotspot-fraction sp) 0.0))
+                 :spatial-coupling-mean (clamp01 (* 4.0 (or (:mean sp) 0.0)))}))))))
+
 
 (defn diagnostics-trace-extended
   "Compute diagnostic vectors with extended SCI dimensions.

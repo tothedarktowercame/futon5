@@ -182,16 +182,19 @@
    :programs (vec programs)})
 
 (defn make-tpg
-  "Create a TPG from teams, operators, and config."
+  "Create a TPG from teams, operators, and config.
+   config may include :temporal-schedule [{:operator op-id :steps n} ...]"
   [tpg-id teams config]
-  {:tpg/id tpg-id
-   :tpg/version 1
-   :teams (vec teams)
-   :operators operator-table
-   :config (merge {:max-depth max-routing-depth
-                   :routing-frequency :per-generation
-                   :diagnostic-window 3}
-                  config)})
+  (cond-> {:tpg/id tpg-id
+           :tpg/version 1
+           :teams (vec teams)
+           :operators operator-table
+           :config (merge {:max-depth max-routing-depth
+                           :routing-frequency :per-generation
+                           :diagnostic-window 3}
+                          (dissoc config :temporal-schedule))}
+    (:temporal-schedule config)
+    (assoc :temporal-schedule (:temporal-schedule config))))
 
 (defn validate-tpg
   "Validate TPG structural invariants.
@@ -261,6 +264,16 @@
         (err! (str "Program " (:program/id program) " has "
                    (count (:weights program)) " weights, expected "
                    diag/diagnostic-dim))))
+
+    ;; Check: temporal schedule validity (if present)
+    (when-let [sched (:temporal-schedule tpg)]
+      (when-not (and (sequential? sched) (seq sched))
+        (err! "temporal-schedule must be a non-empty sequence"))
+      (doseq [{:keys [operator steps]} sched]
+        (when-not (all-operator-ids operator)
+          (err! (str "Schedule references unknown operator: " operator)))
+        (when-not (and (integer? steps) (pos? steps))
+          (err! (str "Schedule step count must be positive integer, got: " steps)))))
 
     {:valid? (empty? @errors)
      :errors @errors})))
