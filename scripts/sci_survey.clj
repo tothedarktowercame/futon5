@@ -29,6 +29,7 @@
          '[futon5.mmca.particle-analysis :as particle]
          '[futon5.mmca.info-dynamics :as info]
          '[futon5.mmca.wolfram-class :as wclass]
+         '[futon5.mmca.bitplane-analysis :as bitplane]
          '[futon5.tpg.diagnostics :as diag]
          '[clojure.edn :as edn]
          '[clojure.string :as str])
@@ -124,10 +125,15 @@
           te-result (info/te-summary history)
           ais-result (info/active-information-storage history)
 
-          ;; 6. Wolfram class estimation
+          ;; 6. Bitplane multi-scale analysis
+          bp-analyses (bitplane/analyze-all-bitplanes history)
+          bp-summary (bitplane/aggregate-bitplane-metrics bp-analyses)
+          coupling (bitplane/coupling-spectrum history {:temporal? false :spatial? true})
+
+          ;; 7. Wolfram class estimation (now uses bitplane signals internally)
           class-result (wclass/estimate-class run-result)
 
-          ;; 7. Diagnostic trace (summary stats)
+          ;; 8. Diagnostic trace (summary stats)
           trace (diag/diagnostics-trace run-result)
           named-values (mapv :named (remove nil? trace))
           dim-means (into {}
@@ -169,6 +175,21 @@
        :info-transport-score (:information-transport-score te-result)
        :ais-mean (:mean ais-result)
        :ais-max (:max ais-result)
+       ;; Bitplane analysis
+       :best-bp-domain-fraction (:best-domain-fraction bp-summary)
+       :best-bp-plane (:best-plane bp-summary)
+       :best-bp-px (:best-domain-px bp-summary)
+       :best-bp-pt (:best-domain-pt bp-summary)
+       :class-iv-plane-count (:class-iv-plane-count bp-summary)
+       :activity-spread (:activity-spread bp-summary)
+       ;; Coupling spectrum
+       :independence-score (:independence-score coupling)
+       :mean-coupling (:mean-coupling coupling)
+       :max-coupling (:max-coupling coupling)
+       :coupling-cv (:coupling-cv coupling)
+       :structured-coupling (:structured-coupling coupling)
+       :coupling-summary (:summary coupling)
+       :spatial-hotspot-fraction (get-in coupling [:spatial-profile :hotspot-fraction] 0.0)
        ;; Wolfram class
        :wolfram-class (:class class-result)
        :class-confidence (:confidence class-result)
@@ -201,13 +222,30 @@
   (printf  "│    temporal-ac:    %s    spatial-ac:   %s    diag-ac:    %s\n"
            (fmt (:temporal-autocorr r) 3) (fmt (:spatial-autocorr r) 3) (fmt (:diag-autocorr r) 3))
   (println "│")
-  (println "│  SCI Metrics:")
+  (println "│  SCI Metrics (sigil-level):")
   (printf  "│    compression-cv: %s    domain-frac:  %s    domain: %dx%d  class-iv? %s\n"
            (fmt (:compression-cv r) 3) (fmt (:domain-fraction r) 3)
            (:domain-px r) (:domain-pt r) (:class-iv-candidate? r))
   (printf  "│    particles:      %-5d  species:      %-5d  max-life: %-5d  interactions: %d\n"
            (:particle-count r) (:species-count r) (:max-lifetime r) (:interaction-count r))
   (printf  "│    mean-velocity:  %s\n" (fmt (:mean-velocity r) 3))
+  (println "│")
+  (println "│  Bitplane Analysis:")
+  (printf  "│    best-bp-df:     %s    best-plane:   %-5d  tile: %dx%d\n"
+           (fmt (:best-bp-domain-fraction r) 3)
+           (or (:best-bp-plane r) -1)
+           (or (:best-bp-px r) 0) (or (:best-bp-pt r) 0))
+  (printf  "│    class-iv-planes: %d/8    activity-spread: %s\n"
+           (or (:class-iv-plane-count r) 0)
+           (fmt (:activity-spread r) 3))
+  (println "│")
+  (println "│  Coupling Spectrum:")
+  (printf  "│    independence:   %s    mean-MI:      %s    max-MI:     %s\n"
+           (fmt (:independence-score r) 3) (fmt (:mean-coupling r) 4) (fmt (:max-coupling r) 4))
+  (printf  "│    coupling-cv:    %s    structured:   %s    hotspots: %s\n"
+           (fmt (:coupling-cv r) 3) (fmt (:structured-coupling r) 3)
+           (fmt (:spatial-hotspot-fraction r) 3))
+  (printf  "│    summary: %s\n" (name (or (:coupling-summary r) :unknown)))
   (println "│")
   (println "│  Information Dynamics:")
   (printf  "│    mean-TE:        %s    max-TE:       %s    TE-var:     %s\n"
@@ -224,28 +262,31 @@
   (println "└──────────────────────────────────────────────────────────────"))
 
 (defn print-summary-table [results]
-  (println "\n╔══════════════════════════════════════════════════════════════════════════════════════╗")
-  (println "║  SCI SURVEY: SUMMARY TABLE                                                         ║")
-  (println "╚══════════════════════════════════════════════════════════════════════════════════════╝")
+  (println "\n╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗")
+  (println "║  SCI SURVEY: SUMMARY TABLE                                                                                     ║")
+  (println "╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝")
   (println)
-  (printf "%-12s │ %8s │ %5s %5s %5s │ %5s %5s │ %5s %5s %5s │ %4s %3s │ %s\n"
-          "Rule" "Expected" "Δ" "H" "CV" "DomF" "P×T" "Part" "Spe" "Life" "Cls" "Cnf" "Match?")
-  (println (apply str (repeat 105 "─")))
+  (printf "%-12s │ %4s │ %5s %5s │ %5s %5s │ %5s %5s │ %6s %6s │ %5s │ %4s %3s │ %s\n"
+          "Rule" "Exp" "Δ" "H" "SigDF" "BpDF" "Part" "Spe"
+          "Indep" "MeanMI" "CplSm" "Cls" "Cnf" "?")
+  (println (apply str (repeat 115 "─")))
   (doseq [{:keys [label expected-class result]} results]
     (let [r result]
-      (printf "%-12s │ %8s │ %5s %5s %5s │ %5s %2d×%-2d │ %5d %5d %5d │ %4s %3s │ %s\n"
+      (printf "%-12s │ %4s │ %5s %5s │ %5s %5s │ %5d %5d │ %6s %6s │ %5s │ %4s %3s │ %s\n"
               label
               (name expected-class)
               (fmt (:change-rate r) 2)
               (fmt (:entropy-n r) 2)
-              (fmt (:compression-cv r) 2)
               (fmt (:domain-fraction r) 2)
-              (:domain-px r) (:domain-pt r)
-              (:particle-count r) (:species-count r) (:max-lifetime r)
+              (fmt (:best-bp-domain-fraction r) 2)
+              (:particle-count r) (:species-count r)
+              (fmt (:independence-score r) 3)
+              (fmt (:mean-coupling r) 4)
+              (name (or (:coupling-summary r) :unk))
               (name (:wolfram-class r))
               (fmt (:class-confidence r) 2)
               (if (= expected-class (:wolfram-class r)) "✓" "✗"))))
-  (println (apply str (repeat 105 "─"))))
+  (println (apply str (repeat 115 "─"))))
 
 (defn print-class-iv-analysis [results]
   (println "\n╔══════════════════════════════════════════════════════════════════════════════════════╗")
