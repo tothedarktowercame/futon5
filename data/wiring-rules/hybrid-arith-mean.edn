@@ -1,0 +1,35 @@
+;; Hybrid: Pure arithmetic mean CA (control)
+;;
+;; result = floor((L + R + C) / 2) via sigil-add-mod + sigil-avg
+;; This should create UNIFORM coupling (all bits always mixed).
+;; Acts as a control — if this shows structured coupling, the detector
+;; is broken.
+;;
+;; Prediction: Uniform coupling similar to Rule 184's regime.
+
+{:meta {:id :hybrid-arith-mean
+        :description "Pure arithmetic mean CA — (L+R)/2 averaged with C"
+        :formula "floor(((L+R)%256 + C) / 2)"
+        :coupling-type :uniform}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; L + R mod 256
+   {:id :sum :component :sigil-add-mod}
+
+   ;; floor((sum + C) / 2)
+   {:id :avg :component :sigil-avg}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [{:from :pred :to :sum :to-port :a}
+   {:from :succ :to :sum :to-port :b}
+   {:from :sum :from-port :result :to :avg :to-port :a}
+   {:from :self :to :avg :to-port :b}
+   {:from :avg :from-port :result :to :output}]}}

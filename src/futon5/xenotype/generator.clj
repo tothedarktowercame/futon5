@@ -177,6 +177,23 @@
            shifted (str (subs bits (- 8 n)) (subs bits 0 (- 8 n)))]
        {:result (bits->sigil shifted)}))
 
+   ;; Arithmetic Operations (sigil-level, bit-mixing via carry chains)
+   :sigil-add-mod
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (+ (sigil->int a) (sigil->int b)))})
+
+   :sigil-sub-mod
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (+ (- (sigil->int a) (sigil->int b)) 256))})
+
+   :sigil-mul-low
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (* (sigil->int a) (sigil->int b)))})
+
+   :sigil-avg
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (quot (+ (sigil->int a) (sigil->int b)) 2))})
+
    ;; Aggregation Operations
    :majority
    (fn [{:keys [sigils]} _ _]
@@ -259,6 +276,10 @@
   :same?
   (fn [{:keys [a b]} _ _]
     {:equal (= a b)})
+
+  :int-gt?
+  (fn [{:keys [a b]} _ _]
+    {:above (> (int (or a 0)) (int (or b 0)))})
 
    :balance
    (fn [{:keys [sigil]} _ _]

@@ -90,6 +90,31 @@
    :traits [:bit-mixing]
    :doc "Rotate sigil right n positions"}
 
+  ;; Arithmetic Operations (sigil-level, bit-mixing via carry chains)
+  :sigil-add-mod
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:sigil-level :bit-mixing]
+   :doc "Arithmetic addition mod 256 — carry propagation couples bitplanes"}
+
+  :sigil-sub-mod
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:sigil-level :bit-mixing]
+   :doc "Arithmetic subtraction mod 256 — borrow chain couples bitplanes"}
+
+  :sigil-mul-low
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:sigil-level :bit-mixing]
+   :doc "Low 8 bits of multiplication — maximum bitplane coupling"}
+
+  :sigil-avg
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:sigil-level :bit-mixing]
+   :doc "Arithmetic average floor((a+b)/2) — carry chain with right shift"}
+
   ;; Aggregation Operations
   :majority
   {:inputs [[:sigils :sigil-list]]
@@ -141,6 +166,11 @@
   {:inputs [[:a :sigil] [:b :sigil]]
    :outputs [[:equal :bool]]
    :doc "Exact equality check"}
+
+  :int-gt?
+  {:inputs [[:a :int] [:b :int]]
+   :outputs [[:above :bool]]
+   :doc "True when a > b — general integer comparison"}
 
   :balance
   {:inputs [[:sigil :sigil]]
