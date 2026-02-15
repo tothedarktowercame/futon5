@@ -1,0 +1,52 @@
+;; Hybrid: Rule 110 + unconditional mild arithmetic perturbation
+;;
+;; Instead of conditional coupling, apply a CONSTANT mild perturbation:
+;; average the Rule 110 result with self. This creates carry-chain
+;; coupling at every cell but the averaging is mild (right-shift by 1)
+;; so Rule 110 dynamics may still dominate.
+;;
+;; floor((Rule110(L,C,R) + C) / 2)
+;;
+;; Prediction: Uniform carry-chain coupling (like ArithMean but milder).
+;; This tests whether Rule 110 structure survives arithmetic perturbation.
+
+{:meta {:id :hybrid-110-avgself
+        :description "Rule 110 result averaged with self — mild uniform coupling"
+        :formula "floor((Rule110(L,C,R) + C) / 2)"
+        :coupling-type :uniform-mild}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; Average with self: floor((R110 + self) / 2)
+   {:id :avg :component :sigil-avg}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [{:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   ;; Average R110 result with self
+   {:from :r110 :from-port :result :to :avg :to-port :a}
+   {:from :self :to :avg :to-port :b}
+
+   {:from :avg :from-port :result :to :output}]}}
