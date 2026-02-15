@@ -13,7 +13,9 @@
      4  φ  — phenotype-genotype coupling (phe entropy, or 0 if no phenotype)
      5  λ  — damage spreading estimate (perturbation sensitivity)"
   (:require [futon5.ca.core :as ca]
-            [futon5.mmca.metrics :as metrics]))
+            [futon5.mmca.metrics :as metrics]
+            [futon5.mmca.domain-analysis :as domain]
+            [futon5.mmca.particle-analysis :as particle]))
 
 (def diagnostic-dim
   "Number of diagnostic dimensions."
@@ -150,3 +152,49 @@
   [{:keys [gen-history phe-history] :as run-result}]
   (mapv (fn [t] (diagnostic-from-run run-result t))
         (range (count gen-history))))
+
+;; =============================================================================
+;; EXTENDED DIAGNOSTICS (SCI Detection Pipeline)
+;; =============================================================================
+
+(def extended-diagnostic-keys
+  "Extended diagnostic dimensions beyond the core 6D vector.
+   These are run-level features (not per-generation) computed once per run."
+  [:compression-cv :domain-fraction :particle-count :diag-autocorr-max])
+
+(defn compute-extended-diagnostic
+  "Compute extended diagnostic features from run history.
+   These require full history and are computed once per run, not per generation.
+
+   Returns a map from extended-diagnostic-keys to [0,1] normalized values."
+  [{:keys [gen-history phe-history] :as run-result}]
+  (let [history (or gen-history phe-history)
+        ;; Compression variance (bursty complexity)
+        cv-result (metrics/compression-variance history)
+        cv (or (:cv cv-result) 0.0)
+        ;; Domain fraction (periodic background)
+        domain-result (domain/analyze-domain history)
+        domain-frac (or (:domain-fraction domain-result) 0.0)
+        ;; Particle count
+        particle-result (particle/analyze-particles history)
+        raw-count (or (:particle-count particle-result) 0)
+        particle-norm (Math/tanh (/ (double raw-count) 10.0))
+        ;; Diagonal autocorrelation (already in metrics but not in 6D vector)
+        autocorr (metrics/autocorr-metrics history)
+        diag-ac (or (:diag-autocorr autocorr) 0.0)]
+    {:compression-cv (clamp01 cv)
+     :domain-fraction (clamp01 domain-frac)
+     :particle-count (clamp01 particle-norm)
+     :diag-autocorr-max (clamp01 diag-ac)
+     ;; Pass through raw results for downstream use
+     :domain-result domain-result
+     :particle-result particle-result}))
+
+(defn diagnostics-trace-extended
+  "Compute diagnostic vectors with extended SCI dimensions.
+   Extended dimensions are the same for all generations (run-level features).
+   Returns a vector of diagnostic maps, each with an :extended key."
+  [{:keys [gen-history] :as run-result}]
+  (let [base-trace (diagnostics-trace run-result)
+        extended (compute-extended-diagnostic run-result)]
+    (mapv #(assoc % :extended extended) base-trace)))
