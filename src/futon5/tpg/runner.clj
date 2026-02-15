@@ -17,6 +17,7 @@
         :tpg (tpg/seed-tpg-hierarchical)
         :seed 42})"
   (:require [futon5.ca.core :as ca]
+            [futon5.mmca.bitplane-analysis :as bitplane]
             [futon5.mmca.exotype :as exotype]
             [futon5.tpg.core :as tpg]
             [futon5.tpg.diagnostics :as diag]
@@ -231,9 +232,14 @@
                                 recent-history)
 
                     ;; 2. Route through TPG (or temporal schedule)
+                    ;; Priority: TPG's evolved schedule > opts override > routing
                     routing (tpg/route tpg (:vector diagnostic))
-                    operator-id (if-let [sched (:temporal-schedule opts)]
-                                  (schedule-operator sched gen)
+                    operator-id (cond
+                                  (:temporal-schedule tpg)
+                                  (schedule-operator (:temporal-schedule tpg) gen)
+                                  (:temporal-schedule opts)
+                                  (schedule-operator (:temporal-schedule opts) gen)
+                                  :else
                                   (:operator-id routing))
                     routing (assoc routing :operator-id operator-id)
 
@@ -273,7 +279,8 @@
 
         ;; 6. Compute extended diagnostics and attach to all diagnostics
         run-result {:gen-history final-gen-history}
-        extended (diag/compute-extended-diagnostic run-result)
+        extended (diag/compute-extended-diagnostic run-result
+                   {:spatial? (boolean (:spatial-coupling? opts))})
         all-diagnostics-ext (mapv #(assoc % :extended extended) all-diagnostics)
 
         ;; 7. Evaluate verifiers over entire trace (with extended diagnostics)
@@ -299,7 +306,8 @@
 
    Returns a vector of run results, plus aggregate statistics."
   [{:keys [tpg genotypes generations verifier-spec base-seed n-runs
-           wiring-operators temporal-schedule]}]
+           wiring-operators temporal-schedule spatial-coupling?
+           coupling-stability?]}]
   (let [n-runs (or n-runs (count genotypes))
         base-seed (or base-seed 42)
         genotypes (or genotypes (repeat n-runs (ca/random-sigil-string 32)))
@@ -313,7 +321,8 @@
                                        :verifier-spec verifier-spec
                                        :seed (+ base-seed i)}
                                 wiring-operators (assoc :wiring-operators wiring-operators)
-                                temporal-schedule (assoc :temporal-schedule temporal-schedule))))
+                                temporal-schedule (assoc :temporal-schedule temporal-schedule)
+                                spatial-coupling? (assoc :spatial-coupling? spatial-coupling?))))
                    (range n-runs)
                    genotypes)
 
@@ -329,12 +338,37 @@
                                 0.0)]))
                       verifier-keys))
         overall-mean (let [vals (map #(get-in % [:verifier-result :overall-satisfaction]) runs)]
-                       (/ (reduce + 0.0 vals) (double (count vals))))]
+                       (/ (reduce + 0.0 vals) (double (count vals))))
+
+        ;; Optional: cross-run coupling stability
+        coupling-stability
+        (when (and coupling-stability? (> n-runs 1))
+          (let [couplings (mapv (fn [run]
+                                  (bitplane/coupling-spectrum
+                                   (:gen-history run)
+                                   {:spatial? false :temporal? false}))
+                                runs)
+                mis (mapv :mean-coupling couplings)
+                mi-mean (/ (reduce + 0.0 mis) (double (count mis)))
+                mi-var (/ (reduce + 0.0 (map #(let [d (- (double %) mi-mean)]
+                                                 (* d d)) mis))
+                          (double (max 1 (dec (count mis)))))
+                mi-cv (if (pos? mi-mean) (/ (Math/sqrt mi-var) mi-mean) 0.0)]
+            {:coupling-stability (- 1.0 (min 1.0 mi-cv))
+             :coupling-mi-mean mi-mean
+             :coupling-mi-cv mi-cv}))
+
+        ;; Merge coupling stability into mean satisfaction if present
+        mean-satisfaction (if coupling-stability
+                           (assoc mean-satisfaction
+                                  :coupling-stability (:coupling-stability coupling-stability))
+                           mean-satisfaction)]
     {:runs runs
      :n-runs n-runs
      :mean-satisfaction mean-satisfaction
      :overall-mean overall-mean
-     :satisfaction-vectors sat-vecs}))
+     :satisfaction-vectors sat-vecs
+     :coupling-stability coupling-stability}))
 
 ;; =============================================================================
 ;; SUMMARY / INSPECTION
