@@ -16,6 +16,8 @@ Research reports, experiments, and visualizations from the futon5 MMCA project.
 
 | Report | Description |
 |--------|-------------|
+| [TPG Coupling-Aware Evolution](tpg-coupling-evolution.md) | Bitplane-aware conditions, coupling fitness, wiring operators in TPG, temporal schedules — first "structured" coupling (MI=0.188) |
+| [Hybrid Coupling Experiment](hybrid-coupling-experiment.md) | Carry-chain coupling via arithmetic operations — R110+AddSelf creates band-diagonal coupling while preserving Class IV |
 | [Hexagram Behavior Report](hexagram-behavior-report.md) | Hexagram distributions from MMCA wiring runs via eigenvalue diagonalization |
 | [L5-Creative Workup](workup-l5-creative-seed-352362012.md) | Deep dive into L5-creative seed 352362012 - Rule 90 patterns, triangle detection |
 | [Domain Transfer: L5-Creative → Ants](domain-transfer-l5-creative-ants.md) | Cross-domain validation showing exploration advantage in patchy environments |
