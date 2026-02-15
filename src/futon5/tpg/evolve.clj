@@ -72,12 +72,15 @@
   (+ (double bias) (* sigma (rng-gaussian rng))))
 
 (defn- random-action
-  "Generate a random action: route to a team or execute an operator."
-  [^java.util.Random rng team-ids]
-  (let [operator-ids (mapv :operator-id tpg/operator-table)]
+  "Generate a random action: route to a team or execute an operator.
+   Includes wiring operator IDs from config if present."
+  [^java.util.Random rng team-ids config]
+  (let [exo-ids (mapv :operator-id tpg/operator-table)
+        wiring-ids (vec (keys (:wiring-operators config)))
+        all-ids (into exo-ids wiring-ids)]
     (if (and (seq team-ids) (< (rng-double rng) 0.3))
       {:type :team :target (rng-choice rng team-ids)}
-      {:type :operator :target (rng-choice rng operator-ids)})))
+      {:type :operator :target (rng-choice rng all-ids)})))
 
 (defn- mutate-program
   "Mutate a single program. Mutation type chosen randomly:
@@ -90,7 +93,7 @@
     (case mutation-type
       0 (assoc program :weights (perturb-weights rng (:weights program) (:weight-sigma config)))
       1 (assoc program :bias (perturb-bias rng (:bias program) (:bias-sigma config)))
-      2 (assoc program :action (random-action rng team-ids))
+      2 (assoc program :action (random-action rng team-ids config))
       3 (-> program
             (assoc :weights (perturb-weights rng (:weights program) (:weight-sigma config)))
             (assoc :bias (perturb-bias rng (:bias program) (:bias-sigma config)))))))
@@ -101,10 +104,10 @@
 
 (defn- random-program
   "Generate a new random program."
-  [^java.util.Random rng team-ids]
+  [^java.util.Random rng team-ids config]
   (let [weights (vec (repeatedly diag/diagnostic-dim #(* 2.0 (- (rng-double rng) 0.5))))
         bias (* 0.5 (- (rng-double rng) 0.5))
-        action (random-action rng team-ids)]
+        action (random-action rng team-ids config)]
     (tpg/make-program (keyword (str "p-" (rng-int rng 10000)))
                       weights bias
                       (:type action)
@@ -128,7 +131,7 @@
 
       ;; Add a program
       1 (if (< (count programs) max-programs)
-          (let [new-prog (random-program rng team-ids)]
+          (let [new-prog (random-program rng team-ids config)]
             (assoc team :programs (conj (vec programs) new-prog)))
           ;; At limit, mutate instead
           (let [idx (rng-int rng (count programs))
@@ -147,7 +150,7 @@
 
       ;; Replace a program
       3 (let [idx (rng-int rng (count programs))
-              new-prog (random-program rng team-ids)]
+              new-prog (random-program rng team-ids config)]
           (assoc team :programs (assoc (vec programs) idx new-prog))))))
 
 ;; =============================================================================
@@ -174,7 +177,7 @@
       (let [new-id (fresh-team-id rng team-ids)
             ;; New team has 2-3 programs routing to operators
             n-programs (+ 2 (rng-int rng 2))
-            programs (vec (repeatedly n-programs #(random-program rng team-ids)))
+            programs (vec (repeatedly n-programs #(random-program rng team-ids config)))
             new-team (tpg/make-team new-id programs)
             ;; Also modify a random existing program to route to the new team
             target-team-idx (rng-int rng (count teams))
@@ -255,7 +258,8 @@
                 :else
                 (mutate-graph-delete-team rng tpg-graph))
 
-              validation (tpg/validate-tpg candidate)]
+              extra-ops (set (keys (:wiring-operators config)))
+              validation (tpg/validate-tpg candidate {:extra-operator-ids extra-ops})]
           (if (:valid? validation)
             candidate
             (recur (inc attempt))))))))
@@ -330,13 +334,15 @@
 
    Returns the TPG augmented with :satisfaction-vector and :overall-satisfaction."
   [tpg-graph config ^java.util.Random rng]
-  (let [{:keys [eval-runs eval-generations genotype-length verifier-spec]} config
+  (let [{:keys [eval-runs eval-generations genotype-length verifier-spec
+                wiring-operators]} config
         batch-result (runner/run-tpg-batch
-                      {:tpg tpg-graph
-                       :n-runs eval-runs
-                       :generations eval-generations
-                       :verifier-spec verifier-spec
-                       :base-seed (rng-int rng Integer/MAX_VALUE)})
+                      (cond-> {:tpg tpg-graph
+                               :n-runs eval-runs
+                               :generations eval-generations
+                               :verifier-spec verifier-spec
+                               :base-seed (rng-int rng Integer/MAX_VALUE)}
+                        wiring-operators (assoc :wiring-operators wiring-operators)))
         mean-sat (:mean-satisfaction batch-result)
         overall (:overall-mean batch-result)]
     (assoc tpg-graph
@@ -378,7 +384,9 @@
   [^java.util.Random rng config]
   (let [n-teams (+ 1 (rng-int rng 3))
         team-ids (mapv (fn [i] (keyword (str "team-" i))) (range n-teams))
-        operator-ids (mapv :operator-id tpg/operator-table)
+        exo-ids (mapv :operator-id tpg/operator-table)
+        wiring-ids (vec (keys (:wiring-operators config)))
+        all-operator-ids (into exo-ids wiring-ids)
         teams (mapv (fn [tid]
                       (let [n-progs (+ 2 (rng-int rng 3))
                             ;; First program always routes to an operator (reachability)
@@ -387,10 +395,10 @@
                                          b (* 0.5 (- (rng-double rng) 0.5))]
                                      (tpg/make-program
                                       (keyword (str "p-anchor-" (rng-int rng 10000)))
-                                      w b :operator (rng-choice rng operator-ids)))
+                                      w b :operator (rng-choice rng all-operator-ids)))
                             ;; Remaining programs can route to teams or operators
                             rest-progs (vec (repeatedly (dec n-progs)
-                                                        #(random-program rng team-ids)))]
+                                                        #(random-program rng team-ids config)))]
                         (tpg/make-team tid (into [anchor] rest-progs))))
                     team-ids)]
     (tpg/make-tpg (str "random-" (rng-int rng 10000))
@@ -410,7 +418,8 @@
                   (if (or (>= (count acc) n-random) (> attempts (* 3 n-random)))
                     (vec (take n-random acc))
                     (let [candidate (random-tpg rng config)
-                          valid? (:valid? (tpg/validate-tpg candidate))]
+                          extra-ops (set (keys (:wiring-operators config)))
+                          valid? (:valid? (tpg/validate-tpg candidate {:extra-operator-ids extra-ops}))]
                       (recur (if valid? (conj acc candidate) acc)
                              (inc attempts)))))]
     (vec (concat seeds randoms))))
@@ -481,7 +490,8 @@
                                     (let [other (rng-choice rng population)
                                           crossed (crossover-tpg rng parent other)]
                                       (mutate-tpg rng crossed config)))
-                            valid? (:valid? (tpg/validate-tpg child))]
+                            extra-ops (set (keys (:wiring-operators config)))
+                            valid? (:valid? (tpg/validate-tpg child {:extra-operator-ids extra-ops}))]
                         (recur (if valid? (conj acc child) acc)
                                (inc attempts)))))
 

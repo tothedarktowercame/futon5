@@ -58,7 +58,12 @@
    {:id "hybrid-110-avgself" :path "data/wiring-rules/hybrid-110-avgself.edn"
     :label "R110+AvgSelf" :predict "carry-chain"}
    {:id "hybrid-110-addself" :path "data/wiring-rules/hybrid-110-addself.edn"
-    :label "R110+AddSelf" :predict "carry-chain"}])
+    :label "R110+AddSelf" :predict "carry-chain"}
+   ;; Bitplane-aware conditional hybrids
+   {:id "hybrid-110-msb" :path "data/wiring-rules/hybrid-110-msb.edn"
+    :label "R110+MSB" :predict "bitplane-conditional"}
+   {:id "hybrid-110-bit5" :path "data/wiring-rules/hybrid-110-bit5.edn"
+    :label "R110+Bit5" :predict "bitplane-conditional"}])
 
 ;; Reference rules for comparison (run fresh)
 (def references

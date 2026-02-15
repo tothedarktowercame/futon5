@@ -20,7 +20,8 @@
             [futon5.mmca.exotype :as exotype]
             [futon5.tpg.core :as tpg]
             [futon5.tpg.diagnostics :as diag]
-            [futon5.tpg.verifiers :as verifiers]))
+            [futon5.tpg.verifiers :as verifiers]
+            [futon5.wiring.runtime :as wrt]))
 
 ;; =============================================================================
 ;; LOCAL PHYSICS KERNELS (same as runtime.clj)
@@ -105,6 +106,57 @@
                        (if hist (conj hist next-phe) [next-phe])))))))
 
 ;; =============================================================================
+;; WIRING-DIAGRAM EVOLUTION
+;; =============================================================================
+
+(defn- advance-generation-wiring
+  "Advance one generation using a wiring diagram."
+  [state diagram]
+  (let [genotype (:genotype state)
+        phenotype (:phenotype state)
+        next-gen (wrt/evolve-genotype diagram genotype)
+        next-phe (when phenotype
+                   (ca/evolve-phenotype-against-genotype genotype phenotype))]
+    (-> state
+        (assoc :generation (inc (:generation state))
+               :genotype next-gen)
+        (cond-> next-phe (assoc :phenotype next-phe))
+        (update-in [:history :genotypes] conj next-gen)
+        (cond-> next-phe
+          (update-in [:history :phenotypes]
+                     (fn [hist] (if hist (conj hist next-phe) [next-phe])))))))
+
+;; =============================================================================
+;; TEMPORAL SCHEDULE
+;; =============================================================================
+
+(defn- schedule-operator
+  "Get operator from temporal schedule at generation t."
+  [schedule t]
+  (let [cycle-len (reduce + (map :steps schedule))
+        pos (mod t cycle-len)]
+    (loop [remaining pos
+           entries schedule]
+      (let [{:keys [operator steps]} (first entries)]
+        (if (< remaining steps)
+          operator
+          (recur (- remaining steps) (rest entries)))))))
+
+;; =============================================================================
+;; WIRING OPERATOR LOADING
+;; =============================================================================
+
+(defn load-wiring-operators
+  "Load wiring diagrams from file paths into operator map.
+
+   path-map: {operator-id file-path}
+   Returns: {operator-id {:diagram ... :meta ...}}"
+  [path-map]
+  (into {} (map (fn [[k path]]
+                  [k (wrt/load-wiring path)])
+                path-map)))
+
+;; =============================================================================
 ;; MAIN RUNNER
 ;; =============================================================================
 
@@ -140,7 +192,8 @@
         verifier-spec (or verifier-spec verifiers/default-spec)
 
         ;; Validate TPG before running
-        validation (tpg/validate-tpg tpg)
+        extra-ops (set (keys (:wiring-operators opts)))
+        validation (tpg/validate-tpg tpg {:extra-operator-ids extra-ops})
         _ (when-not (:valid? validation)
             (throw (ex-info "TPG validation failed"
                             {:errors (:errors validation)})))
@@ -177,16 +230,24 @@
                                 (:phenotype state)
                                 recent-history)
 
-                    ;; 2. Route through TPG
+                    ;; 2. Route through TPG (or temporal schedule)
                     routing (tpg/route tpg (:vector diagnostic))
-                    operator-id (:operator-id routing)
+                    operator-id (if-let [sched (:temporal-schedule opts)]
+                                  (schedule-operator sched gen)
+                                  (:operator-id routing))
+                    routing (assoc routing :operator-id operator-id)
 
-                    ;; 3. Convert operator to physics params
-                    global-rule (tpg/operator->global-rule operator-id)
-                    bend-mode (tpg/operator->bend-mode operator-id)
+                    ;; 3. Check if this is a wiring operator
+                    wiring-ops (:wiring-operators opts)
+                    wiring-entry (get wiring-ops operator-id)
+                    wiring-diagram (when wiring-entry (:diagram wiring-entry))
 
                     ;; 4. Advance the world
-                    next-state (advance-generation state global-rule bend-mode)
+                    next-state (if wiring-diagram
+                                 (advance-generation-wiring state wiring-diagram)
+                                 (let [global-rule (tpg/operator->global-rule operator-id)
+                                       bend-mode (tpg/operator->bend-mode operator-id)]
+                                   (advance-generation state global-rule bend-mode)))
 
                     ;; Track
                     routing-entry (assoc routing :generation gen)
@@ -210,12 +271,17 @@
                           (:phenotype final-state) final-recent)
         all-diagnostics (conj (:diagnostics-trace result) final-diagnostic)
 
-        ;; 6. Evaluate verifiers over entire trace
-        verifier-result (verifiers/evaluate-run all-diagnostics verifier-spec)]
+        ;; 6. Compute extended diagnostics and attach to all diagnostics
+        run-result {:gen-history final-gen-history}
+        extended (diag/compute-extended-diagnostic run-result)
+        all-diagnostics-ext (mapv #(assoc % :extended extended) all-diagnostics)
+
+        ;; 7. Evaluate verifiers over entire trace (with extended diagnostics)
+        verifier-result (verifiers/evaluate-run all-diagnostics-ext verifier-spec)]
 
     {:gen-history (get-in final-state [:history :genotypes])
      :phe-history (get-in final-state [:history :phenotypes])
-     :diagnostics-trace all-diagnostics
+     :diagnostics-trace all-diagnostics-ext
      :routing-trace (:routing-trace result)
      :verifier-result verifier-result
      :generations generations
@@ -232,7 +298,8 @@
   "Run multiple MMCA simulations with the same TPG but different seeds.
 
    Returns a vector of run results, plus aggregate statistics."
-  [{:keys [tpg genotypes generations verifier-spec base-seed n-runs]}]
+  [{:keys [tpg genotypes generations verifier-spec base-seed n-runs
+           wiring-operators temporal-schedule]}]
   (let [n-runs (or n-runs (count genotypes))
         base-seed (or base-seed 42)
         genotypes (or genotypes (repeat n-runs (ca/random-sigil-string 32)))
@@ -240,11 +307,13 @@
         verifier-spec (or verifier-spec verifiers/default-spec)
 
         runs (mapv (fn [i genotype]
-                     (run-tpg {:genotype genotype
-                               :generations generations
-                               :tpg tpg
-                               :verifier-spec verifier-spec
-                               :seed (+ base-seed i)}))
+                     (run-tpg (cond-> {:genotype genotype
+                                       :generations generations
+                                       :tpg tpg
+                                       :verifier-spec verifier-spec
+                                       :seed (+ base-seed i)}
+                                wiring-operators (assoc :wiring-operators wiring-operators)
+                                temporal-schedule (assoc :temporal-schedule temporal-schedule))))
                    (range n-runs)
                    genotypes)
 
