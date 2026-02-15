@@ -196,10 +196,15 @@
 (defn validate-tpg
   "Validate TPG structural invariants.
 
+   opts:
+   - :extra-operator-ids — set of additional valid operator IDs (e.g. wiring operators)
+
    Returns {:valid? boolean :errors [string ...]}"
-  [tpg]
+  ([tpg] (validate-tpg tpg {}))
+  ([tpg {:keys [extra-operator-ids] :or {extra-operator-ids #{}}}]
   (let [errors (atom [])
         err! (fn [msg] (swap! errors conj msg))
+        all-operator-ids (into operator-ids extra-operator-ids)
         team-ids (set (map :team/id (:teams tpg)))]
 
     ;; Check: at least one team
@@ -228,7 +233,7 @@
                 (some (fn [program]
                         (let [{:keys [type target]} (:action program)]
                           (case type
-                            :operator (contains? operator-ids target)
+                            :operator (contains? all-operator-ids target)
                             :team (can-reach? target visited')
                             false)))
                       (:programs team)))))]
@@ -244,7 +249,7 @@
           :team (when-not (team-ids target)
                   (err! (str "Program " (:program/id program) " in team "
                              (:team/id team) " references unknown team " target)))
-          :operator (when-not (operator-ids target)
+          :operator (when-not (all-operator-ids target)
                       (err! (str "Program " (:program/id program) " in team "
                                  (:team/id team) " references unknown operator " target)))
           (err! (str "Program " (:program/id program) " has unknown action type " type)))))
@@ -258,7 +263,7 @@
                    diag/diagnostic-dim))))
 
     {:valid? (empty? @errors)
-     :errors @errors}))
+     :errors @errors})))
 
 ;; =============================================================================
 ;; SEED TPGs (hand-crafted starting points for evolution)

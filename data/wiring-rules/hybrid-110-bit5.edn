@@ -1,0 +1,69 @@
+;; Hybrid: Rule 110 + arithmetic when bit 5 of self = 1
+;;
+;; base   = Rule110(L, C, R)
+;; arith  = (base + C) mod 256
+;; bit5?  = bit-test(C, 5)          <- true when bit 5 (value 32) is set
+;; result = if bit5? then arith else base
+;;
+;; Tests whether mid-range bits create different coupling patterns than MSB.
+;; Bit 5 represents value 32, splitting sigil space into non-contiguous regions.
+;;
+;; Prediction: coupling pattern differs from MSB — less spatially correlated
+;; condition, potentially more distributed coupling.
+
+{:meta {:id :hybrid-110-bit5
+        :description "Rule 110 + arithmetic addition when bit 5 of self is 1"
+        :formula "if bit5(C)=1 then (Rule110(L,C,R)+C)%256 else Rule110(L,C,R)"
+        :coupling-type :bitplane-conditional}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; Arithmetic path: (R110 + C) mod 256
+   {:id :arith :component :sigil-add-mod}
+
+   ;; Bit 5 condition: bit-test(C, 5)
+   {:id :bit5 :component :bit-test}
+
+   ;; Gate: bit5 → arithmetic, else → Rule 110
+   {:id :gate :component :if-then-else-sigil}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [;; Rule 110 wiring
+   {:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   ;; Arithmetic path: R110 + self
+   {:from :r110 :from-port :result :to :arith :to-port :a}
+   {:from :self :to :arith :to-port :b}
+
+   ;; Bit 5 condition
+   {:from :self :to :bit5 :to-port :sigil}
+   {:value 5 :value-type :int :to :bit5 :to-port :index}
+
+   ;; Gate
+   {:from :bit5 :from-port :bit :to :gate :to-port :cond}
+   {:from :arith :from-port :result :to :gate :to-port :then}
+   {:from :r110 :from-port :result :to :gate :to-port :else}
+
+   {:from :gate :from-port :result :to :output}]}}

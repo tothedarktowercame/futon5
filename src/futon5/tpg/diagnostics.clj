@@ -15,7 +15,8 @@
   (:require [futon5.ca.core :as ca]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.domain-analysis :as domain]
-            [futon5.mmca.particle-analysis :as particle]))
+            [futon5.mmca.particle-analysis :as particle]
+            [futon5.mmca.bitplane-analysis :as bitplane]))
 
 (def diagnostic-dim
   "Number of diagnostic dimensions."
@@ -160,7 +161,8 @@
 (def extended-diagnostic-keys
   "Extended diagnostic dimensions beyond the core 6D vector.
    These are run-level features (not per-generation) computed once per run."
-  [:compression-cv :domain-fraction :particle-count :diag-autocorr-max])
+  [:compression-cv :domain-fraction :particle-count :diag-autocorr-max
+   :mean-coupling :coupling-cv])
 
 (defn compute-extended-diagnostic
   "Compute extended diagnostic features from run history.
@@ -181,14 +183,21 @@
         particle-norm (Math/tanh (/ (double raw-count) 10.0))
         ;; Diagonal autocorrelation (already in metrics but not in 6D vector)
         autocorr (metrics/autocorr-metrics history)
-        diag-ac (or (:diag-autocorr autocorr) 0.0)]
+        diag-ac (or (:diag-autocorr autocorr) 0.0)
+        ;; Coupling spectrum (skip spatial/temporal for speed)
+        coupling (bitplane/coupling-spectrum history {:spatial? false :temporal? false})
+        mean-mi (or (:mean-coupling coupling) 0.0)
+        c-cv (or (:coupling-cv coupling) 0.0)]
     {:compression-cv (clamp01 cv)
      :domain-fraction (clamp01 domain-frac)
      :particle-count (clamp01 particle-norm)
      :diag-autocorr-max (clamp01 diag-ac)
+     :mean-coupling (clamp01 (* 4.0 mean-mi))      ;; normalize: MI maxes ~0.25
+     :coupling-cv (clamp01 (/ c-cv 3.0))            ;; normalize CV to [0,1]
      ;; Pass through raw results for downstream use
      :domain-result domain-result
-     :particle-result particle-result}))
+     :particle-result particle-result
+     :coupling-result coupling}))
 
 (defn diagnostics-trace-extended
   "Compute diagnostic vectors with extended SCI dimensions.

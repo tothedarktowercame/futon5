@@ -177,6 +177,12 @@
    :outputs [[:bal :scalar]]
    :doc "(1-bits - 0-bits) / 8, in [-1,1]"}
 
+  :bit-test
+  {:inputs [[:sigil :sigil] [:index :int]]
+   :outputs [[:bit :bool]]
+   :traits [:allele-stratified]
+   :doc "True when bit at index is 1. MSB=7, LSB=0."}
+
   ;; Mutation Operations
   :mutate
   {:inputs [[:sigil :sigil] [:rate :scalar]]

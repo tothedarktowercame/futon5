@@ -76,7 +76,7 @@
         n (count diagnostics-trace)
         per-gen (mapv (fn [diag]
                         (when diag
-                          (evaluate-diagnostic (:named diag) spec)))
+                          (evaluate-diagnostic (merge (:named diag) (:extended diag)) spec)))
                       diagnostics-trace)
         ;; Per-verifier satisfaction rate
         verifier-keys (keys spec)

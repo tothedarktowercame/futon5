@@ -286,6 +286,13 @@
      (let [ones (hamming-weight sigil)]
        {:bal (/ (- (* 2 ones) 8) 8.0)}))
 
+   :bit-test
+   (fn [{:keys [sigil index]} _ _]
+     (let [bits (sigil->bits sigil)
+           idx (min 7 (max 0 (int (or index 0))))
+           char-idx (- 7 idx)]  ;; bits string is MSB-first
+       {:bit (= (nth bits char-idx) \1)}))
+
    ;; Mutation Operations
    :mutate
    (fn [{:keys [sigil rate]} _ _]
