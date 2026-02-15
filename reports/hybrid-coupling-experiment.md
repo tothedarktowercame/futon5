@@ -61,9 +61,12 @@ arithmetic operations. All runs: 100 cells, 100 generations, seed 352362012.
 
 ### Reference: Pure Rule 110
 
-![rule-110](../out/sci-hybrids/rule-110.png)
+![rule-110-full](../out/sci-hybrids/rule-110-full.png)
 
-*Rule 110 sigil-level spacetime. Looks like static at the 256-symbol level.*
+*Rule 110 full spacetime. Left: genotype (sigil colors). Right: phenotype
+(black/white). The genotype shows diagonal texture with dark triangular
+domains — Rule 110's Class IV structure visible even through the 256-color
+palette. The phenotype shows corresponding structure driven by the genotype.*
 
 ![rule-110-bitplanes](../out/sci-hybrids/rule-110-bitplanes.png)
 
@@ -85,11 +88,15 @@ Off-diagonal is uniformly dark: mean MI = 0.0009. No cross-bit interaction.*
 Apply Rule 110 per-bit, then add the original self value arithmetically.
 The addition creates carry-chain coupling at every cell.
 
-![hybrid-110-addself](../out/sci-hybrids/hybrid-110-addself.png)
+![hybrid-110-addself-full](../out/sci-hybrids/hybrid-110-addself-full.png)
 
-*R110+AddSelf sigil spacetime. Similar diagonal texture to Rule 110 at
-the sigil level, but the palette distribution differs — arithmetic mixing
-changes which sigil values appear.*
+*R110+AddSelf full spacetime. Left: genotype. Right: phenotype. The genotype
+retains a diagonal texture similar to Rule 110, with visible triangular domain
+structure. The phenotype layer is driven by genotype dynamics and shows
+corresponding black/white patterns — not identical to Rule 110's phenotype but
+similar in character. The key question is whether the genotype's structure
+survives the arithmetic perturbation — compare the diagonal coherence here
+with pure Rule 110 above.*
 
 ![hybrid-110-addself-bitplanes](../out/sci-hybrids/hybrid-110-addself-bitplanes.png)
 
@@ -162,6 +169,15 @@ preservation with coupling injection.
 Same as AddSelf but with averaging (right-shift after addition). This
 dampens the Rule 110 dynamics more aggressively.
 
+![hybrid-110-avgself-full](../out/sci-hybrids/hybrid-110-avgself-full.png)
+
+*R110+AvgSelf full spacetime. Left: genotype. Right: phenotype. The genotype
+is strikingly different from Rule 110 — it develops pronounced periodic diagonal
+banding with clear repeating structure. This is the averaging operation imposing
+strong damping that regularizes the dynamics. The phenotype shows emerging dark
+blob regions. Visually appealing, but the SCI pipeline says the Class IV ether
+has been destroyed — this periodic structure is closer to Class II.*
+
 ![hybrid-110-avgself-bitplanes](../out/sci-hybrids/hybrid-110-avgself-bitplanes.png)
 
 *R110+AvgSelf bitplanes. Plane 0 (top-left) shows a distinctive half-frozen
@@ -200,6 +216,14 @@ and structural preservation are in tension.
 The original hypothesis: apply arithmetic only at cells where neighbors
 differ significantly, creating spatially localized coupling.
 
+![hybrid-110-boundary-full](../out/sci-hybrids/hybrid-110-boundary-full.png)
+
+*R110+Boundary full spacetime. Left: genotype. Right: phenotype. Genotype
+looks more uniform/chaotic than Rule 110 — the diagonal domain structure
+is gone. Phenotype shows some emerging dark regions but less coherent structure
+than either Rule 110 or AddSelf. The condition fires too often, so the
+arithmetic path dominates and washes out Rule 110's Class IV patterns.*
+
 ![hybrid-110-boundary-bitplanes](../out/sci-hybrids/hybrid-110-boundary-bitplanes.png)
 
 *R110+Boundary bitplanes. All 8 planes look uniformly chaotic — no ether,
@@ -233,6 +257,16 @@ align with any particular bitplane's domain structure.
 
 No Rule 110 at all — pure arithmetic combination of neighbors.
 
+![hybrid-arith-mean-full](../out/sci-hybrids/hybrid-arith-mean-full.png)
+
+*ArithMean full spacetime. Left: genotype. Right: phenotype. The genotype
+develops striking vertical banding — clear periodic stripes running top to
+bottom. This is pure arithmetic dynamics: the averaging operation creates
+spatial periodicity that doesn't exist in any of the Rule 110 hybrids.
+The phenotype shows large-scale black/white regions being driven by the
+banded genotype. Visually distinctive but computationally Class III (no
+gliders, no localized structures — just periodic stripes).*
+
 ![hybrid-arith-mean-bitplanes](../out/sci-hybrids/hybrid-arith-mean-bitplanes.png)
 
 *ArithMean bitplanes. Plane 0 (top-left) shows distinctive structure — slower
@@ -261,11 +295,47 @@ structure that Rule 110 provides.
 
 ---
 
+### R110+Carry: Active-Site Injection
+
+**Formula**: `if hamming(R110(L,C,R),C) > 2 then (R110(L,C,R)+C) mod 256 else R110(L,C,R)`
+
+Inject carry-chain coupling at cells where Rule 110 significantly changes
+the value — active computation sites, glider bodies, collision points.
+
+![hybrid-110-carry-full](../out/sci-hybrids/hybrid-110-carry-full.png)
+
+*R110+Carry full spacetime. Left: genotype. Right: phenotype. The genotype
+shows a different texture — more fine-grained structure than pure Rule 110,
+with visible diagonal coherence. The phenotype shows some emerging spatial
+patterns. The carry injection fires more selectively than the boundary
+condition (only where Rule 110 makes big changes), so some Class IV
+structure survives: BpDF=0.63, 5 particles.*
+
+```
+Detection results:
+  Wolfram class:     IV  (confidence 0.53)
+  Best bitplane df:  0.629  (plane 7)
+  Particles:         5 (4 species)
+  Mean MI:           0.0005
+```
+
+---
+
 ### R110+Rotate: Bit Rotation (No Effect)
 
 **Formula**: `if hamming(L,R) > 3 then rotate(R110(L,C,R), 1) else R110(L,C,R)`
 
 Uses the existing `bit-shift-left` component to rotate bits at boundaries.
+
+![hybrid-110-rotate-full](../out/sci-hybrids/hybrid-110-rotate-full.png)
+
+*R110+Rotate full spacetime. Left: genotype. Right: phenotype. Similar
+diagonal texture to Rule 110 in the genotype but without the distinctive
+dark triangular domains. Phenotype shows standard chaotic black/white
+pattern. The rotation operation changes which bits end up where, but
+because the condition fires at ~50% of cells, this is effectively a
+random per-generation bitplane shuffle — enough to destroy Rule 110's
+Class IV structure without creating any coupling.*
 
 ![hybrid-110-rotate-bitplanes](../out/sci-hybrids/hybrid-110-rotate-bitplanes.png)
 
@@ -406,5 +476,5 @@ Scripts:
   scripts/sci_hybrids.clj                       Full experiment script
 
 Images:
-  out/sci-hybrids/                              30 PNG files
+  out/sci-hybrids/                              37 PNG files
 ```
