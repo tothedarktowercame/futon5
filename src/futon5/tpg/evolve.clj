@@ -33,7 +33,11 @@
    :max-teams 8
    :max-programs-per-team 6
    :weight-sigma 0.15   ; std dev for weight perturbation
-   :bias-sigma 0.1})
+   :bias-sigma 0.1
+   :verbose-eval? false       ; print per-candidate evaluation progress
+   :verbose-eval-runs? false  ; print progress inside each candidate run
+   :verbose-eval-gen-every 10 ; generation heartbeat interval for inner progress
+   :verbose-eval-phases? false}) ; print inner generation phase boundaries
 
 ;; =============================================================================
 ;; RNG HELPERS
@@ -420,7 +424,32 @@
    Returns the TPG augmented with :satisfaction-vector and :overall-satisfaction."
   [tpg-graph config ^java.util.Random rng]
   (let [{:keys [eval-runs eval-generations genotype-length verifier-spec
-                wiring-operators spatial-coupling? coupling-stability?]} config
+                wiring-operators spatial-coupling? coupling-stability?
+                verbose-eval-runs? verbose-eval-gen-every verbose-eval-phases?]} config
+        progress-fn (when verbose-eval-runs?
+                      (fn [{:keys [event run n-runs generation generations elapsed-s overall] :as evt}]
+                        (case event
+                          :run-start
+                          (do (printf "      [run %d/%d] start%n" run n-runs)
+                              (flush))
+                          :generation
+                          (do (printf "      [run %d/%d] gen %d/%d%n"
+                                      run n-runs generation generations)
+                              (flush))
+                          :phase
+                          (when verbose-eval-phases?
+                            (do (printf "      [run %d/%d] phase %s gen=%d%s%n"
+                                        run n-runs (name (:phase evt))
+                                        (int (or generation 0))
+                                        (if-let [op (:operator-id evt)]
+                                          (str " op=" (name op))
+                                          ""))
+                                (flush)))
+                          :run-end
+                          (do (printf "      [run %d/%d] done in %.1fs (overall=%.3f)%n"
+                                      run n-runs elapsed-s (double (or overall 0.0)))
+                              (flush))
+                          nil)))
         batch-result (runner/run-tpg-batch
                       (cond-> {:tpg tpg-graph
                                :n-runs eval-runs
@@ -429,7 +458,10 @@
                                :base-seed (rng-int rng Integer/MAX_VALUE)}
                         wiring-operators (assoc :wiring-operators wiring-operators)
                         spatial-coupling? (assoc :spatial-coupling? true)
-                        coupling-stability? (assoc :coupling-stability? true)))
+                        coupling-stability? (assoc :coupling-stability? true)
+                        progress-fn (assoc :progress-fn progress-fn)
+                        progress-fn (assoc :progress-phases? verbose-eval-phases?)
+                        progress-fn (assoc :progress-every verbose-eval-gen-every)))
         mean-sat (:mean-satisfaction batch-result)
         overall (:overall-mean batch-result)]
     (assoc tpg-graph
@@ -527,6 +559,8 @@
    Returns {:population survivors :gen-record {...}}"
   [population gen config ^java.util.Random rng]
   (let [{:keys [mu lambda]} config
+        verbose-eval? (boolean (:verbose-eval? config))
+        verbose-eval-runs? (boolean (:verbose-eval-runs? config))
         ;; Generate offspring
         offspring
         (loop [acc []
@@ -544,8 +578,28 @@
               (recur (if valid? (conj acc child) acc)
                      (inc attempts)))))
 
-        ;; Evaluate offspring
-        evaluated-offspring (mapv #(evaluate-tpg % config rng) offspring)
+        ;; Evaluate offspring (optionally with per-candidate progress)
+        evaluated-offspring
+        (mapv (fn [idx child]
+                (let [_ (when verbose-eval?
+                          (if verbose-eval-runs?
+                            (printf "  [gen %d] offspring %d/%d%n"
+                                    gen (inc idx) (count offspring))
+                            (printf "  [gen %d] offspring %d/%d ... "
+                                    gen (inc idx) (count offspring)))
+                          (flush))
+                      t0 (System/currentTimeMillis)
+                      evaluated (evaluate-tpg child config rng)
+                      elapsed (/ (- (System/currentTimeMillis) t0) 1000.0)]
+                  (when verbose-eval?
+                    (if verbose-eval-runs?
+                      (printf "  [gen %d] offspring %d/%d done in %.1fs%n"
+                              gen (inc idx) (count offspring) elapsed)
+                      (printf "done in %.1fs%n" elapsed))
+                    (flush))
+                  evaluated))
+              (range (count offspring))
+              offspring)
 
         ;; Select survivors from parents + offspring
         combined (vec (concat population evaluated-offspring))
@@ -586,7 +640,7 @@
     :config config}"
   [config]
   (let [config (merge default-config config)
-        {:keys [mu lambda evo-generations seed verbose?]} config
+        {:keys [mu lambda evo-generations seed verbose? verbose-eval? verbose-eval-runs?]} config
         verbose? (if (some? verbose?) verbose? true)
         rng (java.util.Random. (long (or seed 42)))
 
@@ -598,12 +652,35 @@
             (println (str "Eval: " (:eval-runs config) " runs × "
                           (:eval-generations config) " generations"))
             (println (str "Evolution: " evo-generations " generations"))
+            (when verbose-eval?
+              (println "Per-candidate eval progress: enabled"))
             (println))
 
         ;; Evaluate initial population
-        _ (when verbose? (print "Evaluating initial population... ") (flush))
-        evaluated-pop (mapv #(evaluate-tpg % config rng) pop)
-        _ (when verbose? (println "done."))
+        _ (when verbose?
+            (if verbose-eval?
+              (println "Evaluating initial population:")
+              (print "Evaluating initial population... "))
+            (flush))
+        evaluated-pop
+        (mapv (fn [idx individual]
+                (let [_ (when (and verbose? verbose-eval?)
+                          (if verbose-eval-runs?
+                            (printf "  [init] %d/%d%n" (inc idx) (count pop))
+                            (printf "  [init] %d/%d ... " (inc idx) (count pop)))
+                          (flush))
+                      t0 (System/currentTimeMillis)
+                      evaluated (evaluate-tpg individual config rng)
+                      elapsed (/ (- (System/currentTimeMillis) t0) 1000.0)]
+                  (when (and verbose? verbose-eval?)
+                    (if verbose-eval-runs?
+                      (printf "  [init] %d/%d done in %.1fs%n" (inc idx) (count pop) elapsed)
+                      (printf "done in %.1fs%n" elapsed))
+                    (flush))
+                  evaluated))
+              (range (count pop))
+              pop)
+        _ (when (and verbose? (not verbose-eval?)) (println "done."))
 
         ;; Evolution loop
         result

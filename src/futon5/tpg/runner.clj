@@ -171,6 +171,8 @@
    - :tpg (required) — TPG structure (from tpg/core)
    - :verifier-spec (optional) — verifier target bands (default: tai-zone)
    - :seed (optional) — RNG seed for reproducibility
+   - :progress-fn (optional) — callback for coarse progress events
+   - :progress-every (optional, default 10) — emit generation progress every N generations
 
    Returns:
    {:gen-history [string ...]
@@ -182,12 +184,14 @@
     :seed long
     :tpg-id string
     :config map}"
-  [{:keys [genotype phenotype generations tpg verifier-spec seed] :as opts}]
+  [{:keys [genotype phenotype generations tpg verifier-spec seed
+           progress-fn progress-every progress-phases?] :as opts}]
   (when-not (seq genotype)
     (throw (ex-info "TPG runner requires a starting genotype" {:opts (keys opts)})))
   (when-not tpg
     (throw (ex-info "TPG runner requires a TPG" {:opts (keys opts)})))
   (let [generations (or generations 50)
+        progress-every (max 1 (int (or progress-every 10)))
         seed (or seed (System/nanoTime))
         rng (java.util.Random. (long seed))
         verifier-spec (or verifier-spec verifiers/default-spec)
@@ -222,6 +226,10 @@
               (let [gen-history (get-in state [:history :genotypes])
                     prev-genotype (when (> (count gen-history) 1)
                                     (nth gen-history (- (count gen-history) 2)))
+                    _ (when (and progress-fn progress-phases?)
+                        (progress-fn {:event :phase
+                                      :generation (inc gen)
+                                      :phase :diagnostic-start}))
                     ;; Recent history for damage spread (up to 3 generations)
                     recent-start (max 0 (- (count gen-history) 3))
                     recent-history (subvec (vec gen-history) recent-start)
@@ -230,6 +238,10 @@
                                 prev-genotype
                                 (:phenotype state)
                                 recent-history)
+                    _ (when (and progress-fn progress-phases?)
+                        (progress-fn {:event :phase
+                                      :generation (inc gen)
+                                      :phase :routing-start}))
 
                     ;; 2. Route through TPG (or temporal schedule)
                     ;; Priority: TPG's evolved schedule > opts override > routing
@@ -242,6 +254,11 @@
                                   :else
                                   (:operator-id routing))
                     routing (assoc routing :operator-id operator-id)
+                    _ (when (and progress-fn progress-phases?)
+                        (progress-fn {:event :phase
+                                      :generation (inc gen)
+                                      :phase :advance-start
+                                      :operator-id operator-id}))
 
                     ;; 3. Check if this is a wiring operator
                     wiring-ops (:wiring-operators opts)
@@ -254,16 +271,28 @@
                                  (let [global-rule (tpg/operator->global-rule operator-id)
                                        bend-mode (tpg/operator->bend-mode operator-id)]
                                    (advance-generation state global-rule bend-mode)))
+                    _ (when (and progress-fn progress-phases?)
+                        (progress-fn {:event :phase
+                                      :generation (inc gen)
+                                      :phase :advance-done
+                                      :operator-id operator-id}))
 
                     ;; Track
                     routing-entry (assoc routing :generation gen)
                     diagnostics-trace' (conj diagnostics-trace diagnostic)
-                    routing-trace' (conj routing-trace routing-entry)]
+                    routing-trace' (conj routing-trace routing-entry)
+                    next-gen (inc gen)
+                    _ (when (and progress-fn
+                                 (or (= next-gen generations)
+                                     (zero? (mod next-gen progress-every))))
+                        (progress-fn {:event :generation
+                                      :generation next-gen
+                                      :generations generations}))]
 
                 (recur next-state
                        diagnostics-trace'
                        routing-trace'
-                       (inc gen))))))
+                       next-gen)))))
 
         ;; 5. Compute final diagnostic for the last generation
         final-state (:state result)
@@ -307,7 +336,7 @@
    Returns a vector of run results, plus aggregate statistics."
   [{:keys [tpg genotypes generations verifier-spec base-seed n-runs
            wiring-operators temporal-schedule spatial-coupling?
-           coupling-stability?]}]
+           coupling-stability? progress-fn progress-every progress-phases?]}]
   (let [n-runs (or n-runs (count genotypes))
         base-seed (or base-seed 42)
         genotypes (or genotypes (repeat n-runs (ca/random-sigil-string 32)))
@@ -315,14 +344,36 @@
         verifier-spec (or verifier-spec verifiers/default-spec)
 
         runs (mapv (fn [i genotype]
-                     (run-tpg (cond-> {:genotype genotype
-                                       :generations generations
-                                       :tpg tpg
-                                       :verifier-spec verifier-spec
-                                       :seed (+ base-seed i)}
-                                wiring-operators (assoc :wiring-operators wiring-operators)
-                                temporal-schedule (assoc :temporal-schedule temporal-schedule)
-                                spatial-coupling? (assoc :spatial-coupling? spatial-coupling?))))
+                     (let [run-idx (inc i)
+                           _ (when progress-fn
+                               (progress-fn {:event :run-start
+                                             :run run-idx
+                                             :n-runs n-runs}))
+                           t0 (System/currentTimeMillis)
+                           run-progress (when progress-fn
+                                          (fn [m]
+                                            (progress-fn (merge {:run run-idx
+                                                                 :n-runs n-runs}
+                                                                m))))
+                           run (run-tpg (cond-> {:genotype genotype
+                                                 :generations generations
+                                                 :tpg tpg
+                                                 :verifier-spec verifier-spec
+                                                 :seed (+ base-seed i)}
+                                          wiring-operators (assoc :wiring-operators wiring-operators)
+                                          temporal-schedule (assoc :temporal-schedule temporal-schedule)
+                                          spatial-coupling? (assoc :spatial-coupling? spatial-coupling?)
+                                          run-progress (assoc :progress-fn run-progress)
+                                          progress-phases? (assoc :progress-phases? progress-phases?)
+                                          progress-every (assoc :progress-every progress-every)))
+                           elapsed (/ (- (System/currentTimeMillis) t0) 1000.0)
+                           _ (when progress-fn
+                               (progress-fn {:event :run-end
+                                             :run run-idx
+                                             :n-runs n-runs
+                                             :elapsed-s elapsed
+                                             :overall (get-in run [:verifier-result :overall-satisfaction])}))]
+                       run))
                    (range n-runs)
                    genotypes)
 

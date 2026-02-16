@@ -17,16 +17,51 @@
   (or (System/getenv "POD_EIGS_PATH")
       "pod-eigs/target/release/pod-eigs"))
 
+(def ^:private commons-math3-path
+  (or (System/getenv "COMMONS_MATH3_JAR")
+      (str (System/getProperty "user.home")
+           "/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar")))
+
 (def ^:private babashka?
   (boolean (System/getProperty "babashka.version")))
 
-(def ^:private pod-eigs-fn
+(def ^:private pod-call-timeout-ms
+  (try
+    (Long/parseLong (or (System/getenv "POD_EIGS_TIMEOUT_MS") "2000"))
+    (catch Throwable _ 2000)))
+
+(def ^:private load-pod-fn
   (delay
     (when babashka?
       (try
-        (when (.exists (io/file pod-eigs-path))
-          ((requiring-resolve 'babashka.pods/load-pod) pod-eigs-path)
-          (requiring-resolve 'pod.eigs/eigenvalues))
+        (requiring-resolve 'babashka.pods/load-pod)
+        (catch Throwable _ nil)))))
+
+(def ^:private unload-pod-fn
+  (delay
+    (when babashka?
+      (try
+        (requiring-resolve 'babashka.pods/unload-pod)
+        (catch Throwable _ nil)))))
+
+(def ^:private invoke-pod-fn
+  (delay
+    (when babashka?
+      (try
+        (requiring-resolve 'babashka.pods/invoke)
+        (catch Throwable _ nil)))))
+
+(defonce ^:private pod-id* (atom nil))
+(defonce ^:private pod-disabled? (atom false))
+(defonce ^:private pod-timeout-warned? (atom false))
+
+(def ^:private ensure-java-eigs!
+  (delay
+    (when babashka?
+      (try
+        (let [jar (io/file commons-math3-path)]
+          (when (.exists jar)
+            ((requiring-resolve 'babashka.classpath/add-classpath) (.getPath jar))))
         (catch Throwable _ nil)))))
 
 (def ^:private eigenvalue-cache-limit 10000)
@@ -147,6 +182,7 @@
 (defn- java-eigenvalues
   "Compute eigenvalues via Apache Commons Math, using reflection to avoid hard deps in bb."
   [matrix]
+  (force ensure-java-eigs!)
   (let [arr (matrix->array2d matrix)
         rm-class (Class/forName "org.apache.commons.math3.linear.Array2DRowRealMatrix")
         rm-iface (Class/forName "org.apache.commons.math3.linear.RealMatrix")
@@ -161,12 +197,65 @@
 (defn- pod-eigenvalues
   "Compute eigenvalues via the pod; returns real parts sorted by abs desc."
   [matrix]
-  (let [pod-fn @pod-eigs-fn]
-    (when pod-fn
-      (let [resp (pod-fn {:rows matrix :symmetric false})
-            pairs (:eigenvalues resp)
-            reals (mapv first pairs)]
-        (vec (sort-by #(- (Math/abs %)) reals))))))
+  (let [load-pod @load-pod-fn
+        invoke-pod @invoke-pod-fn
+        unload-pod @unload-pod-fn]
+    (when (and (not @pod-disabled?)
+               load-pod invoke-pod
+               (.exists (io/file pod-eigs-path)))
+      (loop [attempt 0]
+        (let [pod-id (or @pod-id*
+                         (let [pod-info (load-pod pod-eigs-path)
+                               id (:pod/id pod-info)]
+                           (when id
+                             (reset! pod-id* id))
+                           id))]
+          (when pod-id
+            (let [resp-or-err
+                  (let [f (future
+                            (invoke-pod pod-id
+                                        "pod.eigs/eigenvalues"
+                                        [{:rows matrix :symmetric false}]
+                                        {:timeout pod-call-timeout-ms}))
+                        out-or-err (try
+                                     {:out (deref f pod-call-timeout-ms ::timeout)}
+                                     (catch Throwable t
+                                       {:err t}))]
+                    (cond
+                      (:err out-or-err)
+                      {:err (:err out-or-err)}
+
+                      (= (:out out-or-err) ::timeout)
+                      (do
+                        (future-cancel f)
+                        {:err (ex-info "pod-eigs invoke timed out"
+                                       {:timeout-ms pod-call-timeout-ms})})
+
+                      :else
+                      {:resp (:out out-or-err)}))]
+              (if-let [resp (:resp resp-or-err)]
+                (let [pairs (:eigenvalues resp)
+                      reals (mapv first pairs)]
+                  (vec (sort-by #(- (Math/abs %)) reals)))
+                (let [t (:err resp-or-err)]
+                  ;; If pod IPC gets wedged, drop and recreate the pod once.
+                  (try
+                    (when unload-pod
+                      (unload-pod pod-id))
+                    (catch Throwable _ nil))
+                  (reset! pod-id* nil)
+                  (if (< attempt 1)
+                    (recur (inc attempt))
+                    (do
+                      (reset! pod-disabled? true)
+                      (when (compare-and-set! pod-timeout-warned? false true)
+                        (binding [*out* *err*]
+                          (println (str "WARNING: pod-eigs invocation failed after retry; "
+                                        "disabling pod-eigs for this process and "
+                                        "falling back to diagonal eigenvalue approximation. "
+                                        "Set POD_EIGS_TIMEOUT_MS to tune timeout."))
+                          (flush)))
+                      (throw t))))))))))))
 
 (defn- cached-eigenvalues
   [matrix compute-fn]
@@ -189,14 +278,16 @@
   (cached-eigenvalues
    matrix
    (fn [m]
-     (try
-       (or (pod-eigenvalues m)
-           (java-eigenvalues m))
-       (catch Exception _
-         ;; Fallback: use diagonal entries if eigendecomposition fails.
-         (let [diag (mapv (fn [idx] (double (get-in m [idx idx] 0.0)))
-                          (range matrix-shape))]
-           (vec (sort-by #(- (Math/abs %)) diag))))))))
+     (let [diag-fallback
+           (fn []
+             ;; Last resort when eigendecomposition is unavailable/fails.
+             (let [diag (mapv (fn [idx] (double (get-in m [idx idx] 0.0)))
+                              (range matrix-shape))]
+               (vec (sort-by #(- (Math/abs %)) diag))))]
+       ;; Prefer in-process JVM eigendecomposition (robust, no pod IPC deadlocks).
+       (or (try (java-eigenvalues m) (catch Exception _ nil))
+           (try (pod-eigenvalues m) (catch Exception _ nil))
+           (diag-fallback))))))
 
 (defn eigenvalue-signs
   "Compute the signs of eigenvalues as hexagram lines.

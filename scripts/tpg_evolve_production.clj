@@ -47,7 +47,10 @@
    :coupling-stability? false     ;; set true for cross-run stability fitness
    :checkpoint-dir "out/tpg-evo-production"
    :checkpoint-every 5
-   :verbose? true})
+   :verbose? true
+   :verbose-eval? true
+   :verbose-eval-runs? true
+   :verbose-eval-gen-every 1})
 
 ;; Load user config from CLI arg if provided
 (def user-config
@@ -124,7 +127,7 @@
 ;; =============================================================================
 
 (let [{:keys [mu lambda evo-generations seed checkpoint-dir checkpoint-every
-              verbose?]} config
+              verbose-eval? verbose-eval-runs? verbose-eval-gen-every]} config
       config-for-evolve (merge evolve/default-config config)
 
       ;; Check for existing checkpoint
@@ -146,7 +149,26 @@
         (let [rng (make-rng start-gen)]
           (println "  Re-evaluating loaded population...")
           (flush)
-          (mapv #(evolve/evaluate-tpg % config-for-evolve rng) (:population checkpoint)))
+          (mapv (fn [idx individual]
+                  (let [_ (when verbose-eval?
+                            (if verbose-eval-runs?
+                              (printf "    [resume] %d/%d%n"
+                                      (inc idx) (count (:population checkpoint)))
+                              (printf "    [resume] %d/%d ... "
+                                      (inc idx) (count (:population checkpoint))))
+                            (flush))
+                        t0 (System/currentTimeMillis)
+                        evaluated (evolve/evaluate-tpg individual config-for-evolve rng)
+                        elapsed (/ (- (System/currentTimeMillis) t0) 1000.0)]
+                    (when verbose-eval?
+                      (if verbose-eval-runs?
+                        (printf "    [resume] %d/%d done in %.1fs%n"
+                                (inc idx) (count (:population checkpoint)) elapsed)
+                        (printf "done in %.1fs%n" elapsed))
+                      (flush))
+                    evaluated))
+                (range (count (:population checkpoint)))
+                (:population checkpoint)))
         ;; Fresh start
         (let [rng (make-rng 0)
               pop (evolve/initial-population rng config-for-evolve)]
@@ -155,10 +177,36 @@
                         (:eval-generations config-for-evolve) " generations"))
           (println (str "Evolution: " evo-generations " generations"))
           (println (str "Checkpoint: every " checkpoint-every " generations to " checkpoint-dir))
+          (when verbose-eval?
+            (println "Per-candidate eval progress: enabled"))
+          (when verbose-eval-runs?
+            (println (str "Inner eval heartbeat: every " verbose-eval-gen-every " generations")))
           (println)
-          (print "Evaluating initial population... ") (flush)
-          (let [evaluated (mapv #(evolve/evaluate-tpg % config-for-evolve rng) pop)]
-            (println "done.")
+          (if verbose-eval?
+            (println "Evaluating initial population:")
+            (print "Evaluating initial population... "))
+          (flush)
+          (let [evaluated (mapv (fn [idx individual]
+                                  (let [_ (when verbose-eval?
+                                            (if verbose-eval-runs?
+                                              (printf "    [init] %d/%d%n" (inc idx) (count pop))
+                                              (printf "    [init] %d/%d ... "
+                                                      (inc idx) (count pop)))
+                                            (flush))
+                                        t0 (System/currentTimeMillis)
+                                        result (evolve/evaluate-tpg individual config-for-evolve rng)
+                                        elapsed (/ (- (System/currentTimeMillis) t0) 1000.0)]
+                                    (when verbose-eval?
+                                      (if verbose-eval-runs?
+                                        (printf "    [init] %d/%d done in %.1fs%n"
+                                                (inc idx) (count pop) elapsed)
+                                        (printf "done in %.1fs%n" elapsed))
+                                      (flush))
+                                    result))
+                                (range (count pop))
+                                pop)]
+            (when-not verbose-eval?
+              (println "done."))
             evaluated)))]
 
   (println)
