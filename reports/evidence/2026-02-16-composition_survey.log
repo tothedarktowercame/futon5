@@ -1,0 +1,12 @@
+Mission validation:
+  coordination-exotype         valid=true  file=data/missions/coordination-exotype.edn
+  futon1a-rebuild              valid=true  file=data/missions/futon1a-rebuild.edn
+  futon2-aif-ants              valid=true  file=data/missions/futon2-aif-ants.edn
+  futon3-agent-loop            valid=true  file=data/missions/futon3-agent-loop.edn
+  futon3-coordination          valid=true  file=data/missions/futon3-coordination.edn
+  social-exotype               valid=true  file=data/missions/social-exotype.edn
+
+Composition survey summary:
+  Missions: 6 total, 6 valid, 0 invalid
+  Serial compositions: 22 possible, 22 valid, 0 invalid
+  Parallel compositions: 22 possible, 22 valid, 0 invalid
