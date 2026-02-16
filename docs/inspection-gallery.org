@@ -1,0 +1,80 @@
+#+TITLE: Visual Inspection Gallery: Legacy vs Prototype vs Boundary Guardian
+#+DATE: 2026-01-25
+
+* Overview
+
+This gallery compares triptychs from three wiring types:
+- *Legacy 工*: Known-good baseline (update-prob=0.5, match-threshold=0.44)
+- *Prototype-001*: Graph-based creative-peng wiring
+- *Boundary Guardian*: Hybrid using legacy as base with creative XOR in moderate diversity
+
+Each triptych shows: Genotype | Phenotype | Exotype (left to right)
+Time runs top to bottom (100 generations).
+
+* Key Question
+
+Is prototype-001 "hot" (galaxy-like) or does it produce genuine EoC (coral-reef)?
+
+Metrics suggest prototype-001 has *better* band scores than legacy:
+- 26% moderate columns vs 7%
+- Band score 0.260 vs 0.070
+
+But visual inspection is needed to confirm.
+
+* Seed 4242 Comparison
+
+** Legacy 工 (seed 4242)
+
+- Final change rate: 0.22-0.26
+- Moderate columns: 7%
+- Band score: 0.070
+
+[[file:images/inspection-legacy--baseline-seed-4242.png]]
+
+** Prototype-001 (seed 4242)
+
+- Final change rate: 0.10-0.14
+- Moderate columns: 26%
+- Band score: 0.260
+
+[[file:images/inspection-prototype-001-creative-peng-seed-4242.png]]
+
+** Boundary Guardian (seed 4242)
+
+- Final change rate: 0.19-0.24
+- Moderate columns: 8%
+- Band score: 0.080
+
+[[file:images/inspection-boundary-guardian-001-seed-4242.png]]
+
+* Seed 352362012 Comparison (Best Seed)
+
+This seed showed the highest moderate column % in earlier analysis.
+
+** Legacy 工 (seed 352362012)
+
+- Final change rate: ~0.09
+- Moderate columns: 18%
+- Band score: 0.180
+- Note: Classified as "frozen" by collapse detector
+
+[[file:images/inspection-legacy--baseline-seed-352362012.png]]
+
+** Prototype-001 (seed 352362012)
+
+- Final change rate: ~0.12
+- Moderate columns: 31%
+- Band score: 0.310 ("has-active-bands")
+- Widest band: 12 columns
+
+[[file:images/inspection-prototype-001-creative-peng-seed-352362012.png]]
+
+* Questions for Visual Review
+
+1. Does prototype-001 look like "galaxy" (sparse, collapsed) or "coral reef" (dense, branching)?
+
+2. Are there visible vertical bands of activity in the phenotype?
+
+3. Does the exotype layer (right panel) show structure or noise?
+
+4. How does Boundary Guardian compare visually to pure legacy?

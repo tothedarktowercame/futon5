@@ -8,7 +8,8 @@
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.register-shift :as register-shift]
             [futon5.mmca.runtime :as mmca]
-            [futon5.scoring :as scoring]))
+            [futon5.scoring :as scoring]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -138,6 +139,7 @@
             header "update_prob,match_threshold,pass_rate,mean_rank,error_count"
             total (count grid)
             start-ms (System/currentTimeMillis)]
+        (out/warn-overwrite-file! out)
         (with-open [w (io/writer out)]
           (.write w header)
           (.write w "\n")
@@ -195,7 +197,7 @@
               (println (format "progress %d/%d u=%.2f m=%.2f pass=%.3f rank=%.3f elapsed=%.1fs"
                                done total u m pass-rate mean-rank elapsed-s))
               (flush)))
-        (println "Wrote" out))))))
+        (println "Wrote" (out/abs-path out)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

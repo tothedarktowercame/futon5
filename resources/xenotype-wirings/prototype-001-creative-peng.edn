@@ -1,0 +1,51 @@
+{:meta {:id :xenotype-001
+        :hexagram 1
+        :hexagram-name "Creative"
+        :energy :peng
+        :energy-name "Expand"
+        :description "Creative expansion: when local diversity is low, mutate away from neighbors; otherwise XOR to differentiate"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Measure local diversity
+          {:id :diversity :component :diversity}
+
+          ;; Path A: Low diversity -> mutate self
+          {:id :mutate :component :mutate}
+
+          ;; Path B: High diversity -> XOR pred and succ
+          {:id :xor :component :bit-xor}
+
+          ;; Choose based on diversity threshold
+          {:id :choose :component :threshold-sigil}]
+
+  :edges [;; Feed neighbors to diversity
+          {:from :neighbors :from-port :sigils :to :diversity :to-port :sigils}
+
+          ;; Mutate path: mutate self with rate 0.3
+          {:from :ctx-self :from-port :sigil :to :mutate :to-port :sigil}
+          {:value 0.3 :value-type :scalar :to :mutate :to-port :rate}
+
+          ;; XOR path: differentiate from neighbors
+          {:from :ctx-pred :from-port :sigil :to :xor :to-port :a}
+          {:from :ctx-succ :from-port :sigil :to :xor :to-port :b}
+
+          ;; Choose: if diversity < 0.5, mutate (expand); else XOR (differentiate)
+          {:from :diversity :from-port :score :to :choose :to-port :score}
+          {:value 0.5 :value-type :scalar :to :choose :to-port :threshold}
+          {:from :xor :from-port :result :to :choose :to-port :above}
+          {:from :mutate :from-port :result :to :choose :to-port :below}]
+
+  :output :choose}
+
+ :interpretation
+ "When surrounded by similar neighbors (low diversity), inject randomness
+  through mutation to expand the possibility space. When neighbors are
+  already diverse, use XOR to create a new pattern that relates to but
+  differs from the neighborhood. This embodies Creative (generating novelty)
+  with Péng energy (expanding outward)."}

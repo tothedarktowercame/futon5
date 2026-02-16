@@ -8,7 +8,7 @@
    - NEXT (8): THEN / outcomes
    - PHENOTYPE-FAMILY (4): 3 parents + child
 
-   The hexagram (eigenvalue diagonalization of the 6x6 matrix) identifies the physics family.
+   The hexagram (diagonal trace of the 6x6 matrix) identifies the physics family.
    See hexagram/lift.clj for the full structure."
   (:require [futon5.ca.core :as ca]
             [futon5.hexagram.lift :as hex-lift]))
@@ -17,12 +17,14 @@
   [:none :rotate-left :rotate-right :reverse :xor-neighbor :majority :swap-halves :scramble])
 
 (defn- rand-double
+  "Get a random double [0,1), optionally using provided RNG for reproducibility."
   [^java.util.Random rng]
   (if rng
     (.nextDouble rng)
     (rand)))
 
 (defn- rand-nth*
+  "Random element from collection, optionally using provided RNG."
   [^java.util.Random rng coll]
   (if rng
     (nth coll (.nextInt rng (count coll)))
@@ -265,6 +267,13 @@
      :description (str "Hex " hexagram " (" (name (:physics-mode base)) ") × "
                        (:name energy) " (" (name (:mode-bias energy-mod)) ")")}))
 
+(defn hexagram->physics-params
+  "Map a hexagram to physics parameters.
+   DEPRECATED: Use rule->physics-params for full 256-rule physics."
+  [hexagram-id]
+  ;; Default to Péng energy for backwards compatibility
+  (rule->physics-params (hex-lift/hexagram+energy->rule (dec (or hexagram-id 1)) 0)))
+
 (def ^:private sigil-table
   "Cached vector of all 256 sigils for index-based lookup."
   (delay (mapv :sigil (ca/sigil-entries))))
@@ -305,7 +314,7 @@
         ;; Derive physics family
         physics-family (context->physics-family context)
         physics-params (when physics-family
-                         (rule->physics-params (:rule physics-family)))]
+                         (hexagram->physics-params (:hexagram-id physics-family)))]
 
     {:pattern-id (:id pattern)
      :context context
@@ -594,6 +603,7 @@
    - global-rule: The global physics rule (0-255) or a keyword like :baldwin
    - bend-mode: How to compose (:sequential, :blend, :matrix)
    - kernel-fn-map: Map of kernel keywords to functions
+   - rng (optional): java.util.Random for reproducible randomness
 
    Returns a function (genotype phenotype prev-genotype) → evolved-genotype"
   ([global-rule bend-mode kernel-fn-map]
@@ -677,7 +687,6 @@
                                       (local-kernel ego pred succ (merge local-ctx (:params local-spec)))))]
                        (:sigil result))))
               (apply str)))))))
-
 (defn evolve-with-global-exotype
   "Evolve a genotype using a global exotype that bends local physics.
 
@@ -690,6 +699,7 @@
    - global-rule: Global physics rule (number or keyword)
    - bend-mode: How global bends local (:sequential, :blend, :matrix)
    - kernel-fn-map: Map of kernel keywords to functions
+   - rng (optional): java.util.Random for reproducible randomness
 
    Returns the evolved genotype string."
   ([genotype phenotype prev-genotype global-rule bend-mode kernel-fn-map]
@@ -702,12 +712,16 @@
 (defn apply-exotype
   "Rewrite a kernel spec using an exotype and a sampled context.
 
+   DEPRECATED: This function modifies a GLOBAL kernel, not per-cell physics.
+   Use evolve-string-local or evolve-with-global-exotype for the new system.
+
    The full 36-bit context determines physics via:
    - Hexagram (from eigenvalue diagonalization) = situation (1 of 64)
    - Primary energy (from phenotype family bits 0-1) = engagement mode (1 of 4)
    - Combined: physics rule (1 of 256)
 
    The exotype sigil provides additional local modulation."
+  {:deprecated "2026-01-24"}
   [kernel exotype context ^java.util.Random rng]
   (when (and kernel exotype context)
     (let [;; Extract full 256-rule physics from context
@@ -748,3 +762,93 @@
           (assoc :label nil)
           ;; Record which physics rule was active
           (cond-> physics-family (assoc :physics-rule (:rule physics-family)))))))
+
+;; =============================================================================
+;; RUNTIME INVARIANT CHECKING
+;; =============================================================================
+
+(def ^:dynamic *exotype-system*
+  "Which exotype system is active.
+
+   Valid values:
+   - :local-physics — per-cell 36-bit physics (correct)
+   - :global-kernel — old global kernel steering (deprecated)"
+  :global-kernel)
+
+(defn assert-local-physics!
+  "Throw if local physics is not active.
+
+   Call this at the start of scoring/evaluation to ensure
+   we're not accidentally scoring runs from the old system."
+  []
+  (when (not= *exotype-system* :local-physics)
+    (throw (ex-info "Local physics not active! Cannot trust run results."
+                    {:exotype-system *exotype-system*
+                     :expected :local-physics
+                     :hint "Use evolve-string-local or evolve-with-global-exotype"}))))
+
+(defn run-metadata
+  "Generate metadata for a run indicating which exotype system was used.
+
+   Include this in run results for Invariant 4 verification."
+  []
+  {:exotype-system *exotype-system*
+   :timestamp (System/currentTimeMillis)
+   :version "2026-01-24"})
+
+(defmacro with-local-physics
+  "Execute body with local physics enabled.
+
+   This sets *exotype-system* to :local-physics so that
+   assert-local-physics! will pass."
+  [& body]
+  `(binding [*exotype-system* :local-physics]
+     ~@body))
+
+(defn validate-run-metadata
+  "Check that run metadata indicates local physics was used.
+
+   Returns true if valid, throws if invalid."
+  [run-result]
+  (let [meta (:exotype-metadata run-result)]
+    (cond
+      (nil? meta)
+      (throw (ex-info "Run missing exotype metadata! Cannot trust results."
+                      {:run-keys (keys run-result)
+                       :hint "Run was produced by old system"}))
+
+      (not= :local-physics (:exotype-system meta))
+      (throw (ex-info "Run used deprecated exotype system!"
+                      {:exotype-system (:exotype-system meta)
+                       :expected :local-physics}))
+
+      :else true)))
+
+(defn summarize-rules
+  "Summarize the physics rules used in a run.
+
+   Returns a map with:
+   - :total — number of cells evolved
+   - :unique — number of distinct rules used
+   - :rule-counts — frequency map of rules
+   - :kernel-counts — frequency map of kernels"
+  [{:keys [rules kernels]}]
+  (when (seq rules)
+    {:total (count rules)
+     :unique (count (set rules))
+     :rule-counts (frequencies rules)
+     :kernel-counts (frequencies kernels)}))
+
+(defn log-rule-distribution
+  "Print a summary of physics rules used in a run.
+
+   Use this to verify Invariant 1: rules should vary by cell."
+  [{:keys [rules kernels] :as result}]
+  (let [summary (summarize-rules result)]
+    (when summary
+      (println "=== Exotype Rule Distribution ===")
+      (println "Total cells:" (:total summary))
+      (println "Unique rules:" (:unique summary))
+      (println "Rule diversity:" (float (/ (:unique summary) (:total summary))))
+      (println "Kernels used:" (keys (:kernel-counts summary)))
+      summary)))

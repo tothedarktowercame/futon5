@@ -7,10 +7,30 @@
 
    This ensures all four quadrants (LEFT/EGO/RIGHT/NEXT) contribute
    to the hexagram identity through the eigenvalue structure."
-  (:require [futon5.ca.core :as ca]
+  (:require [clojure.java.io :as io]
+            [futon5.ca.core :as ca]
             [futon5.hexagram.lines :as lines]))
 
 (def ^:private matrix-shape 6)
+
+(def ^:private pod-eigs-path
+  (or (System/getenv "POD_EIGS_PATH")
+      "pod-eigs/target/release/pod-eigs"))
+
+(def ^:private babashka?
+  (boolean (System/getProperty "babashka.version")))
+
+(def ^:private pod-eigs-fn
+  (delay
+    (when babashka?
+      (try
+        (when (.exists (io/file pod-eigs-path))
+          ((requiring-resolve 'babashka.pods/load-pod) pod-eigs-path)
+          (requiring-resolve 'pod.eigs/eigenvalues))
+        (catch Throwable _ nil)))))
+
+(def ^:private eigenvalue-cache-limit 10000)
+(defonce ^:private eigenvalue-cache (atom {}))
 
 (def ^:private matrix-layout
   [[:ego :right :right :right :right :right]
@@ -109,78 +129,74 @@
     (fill-matrix exotype-bits)
     (bits->matrix exotype-bits)))
 
-(defn- mat-transpose [m]
-  (apply mapv vector m))
-
-(defn- vec-dot [a b]
-  (reduce + (map * a b)))
-
-(defn- vec-norm [v]
-  (Math/sqrt (double (vec-dot v v))))
-
-(defn- vec-scale [v s]
-  (if (zero? s)
-    (vec (repeat (count v) 0.0))
-    (mapv #(/ (double %) s) v)))
-
-(defn- vec-sub [a b]
-  (mapv - a b))
-
-(defn- mat-mul [a b]
-  (let [bt (mat-transpose b)]
-    (mapv (fn [row]
-            (mapv (fn [col] (double (vec-dot row col))) bt))
-          a)))
-
-(defn- qr-decompose
-  "Compute QR decomposition using classical Gram-Schmidt."
+(defn diagonal
+  "Extract the 6-element diagonal from a 6x6 matrix.
+   DEPRECATED: Use eigenvalue-diagonal for principled hexagram extraction."
   [matrix]
-  (let [cols (mat-transpose matrix)
-        n (count cols)
-        r-init (vec (repeat n (vec (repeat n 0.0))))]
-    (loop [j 0
-           q-cols []
-           r r-init]
-      (if (= j n)
-        [(mat-transpose q-cols) r]
-        (let [a-j (nth cols j)
-              [v r] (loop [i 0
-                           v a-j
-                           r r]
-                      (if (= i j)
-                        [v r]
-                        (let [q-i (nth q-cols i)
-                              r-ij (double (vec-dot q-i a-j))
-                              v' (vec-sub v (vec-scale q-i r-ij))
-                              r' (assoc-in r [i j] r-ij)]
-                          (recur (inc i) v' r'))))
-              r-jj (double (vec-norm v))
-              q-j (vec-scale v r-jj)
-              r (assoc-in r [j j] r-jj)]
-          (recur (inc j) (conj q-cols q-j) r))))))
+  (mapv (fn [idx]
+          (get-in matrix [idx idx]))
+        (range matrix-shape)))
 
-(def ^:private qr-iterations 8)
-
-(defn- eigenvalues-qr
-  "Approximate eigenvalues via QR iteration; returns diagonal values."
+(defn- matrix->array2d
+  "Convert a Clojure 6x6 matrix to a Java double[][] array."
   [matrix]
-  (let [matrix (mapv (fn [row] (mapv double row)) matrix)
-        n (count matrix)]
-    (loop [k 0
-           m matrix]
-      (if (>= k qr-iterations)
-        (mapv (fn [i] (get-in m [i i])) (range n))
-        (let [[q r] (qr-decompose m)
-              m' (mat-mul r q)]
-          (recur (inc k) m'))))))
+  (into-array (map double-array
+                   (for [row matrix]
+                     (map double row)))))
+
+(defn- java-eigenvalues
+  "Compute eigenvalues via Apache Commons Math, using reflection to avoid hard deps in bb."
+  [matrix]
+  (let [arr (matrix->array2d matrix)
+        rm-class (Class/forName "org.apache.commons.math3.linear.Array2DRowRealMatrix")
+        rm-iface (Class/forName "org.apache.commons.math3.linear.RealMatrix")
+        ed-class (Class/forName "org.apache.commons.math3.linear.EigenDecomposition")
+        rm-ctor (.getConstructor rm-class (into-array Class [(class arr)]))
+        rm (.newInstance rm-ctor (object-array [arr]))
+        ed-ctor (.getConstructor ed-class (into-array Class [rm-iface]))
+        eigen (.newInstance ed-ctor (object-array [rm]))
+        reals (vec (.getRealEigenvalues eigen))]
+    (vec (sort-by #(- (Math/abs %)) reals))))
+
+(defn- pod-eigenvalues
+  "Compute eigenvalues via the pod; returns real parts sorted by abs desc."
+  [matrix]
+  (let [pod-fn @pod-eigs-fn]
+    (when pod-fn
+      (let [resp (pod-fn {:rows matrix :symmetric false})
+            pairs (:eigenvalues resp)
+            reals (mapv first pairs)]
+        (vec (sort-by #(- (Math/abs %)) reals))))))
+
+(defn- cached-eigenvalues
+  [matrix compute-fn]
+  (let [key (vec (map double (mapcat identity matrix)))]
+    (if-let [hit (get @eigenvalue-cache key)]
+      hit
+      (let [value (compute-fn matrix)]
+        (swap! eigenvalue-cache
+               (fn [m]
+                 (let [m' (assoc m key value)]
+                   (if (> (count m') eigenvalue-cache-limit)
+                     {}
+                     m'))))
+        value))))
 
 (defn eigenvalues
   "Compute eigenvalues of a 6x6 matrix.
    Returns a vector of 6 eigenvalues (real parts only, sorted by magnitude descending)."
   [matrix]
-  (let [reals (eigenvalues-qr matrix)]
-    ;; Sort by absolute magnitude descending for consistent ordering
-    (vec (sort-by #(- (Math/abs %)) reals))))
+  (cached-eigenvalues
+   matrix
+   (fn [m]
+     (try
+       (or (pod-eigenvalues m)
+           (java-eigenvalues m))
+       (catch Exception _
+         ;; Fallback: use diagonal entries if eigendecomposition fails.
+         (let [diag (mapv (fn [idx] (double (get-in m [idx idx] 0.0)))
+                          (range matrix-shape))]
+           (vec (sort-by #(- (Math/abs %)) diag))))))))
 
 (defn eigenvalue-signs
   "Compute the signs of eigenvalues as hexagram lines.
@@ -210,6 +226,19 @@
     (string? value) (not= value "0")
     (number? value) (> (double value) 0.5)
     :else false))
+
+(defn diagonal->hexagram-lines
+  "Convert a diagonal to a 6-line vector (:yin/:yang), bottom-to-top."
+  [diag]
+  (mapv (fn [v] (if (yang? v) :yang :yin)) diag))
+
+(defn exotype->hexagram-lines-legacy
+  "Lift exotype bits into a 6-line vector using simple diagonal extraction.
+   DEPRECATED: Use exotype->hexagram-lines for eigenvalue-based extraction."
+  [exotype-bits]
+  (-> (exotype->6x6 exotype-bits)
+      diagonal
+      diagonal->hexagram-lines))
 
 (defn exotype->hexagram-lines
   "Lift exotype bits into a 6-line vector (:yin/:yang) via eigenvalue diagonalization.

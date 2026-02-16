@@ -8,7 +8,8 @@
             [futon5.mmca.runtime :as mmca]
             [futon5.mmca.register-shift :as register-shift]
             [futon5.mmca.filament :as filament]
-            [futon5.hexagram.metrics :as hex-metrics]))
+            [futon5.hexagram.metrics :as hex-metrics]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -187,11 +188,10 @@
                              :source-summary (:summary entry)})
                           entries)
             out (or out (format "/tmp/mission-17a-rescore-%d.edn" (System/currentTimeMillis)))]
-        (spit out (pr-str {:log log
-                           :replay replay
-                           :envelope-opts opts
-                           :results results}))
-        (println "Wrote" out)))))
+        (out/spit-text! out (pr-str {:log log
+                                     :replay replay
+                                     :envelope-opts opts
+                                     :results results})))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

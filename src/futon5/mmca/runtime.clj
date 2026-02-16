@@ -1,5 +1,18 @@
 (ns futon5.mmca.runtime
-  "MetaMetaCA runtime that wires compiled pattern operators into the CA loop."
+  "MetaMetaCA runtime that wires compiled pattern operators into the CA loop.
+
+   IMPORTANT: As of 2026-01-24, there are two exotype modes:
+
+   :inline (deprecated) — Old global kernel steering. One context is sampled
+                          and used to modify the GLOBAL kernel. All cells
+                          get the same physics.
+
+   :local-physics       — New per-cell physics. Each cell computes its own
+                          36-bit context and applies the corresponding
+                          physics rule. Different cells may use different
+                          kernels. This is the correct implementation.
+
+   Use :exotype-mode :local-physics for new runs."
   (:require [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.functor :as functor]
@@ -346,6 +359,103 @@
                      :genotype next-gen)
               (update-in [:history :genotypes] conj next-gen)))))))
 
+(def ^:private local-physics-kernels
+  "Kernel functions for local physics mode.
+
+   Each kernel function takes (sigil pred succ context) and returns {:sigil S}.
+   These are simplified versions that just apply the base CA evolution
+   with parameters from the context."
+  (let [;; Helper to ensure we always get a valid sigil string
+        ensure-sigil (fn [result]
+                       (cond
+                         (string? result) result
+                         (map? result) (or (:sigil result) ca/default-sigil)
+                         (char? result) (str result)
+                         :else ca/default-sigil))
+
+        make-kernel (fn [base-fn]
+                      (fn [sigil pred succ context]
+                        (let [mutation-rate (or (:mutation-rate context) 0.2)
+                              result (if (< (rand) mutation-rate)
+                                       (ensure-sigil (base-fn sigil pred succ))
+                                       sigil)]
+                          {:sigil result})))
+
+        blend-fn (fn [sigil pred succ]
+                   (let [bits-self (ca/bits-for sigil)
+                         bits-pred (ca/bits-for pred)
+                         bits-succ (ca/bits-for succ)
+                         ;; Majority vote per bit
+                         blended (apply str
+                                        (map (fn [s p n]
+                                               (let [ones (count (filter #(= \1 %) [s p n]))]
+                                                 (if (>= ones 2) \1 \0)))
+                                             bits-self bits-pred bits-succ))
+                         entry (ca/entry-for-bits blended)]
+                     (or (:sigil entry) ca/default-sigil)))
+
+        mult-fn (fn [sigil pred succ]
+                  ;; Standard CA: apply rule based on neighborhood
+                  (let [kernel-fn (ca/kernel-fn :mutating-template)
+                        result (binding [ca/*evolve-sigil-fn* kernel-fn]
+                                 (ca/evolve-sigil sigil pred succ))]
+                    ;; ca/evolve-sigil returns a map with :sigil key
+                    (or (:sigil result) ca/default-sigil)))]
+
+    {:blending (make-kernel blend-fn)
+     :multiplication (make-kernel mult-fn)
+     :ad-hoc-template (make-kernel mult-fn)
+     :blending-mutation (make-kernel blend-fn)
+     :blending-baldwin (make-kernel blend-fn)
+     :collection-template (make-kernel mult-fn)
+     :mutating-template (make-kernel mult-fn)}))
+
+(defn- advance-world-local-physics
+  "Advance the world using local per-cell physics.
+
+   Each cell computes its own 36-bit context (LEFT/EGO/RIGHT/NEXT/PHENOTYPE)
+   and applies the corresponding physics rule from the 256-rule space.
+
+   This is the CORRECT exotype implementation as of 2026-01-24."
+  [state global-rule bend-mode]
+  (let [genotype (:genotype state)
+        phenotype (:phenotype state)
+        prev-genotype (or (previous-entry (get-in state [:history :genotypes]))
+                          genotype)
+        ;; Use bent evolution if global rule specified
+        result (if global-rule
+                 (let [evolved (exotype/evolve-with-global-exotype
+                                genotype phenotype prev-genotype
+                                global-rule bend-mode local-physics-kernels)]
+                   {:genotype evolved
+                    :rules nil  ; Not tracked when using bent evolution
+                    :kernels nil})
+                 ;; Pure local physics
+                 (exotype/evolve-string-local
+                  genotype phenotype prev-genotype local-physics-kernels))
+        next-gen (:genotype result)
+        ;; Also evolve phenotype if present
+        next-phe (when phenotype
+                   (ca/evolve-phenotype-against-genotype genotype phenotype))]
+    (-> state
+        (assoc :generation (inc (:generation state))
+               :genotype next-gen)
+        (cond-> next-phe (assoc :phenotype next-phe))
+        (update-in [:history :genotypes] conj next-gen)
+        (cond-> next-phe
+          (update-in [:history :phenotypes]
+                     (fn [hist]
+                       (if hist
+                         (conj hist next-phe)
+                         [next-phe]))))
+        ;; Track local physics metadata
+        (update :local-physics-runs (fnil conj [])
+                {:generation (:generation state)
+                 :rules (:rules result)
+                 :kernels (:kernels result)
+                 :rule-diversity (when (:rules result)
+                                   (count (set (:rules result))))}))))
+
 (defn- rng-int [^java.util.Random rng n]
   (.nextInt rng n))
 
@@ -464,6 +574,8 @@
   (case exotype-mode
     :inline (update-kernel-by-exotype state exotype rng tick)
     :nominate (nominate-kernel-by-exotype state exotype rng tick)
+    ;; :local-physics is handled differently - see advance-world-local-physics
+    :local-physics state
     state))
 
 (defn- zap-half [s fill half]
@@ -558,7 +670,12 @@
   - :capture-exotype-contexts (optional, store sampled contexts for lock-2)
   - :exotype-context-mode (optional :history or :random)
   - :exotype-context-depth (optional recursion depth for context sampling)
-  - :exotype-mode (optional :inline or :nominate; default :inline)
+  - :exotype-mode (optional :inline, :nominate, or :local-physics; default :inline)
+      - :inline (DEPRECATED) - samples random context to modify global kernel
+      - :nominate - same as inline but doesn't apply immediately
+      - :local-physics - NEW: each cell computes its own 36-bit physics rule
+  - :global-rule (optional, for :local-physics mode) - global rule (0-255 or keyword)
+  - :bend-mode (optional, for :local-physics mode) - :sequential, :blend, or :matrix
 
   Returns a map containing genotype history, phenotype history, metrics, and
   the final meta-state for each operator."
@@ -570,7 +687,10 @@
         pulses-enabled (true? pulses-enabled)
         exotype (exotype/resolve-exotype (:exotype opts))
         exotype-mode (or (:exotype-mode opts) :inline)
-        exotype-rng (when exotype
+        use-local-physics? (= exotype-mode :local-physics)
+        global-rule (:global-rule opts)
+        bend-mode (or (:bend-mode opts) :blend)
+        exotype-rng (when (and exotype (not use-local-physics?))
                       (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
         lesion (when lesion (merge {:tick (quot generations 2)
                                     :half :left
@@ -578,13 +698,19 @@
                                    lesion))
         initial-state (prepare-initial-state (assoc opts :genotype genotype))
         {:keys [state metas proposals]}
-        (binding [operators/*pulses-enabled* pulses-enabled]
+        (binding [operators/*pulses-enabled* pulses-enabled
+                  exotype/*exotype-system* (if use-local-physics?
+                                             :local-physics
+                                             :global-kernel)]
           (let [world (build-world initial-state {})]
             (run-operators operators [:init] world initial-state {} mode {})))
         ;; After init hooks, refresh metrics in case they mutated the world
         state (refresh-metrics state)
         result
-        (binding [operators/*pulses-enabled* pulses-enabled]
+        (binding [operators/*pulses-enabled* pulses-enabled
+                  exotype/*exotype-system* (if use-local-physics?
+                                             :local-physics
+                                             :global-kernel)]
           (loop [state state
                  metas metas
                  proposals proposals
@@ -604,10 +730,14 @@
                     state (if lesion-now?
                             (refresh-metrics (apply-lesion state lesion) true)
                             state)
-                    state (if exotype
+                    ;; Apply old exotype mode OR skip if using local physics
+                    state (if (and exotype (not use-local-physics?))
                             (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
                             state)
-                    state (advance-world state)
+                    ;; Advance world with appropriate physics
+                    state (if use-local-physics?
+                            (advance-world-local-physics state global-rule bend-mode)
+                            (advance-world state))
                     state (refresh-metrics state true)]
                 (recur state metas proposals (inc tick) (or lesion-applied? lesion-now?) operators)))))]
     (let [{:keys [state metas proposals operators]} result
@@ -619,6 +749,13 @@
        :mode mode
        :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
        :exotype-mode exotype-mode
+       :exotype-system (if use-local-physics? :local-physics :global-kernel)
+       :exotype-metadata {:exotype-system (if use-local-physics? :local-physics :global-kernel)
+                          :timestamp (System/currentTimeMillis)
+                          :version "2026-01-24"}
+       :global-rule (when use-local-physics? global-rule)
+       :bend-mode (when use-local-physics? bend-mode)
+       :local-physics-runs (not-empty (:local-physics-runs state))
        :exotype-nominations (not-empty (:exotype-nominations state))
        :exotype-mutations (not-empty (:exotype-mutations state))
        :exotype-contexts (not-empty (:exotype-contexts state))

@@ -1,0 +1,66 @@
+;; Level 5: Full Hybrid with Creative Path
+;; Gate now chooses between legacy (stable) and creative (XOR)
+;; This is the first level where behavior SHOULD differ from legacy
+
+{:meta {:id :level-5-creative
+        :level 5
+        :label "Legacy + diversity + gate + creative"
+        :description "Full boundary-guardian pattern. Gate chooses legacy vs creative based on diversity."
+        :additions [:creative-path :conditional-behavior]
+        :expected "Behavior SHOULD differ from Level 4. If same, creative path isn't activating."}
+
+ :diagram
+ {:nodes [;; Context extraction
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Diversity measurement
+          {:id :diversity :component :diversity}
+
+          ;; Legacy kernel (stable path)
+          {:id :legacy :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "工"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 0
+                                     :match-threshold 0.4444444444444444
+                                     :invert-on-phenotype? false
+                                     :update-prob 0.5
+                                     :mix-mode :rotate-left
+                                     :mix-shift 0}}}
+
+          ;; NEW: Creative path (XOR of neighbors)
+          {:id :creative :component :bit-xor}
+
+          ;; Gate: diversity > 0.5 → creative, else legacy
+          {:id :gate :component :threshold-sigil}
+
+          {:id :out :component :output-sigil}]
+
+  :edges [;; Diversity measurement
+          {:from :neighbors :from-port :sigils :to :diversity :to-port :sigils}
+
+          ;; Legacy path
+          {:from :ctx-pred :from-port :sigil :to :legacy :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy :to-port :phe}
+
+          ;; Creative path: XOR of neighbors
+          {:from :ctx-pred :from-port :sigil :to :creative :to-port :a}
+          {:from :ctx-succ :from-port :sigil :to :creative :to-port :b}
+
+          ;; Gate: high diversity → creative, low diversity → legacy
+          {:from :diversity :from-port :score :to :gate :to-port :score}
+          {:value 0.5 :value-type :scalar :to :gate :to-port :threshold}
+          {:from :creative :from-port :result :to :gate :to-port :above}  ;; High diversity → creative
+          {:from :legacy :from-port :result :to :gate :to-port :below}    ;; Low diversity → legacy
+
+          {:from :gate :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}}

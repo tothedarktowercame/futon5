@@ -1,0 +1,31 @@
+{:length 120
+ :generations 120
+ :seeds [4242 238310129 1281562706 71312373 352362012 201709760 1564354771 955468957 1701878710 1695261645]
+ :models
+ [;; Baseline (known-good anchor)
+  {:id :m17a-anchor
+   :label "M17a anchor baseline (工 u=0.50 m=0.44)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :operators []
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Candidate (single-variable perturbation: update-prob)
+  {:id :m17a-candidate
+   :label "M17a candidate (工 u=0.45 m=0.44)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :operators []
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.45
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}]}

@@ -1,0 +1,59 @@
+;; Level 4: Legacy + Diversity + Gate Structure
+;; Add gate that reads diversity, but both paths go to legacy
+;; Tests whether gate infrastructure has side effects
+
+{:meta {:id :level-4-gate
+        :level 4
+        :label "Legacy + diversity + gate (both paths legacy)"
+        :description "Level 3 + threshold gate. Gate reads diversity but both outputs are legacy."
+        :additions [:threshold-gate]
+        :expected "MUST match Level 3 exactly. Gate structure shouldn't change output."}
+
+ :diagram
+ {:nodes [;; Context extraction
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Diversity measurement
+          {:id :diversity :component :diversity}
+
+          ;; Legacy kernel
+          {:id :legacy :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "工"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 0
+                                     :match-threshold 0.4444444444444444
+                                     :invert-on-phenotype? false
+                                     :update-prob 0.5
+                                     :mix-mode :rotate-left
+                                     :mix-shift 0}}}
+
+          ;; NEW: Gate structure (but both paths are legacy!)
+          {:id :gate :component :threshold-sigil}
+
+          {:id :out :component :output-sigil}]
+
+  :edges [;; Diversity measurement
+          {:from :neighbors :from-port :sigils :to :diversity :to-port :sigils}
+
+          ;; Legacy path
+          {:from :ctx-pred :from-port :sigil :to :legacy :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy :to-port :phe}
+
+          ;; Gate reads diversity but BOTH paths are legacy output
+          {:from :diversity :from-port :score :to :gate :to-port :score}
+          {:value 0.5 :value-type :scalar :to :gate :to-port :threshold}
+          {:from :legacy :from-port :result :to :gate :to-port :above}
+          {:from :legacy :from-port :result :to :gate :to-port :below}  ;; Same as above!
+
+          {:from :gate :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}}

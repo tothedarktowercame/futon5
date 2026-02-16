@@ -1,0 +1,32 @@
+{:meta {:id :rule-110
+        :description "Rule 110: Turing-complete, Class 4 - localized structures"
+        :wolfram-class 4
+        :formula "(C OR R) AND NOT(L AND C AND R)"}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+   ;; C OR R
+   {:id :or-cr :component :bit-or}
+   ;; L AND C
+   {:id :and-lc :component :bit-and}
+   ;; (L AND C) AND R = L AND C AND R
+   {:id :and-lcr :component :bit-and}
+   ;; NOT(L AND C AND R)
+   {:id :not-lcr :component :bit-not}
+   ;; Final: (C OR R) AND NOT(L AND C AND R)
+   {:id :final :component :bit-and}
+   {:id :output :component :output-sigil}]
+  :output :output
+  :edges
+  [{:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :final :to-port :a}
+   {:from :not-lcr :to :final :to-port :b}
+   {:from :final :to :output}]}}

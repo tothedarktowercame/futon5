@@ -1,0 +1,21 @@
+{:meta {:id :rule-030
+        :description "Rule 30: Chaotic, good for randomness, Class 3"
+        :wolfram-class 3
+        :formula "L XOR (C OR R)"}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+   ;; C OR R
+   {:id :or-cr :component :bit-or}
+   ;; L XOR (C OR R)
+   {:id :xor-l-or :component :bit-xor}
+   {:id :output :component :output-sigil}]
+  :output :output
+  :edges
+  [{:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :xor-l-or :to-port :a}
+   {:from :or-cr :to :xor-l-or :to-port :b}
+   {:from :xor-l-or :to :output}]}}

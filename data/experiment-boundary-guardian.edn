@@ -1,0 +1,73 @@
+{:description "Test Boundary Guardian wiring against legacy and prototype baselines"
+ :hypothesis "Boundary Guardian should produce moderate change rates (0.15-0.45), unlike prototype (0.99) or pure legacy alone"
+ :length 100
+ :generations 100
+ :models
+ [;; === Seed 4242 ===
+  {:id :legacy-baseline-4242
+   :label "legacy 工 baseline"
+   :seed 4242
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :prototype-001-4242
+   :label "prototype-001 creative-peng"
+   :seed 4242
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  {:id :boundary-guardian-4242
+   :label "boundary-guardian-001"
+   :seed 4242
+   :wiring "data/xenotype-hybrid-wirings/boundary-guardian-001.edn"}
+
+  ;; === Seed 238310129 ===
+  {:id :legacy-baseline-238310129
+   :label "legacy 工 baseline"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :prototype-001-238310129
+   :label "prototype-001 creative-peng"
+   :seed 238310129
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  {:id :boundary-guardian-238310129
+   :label "boundary-guardian-001"
+   :seed 238310129
+   :wiring "data/xenotype-hybrid-wirings/boundary-guardian-001.edn"}
+
+  ;; === Seed 352362012 (best seed from earlier analysis) ===
+  {:id :legacy-baseline-352362012
+   :label "legacy 工 baseline"
+   :seed 352362012
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :prototype-001-352362012
+   :label "prototype-001 creative-peng"
+   :seed 352362012
+   :wiring "resources/xenotype-wirings/prototype-001-creative-peng.edn"}
+
+  {:id :boundary-guardian-352362012
+   :label "boundary-guardian-001"
+   :seed 352362012
+   :wiring "data/xenotype-hybrid-wirings/boundary-guardian-001.edn"}]}

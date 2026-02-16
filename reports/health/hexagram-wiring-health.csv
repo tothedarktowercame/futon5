@@ -1,0 +1,65 @@
+file,seed,label,classification,detail,change_rate_early,change_rate_final,frozen_ratio,white_ratio,width,generations
+hex-01-run.edn,352362012,hex-01,barcode,"76% columns frozen, 13 stripes",0.21000000000000005,0.20875000000000007,0.7625,0.1375,80,51
+hex-02-run.edn,352362012,hex-02,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-03-run.edn,352362012,hex-03,unknown,"Unclassified",0.5,0.49937499999999996,0.0,0.4875,80,51
+hex-04-run.edn,352362012,hex-04,collapsed-black,"100% black (collapsed)",0.021249999999999998,0.0,1.0,0.0,80,51
+hex-05-run.edn,352362012,hex-05,unknown,"Unclassified",0.48,0.48749999999999993,0.0,0.5375,80,51
+hex-06-run.edn,352362012,hex-06,hot,"84.9% cells changing per gen (chaotic)",0.8456249999999998,0.8487499999999999,0.05,0.075,80,51
+hex-07-run.edn,352362012,hex-07,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-08-run.edn,352362012,hex-08,eoc,"43.8% change, 61% active columns",0.441875,0.438125,0.3875,0.325,80,51
+hex-09-run.edn,352362012,hex-09,unknown,"Unclassified",0.5518750000000001,0.575,0.0,0.3,80,51
+hex-10-run.edn,352362012,hex-10,unknown,"Unclassified",0.503125,0.48875,0.0,0.525,80,51
+hex-11-run.edn,352362012,hex-11,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-12-run.edn,352362012,hex-12,hot,"84.9% cells changing per gen (chaotic)",0.8456249999999998,0.8487499999999999,0.05,0.075,80,51
+hex-13-run.edn,352362012,hex-13,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-14-run.edn,352362012,hex-14,eoc,"34.6% change, 100% active columns",0.30874999999999997,0.34562499999999996,0.0,0.7,80,51
+hex-15-run.edn,352362012,hex-15,cooling,"59% columns frozen (cooling)",0.30874999999999997,0.309375,0.5875,0.425,80,51
+hex-16-run.edn,352362012,hex-16,collapsed-black,"98% black (collapsed)",0.07499999999999998,0.07499999999999998,0.925,0.025,80,51
+hex-17-run.edn,352362012,hex-17,hot,"65.3% cells changing per gen (chaotic)",0.6456249999999999,0.653125,0.15,0.2625,80,51
+hex-18-run.edn,352362012,hex-18,unknown,"Unclassified",0.49625,0.490625,0.0,0.55,80,51
+hex-19-run.edn,352362012,hex-19,unknown,"Unclassified",0.5693750000000002,0.5575,0.025,0.4625,80,51
+hex-20-run.edn,352362012,hex-20,collapsed-black,"100% black (collapsed)",0.00125,0.0,1.0,0.0,80,51
+hex-21-run.edn,352362012,hex-21,eoc,"32.1% change, 100% active columns",0.27499999999999997,0.32125,0.0,0.8,80,51
+hex-22-run.edn,352362012,hex-22,collapsed-white,"100% white (collapsed)",0.0,0.0,1.0,1.0,80,51
+hex-23-run.edn,352362012,hex-23,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-24-run.edn,352362012,hex-24,cooling,"64% columns frozen (cooling)",0.273125,0.27125,0.6375,0.7125,80,51
+hex-25-run.edn,352362012,hex-25,unknown,"Unclassified",0.48,0.48749999999999993,0.0,0.5375,80,51
+hex-26-run.edn,352362012,hex-26,hot,"84.9% cells changing per gen (chaotic)",0.8456249999999998,0.8487499999999999,0.05,0.075,80,51
+hex-27-run.edn,352362012,hex-27,periodic,"Period 12 attractor",0.331875,0.329375,0.575,0.25,80,51
+hex-28-run.edn,352362012,hex-28,unknown,"Unclassified",0.525625,0.5162500000000001,0.0,0.525,80,51
+hex-29-run.edn,352362012,hex-29,unknown,"Unclassified",0.47375,0.5075,0.0,0.3875,80,51
+hex-30-run.edn,352362012,hex-30,eoc,"29.6% change, 100% active columns",0.24562500000000004,0.29562499999999997,0.0,0.7875,80,51
+hex-31-run.edn,352362012,hex-31,eoc,"41.4% change, 100% active columns",0.43125,0.41437500000000005,0.0,0.325,80,51
+hex-32-run.edn,352362012,hex-32,collapsed-white,"100% white (collapsed)",0.00125,0.0,1.0,1.0,80,51
+hex-33-run.edn,352362012,hex-33,eoc,"36.4% change, 100% active columns",0.3500000000000001,0.364375,0.0,0.225,80,51
+hex-34-run.edn,352362012,hex-34,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-35-run.edn,352362012,hex-35,collapsed-white,"100% white (collapsed)",0.0,0.0,1.0,1.0,80,51
+hex-36-run.edn,352362012,hex-36,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-37-run.edn,352362012,hex-37,unknown,"Unclassified",0.496875,0.505,0.0,0.4,80,51
+hex-38-run.edn,352362012,hex-38,eoc,"27.4% change, 100% active columns",0.225,0.274375,0.0,0.8,80,51
+hex-39-run.edn,352362012,hex-39,unknown,"Unclassified",0.51625,0.47124999999999995,0.0,0.525,80,51
+hex-40-run.edn,352362012,hex-40,collapsed-white,"100% white (collapsed)",0.0225,0.0,1.0,1.0,80,51
+hex-41-run.edn,352362012,hex-41,hot,"61.1% cells changing per gen (chaotic)",0.624375,0.6106250000000001,0.0,0.5125,80,51
+hex-42-run.edn,352362012,hex-42,unknown,"Unclassified",0.513125,0.5087499999999999,0.0,0.5625,80,51
+hex-43-run.edn,352362012,hex-43,collapsed-black,"100% black (collapsed)",0.0,0.0,1.0,0.0,80,51
+hex-44-run.edn,352362012,hex-44,unknown,"Unclassified",0.49937499999999996,0.496875,0.0,0.475,80,51
+hex-45-run.edn,352362012,hex-45,collapsed-black,"100% black (collapsed)",0.0043749999999999995,0.0,1.0,0.0,80,51
+hex-46-run.edn,352362012,hex-46,unknown,"Unclassified",0.51375,0.52125,0.0,0.4875,80,51
+hex-47-run.edn,352362012,hex-47,unknown,"Unclassified",0.5,0.49937499999999996,0.0,0.4875,80,51
+hex-48-run.edn,352362012,hex-48,unknown,"Unclassified",0.48187499999999994,0.49812500000000004,0.0,0.475,80,51
+hex-49-run.edn,352362012,hex-49,unknown,"Unclassified",0.491875,0.501875,0.0,0.4,80,51
+hex-50-run.edn,352362012,hex-50,collapsed-white,"100% white (collapsed)",0.00125,0.0,1.0,1.0,80,51
+hex-51-run.edn,352362012,hex-51,barcode,"83% columns frozen, 11 stripes",0.15812500000000002,0.15812500000000002,0.825,0.8875,80,51
+hex-52-run.edn,352362012,hex-52,collapsed-black,"100% black (collapsed)",0.026249999999999996,0.0,1.0,0.0,80,51
+hex-53-run.edn,352362012,hex-53,collapsed-black,"100% black (collapsed)",0.00125,0.0,1.0,0.0,80,51
+hex-54-run.edn,352362012,hex-54,eoc,"23.5% change, 88% active columns",0.23187499999999997,0.23500000000000001,0.125,0.825,80,51
+hex-55-run.edn,352362012,hex-55,collapsed-white,"94% white (collapsed)",0.10437500000000004,0.10375000000000004,0.8875,0.9375,80,51
+hex-56-run.edn,352362012,hex-56,eoc,"41.6% change, 100% active columns",0.4200000000000001,0.415625,0.0,0.3125,80,51
+hex-57-run.edn,352362012,hex-57,unknown,"Unclassified",0.48187499999999994,0.49812500000000004,0.0,0.475,80,51
+hex-58-run.edn,352362012,hex-58,unknown,"Unclassified",0.515625,0.4893749999999999,0.0,0.3875,80,51
+hex-59-run.edn,352362012,hex-59,unknown,"Unclassified",0.495,0.48687499999999995,0.0,0.4375,80,51
+hex-60-run.edn,352362012,hex-60,unknown,"Unclassified",0.565625,0.5774999999999999,0.0,0.5125,80,51
+hex-61-run.edn,352362012,hex-61,unknown,"Unclassified",0.5518750000000001,0.575,0.0,0.3,80,51
+hex-62-run.edn,352362012,hex-62,collapsed-white,"100% white (collapsed)",0.016250000000000004,0.0,1.0,1.0,80,51
+hex-63-run.edn,352362012,hex-63,unknown,"Unclassified",0.5,0.49937499999999996,0.0,0.4875,80,51
+hex-64-run.edn,352362012,hex-64,collapsed-white,"100% white (collapsed)",0.0,0.0,1.0,1.0,80,51

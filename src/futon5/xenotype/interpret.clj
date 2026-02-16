@@ -2,6 +2,7 @@
   (:require [futon5.mmca.filament :as filament]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.register-shift :as register-shift]
+            [futon5.xenotype.generator :as generator]
             [futon5.xenotype.sigil-features :as sigil-features]
             [futon5.xenotype.wiring :as wiring]))
 
@@ -114,7 +115,13 @@
        vec))
 
 (def eval-registry
-  {:series-field (fn [{:keys [series]} {:keys [key]} _]
+  {:summary-field (fn [{:keys [summary]} {:keys [key]} _]
+                    (let [v (cond
+                              (vector? key) (get-in summary key)
+                              (keyword? key) (get summary key)
+                              :else nil)]
+                      {:score (double (or (when (number? v) v) 0.0))}))
+   :series-field (fn [{:keys [series]} {:keys [key]} _]
                    {:values (series-values series key)})
    :series-regime-flag (fn [{:keys [series]} {:keys [regime]} _]
                          {:flags (series-flags series #(= (:regime %) regime))})
@@ -146,7 +153,7 @@
 
 (defn- list-type?
   [t]
-  (contains? #{:scalar-list :bool-list} t))
+  (contains? #{:scalar-list :bool-list :sigil-list} t))
 
 (defn- topo-order
   [nodes edges]
@@ -200,13 +207,13 @@
 (defn evaluate-diagram
   "Evaluate a wiring diagram and return {:output .. :node-values ..}."
   ([diagram context] (evaluate-diagram diagram context {}))
-  ([diagram {:keys [summary run frames hex-score series components-path] :as context} registry]
-   (let [lib (wiring/load-components (or components-path "futon5/resources/xenotype-generator-components.edn"))
-         registry (merge default-registry eval-registry registry)
+  ([diagram {:keys [summary run frames hex-score series components-path ctx state] :as _context} registry]
+   (let [lib (wiring/load-components (or components-path "resources/xenotype-generator-components.edn"))
+         registry (merge default-registry eval-registry generator/generator-registry registry)
          nodes (:nodes diagram)
          edges (:edges diagram)
          order (topo-order nodes edges)
-       node-map (into {} (map (fn [n] [(:id n) n]) nodes))]
+         node-map (into {} (map (fn [n] [(:id n) n]) nodes))]
     (loop [ids order
            node-values {}]
       (if (empty? ids)
@@ -222,27 +229,35 @@
               inputs (collect-inputs lib node edges node-map node-values)
               component-fn (get registry (:component node))
               params (:params node)
-               result (if component-fn
-                        (component-fn (assoc inputs
-                                             :summary summary
-                                             :run run
-                                             :frames frames
-                                             :series series)
-                                      params
-                                      {:hex-score hex-score
-                                       :summary summary
-                                       :run run
-                                       :frames frames
-                                       :series series})
-                        {})]
+              ;; Include ctx and state in inputs for generator components
+              inputs-with-ctx (assoc inputs
+                                     :summary summary
+                                     :run run
+                                     :frames frames
+                                     :series series
+                                     :ctx ctx
+                                     :state state)
+              result (if component-fn
+                       (component-fn inputs-with-ctx
+                                     params
+                                     {:hex-score hex-score
+                                      :summary summary
+                                      :run run
+                                      :frames frames
+                                      :series series
+                                      :ctx ctx
+                                      :state state})
+                       {})]
            (recur (rest ids) (assoc node-values id result))))))))
 
 (defn evaluate-run-diagram
   "Evaluate a wiring diagram against a run, using windowed macro feature series."
   ([diagram run] (evaluate-run-diagram diagram run {}))
-  ([diagram run {:keys [W S components-path registry] :or {W 10 S 10}}]
-   (let [series (metrics/windowed-macro-features run {:W W :S S})]
+  ([diagram run {:keys [W S components-path registry summary] :or {W 10 S 10}}]
+   (let [series (metrics/windowed-macro-features run {:W W :S S})
+         summary (or summary (metrics/summarize-run run))]
      (evaluate-diagram diagram {:run run
                                 :series series
+                                :summary summary
                                 :components-path components-path}
                        (or registry {})))))

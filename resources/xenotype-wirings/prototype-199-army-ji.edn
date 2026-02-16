@@ -1,0 +1,58 @@
+{:meta {:id :xenotype-199
+        :hexagram 50
+        :hexagram-name "The Cauldron"
+        :hexagram-family "Army"
+        :energy :ji
+        :energy-name "Focus"
+        :description "Army coordination with focus: identify repeating patterns and reinforce them through focused mutation"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Find repeating patterns
+          {:id :repeats :component :find-repeats}
+
+          ;; Find the mode (most common pattern)
+          {:id :mode :component :modal}
+
+          ;; Path A: Repeats found -> reinforce the mode
+          {:id :reinforce :component :mutate-toward}
+
+          ;; Path B: No clear pattern -> differentiate
+          {:id :differentiate :component :bit-xor}
+          {:id :ctx-pred :component :context-pred}
+          {:id :ctx-succ :component :context-succ}
+
+          {:id :choose :component :threshold-sigil}]
+
+  :edges [;; Check for repeats
+          {:from :neighbors :from-port :sigils :to :repeats :to-port :sigils}
+
+          ;; Find mode
+          {:from :neighbors :from-port :sigils :to :mode :to-port :sigils}
+
+          ;; Reinforce mode with high rate
+          {:from :ctx-self :from-port :sigil :to :reinforce :to-port :sigil}
+          {:from :mode :from-port :result :to :reinforce :to-port :target}
+          {:value 0.5 :value-type :scalar :to :reinforce :to-port :rate}
+
+          ;; Differentiate via XOR
+          {:from :ctx-pred :from-port :sigil :to :differentiate :to-port :a}
+          {:from :ctx-succ :from-port :sigil :to :differentiate :to-port :b}
+
+          ;; Choose: if repeats > 0, reinforce; else differentiate
+          {:from :repeats :from-port :count :to :choose :to-port :score}
+          {:value 0.5 :value-type :scalar :to :choose :to-port :threshold}
+          {:from :reinforce :from-port :result :to :choose :to-port :above}
+          {:from :differentiate :from-port :result :to :choose :to-port :below}]
+
+  :output :choose}
+
+ :interpretation
+ "The Cauldron transforms through coordination: when patterns repeat
+  (coordination emerging), reinforce them with focused mutation toward
+  the mode. When no pattern is emerging, differentiate to create new
+  possibilities. This embodies Army (coordination/pattern) with Jǐ energy
+  (concentrated focus on the emerging structure)."}

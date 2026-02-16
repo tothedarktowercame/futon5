@@ -7,7 +7,7 @@
    - proposals: memes seeking funding
    - votes: weak arrows of desire
    - funding_events: market clearing moments (the facts established)"
-  (:require [next.jdbc :as jdbc]))
+  (:require [nonstarter.sql :as sql]))
 
 (def schema-ddl
   ["-- Pool state (singleton row)
@@ -51,6 +51,16 @@
       decayed_weight REAL
     )"
 
+   "-- Hypothesis votes: precision signals for mission ordering
+    CREATE TABLE IF NOT EXISTS hypothesis_votes (
+      id TEXT PRIMARY KEY,
+      hypothesis_id TEXT NOT NULL REFERENCES hypotheses(id),
+      voter TEXT DEFAULT 'anonymous',
+      weight REAL DEFAULT 1,
+      note TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
    "-- Funding events: the facts established
     --   'On this date, this much was committed to this desire'
     CREATE TABLE IF NOT EXISTS funding_events (
@@ -60,6 +70,58 @@
       note TEXT,
       fact_established TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Mana events: internal currency ledger (per session/turn)
+    CREATE TABLE IF NOT EXISTS mana_events (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      turn INTEGER,
+      delta REAL NOT NULL,
+      reason TEXT,
+      note TEXT,
+      balance REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Sidecar events: adjunct metadata from portal/compass
+    CREATE TABLE IF NOT EXISTS sidecar_events (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      turn INTEGER,
+      event_type TEXT NOT NULL,
+      payload TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Hypotheses: statements to be tested in Nonstarter/MMCA
+    CREATE TABLE IF NOT EXISTS hypotheses (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      statement TEXT NOT NULL,
+      context TEXT,
+      status TEXT DEFAULT 'active',
+      priority INTEGER,
+      mana_estimate REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )"
+
+   "-- Study preregistrations: planned tests linked to hypotheses
+    CREATE TABLE IF NOT EXISTS study_preregistrations (
+      id TEXT PRIMARY KEY,
+      hypothesis_id TEXT REFERENCES hypotheses(id),
+      study_name TEXT NOT NULL,
+      design TEXT,
+      metrics TEXT,
+      seeds TEXT,
+      status TEXT DEFAULT 'preregistered',
+      results TEXT,
+      notes TEXT,
+      priority INTEGER,
+      mana_estimate REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
    "-- Xenotypes: counterfactual timelines
@@ -108,7 +170,13 @@
    "-- Indexes for common queries
     CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status)"
    "CREATE INDEX IF NOT EXISTS idx_votes_proposal ON votes(proposal_id)"
+   "CREATE INDEX IF NOT EXISTS idx_hypothesis_votes_hypothesis ON hypothesis_votes(hypothesis_id)"
    "CREATE INDEX IF NOT EXISTS idx_funding_proposal ON funding_events(proposal_id)"
+   "CREATE INDEX IF NOT EXISTS idx_hypotheses_status ON hypotheses(status)"
+   "CREATE INDEX IF NOT EXISTS idx_study_hypothesis ON study_preregistrations(hypothesis_id)"
+   "CREATE INDEX IF NOT EXISTS idx_study_status ON study_preregistrations(status)"
+   "CREATE INDEX IF NOT EXISTS idx_mana_events_session ON mana_events(session_id)"
+   "CREATE INDEX IF NOT EXISTS idx_sidecar_events_session ON sidecar_events(session_id)"
    "CREATE INDEX IF NOT EXISTS idx_xenotypes_simulation ON xenotypes(simulation_id)"
    "CREATE INDEX IF NOT EXISTS idx_personal_blocks_week ON personal_blocks(week_id)"
 
@@ -119,17 +187,28 @@
   "Initialize the database schema."
   [ds]
   (doseq [ddl schema-ddl]
-    (jdbc/execute! ds [ddl])))
+    (sql/execute! ds [ddl])))
 
-(defn db-spec
-  "Create a datasource spec for SQLite."
-  [path]
-  {:dbtype "sqlite"
-   :dbname path})
+(defn- table-columns
+  [ds table]
+  (->> (sql/query ds [(str "PRAGMA table_info(" table ")")])
+       (map :name)
+       set))
+
+(defn- ensure-columns!
+  [ds table columns]
+  (let [existing (table-columns ds table)]
+    (doseq [[col type] columns]
+      (when-not (contains? existing col)
+        (sql/execute! ds [(format "ALTER TABLE %s ADD COLUMN %s %s" table col type)])))))
 
 (defn connect!
   "Connect to database and ensure schema exists."
   [path]
-  (let [ds (jdbc/get-datasource (db-spec path))]
+  (let [ds (sql/datasource path)]
     (create-schema! ds)
+    (ensure-columns! ds "hypotheses" {"priority" "INTEGER"
+                                      "mana_estimate" "REAL"})
+    (ensure-columns! ds "study_preregistrations" {"priority" "INTEGER"
+                                                  "mana_estimate" "REAL"})
     ds))

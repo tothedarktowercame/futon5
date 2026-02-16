@@ -1,0 +1,217 @@
+{:length 120
+ :generations 120
+ :models
+ [;; Mission 17a refine (exact history)
+  {:id :m17a-refine-baseline-exact
+   :label "Mission 17a refine baseline (seed 4242, exact history)"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 4242
+   :length 120
+   :generations 120
+   :genotype "下为八尤午火大勿个土叫心五丸石扔巨刊认毛占术世日巴节土帅史忆击二亏风六力双毛厂无劝友风乎令兄心艺北刊白尤无劝只且飞日凡风布尸午田风及仓弓厂火书父车已飞一且付丸仅打从艺仪凡用电元井升犬刊刊支火不丸手白心二仗上乌由见元于刀允仔平一扔叮叫从大北印"
+   :phenotype "000100000000101101110100111011111111111010101110000010000100011001110011110100000010110111010111000001011000110001000011"}
+
+  {:id :m17a-refine-exotic-exact
+   :label "Mission 17a refine exotic (sigil 工, seed 4242, exact config)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :seed 4242
+   :length 120
+   :generations 120
+   :genotype "下为八尤午火大勿个土叫心五丸石扔巨刊认毛占术世日巴节土帅史忆击二亏风六力双毛厂无劝友风乎令兄心艺北刊白尤无劝只且飞日凡风布尸午田风及仓弓厂火书父车已飞一且付丸仅打从艺仪凡用电元井升犬刊刊支火不丸手白心二仗上乌由见元于刀允仔平一扔叮叫从大北印"
+   :phenotype "000100000000101101110100111011111111111010101110000010000100011001110011110100000010110111010111000001011000110001000011"
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Mission 17a p×t sweep (u=0.60 m=0.80) baselines
+  {:id :m17a-pt-baseline-1281562706
+   :label "Mission 17a p×t sweep (u=0.60 m=0.80) baseline (seed 1281562706)"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 1281562706}
+
+  {:id :m17a-pt-baseline-71312373
+   :label "Mission 17a p×t sweep (u=0.60 m=0.80) baseline (seed 71312373)"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 71312373}
+
+  ;; Mission 17a compare set highlights
+  {:id :m17a-compare-01-exotic
+   :label "Mission 17a compare 01 (seed 238310129) exotic"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :seed 238310129
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :m17a-compare-02-baseline
+   :label "Mission 17a compare 02 (seed 1281562706) baseline"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 1281562706}
+
+  {:id :m17a-compare-02-exotic
+   :label "Mission 17a compare 02 (seed 1281562706) exotic"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :seed 1281562706
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :m17a-compare-09-baseline
+   :label "Mission 17a compare 09 (seed 352362012) baseline"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 352362012}
+
+  {:id :m17a-compare-09-exotic
+   :label "Mission 17a compare 09 (seed 352362012) exotic"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :seed 352362012
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  {:id :m17a-compare-10-baseline
+   :label "Mission 17a compare 10 (seed 201709760) baseline"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 201709760}
+
+  {:id :m17a-compare-16-baseline
+   :label "Mission 17a compare 16 (seed 1564354771) baseline"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 1564354771}
+
+  {:id :m17a-compare-20-baseline
+   :label "Mission 17a compare 20 (seed 955468957) baseline"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 955468957}
+
+  {:id :m17a-compare-20-exotic
+   :label "Mission 17a compare 20 (seed 955468957) exotic"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"
+   :seed 955468957
+   :exotype {:sigil "工"
+             :tier :super
+             :params {:rotation 0
+                      :match-threshold 0.4444444444444444
+                      :invert-on-phenotype? false
+                      :update-prob 0.5
+                      :mix-mode :rotate-left
+                      :mix-shift 0}}}
+
+  ;; Mission 7A/7B highlights
+  {:id :m07a-top2
+   :label "Mission 7A top genotype #2 (score 43.10)"
+   :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"
+   :seed 1701878710
+   :length 50
+   :generations 30}
+
+  {:id :m07b-top1-nominate
+   :label "Mission 7B top exotype #1 nomination run"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super-mission07.edn"
+   :seed 1695261645
+   :length 50
+   :generations 30
+   :lock-mode :nominate
+   :exotype {:sigil "兄"
+             :tier :super
+             :params {:rotation 3
+                      :match-threshold 0.5555555555555556
+                      :invert-on-phenotype? true
+                      :update-prob 0.25
+                      :mix-mode :xor-neighbor
+                      :mix-shift 0}}}
+
+  {:id :m07b-top1-lock0
+   :label "Mission 7B top exotype #1 Lock-0 (kernel only, fresh rng)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super-mission07.edn"
+   :seed 1695261645
+   :length 50
+   :generations 30
+   :lock-mode :lock0
+   :exotype {:sigil "兄"
+             :tier :super
+             :params {:rotation 3
+                      :match-threshold 0.5555555555555556
+                      :invert-on-phenotype? true
+                      :update-prob 0.25
+                      :mix-mode :xor-neighbor
+                      :mix-shift 0}}}
+
+  {:id :m07b-top1-lock1
+   :label "Mission 7B top exotype #1 Lock-1 (kernel + rng seed)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super-mission07.edn"
+   :seed 1695261645
+   :length 50
+   :generations 30
+   :lock-mode :lock1
+   :exotype {:sigil "兄"
+             :tier :super
+             :params {:rotation 3
+                      :match-threshold 0.5555555555555556
+                      :invert-on-phenotype? true
+                      :update-prob 0.25
+                      :mix-mode :xor-neighbor
+                      :mix-shift 0}}}
+
+  {:id :m07b-top1-lock2
+   :label "Mission 7B top exotype #1 Lock-2 (kernel + context schedule)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super-mission07.edn"
+   :seed 1695261645
+   :length 50
+   :generations 30
+   :lock-mode :lock2
+   :exotype {:sigil "兄"
+             :tier :super
+             :params {:rotation 3
+                      :match-threshold 0.5555555555555556
+                      :invert-on-phenotype? true
+                      :update-prob 0.25
+                      :mix-mode :xor-neighbor
+                      :mix-shift 0}}}
+
+  {:id :m07b-top1-locked-kernel
+   :label "Mission 7B top exotype #1 locked kernel rerun"
+   :wiring "data/xenotype-legacy-wirings/legacy-locked-kernel-mission07.edn"
+   :seed 1695261645
+   :length 50
+   :generations 30
+   :kernel {:blend-mode :none
+            :mutation {:mode :none, :count 0, :offset 2, :prob 0.33}
+            :template-mode :context
+            :mix-shift 0
+            :mix-mode :xor-neighbor
+            :balance {:enabled? true, :min-ones 2, :max-ones 6, :chance 0.05, :flip-count 1}
+            :label nil
+            :flip? false
+            :reserved "000000"}
+   :lock-kernel true}
+
+  {:id :m07b-top2-context-only
+   :label "Mission 7B top exotype #2 randomized context (context-only baseline)"
+   :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super-mission07.edn"
+   :seed 4242
+   :length 50
+   :generations 30
+   :exotype-mode :nominate
+   :exotype-context-mode :random
+   :exotype {:sigil "兄" :tier :super}}]}

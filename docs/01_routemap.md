@@ -7,6 +7,9 @@ Status note: FUTON5 already has running MMCA code + early sigil/operator
 plumbing, but the operator set is still sparse and the narrative/spec
 is not yet canonical.
 
+Settled-state invariants (what should not drift during housekeeping windows):
+see `docs/technote-settled-state.md`.
+
 ## Route (short)
 
 1) Lock the operator spec

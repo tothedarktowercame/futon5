@@ -1,0 +1,260 @@
+{:meta {:name "Xenotype Scorer Components"
+        :version 1
+        :description "Primitives for scorer wiring diagrams - evaluate CA runs"
+        :created "2026-01-24"}
+
+ :types {:run "CA run data {:frames [...] :genotype ...}"
+         :frames "Sequence of frame grids"
+         :frame "Single 2D grid"
+         :metrics "Map of metric values"
+         :scalar "Float value"
+         :scalar-list "Vector of scalars"
+         :int "Integer"
+         :bool "Boolean"}
+
+ :components
+ {;;; ============================================================
+  ;;; INPUT: Extract from run data
+  ;;; ============================================================
+
+  :run-frames
+  {:inputs [[:run :run]]
+   :outputs [[:frames :frames]]
+   :doc "Extract frames sequence from run"}
+
+  :run-genotype
+  {:inputs [[:run :run]]
+   :outputs [[:genotype :sigil-list]]
+   :doc "Extract genotype from run"}
+
+  :run-metadata
+  {:inputs [[:run :run]]
+   :outputs [[:meta :metrics]]
+   :doc "Extract metadata map from run"}
+
+  :frames-count
+  {:inputs [[:frames :frames]]
+   :outputs [[:count :int]]
+   :doc "Count of frames in sequence"}
+
+  :frame-at
+  {:inputs [[:frames :frames] [:index :int]]
+   :outputs [[:frame :frame]]
+   :doc "Get frame at index"}
+
+  :frames-slice
+  {:inputs [[:frames :frames] [:start :int] [:end :int]]
+   :outputs [[:frames :frames]]
+   :doc "Slice frames from start to end"}
+
+  ;;; ============================================================
+  ;;; SKELETON: Thinning and structure extraction
+  ;;; ============================================================
+
+  :thin-frame
+  {:inputs [[:frame :frame]]
+   :outputs [[:skeleton :frame]]
+   :doc "Zhang-Suen thinning on a binary grid"}
+
+  :thin-all
+  {:inputs [[:frames :frames]]
+   :outputs [[:skeletons :frames]]
+   :doc "Thin all frames in sequence"}
+
+  ;;; ============================================================
+  ;;; METRICS: Per-frame measurements
+  ;;; ============================================================
+
+  :skeleton-length
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:length :int]]
+   :doc "Count of on-pixels in skeleton"}
+
+  :endpoint-density
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:density :scalar]]
+   :doc "Ratio of endpoints to skeleton length"}
+
+  :branchpoint-density
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:density :scalar]]
+   :doc "Ratio of branchpoints to skeleton length"}
+
+  :component-count
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:count :int]]
+   :doc "Number of connected components"}
+
+  :giant-component-frac
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:frac :scalar]]
+   :doc "Fraction of skeleton in largest component"}
+
+  :cycle-count
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:cycles :int]]
+   :doc "Number of cycles (loops) in skeleton graph"}
+
+  :skeleton-metrics
+  {:inputs [[:skeleton :frame]]
+   :outputs [[:metrics :metrics]]
+   :doc "Full metrics map from skeleton"}
+
+  ;;; ============================================================
+  ;;; TEMPORAL: Cross-frame measurements
+  ;;; ============================================================
+
+  :persistence
+  {:inputs [[:skel-a :frame] [:skel-b :frame] [:radius :int]]
+   :outputs [[:overlap :scalar]]
+   :doc "Overlap fraction between skeletons with tolerance"}
+
+  :persistence-series
+  {:inputs [[:skeletons :frames] [:radius :int]]
+   :outputs [[:series :scalar-list]]
+   :doc "Persistence values between consecutive frames"}
+
+  :change-rate
+  {:inputs [[:frame-a :frame] [:frame-b :frame]]
+   :outputs [[:rate :scalar]]
+   :doc "Fraction of cells that changed between frames"}
+
+  :activity-series
+  {:inputs [[:frames :frames]]
+   :outputs [[:series :scalar-list]]
+   :doc "Change rate for consecutive frame pairs"}
+
+  ;;; ============================================================
+  ;;; AGGREGATION: Combine measurements
+  ;;; ============================================================
+
+  :mean
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:avg :scalar]]
+   :doc "Arithmetic mean of values"}
+
+  :median
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:med :scalar]]
+   :doc "Median of values"}
+
+  :variance
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:var :scalar]]
+   :doc "Variance of values"}
+
+  :min-val
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:min :scalar]]
+   :doc "Minimum value"}
+
+  :max-val
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:max :scalar]]
+   :doc "Maximum value"}
+
+  :sum
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:total :scalar]]
+   :doc "Sum of values"}
+
+  :normalize
+  {:inputs [[:value :scalar] [:min :scalar] [:max :scalar]]
+   :outputs [[:normalized :scalar]]
+   :doc "Scale value to [0,1] range"}
+
+  ;;; ============================================================
+  ;;; ARITHMETIC: Scalar operations
+  ;;; ============================================================
+
+  :add
+  {:inputs [[:a :scalar] [:b :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "Add two scalars"}
+
+  :multiply
+  {:inputs [[:a :scalar] [:b :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "Multiply two scalars"}
+
+  :divide
+  {:inputs [[:a :scalar] [:b :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "Divide a by b (safe, returns 0 if b=0)"}
+
+  :log1p
+  {:inputs [[:x :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "log(1+x), safe for small values"}
+
+  :pow
+  {:inputs [[:base :scalar] [:exp :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "base^exp"}
+
+  :clamp
+  {:inputs [[:x :scalar] [:lo :scalar] [:hi :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "Clamp x to [lo, hi]"}
+
+  :invert
+  {:inputs [[:x :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "1/x (safe, returns 0 if x=0)"}
+
+  ;;; ============================================================
+  ;;; CONTROL: Conditional and composition
+  ;;; ============================================================
+
+  :threshold
+  {:inputs [[:score :scalar] [:threshold :scalar]]
+   :outputs [[:above :bool]]
+   :doc "True if score >= threshold"}
+
+  :if-then-else
+  {:inputs [[:cond :bool] [:then :scalar] [:else :scalar]]
+   :outputs [[:result :scalar]]
+   :doc "Conditional scalar selection"}
+
+  :weighted-sum
+  {:inputs [[:values :scalar-list] [:weights :scalar-list]]
+   :outputs [[:result :scalar]]
+   :doc "Weighted sum of values"}
+
+  :product-all
+  {:inputs [[:values :scalar-list]]
+   :outputs [[:result :scalar]]
+   :doc "Product of all values"}
+
+  ;;; ============================================================
+  ;;; EDGE-OF-CHAOS: Specialized EOC metrics
+  ;;; ============================================================
+
+  :entropy-score
+  {:inputs [[:frames :frames]]
+   :outputs [[:score :scalar]]
+   :doc "Spatial entropy averaged across frames"}
+
+  :lambda-estimate
+  {:inputs [[:frames :frames]]
+   :outputs [[:lambda :scalar]]
+   :doc "Estimated Langton's lambda from activity"}
+
+  :eoc-distance
+  {:inputs [[:lambda :scalar]]
+   :outputs [[:dist :scalar]]
+   :doc "Distance from lambda=0.5 (edge of chaos)"}
+
+  ;;; ============================================================
+  ;;; OUTPUT: Final score
+  ;;; ============================================================
+
+  :output-score
+  {:inputs [[:score :scalar]]
+   :outputs [[:out :scalar]]
+   :doc "Terminal node: output the final score"}
+
+  :output-with-breakdown
+  {:inputs [[:score :scalar] [:components :metrics]]
+   :outputs [[:out :scalar] [:breakdown :metrics]]
+   :doc "Output score with component breakdown for debugging"}}}

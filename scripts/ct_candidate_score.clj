@@ -5,7 +5,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -26,7 +27,7 @@
     "  --change-center P      Envelope change center (default 0.2)."
     "  --change-width P       Envelope change width (default 0.15)."
     "  --no-change            Ignore avg-change in envelope score."
-    "  --help                 Show this message."])))
+    "  --help                 Show this message."]))
 
 (defn- parse-double [s]
   (try (Double/parseDouble s) (catch Exception _ nil)))
@@ -217,8 +218,7 @@
                             :generations generations
                             :envelope envelope-opts}
                      :candidates scored}]
-        (spit out (pr-str payload))
-        (println "Wrote" out)))))
+        (out/spit-text! out (pr-str payload)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

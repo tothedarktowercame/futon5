@@ -1,0 +1,51 @@
+{:meta {:id :scorer-ji
+        :energy :ji
+        :energy-name "Focus"
+        :description "Edge-of-chaos scorer: rewards lambda near 0.5 (critical point)"}
+
+ :diagram
+ {:nodes [;; Extract frames
+          {:id :input :component :run-frames}
+
+          ;; Lambda estimate
+          {:id :lambda :component :lambda-estimate}
+
+          ;; Distance from edge of chaos (lambda = 0.5)
+          {:id :dist :component :eoc-distance}
+
+          ;; Invert distance (closer = better)
+          {:id :inv-dist :component :invert}
+
+          ;; Also measure entropy (complexity at EOC)
+          {:id :entropy :component :entropy-score}
+
+          ;; Combine: EOC proximity * entropy
+          {:id :combined :component :multiply}
+
+          ;; Output
+          {:id :out :component :output-score}]
+
+  :edges [;; Lambda estimation
+          {:from :input :from-port :frames :to :lambda :to-port :frames}
+          {:from :lambda :from-port :lambda :to :dist :to-port :lambda}
+
+          ;; Invert distance (add small constant to avoid div by zero)
+          {:from :dist :from-port :dist :to :inv-dist :to-port :x}
+
+          ;; Entropy
+          {:from :input :from-port :frames :to :entropy :to-port :frames}
+
+          ;; Combine
+          {:from :inv-dist :from-port :result :to :combined :to-port :a}
+          {:from :entropy :from-port :score :to :combined :to-port :b}
+
+          ;; Output
+          {:from :combined :from-port :result :to :out :to-port :score}]
+
+  :output :out}
+
+ :interpretation
+ "Jǐ (Focus) energy rewards edge-of-chaos dynamics. This scorer measures
+  how close the CA's activity level (lambda) is to the critical point (0.5)
+  and how much spatial entropy exists. The focus is on finding the narrow
+  band between order and chaos where complex computation can occur."}

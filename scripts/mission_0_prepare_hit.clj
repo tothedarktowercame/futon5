@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -124,6 +125,7 @@
                             :seed seed})
         base (format "%s-%02d-seed-%d" label idx seed)
         path (str (io/file out-dir (str base ".edn")))]
+    (out/warn-overwrite-file! path)
     (spit path (pr-str (assoc run
                               :hit/meta {:label base
                                          :seed seed
@@ -149,13 +151,13 @@
             label (or label "mission-0-hit")
             entries (->> (read-lines log) (filter #(= :run (:event %))) vec)
             selected (select-entries entries top-k mid-k rand-k seed)]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (let [paths (mapv (fn [[idx entry]]
                             (run->edn! entry out-dir label (inc idx)))
                           (map-indexed vector selected))]
-          (spit inputs (str/join "\n" paths))
-          (println "Wrote" inputs)
-          (println "Runs saved to" out-dir))))))
+          (out/spit-text! inputs (str/join "\n" paths))
+          (println "Runs saved to" (out/abs-path out-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

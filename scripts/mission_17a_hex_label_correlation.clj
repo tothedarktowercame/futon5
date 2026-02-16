@@ -1,5 +1,6 @@
 (ns mission-17a-hex-label-correlation
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -187,25 +188,25 @@
             header ["summary_scope" "seed" "label" "variant" "window_size"
                     "tai_fraction" "tai_max_streak" "dominant" "dominance_margin" "hist"]
             rows-out (concat per-run group-rows)]
-        (spit out
-              (str (csv-row header)
-                   "\n"
-                   (str/join
-                    "\n"
-                    (map (fn [row]
-                           (csv-row [(get row :summary_scope)
-                                     (get row :seed)
-                                     (get row :label)
-                                     (get row :variant)
-                                     (get row :window_size)
-                                     (get row :tai_fraction)
-                                     (get row :tai_max_streak)
-                                     (let [d (:dominant row)]
-                                       (if (keyword? d) (name d) d))
-                                     (get row :dominance_margin)
-                                     (get row :hist)]))
-                         rows-out))))
-        (println "Wrote" out)))))
+        (out/spit-text!
+         out
+         (str (csv-row header)
+              "\n"
+              (str/join
+               "\n"
+               (map (fn [row]
+                      (csv-row [(get row :summary_scope)
+                                (get row :seed)
+                                (get row :label)
+                                (get row :variant)
+                                (get row :window_size)
+                                (get row :tai_fraction)
+                                (get row :tai_max_streak)
+                                (let [d (:dominant row)]
+                                  (if (keyword? d) (name d) d))
+                                (get row :dominance_margin)
+                                (get row :hist)]))
+                    rows-out)))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

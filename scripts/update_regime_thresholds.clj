@@ -1,7 +1,8 @@
 (ns update-regime-thresholds
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -94,10 +95,9 @@
         (when-not thresholds
           (throw (ex-info "Insufficient data to compute thresholds."
                           {:counts counts})))
-        (spit out (pr-str (assoc thresholds :source :hit
-                                            :counts counts
-                                            :min-count min)))
-        (println "Wrote" out)
+        (out/spit-text! out (pr-str (assoc thresholds :source :hit
+                                                      :counts counts
+                                                      :min-count min)))
         (println "Counts" counts)))))
 
 (when (= *file* (System/getProperty "babashka.file"))

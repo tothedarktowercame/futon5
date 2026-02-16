@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+NONSTARTER_DB="${NONSTARTER_DB:-$ROOT/data/nonstarter.db}"
+BB_BIN="${BB_BIN:-bb}"
+
+show_help() {
+  cat <<'USAGE'
+Usage: scripts/give-mana <amount> [--note "reason"] [--donor NAME]
+       scripts/give-mana sospeso --action "description" --confidence P --cost C [--donor NAME]
+       scripts/give-mana pool
+
+Donate mana to the local nonstarter pool.
+
+Direct donation:
+  scripts/give-mana 5 --note "completed task with uncertainty"
+
+Sospeso (confidence-triggered):
+  scripts/give-mana sospeso --action "refactored parser" --confidence 0.8 --cost 2.0
+
+  This donates (1-p)*C to the pool. With p=0.8 and C=2.0, that's 0.4 mana.
+  Valid confidence values: 0.3, 0.6, 0.8, 0.95
+
+Check pool balance:
+  scripts/give-mana pool
+USAGE
+}
+
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 0
+fi
+
+cd "$ROOT"
+
+case "$1" in
+  -h|--help)
+    show_help
+    exit 0
+    ;;
+  pool)
+    "$BB_BIN" -m scripts.nonstarter-mana pool --db "$NONSTARTER_DB" --format text
+    ;;
+  sospeso)
+    shift
+    action=""
+    confidence=""
+    cost=""
+    donor="personal"
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --action)
+          action="$2"; shift 2;;
+        --confidence)
+          confidence="$2"; shift 2;;
+        --cost)
+          cost="$2"; shift 2;;
+        --donor)
+          donor="$2"; shift 2;;
+        *)
+          echo "give-mana: unknown option $1" >&2
+          exit 2
+          ;;
+      esac
+    done
+    if [[ -z "$confidence" || -z "$cost" ]]; then
+      echo "give-mana: sospeso requires --confidence and --cost" >&2
+      exit 2
+    fi
+    amount=$(python3 - <<PY
+p = float("$confidence")
+c = float("$cost")
+print(f"{(1.0 - p) * c:.4f}")
+PY
+)
+    note="sospeso"
+    if [[ -n "$action" ]]; then
+      note="sospeso: $action"
+    fi
+    "$BB_BIN" -m scripts.nonstarter-mana donate \
+      --db "$NONSTARTER_DB" \
+      --amount "$amount" \
+      --donor "$donor" \
+      --note "$note" \
+      --format text
+    ;;
+  *)
+    amount="$1"
+    shift
+    note=""
+    donor="personal"
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --note)
+          note="$2"; shift 2;;
+        --donor)
+          donor="$2"; shift 2;;
+        *)
+          echo "give-mana: unknown option $1" >&2
+          exit 2
+          ;;
+      esac
+    done
+    "$BB_BIN" -m scripts.nonstarter-mana donate \
+      --db "$NONSTARTER_DB" \
+      --amount "$amount" \
+      --donor "$donor" \
+      ${note:+--note "$note"} \
+      --format text
+    ;;
+esac

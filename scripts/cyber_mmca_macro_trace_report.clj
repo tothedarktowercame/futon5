@@ -3,7 +3,8 @@
             [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.mmca.metrics :as metrics]
-            [futon5.mmca.runtime :as runtime]))
+            [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -77,10 +78,11 @@
                       {:hint "Use: bb -cp futon5/src:futon5/resources ..."})))) )
 
 (defn- rows->csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join "\n" (map #(str/join "," %) rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn- rng-int [^java.util.Random rng n]
   (.nextInt rng n))
@@ -145,8 +147,7 @@
                    ["seed" "window" "w_start" "w_end" "empty"
                     "pressure_up" "pressure_down" "selectivity_up" "selectivity_down"
                     "structure_preserve" "structure_disrupt"]
-                   (or out "/tmp/cyber-mmca-macro-trace.csv"))
-        (println "Wrote" (or out "/tmp/cyber-mmca-macro-trace.csv"))))))
+                   (or out "/tmp/cyber-mmca-macro-trace.csv"))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

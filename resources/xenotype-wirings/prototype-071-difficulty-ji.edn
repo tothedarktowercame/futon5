@@ -1,0 +1,49 @@
+{:meta {:id :xenotype-071
+        :hexagram 18
+        :hexagram-name "Work on the Decayed"
+        :hexagram-family "Difficulty"
+        :energy :ji
+        :energy-name "Focus"
+        :description "Difficulty with focus: when entropy is high (decay), focus mutation toward the modal sigil to restore order"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Measure disorder
+          {:id :entropy :component :entropy}
+
+          ;; Find the dominant pattern (mode)
+          {:id :mode :component :modal}
+
+          ;; Path A: High entropy -> focused mutation toward mode
+          {:id :focus-mutate :component :mutate-toward}
+
+          ;; Path B: Low entropy -> preserve
+          {:id :choose :component :threshold-sigil}]
+
+  :edges [;; Measure entropy
+          {:from :neighbors :from-port :sigils :to :entropy :to-port :sigils}
+
+          ;; Find mode
+          {:from :neighbors :from-port :sigils :to :mode :to-port :sigils}
+
+          ;; Focused mutation toward mode
+          {:from :ctx-self :from-port :sigil :to :focus-mutate :to-port :sigil}
+          {:from :mode :from-port :result :to :focus-mutate :to-port :target}
+          {:value 0.4 :value-type :scalar :to :focus-mutate :to-port :rate}
+
+          ;; Choose: if entropy > 0.6, focus-mutate; else preserve
+          {:from :entropy :from-port :score :to :choose :to-port :score}
+          {:value 0.6 :value-type :scalar :to :choose :to-port :threshold}
+          {:from :focus-mutate :from-port :result :to :choose :to-port :above}
+          {:from :ctx-self :from-port :sigil :to :choose :to-port :below}]
+
+  :output :choose}
+
+ :interpretation
+ "When facing decay (high entropy), apply focused effort to restore order
+  by mutating toward the dominant pattern. When order is already present,
+  preserve the current state. This embodies Difficulty (challenge/adaptation)
+  with Jǐ energy (concentrated focus on specific target)."}

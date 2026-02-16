@@ -1,0 +1,36 @@
+{:meta {:id :legacy-exotype-gong-super
+        :label "Legacy exotype (工, super)"
+        :source {:notebook "exotic-programming-notebook-iii.org"
+                 :run "Mission 17a refine exotic"
+                 :seed 4242}
+        :description "Legacy kernel with exotype sigil 工 (super), mission-17a refine exotic params."}
+
+ :diagram
+ {:nodes [{:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :legacy-step :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "工"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 0
+                                     :match-threshold 0.4444444444444444
+                                     :invert-on-phenotype? false
+                                     :update-prob 0.5
+                                     :mix-mode :rotate-left
+                                     :mix-shift 0}}}
+          {:id :out :component :output-sigil}]
+
+  :edges [{:from :ctx-pred :from-port :sigil :to :legacy-step :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy-step :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy-step :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy-step :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy-step :to-port :phe}
+          {:from :legacy-step :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Legacy mutating-template kernel with exotype sigil 工 (super) and Mission 17a refine parameters."}

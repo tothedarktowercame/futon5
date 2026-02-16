@@ -1,5 +1,6 @@
 (ns mission-17a-hex-quantile-reclassify
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -226,30 +227,30 @@
                     "pressure" "selectivity" "structure" "entropy" "class"
                     "dominant" "dominance_margin" "stability" "transitions" "hist"]
             rows-out (concat window-out summary-out)]
-        (spit out
-              (str (csv-row header)
-                   "\n"
-                   (str/join
-                    "\n"
-                    (map (fn [row]
-                           (csv-row [(get row "seed")
-                                     (get row "label" "unknown")
-                                     (get row "variant")
-                                     (get row "summary_scope" "window")
-                                     (get row "window_size")
-                                     (get row "window_idx")
-                                     (get row "pressure" "")
-                                     (get row "selectivity" "")
-                                     (get row "structure" "")
-                                     (get row "entropy" "")
-                                     (get row "class" "")
-                                     (get row "dominant" "")
-                                     (get row "dominance_margin" "")
-                                     (get row "stability" "")
-                                     (get row "transitions" "")
-                                     (get row "hist" "")]))
-                         rows-out))))
-        (println "Wrote" out)
+        (out/spit-text!
+         out
+         (str (csv-row header)
+              "\n"
+              (str/join
+               "\n"
+               (map (fn [row]
+                      (csv-row [(get row "seed")
+                                (get row "label" "unknown")
+                                (get row "variant")
+                                (get row "summary_scope" "window")
+                                (get row "window_size")
+                                (get row "window_idx")
+                                (get row "pressure" "")
+                                (get row "selectivity" "")
+                                (get row "structure" "")
+                                (get row "entropy" "")
+                                (get row "class" "")
+                                (get row "dominant" "")
+                                (get row "dominance_margin" "")
+                                (get row "stability" "")
+                                (get row "transitions" "")
+                                (get row "hist" "")]))
+                    rows-out)))))
         (println "Global thresholds:" global-thresholds)
         (when thresholds-by-label
           (println "Label thresholds:" thresholds-by-label))))))

@@ -1,0 +1,28 @@
+{:meta {:id :rule-184
+        :description "Rule 184: Traffic/particle flow, Class 2 - conserves particles"
+        :wolfram-class 2
+        :formula "(C AND R) OR (L AND NOT C)"}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+   ;; C AND R
+   {:id :and-cr :component :bit-and}
+   ;; NOT C
+   {:id :not-c :component :bit-not}
+   ;; L AND NOT C
+   {:id :and-l-notc :component :bit-and}
+   ;; Final OR
+   {:id :or-final :component :bit-or}
+   {:id :output :component :output-sigil}]
+  :output :output
+  :edges
+  [{:from :self :to :and-cr :to-port :a}
+   {:from :succ :to :and-cr :to-port :b}
+   {:from :self :to :not-c}
+   {:from :pred :to :and-l-notc :to-port :a}
+   {:from :not-c :to :and-l-notc :to-port :b}
+   {:from :and-cr :to :or-final :to-port :a}
+   {:from :and-l-notc :to :or-final :to-port :b}
+   {:from :or-final :to :output}]}}

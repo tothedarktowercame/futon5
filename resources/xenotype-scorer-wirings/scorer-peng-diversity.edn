@@ -1,0 +1,54 @@
+{:meta {:id :scorer-peng
+        :energy :peng
+        :energy-name "Expand"
+        :description "Diversity-focused scorer: rewards spatial variety and change"}
+
+ :diagram
+ {:nodes [;; Extract frames
+          {:id :input :component :run-frames}
+
+          ;; Measure activity (change between frames)
+          {:id :activity :component :activity-series}
+
+          ;; Aggregate activity
+          {:id :avg-activity :component :mean}
+          {:id :var-activity :component :variance}
+
+          ;; Lambda estimate (activity level)
+          {:id :lambda :component :lambda-estimate}
+
+          ;; Combine: activity + variance (diversity of change)
+          {:id :activity-score :component :multiply}
+          {:id :var-boost :component :log1p}
+          {:id :combined :component :add}
+
+          ;; Output
+          {:id :out :component :output-score}]
+
+  :edges [;; Activity measurement
+          {:from :input :from-port :frames :to :activity :to-port :frames}
+          {:from :activity :from-port :series :to :avg-activity :to-port :values}
+          {:from :activity :from-port :series :to :var-activity :to-port :values}
+
+          ;; Lambda
+          {:from :input :from-port :frames :to :lambda :to-port :frames}
+
+          ;; Combine scores
+          {:from :avg-activity :from-port :avg :to :activity-score :to-port :a}
+          {:from :lambda :from-port :lambda :to :activity-score :to-port :b}
+
+          {:from :var-activity :from-port :var :to :var-boost :to-port :x}
+
+          {:from :activity-score :from-port :result :to :combined :to-port :a}
+          {:from :var-boost :from-port :result :to :combined :to-port :b}
+
+          ;; Output
+          {:from :combined :from-port :result :to :out :to-port :score}]
+
+  :output :out}
+
+ :interpretation
+ "Péng (Expand) energy rewards diversity and change. This scorer measures
+  activity level (how much the CA changes between frames) and its variance
+  (diversity of change rates). High scores indicate dynamic, expansive behavior
+  with varied patterns of change."}

@@ -1,0 +1,51 @@
+{:meta {:id :xenotype-166
+        :hexagram 42
+        :hexagram-name "Increase"
+        :hexagram-family "Conflict"
+        :energy :lu
+        :energy-name "Yield"
+        :description "Resolving tension through yielding: when neighbors conflict, yield toward the minority to restore balance"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Find majority and minority
+          {:id :majority :component :majority}
+          {:id :minority :component :minority}
+
+          ;; Measure tension (dominance = one sigil dominating)
+          {:id :dominance :component :dominance}
+
+          ;; Path A: High dominance (tension) -> yield toward minority
+          {:id :yield :component :mutate-toward}
+
+          ;; Path B: Low dominance (balanced) -> stay
+          {:id :choose :component :threshold-sigil}]
+
+  :edges [;; Compute majority and minority
+          {:from :neighbors :from-port :sigils :to :majority :to-port :sigils}
+          {:from :neighbors :from-port :sigils :to :minority :to-port :sigils}
+
+          ;; Measure dominance (tension)
+          {:from :neighbors :from-port :sigils :to :dominance :to-port :sigils}
+
+          ;; Yield toward minority to increase balance
+          {:from :ctx-self :from-port :sigil :to :yield :to-port :sigil}
+          {:from :minority :from-port :result :to :yield :to-port :target}
+          {:value 0.25 :value-type :scalar :to :yield :to-port :rate}
+
+          ;; Choose: if dominance > 0.6 (tension), yield; else stay
+          {:from :dominance :from-port :score :to :choose :to-port :score}
+          {:value 0.6 :value-type :scalar :to :choose :to-port :threshold}
+          {:from :yield :from-port :result :to :choose :to-port :above}
+          {:from :ctx-self :from-port :sigil :to :choose :to-port :below}]
+
+  :output :choose}
+
+ :interpretation
+ "Increase through yielding: when one pattern dominates (high tension),
+  yield toward the minority to restore balance and increase diversity.
+  When already balanced, maintain position. This embodies Conflict (tension/resolution)
+  with Lǚ energy (yielding to redirect force rather than oppose it)."}

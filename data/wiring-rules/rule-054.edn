@@ -1,0 +1,35 @@
+{:meta {:id :rule-054
+        :description "Rule 54: Complex periodic structures, Class 4"
+        :wolfram-class 4
+        :formula "(NOT L AND (C XOR R)) OR (L AND NOT C)"}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+   ;; NOT L
+   {:id :not-l :component :bit-not}
+   ;; C XOR R
+   {:id :xor-cr :component :bit-xor}
+   ;; NOT L AND (C XOR R)
+   {:id :and-notl-xor :component :bit-and}
+   ;; NOT C
+   {:id :not-c :component :bit-not}
+   ;; L AND NOT C
+   {:id :and-l-notc :component :bit-and}
+   ;; Final OR
+   {:id :or-final :component :bit-or}
+   {:id :output :component :output-sigil}]
+  :output :output
+  :edges
+  [{:from :pred :to :not-l}
+   {:from :self :to :xor-cr :to-port :a}
+   {:from :succ :to :xor-cr :to-port :b}
+   {:from :not-l :to :and-notl-xor :to-port :a}
+   {:from :xor-cr :to :and-notl-xor :to-port :b}
+   {:from :self :to :not-c}
+   {:from :pred :to :and-l-notc :to-port :a}
+   {:from :not-c :to :and-l-notc :to-port :b}
+   {:from :and-notl-xor :to :or-final :to-port :a}
+   {:from :and-l-notc :to :or-final :to-port :b}
+   {:from :or-final :to :output}]}}

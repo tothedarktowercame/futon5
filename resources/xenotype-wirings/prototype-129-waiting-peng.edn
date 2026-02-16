@@ -1,0 +1,42 @@
+{:meta {:id :xenotype-129
+        :hexagram 33
+        :hexagram-name "Retreat"
+        :hexagram-family "Waiting"
+        :energy :peng
+        :energy-name "Expand"
+        :description "Patient waiting with expansion: hold position but prepare for action by expanding internal diversity"}
+
+ :diagram
+ {:nodes [;; Extract context
+          {:id :ctx-self :component :context-self}
+          {:id :neighbors :component :context-neighbors}
+
+          ;; Check neighborhood stability (low change = stable)
+          {:id :autocorr :component :autocorr}
+
+          ;; Path A: Stable -> mutate self to build internal options
+          {:id :expand :component :mutate}
+
+          ;; Path B: Unstable -> hold position
+          {:id :choose :component :threshold-sigil}]
+
+  :edges [;; Measure stability via autocorrelation
+          {:from :neighbors :from-port :sigils :to :autocorr :to-port :sigils}
+
+          ;; Expansion through mutation
+          {:from :ctx-self :from-port :sigil :to :expand :to-port :sigil}
+          {:value 0.15 :value-type :scalar :to :expand :to-port :rate}
+
+          ;; Choose: if autocorr > 0.5 (stable), expand; else hold
+          {:from :autocorr :from-port :score :to :choose :to-port :score}
+          {:value 0.5 :value-type :scalar :to :choose :to-port :threshold}
+          {:from :expand :from-port :result :to :choose :to-port :above}
+          {:from :ctx-self :from-port :sigil :to :choose :to-port :below}]
+
+  :output :choose}
+
+ :interpretation
+ "Strategic retreat: when the environment is stable (high autocorrelation),
+  use the quiet time to expand internal diversity through small mutations.
+  When unstable, hold position and wait. This embodies Waiting (patience/timing)
+  with Péng energy (expanding options while waiting for the right moment)."}

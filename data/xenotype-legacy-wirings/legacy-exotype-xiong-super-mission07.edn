@@ -1,0 +1,36 @@
+{:meta {:id :legacy-exotype-xiong-super-mission07
+        :label "Legacy exotype (兄, super) Mission 07"
+        :source {:notebook "exotic-programming-notebook.org"
+                 :run "Mission 7B top exotype #1"
+                 :seed 1695261645}
+        :description "Legacy kernel with exotype sigil 兄 (super) and Mission 07 params."}
+
+ :diagram
+ {:nodes [{:id :ctx-pred :component :context-pred}
+          {:id :ctx-self :component :context-self}
+          {:id :ctx-succ :component :context-succ}
+          {:id :ctx-prev :component :context-prev}
+          {:id :ctx-phe :component :context-phe}
+          {:id :legacy-step :component :legacy-kernel-step
+           :params {:kernel :mutating-template
+                    :exotype-sigil "兄"
+                    :exotype-tier :super
+                    :exotype-params {:rotation 3
+                                     :match-threshold 0.5555555555555556
+                                     :invert-on-phenotype? true
+                                     :update-prob 0.25
+                                     :mix-mode :xor-neighbor
+                                     :mix-shift 0}}}
+          {:id :out :component :output-sigil}]
+
+  :edges [{:from :ctx-pred :from-port :sigil :to :legacy-step :to-port :pred}
+          {:from :ctx-self :from-port :sigil :to :legacy-step :to-port :self}
+          {:from :ctx-succ :from-port :sigil :to :legacy-step :to-port :succ}
+          {:from :ctx-prev :from-port :sigil :to :legacy-step :to-port :prev}
+          {:from :ctx-phe :from-port :bits :to :legacy-step :to-port :phe}
+          {:from :legacy-step :from-port :result :to :out :to-port :sigil}]
+
+  :output :out}
+
+ :interpretation
+ "Legacy mutating-template kernel with exotype sigil 兄 (super) and Mission 07 parameters."}

@@ -41,6 +41,21 @@ done
 bb -cp futon5/src:futon5/resources futon5/scripts/cyber_mmca_prepare_hit.clj \
   "${prepare_args[@]}"
 
+report_out="${judgements_out%.edn}-report.txt"
+
+if [[ -e "$judgements_out" ]]; then
+  echo "NOTE: overwriting existing file: $judgements_out" >&2
+fi
+if [[ -e "$report_out" ]]; then
+  echo "NOTE: overwriting existing file: $report_out" >&2
+fi
+if [[ -e "$inputs_path" ]]; then
+  echo "NOTE: overwriting existing file: $inputs_path" >&2
+fi
+if [[ -d "$render_dir" ]] && [[ -n "$(ls -A "$render_dir" 2>/dev/null)" ]]; then
+  echo "NOTE: writing into existing non-empty directory: $render_dir" >&2
+fi
+
 bb -cp futon5/src:futon5/resources -m futon5.mmca.judge-cli \
   --inputs "$inputs_path" \
   --out "$judgements_out" \
@@ -51,4 +66,10 @@ bb -cp futon5/src:futon5/resources -m futon5.mmca.judge-cli \
 bb -cp futon5/src:futon5/resources futon5/scripts/hit_agreement_report.clj \
   --inputs "$inputs_path" \
   --judgements "$judgements_out" \
-  --out "${judgements_out%.edn}-report.txt"
+  --out "$report_out"
+
+echo "Outputs:"
+echo "  Inputs:     $inputs_path"
+echo "  Judgements: $judgements_out"
+echo "  Renders:    $render_dir"
+echo "  Report:     $report_out"

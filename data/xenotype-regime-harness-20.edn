@@ -1,0 +1,25 @@
+{:meta {:name "Legacy regime harness (20 runs)"
+        :created "2026-01-25"
+        :description "5 seeds x 4 models for comparable CA outputs."}
+
+ :length 32
+ :generations 32
+
+ :seeds [4242
+         238310129
+         1281562706
+         71312373
+         352362012]
+
+ :models [{:id :legacy-baseline
+           :label "legacy-baseline"
+           :wiring "data/xenotype-legacy-wirings/legacy-baseline.edn"}
+          {:id :legacy-exotype-gong-super
+           :label "legacy-exotype-gong-super"
+           :wiring "data/xenotype-legacy-wirings/legacy-exotype-gong-super.edn"}
+          {:id :legacy-exotype-xiong-super
+           :label "legacy-exotype-xiong-super"
+           :wiring "data/xenotype-legacy-wirings/legacy-exotype-xiong-super.edn"}
+          {:id :new-local-physics
+           :label "new-local-physics"
+           :wiring "data/xenotype-legacy-wirings/new-local-physics.edn"}]}
