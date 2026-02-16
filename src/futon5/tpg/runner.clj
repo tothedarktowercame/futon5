@@ -115,7 +115,10 @@
   [state diagram]
   (let [genotype (:genotype state)
         phenotype (:phenotype state)
-        next-gen (wrt/evolve-genotype diagram genotype)
+        prev-genotype (when (> (count (get-in state [:history :genotypes])) 1)
+                        (nth (get-in state [:history :genotypes])
+                             (- (count (get-in state [:history :genotypes])) 2)))
+        next-gen (wrt/evolve-genotype diagram genotype prev-genotype)
         next-phe (when phenotype
                    (ca/evolve-phenotype-against-genotype genotype phenotype))]
     (-> state
