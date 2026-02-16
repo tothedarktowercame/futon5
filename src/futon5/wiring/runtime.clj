@@ -31,16 +31,22 @@
   "Evolve entire genotype string using wiring diagram.
 
    Applies the wiring rule to each cell position, using circular
-   boundary conditions (wraps around)."
-  [diagram genotype]
-  (let [len (count genotype)
-        chars (vec (seq genotype))]
-    (apply str
-           (for [i (range len)]
-             (let [ctx {:pred (str (get chars (mod (dec i) len)))
-                        :self (str (get chars i))
-                        :succ (str (get chars (mod (inc i) len)))}]
-               (evolve-cell diagram ctx))))))
+   boundary conditions (wraps around).
+
+   prev-genotype, when provided, supplies :prev context (same cell,
+   previous generation) for temporal-aware wirings."
+  ([diagram genotype] (evolve-genotype diagram genotype nil))
+  ([diagram genotype prev-genotype]
+   (let [len (count genotype)
+         chars (vec (seq genotype))
+         prev-chars (when prev-genotype (vec (seq prev-genotype)))]
+     (apply str
+            (for [i (range len)]
+              (let [ctx (cond-> {:pred (str (get chars (mod (dec i) len)))
+                                 :self (str (get chars i))
+                                 :succ (str (get chars (mod (inc i) len)))}
+                          prev-chars (assoc :prev (str (get prev-chars i))))]
+                (evolve-cell diagram ctx)))))))
 
 (defn evolve-phenotype
   "Evolve phenotype against genotype (standard CA rule)."
@@ -214,6 +220,7 @@
            phe-history (when phenotype [phenotype])
            metrics-history (when collect-metrics?
                             [(compute-metrics genotype nil phenotype)])
+           prev-gen nil
            current-gen genotype
            current-phe phenotype
            gen 0]
@@ -223,13 +230,14 @@
                  :generations (count gen-history)}
           phe-history (assoc :phe-history phe-history)
           metrics-history (assoc :metrics-history metrics-history))
-        (let [next-gen (evolve-genotype diagram current-gen)
+        (let [next-gen (evolve-genotype diagram current-gen prev-gen)
               next-phe (when current-phe (evolve-phenotype current-gen current-phe))
               next-metrics (when collect-metrics?
                             (compute-metrics next-gen current-gen next-phe))]
           (recur (conj gen-history next-gen)
                  (when phe-history (conj phe-history next-phe))
                  (when metrics-history (conj metrics-history next-metrics))
+                 current-gen
                  next-gen
                  next-phe
                  (inc gen)))))))

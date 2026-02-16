@@ -214,8 +214,7 @@ are now substantially improved. The revised loop:
 
 ### What still needs building
 
-1. **The embedding function**: pattern text → exotype encoding via
-   hexagram skeleton. Small ML problem, ~320 training examples.
+1. ~~**The embedding function**~~: **Done.** See below.
 
 2. **Lift strategies to test**: exotype set → xenotype policy. The
    search for computational intelligence lives here. Multiple
@@ -285,6 +284,57 @@ If the methodology works, it will find solutions to the coupling-
 diversity tradeoff that we wouldn't design by hand, because it will
 bring structural knowledge from other domains (via the xenotype lift)
 that applies to MMCA in ways we can't predict in advance.
+
+---
+
+## Progress
+
+### 2026-02-16: Pattern → Exotype Bridge (completed)
+
+The embedding function is built and produces exotype encodings for all
+791 patterns in the library.
+
+**Implementation**: `scripts/pattern_exotype_bridge.py`
+
+**Method**: PCA(32) + multi-output ridge regression, trained on 320
+anchor points (64 hexagrams + 256 exotypes) with known 8-bit encodings.
+MiniLM embeddings (384-dim, from futon3a) are the input representation.
+
+- Standardize → PCA to 32 components → RidgeCV (cross-validated α)
+- Section-level text (IF/HOWEVER/THEN/BECAUSE) embedded separately
+  with MiniLM, then per-section ridge projectors produce 36-bit
+  xenotypes: IF(8) + HOWEVER(8) + THEN(8) + BECAUSE(8) + phenotype(4)
+
+**Validation** (10-fold CV on held-out hexagrams):
+
+| Method | Hamming distance | Bit accuracy |
+|--------|-----------------|--------------|
+| k-NN (k=5) | 3.37 ± 1.33 | 57.9% |
+| PCA(32)+Ridge | 3.37 ± 1.34 | 57.9% |
+| MLP (384→64→8) | 3.75 ± 1.37 | 53.1% |
+
+Ridge matches k-NN on holdout accuracy and produces better domain
+coherence — semantically similar patterns get more similar encodings.
+MLP overfits at this sample size (320 training points, 384 input dims).
+
+**Domain coherence** (mean intra-domain hamming distance, lower = more
+coherent; ridge values): corps 1.07, repository-transition 0.68,
+vsat 0.40, ai4ci 1.18, t4r 1.96, hdm 1.57. Patterns in the same
+namespace consistently land near each other in the 8-bit space.
+
+**Output**: `resources/pattern-exotype-bridge.edn` — 791 patterns with
+8-bit exotype, 36-bit xenotype, nearest anchors, and confidence scores.
+
+**What this unblocks**: Every pattern in the library now has an exotype
+encoding. All 791 are executable in any domain with a xenotype
+interpreter. The lift problem (item 2 above) can now draw on the full
+pattern space, not just the 320 hand-authored anchors.
+
+**What it doesn't solve**: The 57.9% bit accuracy means the learned
+encodings are approximate — the hexagram skeleton provides direction
+but not precision for non-anchor patterns. The lift strategies will
+need to be robust to this noise, or the embedding will need to improve
+as more ground truth becomes available (via the ratchet).
 
 ---
 
