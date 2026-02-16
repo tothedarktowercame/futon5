@@ -3,7 +3,8 @@
 
    The futon1a mission diagram is the reference case — it was drawn by hand
    in the mission document, and this is the machine-checkable EDN equivalent."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.edn :as edn]
+            [clojure.test :refer [deftest is testing]]
             [futon5.ct.mission :as mission]))
 
 ;;; ============================================================
@@ -391,3 +392,5 @@
       (is (= 7 (:output-count s)))
       (is (= 6 (:component-count s)))
       (is (:all-valid s))))))
+
+;; Parallel composition tests live in futon5.ct.composition-test.

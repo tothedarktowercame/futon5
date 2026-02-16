@@ -44,6 +44,7 @@ esac
 timestamp="$(date +%Y%m%d-%H%M%S)"
 log_path="$log_root/mission-0-${mode}-${timestamp}.edn"
 csv_path="$log_root/mission-0-${mode}-${timestamp}-hex.csv"
+psr_pur_path="$log_root/psr-pur-${mode}-${timestamp}.edn"
 
 bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
   --runs "$runs" \
@@ -52,7 +53,7 @@ bb -cp futon5/src:futon5/resources -m futon5.mmca.exoevolve \
   --generations "$generations" \
   --hexagram-weight "$hex_weight" \
   --score-mode "$score_mode" \
-  --hexagram-log "$log_root/psr-pur-${mode}-${timestamp}.edn" \
+  --hexagram-log "$psr_pur_path" \
   --log "$log_path"
 
 bb -cp futon5/src:futon5/resources -m futon5.mmca.hex-batch \
@@ -66,5 +67,7 @@ bb -cp futon5/src:futon5/resources futon5/scripts/mission_0_persist.clj \
   --top-k 6 \
   --out-dir "/home/joe/code/futon3/library/iiching"
 
-echo "Log: $log_path"
-echo "Hex summary: $csv_path"
+echo "Outputs:"
+echo "  Log:        $log_path"
+echo "  PSR/PUR:    $psr_pur_path"
+echo "  Hex summary: $csv_path"

@@ -6,6 +6,7 @@
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]
             [futon5.xenotype.interpret :as interpret]
             [futon5.xenotype.wiring :as wiring]))
 
@@ -311,6 +312,7 @@
                         :seed seed
                         :controller controller
                         :note "wiring vs hex disagreement run"}}]
+    (out/warn-overwrite-file! path)
     (spit path (pr-str run))
     path))
 
@@ -338,6 +340,7 @@
             out-dir (or out-dir (format "/tmp/cyber-mmca-disagree-%d" ts))
             inputs (or inputs (format "/tmp/cyber-mmca-disagree-%d-inputs.txt" ts))
             label (or label "cyber-mmca-disagree")]
+        (out/warn-overwrite-dir! out-dir)
         (.mkdirs (io/file out-dir))
         (let [results
               (mapv (fn [seed]
@@ -370,11 +373,10 @@
                               [(run->edn! (assoc hex :controller :hex :seed seed) out-dir label)
                                (run->edn! (assoc wiring :controller :wiring :seed seed) out-dir label)])
                             ranked)]
-          (spit inputs (str/join "\n" paths))
-          (println "Wrote" inputs)
+          (out/spit-text! inputs (str/join "\n" paths))
           (doseq [{:keys [seed rate]} ranked]
             (println (format "seed %d disagreement %.3f" seed rate)))
-          (println "Runs saved to" out-dir))))))
+          (println "Runs saved to" (out/abs-path out-dir)))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

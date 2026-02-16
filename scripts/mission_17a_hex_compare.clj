@@ -4,7 +4,8 @@
             [futon5.ca.core :as ca]
             [futon5.hexagram.metrics :as hex]
             [futon5.mmca.exotype :as exotype]
-            [futon5.mmca.runtime :as mmca]))
+            [futon5.mmca.runtime :as mmca]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -148,8 +149,7 @@
                                  (double (:fitness exo-dom))))
                        rows)
             table (str/join "\n" (concat [header sep] lines))]
-        (spit out table)
-        (println "Wrote" out)))))
+        (out/spit-text! out table))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

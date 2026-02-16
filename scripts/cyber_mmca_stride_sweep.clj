@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
-            [futon5.cyber-mmca.core :as core]))
+            [futon5.cyber-mmca.core :as core]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -123,10 +124,11 @@
                       {:hint "Use: bb -cp futon5/src:futon5/resources ..."})))) )
 
 (defn- rows->csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join "\n" (map #(str/join "," %) rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn -main [& args]
   (let [{:keys [help unknown seeds controllers Ws Ss windows length phenotype-length no-phenotype kernel sigil
@@ -182,8 +184,7 @@
                    ["controller" "W" "S" "window_count" "freeze_frac" "magma_frac"
                     "ok_frac" "avg_freeze_exit" "avg_magma_exit" "avg_ok_streak"
                     "regime_transitions" "regime_classes"]
-                   (or out "/tmp/cyber-mmca-stride-sweep.csv"))
-        (println "Wrote" (or out "/tmp/cyber-mmca-stride-sweep.csv"))))))
+                   (or out "/tmp/cyber-mmca-stride-sweep.csv"))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

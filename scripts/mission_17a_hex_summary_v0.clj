@@ -1,5 +1,6 @@
 (ns mission-17a-hex-summary-v0
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -104,24 +105,24 @@
                               :stability (:stability summary)
                               :transitions (pr-str (:transitions summary))
                               :hist (pr-str (:hist summary))}))]
-        (spit out
-              (str (csv-row ["seed" "variant" "window_size"
-                             "dominant" "dominance_margin" "stability"
-                             "transitions" "hist"])
-                   "\n"
-                   (str/join
-                    "\n"
-                    (map (fn [row]
-                           (csv-row [(get row :seed)
-                                     (get row :variant)
-                                     (get row :window_size)
-                                     (name (:dominant row))
-                                     (get row :dominance_margin)
-                                     (get row :stability)
-                                     (get row :transitions)
-                                     (get row :hist)]))
-                         summary-rows))))
-        (println "Wrote" out)))))
+        (out/spit-text!
+         out
+         (str (csv-row ["seed" "variant" "window_size"
+                        "dominant" "dominance_margin" "stability"
+                        "transitions" "hist"])
+              "\n"
+              (str/join
+               "\n"
+               (map (fn [row]
+                      (csv-row [(get row :seed)
+                                (get row :variant)
+                                (get row :window_size)
+                                (name (:dominant row))
+                                (get row :dominance_margin)
+                                (get row :stability)
+                                (get row :transitions)
+                                (get row :hist)]))
+                    summary-rows)))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

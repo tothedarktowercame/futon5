@@ -1,7 +1,8 @@
 (ns mission-17a-gate-rank
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
-            [futon5.scoring :as scoring]))
+            [futon5.scoring :as scoring]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -103,8 +104,7 @@
             header "| seed | rank score | pred | gate |"
             sep "|-"
             table (str/join "\n" (concat [header sep] lines))]
-        (spit out table)
-        (println "Wrote" out)))))
+        (out/spit-text! out table))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

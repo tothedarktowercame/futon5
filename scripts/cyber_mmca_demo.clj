@@ -3,7 +3,8 @@
             [futon5.ca.core :as ca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
-            [futon5.mmca.runtime :as runtime]))
+            [futon5.mmca.runtime :as runtime]
+            [futon5.scripts.output :as out]))
 
 (defn- usage []
   (str/join
@@ -116,10 +117,11 @@
     (format "%.4f" (double v))))
 
 (defn- rows->csv [rows header out-path]
-  (spit out-path
-        (str (str/join "," header)
-             "\n"
-             (str/join "\n" (map #(str/join "," %) rows)))))
+  (out/spit-text!
+   out-path
+   (str (str/join "," header)
+        "\n"
+        (str/join "\n" (map #(str/join "," %) rows)))))
 
 (defn -main [& args]
   (let [{:keys [help unknown windows W S seed genotype length phenotype phenotype-length kernel sigil out]} (parse-args args)]
@@ -157,8 +159,7 @@
                          ["window" "w_start" "w_end" "regime" "pressure"
                           "selectivity" "structure" "activity" "actions"
                           "update_prob" "match_threshold" "kernel"]
-                         out)
-              (println "Wrote" out))
+                         out))
             (let [result (runtime/run-mmca {:genotype genotype
                                             :phenotype phenotype
                                             :generations W
