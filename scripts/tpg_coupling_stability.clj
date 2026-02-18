@@ -53,9 +53,10 @@
 (println "\nLoading wiring operators...")
 (def wiring-operators
   (runner/load-wiring-operators
-   {:wiring-addself "data/wiring-rules/hybrid-110-addself.edn"
-    :wiring-msb     "data/wiring-rules/hybrid-110-msb.edn"
-    :wiring-bit5    "data/wiring-rules/hybrid-110-bit5.edn"}))
+   {:wiring-addself  "data/wiring-rules/hybrid-110-addself.edn"
+    :wiring-xorself "data/wiring-rules/hybrid-110-xorself.edn"
+    :wiring-msb      "data/wiring-rules/hybrid-110-msb.edn"
+    :wiring-bit5     "data/wiring-rules/hybrid-110-bit5.edn"}))
 
 (def coupling-spec
   {:entropy      [0.6 0.35]
