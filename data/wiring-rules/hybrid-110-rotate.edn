@@ -1,0 +1,71 @@
+;; Hybrid: Rule 110 + bit rotation at domain boundaries
+;;
+;; Simplest possible structured coupling. Uses ONLY existing components
+;; (bit-shift-left, distance) plus the new int-gt?.
+;;
+;; At cells where neighbors differ by >3 bits, rotate the Rule 110
+;; result by 1 bit position. This permutes bitplane identities at
+;; boundaries — bit 0 becomes bit 1, bit 1 becomes bit 2, etc.
+;;
+;; Prediction: Minimal structured coupling — bitplane mixing at boundaries only.
+
+{:meta {:id :hybrid-110-rotate
+        :description "Rule 110 base + 1-bit rotation at domain boundaries"
+        :formula "if hamming(L,R)>3 then rot(R110(L,C,R),1) else R110(L,C,R)"
+        :coupling-type :structured}
+ :diagram
+ {:nodes
+  [;; Context
+   {:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; Rotation path: rotate Rule110 result by 1 bit
+   {:id :rotated :component :bit-shift-left}
+
+   ;; Boundary detection: hamming(L, R) > 3
+   {:id :dist :component :distance}
+   {:id :boundary :component :int-gt?}
+
+   ;; Gate: boundary → rotated, else → Rule 110
+   {:id :gate :component :if-then-else-sigil}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [;; Rule 110
+   {:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   ;; Rotation of Rule110 result
+   {:from :r110 :from-port :result :to :rotated :to-port :sigil}
+   {:value 1 :value-type :int :to :rotated :to-port :n}
+
+   ;; Boundary detection
+   {:from :pred :to :dist :to-port :a}
+   {:from :succ :to :dist :to-port :b}
+   {:from :dist :from-port :dist :to :boundary :to-port :a}
+   {:value 3 :value-type :int :to :boundary :to-port :b}
+
+   ;; Gate
+   {:from :boundary :from-port :above :to :gate :to-port :cond}
+   {:from :rotated :from-port :result :to :gate :to-port :then}
+   {:from :r110 :from-port :result :to :gate :to-port :else}
+
+   {:from :gate :from-port :result :to :output}]}}

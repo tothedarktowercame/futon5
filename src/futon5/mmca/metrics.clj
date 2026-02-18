@@ -57,6 +57,39 @@
     {:lz78-tokens (avg tokens)
      :lz78-ratio (avg ratios)}))
 
+(defn per-row-lz78-ratios
+  "Compute per-row lz78-ratio for each generation in history.
+   Returns a vector of doubles."
+  [history]
+  (mapv (fn [s]
+          (let [len (count s)]
+            (if (pos? len)
+              (/ (double (lz78-token-count s)) (double len))
+              0.0)))
+        (remove nil? history)))
+
+(defn compression-variance
+  "Coefficient of variation of per-row lz78-ratio.
+   Class III: cv ~ 0 (uniform incompressibility).
+   Class IV:  cv high (bursty complexity — quiet background with collision bursts).
+   Returns {:cv double :raw-cv double :mean-ratio double :std-ratio double}
+   where :cv is normalized to [0,1] via tanh."
+  [history]
+  (let [ratios (per-row-lz78-ratios history)
+        n (count ratios)]
+    (if (< n 3)
+      {:cv 0.0 :raw-cv 0.0 :mean-ratio 0.0 :std-ratio 0.0}
+      (let [mean-r (/ (reduce + 0.0 ratios) (double n))
+            variance (/ (reduce + 0.0 (map #(let [d (- % mean-r)] (* d d)) ratios))
+                        (double (dec n)))
+            std-r (Math/sqrt variance)
+            raw-cv (if (pos? mean-r) (/ std-r mean-r) 0.0)
+            cv (Math/tanh (* 2.0 raw-cv))]
+        {:cv cv
+         :raw-cv raw-cv
+         :mean-ratio mean-r
+         :std-ratio std-r}))))
+
 (defn spatial-autocorr [s]
   (let [chars (vec (seq (or s "")))
         pairs (partition 2 1 chars)
@@ -249,7 +282,8 @@
      (k "lz78-ratio") (:lz78-ratio summary)
      (k "temporal-autocorr") (:temporal-autocorr summary)
      (k "spatial-autocorr") (:spatial-autocorr summary)
-     (k "diag-autocorr") (:diag-autocorr summary)}))
+     (k "diag-autocorr") (:diag-autocorr summary)
+     (k "compression-cv") (:compression-cv summary)}))
 
 (defn summarize-series [series]
   (let [metrics-history (series-metrics-history series)
@@ -258,10 +292,12 @@
         autocorr (autocorr-metrics series)
         coherence (coherence-score interesting autocorr)
         structured (structured-chaos-score interesting autocorr)
-        composite (composite-score interesting compress autocorr nil coherence)]
+        composite (composite-score interesting compress autocorr nil coherence)
+        cv-result (compression-variance series)]
     (merge {:composite-score composite
             :coherence coherence
-            :structured-chaos-score structured}
+            :structured-chaos-score structured
+            :compression-cv (:cv cv-result)}
            interesting
            compress
            autocorr)))

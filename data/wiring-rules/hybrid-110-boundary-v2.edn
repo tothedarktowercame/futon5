@@ -1,0 +1,64 @@
+;; Hybrid v2: Rule 110 + arithmetic at RARE boundaries
+;;
+;; v1 used hamming > 3 which fires at ~50% of cells (expected hamming
+;; distance of random 8-bit values is 4). This made it effectively
+;; unconditional, drowning Rule 110's structure in arithmetic noise.
+;;
+;; v2 uses hamming > 6 — only ~4% of cell pairs differ this much.
+;; This should be far more selective, allowing Rule 110 dynamics to
+;; dominate while creating coupling only at extreme domain boundaries.
+
+{:meta {:id :hybrid-110-boundary-v2
+        :description "Rule 110 + arithmetic at rare boundaries (hamming > 6)"
+        :formula "if hamming(L,R)>6 then (L+R)%256 else Rule110(L,C,R)"
+        :coupling-type :structured}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; Arithmetic path
+   {:id :arith :component :sigil-add-mod}
+
+   ;; Boundary detection: hamming > 6 (very selective)
+   {:id :dist :component :distance}
+   {:id :boundary :component :int-gt?}
+
+   ;; Gate
+   {:id :gate :component :if-then-else-sigil}
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [{:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   {:from :pred :to :arith :to-port :a}
+   {:from :succ :to :arith :to-port :b}
+
+   {:from :pred :to :dist :to-port :a}
+   {:from :succ :to :dist :to-port :b}
+   {:from :dist :from-port :dist :to :boundary :to-port :a}
+   {:value 6 :value-type :int :to :boundary :to-port :b}
+
+   {:from :boundary :from-port :above :to :gate :to-port :cond}
+   {:from :arith :from-port :result :to :gate :to-port :then}
+   {:from :r110 :from-port :result :to :gate :to-port :else}
+
+   {:from :gate :from-port :result :to :output}]}}

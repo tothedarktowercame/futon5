@@ -1,0 +1,8 @@
+# Python dependencies for tools/tpg/ (JAX weight refinement, SMT analysis)
+# Usage: python3 -m venv .venv-tpg && .venv-tpg/bin/pip install -r requirements-tpg.txt
+jax==0.9.0.1
+jaxlib==0.9.0.1
+numpy==2.4.2
+scipy==1.17.0
+opt_einsum==3.4.0
+z3-solver==4.15.8.0

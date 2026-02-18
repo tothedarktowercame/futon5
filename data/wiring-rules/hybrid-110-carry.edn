@@ -1,0 +1,70 @@
+;; Hybrid: Rule 110 + carry injection at active sites
+;;
+;; Base: Rule 110 per-bit computation
+;; At cells where Rule 110 significantly changes the value (hamming > 2),
+;; add the original self value arithmetically. This injects carry-chain
+;; coupling specifically at sites where Rule 110 is active (glider bodies,
+;; collision points).
+;;
+;; Prediction: Coupling at active computation sites, not domain boundaries.
+
+{:meta {:id :hybrid-110-carry
+        :description "Rule 110 base + arithmetic carry at active computation sites"
+        :formula "if hamming(R110(L,C,R),C)>2 then (R110(L,C,R)+C)%256 else R110(L,C,R)"
+        :coupling-type :structured}
+ :diagram
+ {:nodes
+  [;; Context
+   {:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; Carry path: Rule110-result + self mod 256
+   {:id :carry :component :sigil-add-mod}
+
+   ;; Activity detection: hamming(Rule110-result, self) > 2
+   {:id :change :component :distance}
+   {:id :active :component :int-gt?}
+
+   ;; Gate: active → carry-injected, else → pure Rule 110
+   {:id :gate :component :if-then-else-sigil}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [;; Rule 110
+   {:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   ;; Carry: R110 + self
+   {:from :r110 :from-port :result :to :carry :to-port :a}
+   {:from :self :to :carry :to-port :b}
+
+   ;; Activity detection: how much did R110 change things?
+   {:from :r110 :from-port :result :to :change :to-port :a}
+   {:from :self :to :change :to-port :b}
+   {:from :change :from-port :dist :to :active :to-port :a}
+   {:value 2 :value-type :int :to :active :to-port :b}
+
+   ;; Gate
+   {:from :active :from-port :above :to :gate :to-port :cond}
+   {:from :carry :from-port :result :to :gate :to-port :then}
+   {:from :r110 :from-port :result :to :gate :to-port :else}
+
+   {:from :gate :from-port :result :to :output}]}}

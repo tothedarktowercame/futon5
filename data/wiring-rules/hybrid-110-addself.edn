@@ -1,0 +1,49 @@
+;; Hybrid: Rule 110 + unconditional arithmetic addition with self
+;;
+;; result = (Rule110(L,C,R) + C) mod 256
+;;
+;; Full addition (not averaging) creates stronger carry-chain coupling.
+;; Tests whether Rule 110 structure survives stronger perturbation.
+;;
+;; Prediction: Stronger coupling than avgself, but may destroy Class IV.
+
+{:meta {:id :hybrid-110-addself
+        :description "Rule 110 result plus self mod 256 — strong uniform coupling"
+        :formula "(Rule110(L,C,R) + C) mod 256"
+        :coupling-type :uniform-strong}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; Add self to Rule 110 result
+   {:id :add :component :sigil-add-mod}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [{:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   ;; R110 + self
+   {:from :r110 :from-port :result :to :add :to-port :a}
+   {:from :self :to :add :to-port :b}
+
+   {:from :add :from-port :result :to :output}]}}

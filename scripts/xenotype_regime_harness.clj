@@ -256,7 +256,7 @@
                              :meta meta})
                 nil))))
         (println "Done.")
-        (println "Outputs saved to" (out/abs-path out-dir)))))))
+        (println "Outputs saved to" (out/abs-path out-dir))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

@@ -604,7 +604,8 @@
           (out/spit-text! inputs (str/join "\n" paths))
           (println "Runs saved to" (out/abs-path out-dir))
           (when render-dir
-            (println "Renders saved to" (out/abs-path render-dir)))))))
+            (println "Renders saved to" (out/abs-path render-dir))))))))
+
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

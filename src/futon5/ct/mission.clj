@@ -50,6 +50,7 @@
     :type-registry      ; catalog of entity/relation types
     :proof-path         ; durable-write audit trail
     :error-response     ; structured error
+    :evidence-entry     ; typed evidence record (EvidenceEntry shape)
     :config             ; system configuration
     :migration-data     ; futon1 LMDB data
     :test-suite         ; test namespace
@@ -63,7 +64,9 @@
    [:xtdb-entity :xtdb-tx]        true   ; entity goes into tx
    [:model-descriptor :type-registry] true ; descriptor registers into registry
    [:edn-document :config]        true   ; EDN can be config
-   [:config :edn-document]        true}) ; config is EDN
+   [:config :edn-document]        true   ; config is EDN
+   [:xtdb-entity :evidence-entry] true   ; evidence entries are storable entities
+   [:evidence-entry :xtdb-entity] true}) ; evidence entries can be stored
 
 (defn types-compatible?
   "Check if from-type can wire to where to-type is expected."

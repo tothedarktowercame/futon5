@@ -1,0 +1,53 @@
+;; Hybrid: Rule 110 + XOR with self (no carry propagation)
+;;
+;; result = Rule110(L,C,R) XOR C
+;;
+;; XOR couples all bitplanes equally but without carry chains.
+;; Each output bit depends only on the corresponding input bits,
+;; so a flip at bit n affects only bit n (not n+1, n+2, ...).
+;; Preserves entropy: XOR with uniform input stays uniform.
+;;
+;; Hypothesis: XOR coupling preserves diversity that carry-chain
+;; coupling (sigil-add-mod) destroys, because it doesn't synchronise
+;; adjacent bitplanes.
+
+{:meta {:id :hybrid-110-xorself
+        :description "Rule 110 result XOR self — carry-free coupling"
+        :formula "Rule110(L,C,R) XOR C"
+        :coupling-type :bitwise-uniform}
+ :diagram
+ {:nodes
+  [{:id :pred :component :context-pred}
+   {:id :self :component :context-self}
+   {:id :succ :component :context-succ}
+
+   ;; Rule 110: (C OR R) AND NOT(L AND C AND R)
+   {:id :or-cr :component :bit-or}
+   {:id :and-lc :component :bit-and}
+   {:id :and-lcr :component :bit-and}
+   {:id :not-lcr :component :bit-not}
+   {:id :r110 :component :bit-and}
+
+   ;; XOR self with Rule 110 result
+   {:id :xor :component :sigil-xor}
+
+   {:id :output :component :output-sigil}]
+
+  :output :output
+
+  :edges
+  [{:from :self :to :or-cr :to-port :a}
+   {:from :succ :to :or-cr :to-port :b}
+   {:from :pred :to :and-lc :to-port :a}
+   {:from :self :to :and-lc :to-port :b}
+   {:from :and-lc :to :and-lcr :to-port :a}
+   {:from :succ :to :and-lcr :to-port :b}
+   {:from :and-lcr :to :not-lcr}
+   {:from :or-cr :to :r110 :to-port :a}
+   {:from :not-lcr :to :r110 :to-port :b}
+
+   ;; R110 XOR self
+   {:from :r110 :from-port :result :to :xor :to-port :a}
+   {:from :self :to :xor :to-port :b}
+
+   {:from :xor :from-port :result :to :output}]}}

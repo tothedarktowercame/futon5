@@ -13,6 +13,9 @@
   (:require [futon5.ca.core :as ca]
             [futon5.hexagram.lift :as hex-lift]))
 
+(def ^:private trace-bent-cell?
+  (boolean (System/getenv "TPG_TRACE_CELL")))
+
 (def ^:private mix-modes
   [:none :rotate-left :rotate-right :reverse :xor-neighbor :majority :swap-halves :scramble])
 
@@ -633,18 +636,26 @@
              prev-letters (vec (map str (seq (or prev-genotype genotype))))
              default ca/default-sigil]
 
-         (->> (range len)
-              (map (fn [idx]
-                     (let [pred (get letters (dec idx) default)
-                           ego (get letters idx)
-                           succ (get letters (inc idx) default)
+             (->> (range len)
+                  (map (fn [idx]
+                         (let [pred (get letters (dec idx) default)
+                               ego (get letters idx)
+                               succ (get letters (inc idx) default)
                            prev (get prev-letters idx ego)
                            phe (phenotype-family-at phe-row phe-next idx)
 
-                           ;; Compute local rule from 36-bit context
-                           local-ctx (assoc (build-local-context pred ego succ prev phe) :rng rng)
-                           local-spec (context->kernel-spec local-ctx)
-                           local-rule (:rule (hex-lift/context->physics-rule local-ctx))
+                               ;; Compute local physics once per cell (rule + kernel spec).
+                               local-ctx (assoc (build-local-context pred ego succ prev phe) :rng rng)
+                               _ (when trace-bent-cell?
+                                   (printf "[bent] idx=%d phase=local-physics-start%n" idx)
+                                   (flush))
+                               local-physics (hex-lift/context->physics-rule local-ctx)
+                               local-rule (:rule local-physics)
+                               local-spec (rule->kernel-spec local-rule)
+                               _ (when trace-bent-cell?
+                                   (printf "[bent] idx=%d phase=local-physics-done rule=%d kernel=%s%n"
+                                           idx (long local-rule) (name (:kernel local-spec)))
+                                   (flush))
 
                            ;; Bend local with global
                            result (case bend-mode

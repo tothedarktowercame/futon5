@@ -177,6 +177,28 @@
            shifted (str (subs bits (- 8 n)) (subs bits 0 (- 8 n)))]
        {:result (bits->sigil shifted)}))
 
+   ;; Arithmetic Operations (sigil-level, bit-mixing via carry chains)
+   :sigil-add-mod
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (+ (sigil->int a) (sigil->int b)))})
+
+   :sigil-sub-mod
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (+ (- (sigil->int a) (sigil->int b)) 256))})
+
+   :sigil-mul-low
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (* (sigil->int a) (sigil->int b)))})
+
+   :sigil-avg
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (quot (+ (sigil->int a) (sigil->int b)) 2))})
+
+   ;; Bitwise Operations (no carry propagation)
+   :sigil-xor
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (bit-xor (sigil->int a) (sigil->int b)))})
+
    ;; Aggregation Operations
    :majority
    (fn [{:keys [sigils]} _ _]
@@ -260,10 +282,21 @@
   (fn [{:keys [a b]} _ _]
     {:equal (= a b)})
 
+  :int-gt?
+  (fn [{:keys [a b]} _ _]
+    {:above (> (int (or a 0)) (int (or b 0)))})
+
    :balance
    (fn [{:keys [sigil]} _ _]
      (let [ones (hamming-weight sigil)]
        {:bal (/ (- (* 2 ones) 8) 8.0)}))
+
+   :bit-test
+   (fn [{:keys [sigil index]} _ _]
+     (let [bits (sigil->bits sigil)
+           idx (min 7 (max 0 (int (or index 0))))
+           char-idx (- 7 idx)]  ;; bits string is MSB-first
+       {:bit (= (nth bits char-idx) \1)}))
 
    ;; Mutation Operations
    :mutate

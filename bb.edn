@@ -1,2 +1,3 @@
 {:paths ["." "bb" "src" "resources"]
+ :deps {org.apache.commons/commons-math3 {:mvn/version "3.6.1"}}
  :pods {org.babashka/go-sqlite3 {:version "0.2.3"}}}
