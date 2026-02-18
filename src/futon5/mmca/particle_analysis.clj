@@ -8,7 +8,8 @@
    A particle is a connected defect region that persists and moves at a
    consistent velocity. A catalog of particle species is a strong signal
    of Wolfram Class IV dynamics."
-  (:require [futon5.mmca.domain-analysis :as domain]))
+  (:require [clojure.set :as set]
+            [futon5.mmca.domain-analysis :as domain]))
 
 ;; ---------------------------------------------------------------------------
 ;; Defect detection
@@ -87,8 +88,8 @@
   [comp-a comp-b shift]
   (let [shifted-a (set (map #(+ % shift) (:cells comp-a)))
         cells-b (:cells comp-b)
-        intersection (count (clojure.set/intersection shifted-a cells-b))
-        union (count (clojure.set/union shifted-a cells-b))]
+        intersection (count (set/intersection shifted-a cells-b))
+        union (count (set/union shifted-a cells-b))]
     (if (pos? union)
       (/ (double intersection) (double union))
       0.0)))
