@@ -95,6 +95,34 @@ Default outputs:
 
 Use `--dry-run` to inspect without writing files.
 
+### TPG SMT/JAX Setup
+
+Bootstrap the local Python environment for TPG SMT analysis and JAX refinement:
+
+```
+./scripts/setup_tpg_python.sh
+```
+
+Then run the comparison harness:
+
+```
+clj -M -m futon5.tpg.compare
+```
+
+`futon5.tpg.compare` resolves Python in this order:
+
+1. `FUTON5_TPG_PYTHON`
+2. `.venv-tpg/bin/python3`
+3. `python3` from `PATH`
+
+For GPU runs (for example, a temporary Linode GPU VM), build a GPU-capable JAX
+environment on that host and point Futon to it:
+
+```
+export FUTON5_TPG_PYTHON=/path/to/gpu-env/bin/python3
+clj -M -m futon5.tpg.compare
+```
+
 ### Exotypes (Kernel Context)
 
 We treat kernel context as an exotype: a dynamic informational regime that

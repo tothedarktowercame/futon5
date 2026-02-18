@@ -7,6 +7,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
+            [clojure.string :as str]
             [futon5.mmca.runtime :as runtime]))
 
 (def ^:private required-resource-files
@@ -102,6 +103,44 @@
       {:ok? false
        :warning (str "Unable to check for ImageMagick `convert`: " (.getMessage e))})))
 
+(defn- resolve-tpg-python
+  "Resolve Python interpreter for TPG tools."
+  [root]
+  (let [env-python (some-> (System/getenv "FUTON5_TPG_PYTHON") str/trim)
+        venv-python (io/file root ".venv-tpg/bin/python3")]
+    (cond
+      (seq env-python) {:path env-python :source :env}
+      (file-exists? venv-python) {:path (.getAbsolutePath venv-python) :source :venv}
+      :else {:path "python3" :source :path})))
+
+(defn check-tpg-python-toolchain
+  "Best-effort TPG toolchain check (non-fatal).
+   Verifies Python interpreter can import jax and z3."
+  ([] (check-tpg-python-toolchain (find-repo-root)))
+  ([root]
+   (let [root (or root (io/file (System/getProperty "user.dir")))
+         {:keys [path source]} (resolve-tpg-python root)]
+     (try
+       (let [{:keys [exit err]} (sh/sh path "-c" "import jax, z3; print('ok')")]
+         (if (zero? exit)
+           {:ok? true :path path :source source}
+           {:ok? false
+            :path path
+            :source source
+            :warning (str "TPG Python toolchain not ready via " path
+                          " (" (name source) "): "
+                          (if (str/blank? err)
+                            "missing jax and/or z3-solver"
+                            (str/trim err))
+                          ". Run scripts/setup_tpg_python.sh or set FUTON5_TPG_PYTHON.")}))
+       (catch Throwable t
+         {:ok? false
+          :path path
+          :source source
+          :warning (str "Unable to launch TPG Python interpreter " path
+                        " (" (name source) "): " (.getMessage t)
+                        ". Run scripts/setup_tpg_python.sh or set FUTON5_TPG_PYTHON.")})))))
+
 (defn run-mmca-smoke
   "Run a tiny deterministic MMCA run (no operators, deterministic kernel).
   Returns {:ok? bool :result <map>|nil :error <string>|nil}."
@@ -134,6 +173,7 @@
         deps (check-local-deps root)
         declared (check-deps-edn-declares-local-deps root)
         convert (check-imagemagick-convert)
+        tpg-python (check-tpg-python-toolchain root)
         mmca (run-mmca-smoke)
         fatal-missing? (or (not (:ok? req))
                            (not (:ok? deps))
@@ -171,6 +211,12 @@
     (when-not (:ok? convert)
       (println-err "WARN:" (:warning convert))
       (println-err))
+
+    (println "TPG Python toolchain (optional, needed for SMT/JAX TPG runs):")
+    (if (:ok? tpg-python)
+      (println "  OK " (:path tpg-python) "(" (name (:source tpg-python)) ") imports jax,z3")
+      (println "  WARN" (:warning tpg-python)))
+    (println)
 
     (println "MMCA smoke:")
     (if (:ok? mmca)
