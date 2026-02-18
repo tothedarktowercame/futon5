@@ -54,6 +54,12 @@ Research reports, experiments, and visualizations from the futon5 MMCA project.
 | [Peer Programming Review](meta-review-peer-programming.md) | Review of Claude-Claude collaboration patterns |
 | [Next Steps: L5-Creative](next-steps-l5-creative.md) | Planned follow-up experiments |
 
+## Evidence Bundles
+
+| Report | Description |
+|--------|-------------|
+| [TPG Evolution Repro Bundle](evidence/2026-02-18-tpg-evo-repro-report.md) | Deterministic checkpoint/best-artifact consistency report with SHA-256 checksums |
+
 ---
 
 ## Images

@@ -78,6 +78,23 @@ bb -cp src:resources -m futon5.mmca.metaevolve \
   --save-top-pdf /tmp/mmca_top_runs.pdf
 ```
 
+### TPG Evidence Repro Bundle
+
+Build a deterministic evidence bundle from local TPG evolution artifacts
+(`out/tpg-evo-production`):
+
+```
+bb -cp src:resources scripts/tpg_evidence_bundle.clj
+```
+
+Default outputs:
+
+- `reports/evidence/2026-02-18-tpg-evo-repro-summary.edn`
+- `reports/evidence/2026-02-18-tpg-evo-repro-report.md`
+- `reports/evidence/2026-02-18-tpg-evo-repro-checksums.txt`
+
+Use `--dry-run` to inspect without writing files.
+
 ### Exotypes (Kernel Context)
 
 We treat kernel context as an exotype: a dynamic informational regime that
