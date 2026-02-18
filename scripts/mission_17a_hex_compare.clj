@@ -149,7 +149,7 @@
                                  (double (:fitness exo-dom))))
                        rows)
             table (str/join "\n" (concat [header sep] lines))]
-        (out/spit-text! out table))))))
+        (out/spit-text! out table)))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))

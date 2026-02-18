@@ -1,11 +1,15 @@
 # Technote: Settled State (futon5)
 
-This doc is a small set of "do not drift" invariants intended to keep futon5
-settled and runnable through **Feb 18, 2026**.
+This doc was originally a set of "do not drift" invariants intended to keep
+futon5 settled and runnable through **Feb 18, 2026**.
 
-The goal is to reduce cognitive load: you should be able to re-enter the repo,
-run the key CLIs, and know where outputs will go without rediscovering
-structure.
+That window has closed. As of **Feb 18, 2026**, futon5 is in **active
+development**. The ratchets below remain useful as orientation — they describe
+the stable spine of the repo — but structural changes are now expected.
+
+The goal is still to reduce cognitive load: you should be able to re-enter the
+repo, run the key CLIs, and know where outputs will go without rediscovering
+structure. But the "do not touch" constraint is lifted.
 
 ## File Location Ratchets
 
@@ -71,9 +75,12 @@ Some components are explicitly allowed to be incomplete without it being a bug:
 - The "exotic xenotype" scorer path in `README-exotic-mode.md` is explicitly a
   placeholder scorer until later missions replace it with real CT-derived metrics.
 
-## What Not To Change (During Settled Window)
+## Structural Spine (Respect, But May Now Evolve)
 
-- Core MMCA runtime/evolution behavior (unless a correctness bug is proven).
-- Resource file locations listed above (unless moved with healthcheck + docs updates).
+These were frozen during the settled window. They remain the stable core but
+can now change with appropriate healthcheck/doc updates:
+
+- Core MMCA runtime/evolution behavior.
+- Resource file locations listed above.
 - Default output conventions (print + warn rather than changing paths).
 
