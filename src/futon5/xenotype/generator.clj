@@ -194,6 +194,11 @@
    (fn [{:keys [a b]} _ _]
      {:result (int->sigil (quot (+ (sigil->int a) (sigil->int b)) 2))})
 
+   ;; Bitwise Operations (no carry propagation)
+   :sigil-xor
+   (fn [{:keys [a b]} _ _]
+     {:result (int->sigil (bit-xor (sigil->int a) (sigil->int b)))})
+
    ;; Aggregation Operations
    :majority
    (fn [{:keys [sigils]} _ _]

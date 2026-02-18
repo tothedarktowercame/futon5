@@ -115,6 +115,13 @@
    :traits [:sigil-level :bit-mixing]
    :doc "Arithmetic average floor((a+b)/2) — carry chain with right shift"}
 
+  ;; Bitwise Operations (sigil-level, no carry propagation)
+  :sigil-xor
+  {:inputs [[:a :sigil] [:b :sigil]]
+   :outputs [[:result :sigil]]
+   :traits [:sigil-level :bit-mixing]
+   :doc "Bitwise XOR — couples all bitplanes without carry propagation"}
+
   ;; Aggregation Operations
   :majority
   {:inputs [[:sigils :sigil-list]]
