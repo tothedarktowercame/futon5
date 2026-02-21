@@ -1,6 +1,19 @@
-%% Cyber-ant CT diagram seed 1008
+%% Cyber-ant architecture seed 1008
 graph LR
-    io_world(["world"])
-    n1(["id:world"])
-    io_world -->|id| n1
-    n1 -->|id| io_world
+    sigils["sigils: 乐 仇 匹 中 甩 仗 干 天"]
+    patterns["patterns: baseline"]
+    rule["rule: engine=tensor, backend=clj, sigil=禾"]
+    op["operator: UpliftOperator"]
+    telem["telemetry: policy-golden=forage-normal"]
+    prec["aif precision: need-gain=0.6, dhdt-gain=0.8, tau-floor=0.08, tau-cap=1.5"]
+    modes["aif modes: cargo-high, cargo-low, food-eps, home-high, home-low, reserve-low, trail-min"]
+    ant(["cyber-ant: auto-1008-01"])
+    title["title: Auto Cyber-Ant (乐 仇 匹 中 甩 仗 干 天)"]
+    sigils --> op
+    patterns --> op
+    rule --> op
+    op --> telem
+    telem --> prec
+    prec --> modes
+    modes --> ant
+    ant --> title
