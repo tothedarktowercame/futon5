@@ -199,6 +199,94 @@
                     edges))]
     (str/join "\n" lines)))
 
+(defn- one-object-identity?
+  [diagram]
+  (let [dom (vec (:domain diagram))
+        cod (vec (:codomain diagram))]
+    (and (= :identity (:type diagram))
+         (= dom cod)
+         (= 1 (count dom)))))
+
+(defn- value->label
+  [v]
+  (cond
+    (keyword? v) (name v)
+    (string? v) v
+    :else (str v)))
+
+(defn- shorten
+  [s n]
+  (let [s (str s)]
+    (if (> (count s) n)
+      (str (subs s 0 (max 0 (- n 1))) "...")
+      s)))
+
+(defn- line-label
+  [s]
+  (-> (str s)
+      (str/replace #"\s+" " ")
+      (str/replace #"\"" "'")
+      (shorten 96)))
+
+(defn- cyber-ant-architecture->mermaid
+  [entry]
+  (let [ca (get-in entry [:tensor-transfer :cyber-ant])
+        src (:source ca)
+        rule (:rule src)
+        sigils (map value->label (:sigils src))
+        patterns (map value->label (:pattern-ids src))
+        operator (or (:operator ca) (first (:operators ca)))
+        telemetry (or (first (:telemetry ca)) {})
+        precision (or (get-in ca [:aif :precision]) {})
+        modes (or (get-in ca [:aif :modes]) {})
+        sigil-str (if (seq sigils) (str/join " " sigils) "-")
+        pattern-str (if (seq patterns) (str/join ", " patterns) "-")
+        telemetry-str (if (seq telemetry)
+                        (->> telemetry
+                             (map (fn [[k v]] (str (name k) "=" (value->label v))))
+                             (str/join ", "))
+                        "-")
+        precision-str (if (seq precision)
+                        (->> [:need-gain :dhdt-gain :tau-floor :tau-cap]
+                             (keep (fn [k]
+                                     (when (contains? precision k)
+                                       (str (name k) "=" (precision k)))))
+                             (str/join ", "))
+                        "-")
+        mode-keys-str (if (seq modes)
+                        (->> (keys modes)
+                             (map name)
+                             sort
+                             (str/join ", "))
+                        "-")
+        operator-str (if operator (value->label operator) "-")
+        rule-str (str "engine=" (value->label (:engine rule))
+                      ", backend=" (value->label (:backend rule))
+                      ", sigil=" (value->label (:rule-sigil rule)))
+        ant-id (value->label (:id ca))
+        title (value->label (:title ca))]
+    (str/join
+     "\n"
+     [(str "%% Cyber-ant architecture seed " (:seed entry))
+      "graph LR"
+      (str "    sigils[\"" (line-label (str "sigils: " sigil-str)) "\"]")
+      (str "    patterns[\"" (line-label (str "patterns: " pattern-str)) "\"]")
+      (str "    rule[\"" (line-label (str "rule: " rule-str)) "\"]")
+      (str "    op[\"" (line-label (str "operator: " operator-str)) "\"]")
+      (str "    telem[\"" (line-label (str "telemetry: " telemetry-str)) "\"]")
+      (str "    prec[\"" (line-label (str "aif precision: " precision-str)) "\"]")
+      (str "    modes[\"" (line-label (str "aif modes: " mode-keys-str)) "\"]")
+      (str "    ant([\"" (line-label (str "cyber-ant: " ant-id)) "\"])")
+      (str "    title[\"" (line-label (str "title: " title)) "\"]")
+      "    sigils --> op"
+      "    patterns --> op"
+      "    rule --> op"
+      "    op --> telem"
+      "    telem --> prec"
+      "    prec --> modes"
+      "    modes --> ant"
+      "    ant --> title"])))
+
 (defn- render-top-runs!
   [report out-dir {:keys [top render-exotype png? scale]}]
   (let [ranked (vec (or (:ranked report) []))
@@ -223,12 +311,19 @@
                   _ (render/render-run->file! run-result ppm {:exotype? (boolean render-exotype)})
                   png-result (when png?
                                (maybe-ppm->png! ppm png scale))
-                  ct-diagram (get-in entry [:tensor-transfer :cyber-ant :ct :diagram])
-                  ct-mmd (when ct-diagram
+                  ca (get-in entry [:tensor-transfer :cyber-ant])
+                  ct-diagram (get-in ca [:ct :diagram])
+                  ct-mermaid (cond
+                               (and ct-diagram (not (one-object-identity? ct-diagram)))
+                               (diagram->mermaid ct-diagram
+                                                 (str "Cyber-ant CT diagram seed " seed))
+                               (map? ca)
+                               (cyber-ant-architecture->mermaid entry)
+                               :else nil)
+                  ct-mmd (when ct-mermaid
                            (str out-dir "/diagrams/" base "-cyber-ant.mmd"))
-                  _ (when ct-diagram
-                      (write-text! ct-mmd (diagram->mermaid ct-diagram
-                                                            (str "Cyber-ant CT diagram seed " seed))))]
+                  _ (when ct-mermaid
+                      (write-text! ct-mmd ct-mermaid))]
               {:index (inc idx)
                :seed seed
                :score score
