@@ -269,20 +269,36 @@
 (defn- markdown-index
   [report-path out-dir run-artifacts diagram-artifacts gallery]
   (let [now (str (java.time.Instant/now))
+        rel-path
+        (fn [p]
+          (when p
+            (let [base (-> (io/file out-dir) .toPath .toAbsolutePath .normalize)
+                  target (-> (io/file p) .toPath .toAbsolutePath .normalize)]
+              (-> (str (.relativize base target))
+                  (str/replace "\\" "/")))))
         run-lines
         (map (fn [{:keys [index seed score rule-sigil parity-history ppm png cyber-ant-mermaid]}]
-               (format "| %d | %s | %s | %s | %s | `%s` | `%s` |"
-                       index
-                       (or seed "-")
-                       score
-                       rule-sigil
-                       (if (nil? parity-history) "-" parity-history)
-                       (or png ppm)
-                       (or cyber-ant-mermaid "-")))
+               (let [image-rel (rel-path (or png ppm))
+                     image-cell (if png
+                                  (format "[![run-%d](%s)](%s)" index image-rel image-rel)
+                                  (format "[`%s`](%s)" image-rel image-rel))
+                     diagram-rel (rel-path cyber-ant-mermaid)
+                     diagram-cell (if diagram-rel
+                                    (format "[`diagram`](%s)" diagram-rel)
+                                    "-")]
+                 (format "| %d | %s | %s | %s | %s | %s | %s |"
+                         index
+                         (or seed "-")
+                         score
+                         rule-sigil
+                         (if (nil? parity-history) "-" parity-history)
+                         image-cell
+                         diagram-cell)))
              run-artifacts)
         diagram-lines
         (map (fn [{:keys [id path]}]
-               (format "- `%s`: `%s`" (name id) path))
+               (let [diagram-rel (rel-path path)]
+                 (format "- `%s`: [`%s`](%s)" (name id) diagram-rel diagram-rel)))
              diagram-artifacts)
         note-lines
         (when-let [errs (seq (keep :png-error run-artifacts))]
@@ -300,7 +316,10 @@
           "## Top Runs"
           ""]
          (when gallery
-           [(str "- Gallery: `" gallery "`") ""])
+           (let [gallery-rel (rel-path gallery)]
+             [(str "- Gallery: [`" gallery-rel "`](" gallery-rel ")")
+              (str "![Top runs gallery](" gallery-rel ")")
+              ""]))
          ["| # | seed | score | rule | history parity | image | cyber-ant diagram |"
           "| --- | --- | --- | --- | --- | --- | --- |"]
          run-lines
