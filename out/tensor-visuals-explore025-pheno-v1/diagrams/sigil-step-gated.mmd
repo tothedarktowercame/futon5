@@ -1,0 +1,38 @@
+%% Tensor diagram: sigil-step-gated
+graph LR
+    io_sigil-row(["sigil-row"])
+    io_gated-row(["gated-row"])
+    fork7{"tensor fork"}
+    join8{"tensor join"}
+    n1["pass-sigil-row"]
+    n2["sigil-row->tensor"]
+    n3["tensor->bitplanes"]
+    n4["step-bitplanes"]
+    n5["bitplanes->tensor"]
+    n6["tensor->sigil-row"]
+    n9["gate-sigil-row"]
+    io_sigil-row -->|in| n1
+    n1 -->|out| io_old-row
+    io_sigil-row -->|in| n2
+    n2 -->|out| io_tensor
+    io_tensor -->|in| n3
+    n3 -->|out| io_bitplanes
+    io_bitplanes -->|in| n4
+    n4 -->|out| io_bitplanes-next
+    io_bitplanes-next -->|in| n5
+    n5 -->|out| io_tensor-next
+    io_tensor-next -->|in| n6
+    n6 -->|out| io_new-row
+    n2 --> n3
+    n3 --> n4
+    n4 --> n5
+    n5 --> n6
+    fork7 --> n1
+    fork7 --> n2
+    n1 --> join8
+    n6 --> join8
+    io_old-row -->|in| n9
+    io_new-row -->|in| n9
+    io_phenotype -->|in| n9
+    n9 -->|out| io_gated-row
+    join8 --> n9
