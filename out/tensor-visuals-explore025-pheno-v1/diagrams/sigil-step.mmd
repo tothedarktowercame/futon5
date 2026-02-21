@@ -1,0 +1,23 @@
+%% Tensor diagram: sigil-step
+graph LR
+    io_sigil-row(["sigil-row"])
+    io_new-row(["new-row"])
+    n1["sigil-row->tensor"]
+    n2["tensor->bitplanes"]
+    n3["step-bitplanes"]
+    n4["bitplanes->tensor"]
+    n5["tensor->sigil-row"]
+    io_sigil-row -->|in| n1
+    n1 -->|out| io_tensor
+    io_tensor -->|in| n2
+    n2 -->|out| io_bitplanes
+    io_bitplanes -->|in| n3
+    n3 -->|out| io_bitplanes-next
+    io_bitplanes-next -->|in| n4
+    n4 -->|out| io_tensor-next
+    io_tensor-next -->|in| n5
+    n5 -->|out| io_new-row
+    n1 --> n2
+    n2 --> n3
+    n3 --> n4
+    n4 --> n5
