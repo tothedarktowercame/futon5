@@ -12,6 +12,7 @@
    Start: (start! {:port 7071 :db \"path/to/nonstarter.db\"})"
   (:require [cheshire.core :as json]
             [nonstarter.db :as db]
+            [nonstarter.paths :as paths]
             [nonstarter.schema :as schema]
             [ring.adapter.jetty :as jetty])
   (:import [java.time LocalDate]
@@ -93,7 +94,7 @@
 (defn start!
   "Start the nonstarter HTTP API server.
    opts: {:port 7071 :db \"path/to/nonstarter.db\"}"
-  [{:keys [port db] :or {port 7071 db "data/nonstarter.db"}}]
+  [{:keys [port db] :or {port 7071 db (paths/default-db-path "futon5")}}]
   (let [ds (schema/connect! db)
         handler (wrap-query-params (make-handler ds))]
     (println (str "[nonstarter] API on http://localhost:" port))
@@ -106,6 +107,7 @@
 
 (defn -main [& args]
   (let [port (if (seq args) (parse-long (first args)) 7071)
-        db (or (System/getenv "NONSTARTER_DB") "data/nonstarter.db")]
+        db (or (System/getenv "NONSTARTER_DB")
+               (paths/default-db-path "futon5"))]
     (start! {:port port :db db})
     @(promise)))  ;; block forever

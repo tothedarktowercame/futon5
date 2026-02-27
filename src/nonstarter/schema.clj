@@ -9,6 +9,13 @@
    - funding_events: market clearing moments (the facts established)"
   (:require [nonstarter.sql :as sql]))
 
+(defn- ensure-parent-dir!
+  [path]
+  (let [f (java.io.File. (str path))
+        parent (.getParentFile f)]
+    (when (and parent (not (.exists parent)))
+      (.mkdirs parent))))
+
 (def schema-ddl
   ["-- Pool state (singleton row)
     CREATE TABLE IF NOT EXISTS pool (
@@ -205,6 +212,7 @@
 (defn connect!
   "Connect to database and ensure schema exists."
   [path]
+  (ensure-parent-dir! path)
   (let [ds (sql/datasource path)]
     (create-schema! ds)
     (ensure-columns! ds "hypotheses" {"priority" "INTEGER"

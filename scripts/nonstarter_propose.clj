@@ -10,9 +10,9 @@
        "  --db PATH --title TEXT [--ask N] [--estimate EDN] \\n"
        "  [--description TEXT] [--sigil TEXT] [--proposer NAME]\n\n"
        "Examples:\n"
-       "  clj -M -m scripts.nonstarter-propose --db data/nonstarter.db \\\n"
+       "  clj -M -m scripts.nonstarter-propose --db $HOME/code/storage/futon5/nonstarter.db \\\n"
        "    --title \"Prototype 5 of futon2\" --ask 500\n"
-       "  clj -M -m scripts.nonstarter-propose --db data/nonstarter.db \\\n"
+       "  clj -M -m scripts.nonstarter-propose --db $HOME/code/storage/futon5/nonstarter.db \\\n"
        "    --title \"Prototype 5 of futon2\" --estimate '{:size :large :complexity :high :risk :med}'\n"))
 
 (defn- parse-int [value fallback]
@@ -56,4 +56,3 @@
       (prn {:proposal record
             :estimate estimate-result})
       (prn {:proposal record}))))
-

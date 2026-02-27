@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-NONSTARTER_DB="${NONSTARTER_DB:-$ROOT/data/nonstarter.db}"
+NONSTARTER_DB="${NONSTARTER_DB:-$HOME/code/storage/futon5/nonstarter.db}"
 BB_BIN="${BB_BIN:-bb}"
 
 show_help() {

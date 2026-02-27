@@ -31,7 +31,8 @@
   :group 'nonstarter)
 
 (defcustom nonstarter-personal-db-path nil
-  "Path to personal Nonstarter SQLite DB. If nil, uses data/nonstarter.db under futon5a."
+  "Path to personal Nonstarter SQLite DB.
+If nil, uses NONSTARTER_PERSONAL_DB or ~/code/storage/futon5a/nonstarter.db."
   :type '(choice (const :tag "Auto" nil) file)
   :group 'nonstarter)
 
@@ -183,8 +184,15 @@ Each entry is (CATEGORY . MISSION-ID)."
   :type '(choice (const :tag "Auto" nil) directory)
   :group 'nonstarter)
 
+(defcustom nonstarter-storage-root nil
+  "Path to shared storage root.
+If nil, uses FUTON_STORAGE_ROOT or ~/code/storage."
+  :type '(choice (const :tag "Auto" nil) directory)
+  :group 'nonstarter)
+
 (defcustom nonstarter-db-path nil
-  "Path to Nonstarter SQLite DB. If nil, uses FUTON5_NONSTARTER_DB or data/nonstarter.db."
+  "Path to Nonstarter SQLite DB.
+If nil, uses FUTON5_NONSTARTER_DB or ~/code/storage/futon5/nonstarter.db."
   :type '(choice (const :tag "Auto" nil) file)
   :group 'nonstarter)
 
@@ -199,11 +207,23 @@ Each entry is (CATEGORY . MISSION-ID)."
        (getenv "FUTON5_ROOT")
        (file-name-directory (or load-file-name buffer-file-name default-directory)))))
 
+(defun nonstarter--storage-root ()
+  (expand-file-name
+   (or (and (stringp nonstarter-storage-root)
+            (not (nonstarter--blank-p nonstarter-storage-root))
+            nonstarter-storage-root)
+       (getenv "FUTON_STORAGE_ROOT")
+       "~/code/storage")))
+
+(defun nonstarter--storage-db-path (repo-key)
+  (expand-file-name (concat repo-key "/nonstarter.db")
+                    (nonstarter--storage-root)))
+
 (defun nonstarter--db ()
   (expand-file-name
    (or (and (stringp nonstarter-db-path) (not (nonstarter--blank-p nonstarter-db-path)) nonstarter-db-path)
        (getenv "FUTON5_NONSTARTER_DB")
-       (expand-file-name "data/nonstarter.db" (nonstarter--root)))))
+       (nonstarter--storage-db-path "futon5"))))
 
 (defun nonstarter--personal-root ()
   (expand-file-name
@@ -233,7 +253,8 @@ Each entry is (CATEGORY . MISSION-ID)."
    (or (and (stringp nonstarter-personal-db-path)
             (not (nonstarter--blank-p nonstarter-personal-db-path))
             nonstarter-personal-db-path)
-       (expand-file-name "data/nonstarter.db" (nonstarter--personal-root)))))
+       (getenv "NONSTARTER_PERSONAL_DB")
+       (nonstarter--storage-db-path "futon5a"))))
 
 (defun nonstarter-personal-server-running-p ()
   (and nonstarter-personal-server-process

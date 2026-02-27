@@ -43,7 +43,7 @@ After completing work with sospeso, record the gift:
 
 ```bash
 clj -M -m scripts.nonstarter-mana sospeso \
-  --db data/nonstarter.db \
+  --db $HOME/code/storage/futon5/nonstarter.db \
   --action "brief action description" \
   --confidence 0.8 \
   --cost 1.0
@@ -73,7 +73,7 @@ MMCA experiments (hexagram runs, xenotype studies) are gated by available mana.
 Before starting MMCA work, check the pool:
 
 ```bash
-clj -M -m scripts.nonstarter-mana pool --db data/nonstarter.db --format text
+clj -M -m scripts.nonstarter-mana pool --db $HOME/code/storage/futon5/nonstarter.db --format text
 ```
 
 If insufficient mana, do other work first (which generates mana via sospeso).

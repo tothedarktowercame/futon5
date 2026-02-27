@@ -11,4 +11,5 @@ resources/ii_v_circle.pdf
 .venv-tpg/
 __pycache__/
 out/
+*.ppm
 data/nonstarter.db
