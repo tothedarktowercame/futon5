@@ -1,0 +1,68 @@
+;; Grounding Functor: F3C Mission Types → nLab Free Category
+;;
+;; This functor maps the abstract port types and components of the
+;; futon3c mission diagrams (social-exotype + evidence-landscape-exotype)
+;; to concrete mathematical concepts in the nLab knowledge base.
+;; 100% grounding — every mission type corresponds to an actual nLab page
+;; with outgoing morphisms.
+;;
+;; The functor validates that our type vocabulary is categorically
+;; coherent: the engineering concepts we use have mathematical backing.
+;;
+;; Generated from: data/hyperreal.json (20,401 objects, 312,854 morphisms)
+;;
+;; Notable groundings:
+;;   S-mode → subobject classifier  (classification = Ω in a topos)
+;;   E-store → presheaf             (evidence landscape = presheaf on artifact category)
+;;   E-threads → limit              (thread projection = limit over reply-chain diagram)
+;;   S-persist → colimit            (accumulating events into session state)
+;;   S-presence → localization      (restriction to connected subspace)
+
+{:functor/name :f3c-grounding
+ :functor/source :f3c-missions      ;; combined social + evidence-landscape mission category
+ :functor/target :nlab/hyperreal    ;; nLab free category
+
+ ;; Object map: port types → nLab concepts
+ :functor/object-map
+ {:http-request      "stream"                    ;; nLab page 4159, 14 outgoing
+  :xtdb-entity       "database"                  ;; nLab page 24844, 5 outgoing (stored entity records)
+  :config            "context"                   ;; nLab page 1327, 24 outgoing (same as f6)
+  :error-response    "proof"                     ;; nLab page 6980, 53 outgoing (errors are refuted proofs)
+  :evidence-entry    "presheaf"}                 ;; nLab page 146, 53 outgoing (presheaf sections over artifacts)
+
+ ;; Morphism map: components → nLab concepts
+ ;; Each component is a morphism in the mission category; the grounding
+ ;; maps it to a corresponding nLab concept, which defines a morphism in
+ ;; the free category via its outgoing wiki-links.
+ :functor/morphism-map
+ {;; === SOCIAL PIPELINE ===
+  :S-presence      "localization"               ;; nLab page 26478, 24 outgoing (restriction to connected subspace)
+  :S-authenticate  "fiber"                      ;; nLab page 2063, 21 outgoing (transport → identity is fiber over identity space)
+  :S-mode          "subobject classifier"       ;; nLab page 306, 113 outgoing (classification = Ω in a topos)
+  :S-dispatch      "pushforward"                ;; nLab page 20549, 3 outgoing (routing = pushing data forward along morphisms)
+  :S-validate      "evaluation map"             ;; nLab page 5887, 20 outgoing (checking outcome against criteria)
+  :S-persist       "colimit"                    ;; nLab page 590, 31 outgoing (accumulating events into session state)
+  :S-default       "identity morphism"          ;; nLab page 1247, 14 outgoing (default = do nothing = id)
+
+  ;; === EVIDENCE LANDSCAPE ===
+  :E-store         "presheaf"                   ;; nLab page 146, 53 outgoing (evidence landscape = presheaf on artifact category)
+  :E-threads       "limit"                      ;; nLab page 314, 69 outgoing (thread projection = limit over reply-chain diagram)
+  :E-validate      "evaluation map"             ;; nLab page 5887, 20 outgoing (same evaluation pattern as S-validate)
+  :E-compact       "colimit"                    ;; nLab page 590, 31 outgoing (summarization = colimit / gluing)
+  :E-default       "identity morphism"}         ;; nLab page 1247, 14 outgoing (default = id)
+
+ ;; Morphism preservation evidence: edges in the mission that
+ ;; correspond to paths in the nLab category
+ :functor/preservation-evidence
+ [{:mission-edge [:S-presence :S-authenticate]
+   :nlab-path    ["localization" "fiber"]
+   :shared-vocab ["category" "morphism" "space"]}
+  {:mission-edge [:E-store :E-threads]
+   :nlab-path    ["presheaf" "limit"]
+   :shared-vocab ["category" "functor" "colimit" "diagram" "sheaf"]}
+  {:mission-edge [:S-validate :S-persist]
+   :nlab-path    ["evaluation map" "colimit"]
+   :shared-vocab ["functor" "category" "universal"]}
+  {:mission-edge [:E-store :E-validate]
+   :nlab-path    ["presheaf" "evaluation map"]
+   :shared-vocab ["category" "functor" "sheaf" "topos"]}]}

@@ -1,0 +1,21 @@
+;; Shorter evolution run to test whether XOR coupling breaks the
+;; diversity-coupling tradeoff. 20 gens is past the gen-12 phase
+;; transition from the original production run.
+{:mu 8
+ :lambda 8
+ :eval-runs 5
+ :eval-generations 50
+ :genotype-length 64
+ :evo-generations 20
+ :seed 352362012
+ :verifier-spec {:entropy      [0.6 0.35]
+                 :change       [0.2 0.2]
+                 :autocorr     [0.6 0.3]
+                 :diversity    [0.4 0.3]
+                 :mean-coupling [0.08 0.06]
+                 :coupling-cv  [0.5 0.3]}
+ :checkpoint-dir "out/tpg-evo-xor-probe"
+ :checkpoint-every 5
+ :verbose? true
+ :verbose-eval? false
+ :verbose-eval-runs? false}

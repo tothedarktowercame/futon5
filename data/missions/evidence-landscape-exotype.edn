@@ -1,0 +1,236 @@
+;; Abstract evidence landscape diagram — the evidence landscape exotype.
+;;
+;; This is the shared medium for all three timescales in the futon3c stack.
+;; It receives coordination evidence from both the social pipeline and the
+;; coordination pipeline, and provides thread projections, front-page views,
+;; and validated evidence entries.
+;;
+;; Composes with social-exotype and coordination-exotype via compose-parallel.
+;; Cross-diagram edges:
+;;   social.O-coordination-evidence → evidence.I-coordination-events
+;;   coordination.O-evidence → evidence.I-gate-traversals
+;;
+;; SHARED CONSTRAINTS (appear in all three diagrams):
+;;   I-patterns  (:config, :glacial, constraint: true)
+;;   I-registry  (:config, :slow, constraint: true)
+;;
+;; TIMESCALE:
+;; Most components at :social timescale (~seconds).
+;; E-compact at :medium timescale (ephemeral compaction, slower than social).
+;; Constraint inputs (:glacial, :slow) constrain social/medium components (I3).
+;; No output reaches any constraint input (I4).
+;;
+;; INVARIANT ANALYSIS:
+;; I3 (timescale ordering): Constraint inputs (glacial/slow) constrain social
+;;   components. E-compact at :medium is fine — medium is slower than social
+;;   but faster than glacial; it doesn't write to constraints.
+;; I4 (exogeneity): No output reaches I-patterns or I-registry. Evidence flows
+;;   forward only. The L1 observer (in coordination-exotype) reads from evidence
+;;   but that's a cross-diagram connection, not an internal feedback loop.
+;; I6 (compositional closure): E-store is a structural SPOF (all evidence flows
+;;   through it). Mitigation: E-default provides a parallel path to O-front-page.
+;;   Same pattern as S-default in social-exotype and C-default in coordination.
+
+{:mission/id :evidence-landscape-exotype
+ :mission/state :active
+
+ :ports
+ {:input
+  [;; === SOCIAL-TIMESCALE INPUTS ===
+
+   ;; Coordination events from the social pipeline (S-validate, S-persist).
+   ;; These are typed social coordination records: presence logs, routing
+   ;; decisions, delivery receipts, handoff records.
+   {:id :I-coordination-events :name "Coordination events"
+    :type :xtdb-entity
+    :source "social pipeline (O-coordination-evidence)"
+    :timescale :social}
+
+   ;; Gate traversal evidence from the coordination pipeline (G0, G1).
+   ;; PSR/PUR/PAR records documenting pattern use in task execution.
+   {:id :I-gate-traversals :name "Gate traversals"
+    :type :xtdb-entity
+    :source "coordination pipeline (O-evidence)"
+    :timescale :fast}
+
+   ;; === CONSTRAINT INPUTS (slow/glacial) ===
+   ;; SHARED with social-exotype and coordination-exotype.
+
+   ;; Pattern library — constrains what counts as valid evidence,
+   ;; claim-type rules from pattern library.
+   ;; SHARED: same I-patterns as social-exotype and coordination-exotype.
+   {:id :I-patterns :name "Pattern library"
+    :type :config
+    :source "library/**/*.flexiarg"
+    :timescale :glacial
+    :constraint true}
+
+   ;; Agent registry — author verification for evidence entries.
+   ;; SHARED: same I-registry as social-exotype and coordination-exotype.
+   {:id :I-registry :name "Agent registry"
+    :type :config
+    :source "agent registry / capability declarations"
+    :timescale :slow
+    :constraint true}]
+
+  :output
+  [;; Validated evidence entries — typed evidence records that have
+   ;; passed through E-store and optionally E-validate or E-compact.
+   {:id :O-evidence-entries :name "Evidence entries"
+    :type :evidence-entry
+    :consumer "evidence store / query layer"
+    :spec-ref "evidence-landscape/entries"
+    :timescale :social}
+
+   ;; Thread projections — reply-chain views computed from evidence.
+   {:id :O-thread-projections :name "Thread projections"
+    :type :xtdb-entity
+    :consumer "forum / thread view"
+    :spec-ref "evidence-landscape/threads"
+    :timescale :social}
+
+   ;; Front page — default-mode output for the evidence landscape.
+   ;; What you see between active coordination episodes.
+   {:id :O-front-page :name "Front page"
+    :type :xtdb-entity
+    :consumer "forum / dashboard"
+    :spec-ref "evidence-landscape/front-page"
+    :timescale :social}
+
+   ;; Evidence errors — structured failures from evidence processing.
+   {:id :O-evidence-errors :name "Evidence errors"
+    :type :error-response
+    :consumer "human / retry / monitoring"
+    :spec-ref "evidence-landscape/errors"
+    :timescale :social}]}
+
+ :components
+ [;; ================================================================
+  ;; THE EVIDENCE PIPELINE
+  ;; Five components: store, validate, threads, compact, default.
+  ;; ================================================================
+
+  ;; E-store: Evidence storage.
+  ;; The central evidence store — all evidence flows through here.
+  ;; Receives coordination events and gate traversals, produces typed
+  ;; evidence entries. Uses claim-type rules from patterns and author
+  ;; verification from registry.
+  ;; Ref: social/ARGUMENT:R8+R9 (authoritative transcript, structured events)
+  {:id :E-store :name "E-store: Evidence storage"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R8+R9"
+   :accepts #{:xtdb-entity :evidence-entry :config}
+   :produces #{:evidence-entry :error-response}
+   :timescale :social}
+
+  ;; E-threads: Thread projection.
+  ;; Computes reply-chain views from stored evidence entries.
+  ;; Thread projection = limit over the reply-chain diagram.
+  {:id :E-threads :name "E-threads: Thread projection"
+   :type :abstract-role
+   :ref "evidence-landscape:thread-projection"
+   :accepts #{:evidence-entry}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; E-validate: Evidence validation.
+  ;; Validates that evidence entries satisfy coordination criteria.
+  ;; Uses patterns (what counts as valid coordination) and checks
+  ;; evidence shape against requirements.
+  ;; Ref: social/ARGUMENT:R5 (bounded lifecycle)
+  {:id :E-validate :name "E-validate: Evidence validation"
+   :type :abstract-role
+   :ref "social/ARGUMENT:R5"
+   :accepts #{:xtdb-entity :evidence-entry :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}
+
+  ;; E-compact: Ephemeral compaction.
+  ;; Summarizes transient evidence into durable summaries at the
+  ;; :medium timescale. Ephemera compaction per Corneli 2014.
+  {:id :E-compact :name "E-compact: Ephemeral compaction"
+   :type :abstract-role
+   :ref "corneli-2014:table24:ephemera"
+   :accepts #{:evidence-entry}
+   :produces #{:evidence-entry :xtdb-entity :error-response}
+   :timescale :medium}
+
+  ;; ================================================================
+  ;; DEFAULT MODE (I6 compositional closure)
+  ;; Parallel path: evidence observation → front page.
+  ;; If the evidence pipeline stalls, this sustains the system.
+  ;; ================================================================
+
+  {:id :E-default :name "Default mode (evidence landscape)"
+   :type :abstract-role
+   :ref "chapter0/default-mode-network"
+   :accepts #{:evidence-entry :config}
+   :produces #{:xtdb-entity :error-response}
+   :timescale :social}]
+
+ :edges
+ [;; ================================================================
+  ;; EVIDENCE PIPELINE (sequential)
+  ;; I-coordination-events → E-store → E-threads → O-thread-projections
+  ;; I-gate-traversals → E-store
+  ;; ================================================================
+
+  {:from :I-coordination-events :to :E-store    :type :xtdb-entity}
+  {:from :I-gate-traversals     :to :E-store    :type :xtdb-entity}
+  {:from :E-store               :to :E-threads  :type :evidence-entry}
+  {:from :E-threads             :to :O-thread-projections :type :xtdb-entity}
+
+  ;; ================================================================
+  ;; VALIDATION PATH
+  ;; E-store → E-validate → O-evidence-entries
+  ;; ================================================================
+
+  {:from :E-store    :to :E-validate          :type :evidence-entry}
+  {:from :E-validate :to :O-evidence-entries  :type :xtdb-entity}
+
+  ;; ================================================================
+  ;; CONSTRAINT INPUTS (slow/glacial → social/medium components)
+  ;; I3: slow constrains fast. I4: no social→constraint path.
+  ;; ================================================================
+
+  ;; Patterns constrain validation (what counts as valid coordination)
+  ;; and storage (claim-type rules from pattern library)
+  {:from :I-patterns :to :E-validate :type :config}
+  {:from :I-patterns :to :E-store    :type :config}
+
+  ;; Registry constrains storage (author verification)
+  {:from :I-registry :to :E-store    :type :config}
+
+  ;; ================================================================
+  ;; EPHEMERAL COMPACTION (medium timescale)
+  ;; E-store → E-compact → O-evidence-entries
+  ;; ================================================================
+
+  {:from :E-store   :to :E-compact          :type :evidence-entry}
+  {:from :E-compact :to :O-evidence-entries :type :evidence-entry}
+
+  ;; ================================================================
+  ;; DEFAULT MODE (I6: compositional closure)
+  ;; Parallel path: evidence → front page.
+  ;; Does NOT receive pattern constraints (pre-deliberative).
+  ;; ================================================================
+
+  {:from :E-store    :to :E-default   :type :evidence-entry}
+  {:from :I-registry :to :E-default   :type :config}
+  {:from :E-default  :to :O-front-page :type :xtdb-entity}
+
+  ;; ================================================================
+  ;; DIRECT OUTPUT PATHS
+  ;; ================================================================
+
+  {:from :E-store    :to :O-evidence-entries :type :evidence-entry}
+
+  ;; ================================================================
+  ;; ERROR PROPAGATION (all evidence components can reject)
+  ;; ================================================================
+
+  {:from :E-store    :to :O-evidence-errors :type :error-response}
+  {:from :E-threads  :to :O-evidence-errors :type :error-response}
+  {:from :E-validate :to :O-evidence-errors :type :error-response}
+  {:from :E-compact  :to :O-evidence-errors :type :error-response}
+  {:from :E-default  :to :O-evidence-errors :type :error-response}]}

@@ -10,4 +10,4 @@ resources/ii_v_circle.pdf
 **/.lsp/.cache/
 .venv-tpg/
 __pycache__/
-
+out/
