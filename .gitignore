@@ -13,3 +13,9 @@ __pycache__/
 out/
 *.ppm
 data/nonstarter.db
+*.aux
+*.log
+*.out
+*.fdb_latexmk
+*.fls
+*.toc

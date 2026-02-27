@@ -1,7 +1,0 @@
-metric,value
-entropy,0.7686274509803922
-change,0.6666666666666666
-autocorr,0.6862745098039216
-diversity,0.39607843137254906
-mean-coupling,1.0
-coupling-cv,1.0
