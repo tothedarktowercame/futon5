@@ -1,0 +1,102 @@
+{:study/id "tensor-metaevolve-lockin-2026-02-21"
+ :created-at "2026-02-21"
+ :owner "joe+codex"
+ :status :preregistered
+
+ :question
+ "Does tensor metaevolve with exploration reduce early rule lock-in without breaking tensor/meta-lift parity?"
+
+ :hypotheses
+ [{:id :h1
+   :statement
+   "Exploration (:tensor-explore-rate 0.25) increases rule diversity vs no exploration (0.0)."
+   :direction :positive
+   :primary? true}
+  {:id :h2
+   :statement
+   "Exploration reduces longest same-rule streak (lock-in length) vs no exploration."
+   :direction :negative
+   :primary? true}
+  {:id :h3
+   :statement
+   "Exploration does not materially degrade quality (top composite score no worse than 20% below control median)."
+   :direction :non-inferiority
+   :primary? false}
+  {:id :h4
+   :statement
+   "Parity remains intact under exploration (history parity rate >= 0.99)."
+   :direction :constraint
+   :primary? true}]
+
+ :design
+ {:engine :tensor-closed-loop
+  :frozen-params {:runs 64
+                  :length 128
+                  :generations 256
+                  :feedback-top 32
+                  :require-phenotype true
+                  :tensor-backend :clj}
+  :arms
+  [{:name :control
+    :tensor-explore-rate 0.0
+    :seed 7
+    :report "out/metaevolve-tensor-control-2026-02-21.edn"
+    :feedback "out/metaevolve-tensor-control-feedback-2026-02-21.edn"}
+   {:name :treatment
+    :tensor-explore-rate 0.25
+    :seed 7
+    :report "out/metaevolve-tensor-explore025-2026-02-21.edn"
+    :feedback "out/metaevolve-tensor-explore025-feedback-2026-02-21.edn"}]
+  :commands
+  [{:name :control
+    :cmd "/usr/bin/time -f \"elapsed=%E cpu=%P mem=%MKB\" clj -M -m futon5.mmca.metaevolve --engine tensor-closed-loop --seed 7 --runs 64 --length 128 --generations 256 --require-phenotype --feedback-top 32 --tensor-explore-rate 0.0 --tensor-backend clj --report out/metaevolve-tensor-control-2026-02-21.edn --feedback-edn out/metaevolve-tensor-control-feedback-2026-02-21.edn"}
+   {:name :treatment
+    :cmd "/usr/bin/time -f \"elapsed=%E cpu=%P mem=%MKB\" clj -M -m futon5.mmca.metaevolve --engine tensor-closed-loop --seed 7 --runs 64 --length 128 --generations 256 --require-phenotype --feedback-top 32 --tensor-explore-rate 0.25 --tensor-backend clj --report out/metaevolve-tensor-explore025-2026-02-21.edn --feedback-edn out/metaevolve-tensor-explore025-feedback-2026-02-21.edn"}]}
+
+ :metrics
+ [{:id :m1
+   :name :rule-diversity
+   :definition "Count distinct :rule/:rule-sigil values in :runs-detail."
+   :aggregation :count}
+  {:id :m2
+   :name :max-lockin-streak
+   :definition "Longest consecutive run streak with same :rule/:rule-sigil in :runs-detail."
+   :aggregation :max}
+  {:id :m3
+   :name :top-composite
+   :definition "Max of :summary/:composite-score across :ranked."
+   :aggregation :max}
+  {:id :m4
+   :name :history-parity-rate
+   :definition "From report metadata/parity summary."
+   :aggregation :rate}]
+
+ :decision-rules
+ [{:id :d1
+   :rule "Support anti-lock claim if treatment rule-diversity >= control + 2."}
+  {:id :d2
+   :rule "Support anti-lock claim if treatment max-lockin-streak <= 0.7 * control."}
+  {:id :d3
+   :rule "Require parity safety: history-parity-rate >= 0.99 for both arms."}
+  {:id :d4
+   :rule "Non-inferiority: treatment top-composite >= 0.8 * control top-composite."}]
+
+ :disconfirmation
+ ["Rule diversity does not improve or lock-in streak does not decrease."
+  "Parity drops below 0.99 in treatment."
+  "Top composite drops by >20% in treatment."]
+
+ :analysis-plan
+ {:inputs
+  ["out/metaevolve-tensor-control-2026-02-21.edn"
+   "out/metaevolve-tensor-explore025-2026-02-21.edn"]
+  :manual-checklist
+  ["Extract ordered run sigils from :runs-detail."
+   "Compute distinct sigil count and longest streak per arm."
+   "Compare top composite score from :ranked."
+   "Record parity rates from summary/meta fields."
+   "Evaluate d1..d4 as pass/fail before interpretation."]
+  :report-output "out/metaevolve-tensor-lockin-analysis-2026-02-21.edn"}
+
+ :notes
+ "This preregistration focuses on lock-in behavior only; backend perf profiling is secondary."}

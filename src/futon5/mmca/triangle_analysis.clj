@@ -59,7 +59,8 @@
   "Project genotype history into a 0/1 history by majority vote over sigil bits.
    tie-breaker: :seeded (default), :hash, :zero, :one, :random."
   [history {:keys [seed tie-breaker] :or {seed 0 tie-breaker :seeded}}]
-  (let [tie-fn (tie-breaker-fn tie-breaker seed)]
+  (let [seed (long (or seed 0))
+        tie-fn (tie-breaker-fn tie-breaker seed)]
     (mapv (fn [[row-idx row]]
             (let [sigils (cond
                            (string? row) (seq row)
@@ -181,21 +182,25 @@
                              (assoc (analyze-history plane opts) :plane idx))
                            (range 8)
                            histories)
+           max-num (fn [vals default]
+                     (let [nums (seq (keep (fn [x] (when (number? x) (double x))) vals))]
+                       (if nums (apply max nums) default)))
            score-key (fn [m] (or (:triangle-score m) 0.0))
            best (apply max-key score-key per-plane)]
        {:triangle-bitplanes per-plane
         :triangle-best-plane (:plane best)
-        :triangle-score-max (:triangle-score best)
-        :triangle-count-max (apply max (map :triangle-count per-plane))
-        :triangle-density-max (apply max (map :triangle-density per-plane))
-        :triangle-avg-height-max (apply max (map :triangle-avg-height per-plane))}))))
+        :triangle-score-max (double (or (:triangle-score best) 0.0))
+        :triangle-count-max (long (max-num (map :triangle-count per-plane) 0.0))
+        :triangle-density-max (max-num (map :triangle-density per-plane) 0.0)
+        :triangle-avg-height-max (max-num (map :triangle-avg-height per-plane) 0.0)}))))
 
 (defn analyze-genotype-vote
   "Analyze genotype history after majority-vote projection to 0/1."
   ([history] (analyze-genotype-vote history {}))
   ([history {:keys [seed tie-breaker] :or {seed 0 tie-breaker :seeded} :as opts}]
    (when (seq history)
-     (let [projected (project-genotype-history history opts)
+     (let [seed (long (or seed 0))
+           projected (project-genotype-history history (assoc opts :seed seed))
            summary (analyze-history projected)]
        (assoc summary
               :triangle-projection :vote

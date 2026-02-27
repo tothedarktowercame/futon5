@@ -3,13 +3,14 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
-            [clojure.set :as set]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
+            [futon5.ct.tensor-closed-loop :as tensor-loop]
             [futon5.mmca.adapters :as adapters]
             [futon5.mmca.meta-lift :as meta-lift]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.operators :as operators]
+            [futon5.mmca.payload :as payload]
             [futon5.mmca.render :as render]
             [futon5.mmca.runtime :as mmca]))
 
@@ -31,6 +32,7 @@
     "  --generations N  Generations per run (default 50)."
     "  --runs N         Number of runs (default 50)."
     "  --seed N         Seed for meta-evolution RNG."
+    "  --engine NAME    Engine: mmca (default) or tensor-closed-loop."
     "  --report PATH   Write full run report to EDN."
     "  --no-freeze      Deprecated (freeze-genotype is disabled)."
     "  --require-phenotype  Require phenotype in all runs."
@@ -63,6 +65,13 @@
     "  --save-top-pdf PATH  Render saved images into a PDF (optional)."
     "  --render-exotype     Render genotype/phenotype/exotype triptychs."
     "  --report-every N     Write report EDN every N runs (streaming)."
+    "  --tensor-rule-sigil SIGIL  Initial tensor rule sigil (tensor engine)."
+    "  --tensor-backend NAME      Tensor backend: clj or jax (tensor engine)."
+    "  --tensor-wrap              Use wrapped boundary mode (tensor engine)."
+    "  --tensor-boundary-bit N    Boundary bit for open mode (tensor engine)."
+    "  --strict-parity            Fail on tensor/meta-lift parity mismatch (tensor engine)."
+    "  --no-strict-parity         Continue on parity mismatch (tensor engine)."
+    "  --tensor-explore-rate P    Rule exploration rate 0..1 (tensor engine)."
     "  --help           Show this message."]))
 
 (defn- parse-int [s]
@@ -91,6 +100,9 @@
 
           (= "--seed" flag)
           (recur (rest more) (assoc opts :seed (parse-int (first more))))
+
+          (= "--engine" flag)
+          (recur (rest more) (assoc opts :engine (first more)))
 
           (= "--report" flag)
           (recur (rest more) (assoc opts :report (first more)))
@@ -187,6 +199,27 @@
 
           (= "--report-every" flag)
           (recur (rest more) (assoc opts :report-every (parse-int (first more))))
+
+          (= "--tensor-rule-sigil" flag)
+          (recur (rest more) (assoc opts :tensor-rule-sigil (first more)))
+
+          (= "--tensor-backend" flag)
+          (recur (rest more) (assoc opts :tensor-backend (keyword (first more))))
+
+          (= "--tensor-wrap" flag)
+          (recur more (assoc opts :tensor-wrap true))
+
+          (= "--tensor-boundary-bit" flag)
+          (recur (rest more) (assoc opts :tensor-boundary-bit (parse-int (first more))))
+
+          (= "--strict-parity" flag)
+          (recur more (assoc opts :strict-parity true))
+
+          (= "--no-strict-parity" flag)
+          (recur more (assoc opts :strict-parity false))
+
+          (= "--tensor-explore-rate" flag)
+          (recur (rest more) (assoc opts :tensor-explore-rate (Double/parseDouble (first more))))
 
           :else
           (recur more (assoc opts :unknown flag))))
@@ -940,7 +973,7 @@
             (name leader)
             (if gap (format " (%.2f)" (double gap)) ""))))
 
-(declare update-leaderboard pick-leaderboard-rule feedback-payload report-payload)
+(declare update-leaderboard pick-leaderboard-rule)
 
 (defn evolve-meta-rules [runs length generations seed no-freeze? require-phenotype? require-gate? baldwin-share lesion feedback-top initial-feedback initial-learned-specs aif-opts kernel-context-opts pulses-enabled save-top leaderboard-opts checkpoint-opts report-opts]
   (loop [i 0
@@ -1018,10 +1051,8 @@
                              (update-learned-specs learned-specs {:top-sigils guided-top
                                                                   :sigil-counts (get-in result [:meta-lift :sigil-counts])})
                              learned-specs)
-            learned-prev (set (keys learned-specs))
-            learned-next (set (keys learned-specs'))
-            learned-new (count (set/difference learned-next learned-prev))
-            learned-total (count learned-next)
+            learned-new (count (payload/learned-specs-delta learned-specs learned-specs'))
+            learned-total (count (keys learned-specs'))
             policy-k (policy-key policy)
             score (double (or (get-in result [:summary :composite-score]) 0.0))
             prev-best (get policy-best policy-k)
@@ -1040,24 +1071,24 @@
                    (pos? (long (:every checkpoint-opts)))
                    (zero? (mod (inc i) (long (:every checkpoint-opts)))))
           (spit (:path checkpoint-opts)
-                (pr-str (feedback-payload {:meta (:meta checkpoint-opts)
-                                           :feedback-sigils feedback-sigils'
-                                           :learned-specs learned-specs'
-                                           :leaderboard leaderboard'
-                                           :runs-completed (inc i)}))))
+                (pr-str (payload/feedback-payload {:meta (:meta checkpoint-opts)
+                                                   :feedback-sigils feedback-sigils'
+                                                   :learned-specs learned-specs'
+                                                   :leaderboard leaderboard'
+                                                   :runs-completed (inc i)}))))
         (when (and report-opts
                    (:path report-opts)
                    (number? (:every report-opts))
                    (pos? (long (:every report-opts)))
                    (zero? (mod (inc i) (long (:every report-opts)))))
           (let [ranked (sort-by (comp :composite-score :summary) > (conj history result))
-                payload (report-payload (merge {:ranked ranked
-                                                :learned-specs learned-specs'
-                                                :leaderboard leaderboard'
-                                                :runs-detail (conj history result)
-                                                :top-runs (map #(dissoc % :run-result) top-runs')}
-                                               (:meta report-opts)
-                                               {:runs-completed (inc i)}))]
+                payload (payload/report-payload {:meta (merge (:meta report-opts)
+                                                              {:runs-completed (inc i)})
+                                                 :ranked ranked
+                                                 :learned-specs learned-specs'
+                                                 :leaderboard leaderboard'
+                                                 :runs-detail (conj history result)
+                                                 :top-runs (map #(dissoc % :run-result) top-runs)})]
             (spit (:path report-opts) (pr-str payload))))
         (recur (inc i) best' (conj history result) policy-rng feedback-sigils' learned-specs' policy-best' leaderboard' top-runs' (:summary result) last-history')))))
 
@@ -1084,21 +1115,6 @@
 (defn- pick-leaderboard-rule [leaderboard chance ^java.util.Random rng]
   (when (and (seq leaderboard) (number? chance) (< (.nextDouble rng) (double chance)))
     (:rule (nth leaderboard (rng-int rng (count leaderboard))))))
-
-(defn- feedback-payload [{:keys [meta feedback-sigils learned-specs leaderboard runs-completed]}]
-  (cond-> (merge {:feedback-sigils feedback-sigils
-                  :learned-specs learned-specs
-                  :leaderboard leaderboard}
-                 meta)
-    runs-completed (assoc :runs-completed runs-completed)))
-
-(defn- report-payload [{:keys [meta ranked learned-specs leaderboard runs-detail top-runs]}]
-  (merge meta
-         {:ranked ranked
-          :learned-specs learned-specs
-          :leaderboard leaderboard
-          :runs-detail runs-detail
-          :top-runs top-runs}))
 
 (defn- safe-name [s]
   (-> s str (str/replace #"[^a-zA-Z0-9._-]" "_")))
@@ -1136,15 +1152,66 @@
                    image-paths
                    [out]))))
 
+(def ^:private supported-engines
+  #{:mmca :tensor-closed-loop})
+
+(def ^:private tensor-unsupported-keys
+  [:no-freeze :require-gate :baldwin-share
+   :lesion :lesion-tick :lesion-target :lesion-half :lesion-mode
+   :aif-weight :aif-guide :aif-guide-min :aif-mutate :aif-mutate-min
+   :kernel-context :exotype-update-threshold :exotype-invert :quiet-kernel
+   :pulses :no-pulses :render-exotype :save-top :save-top-dir :save-top-pdf
+   :report-every :feedback-every])
+
+(defn- present? [v]
+  (cond
+    (nil? v) false
+    (false? v) false
+    (and (string? v) (empty? v)) false
+    (and (sequential? v) (empty? v)) false
+    :else true))
+
+(defn- normalize-engine [engine]
+  (let [raw (cond
+              (nil? engine) :mmca
+              (keyword? engine) engine
+              (string? engine) (keyword engine)
+              :else engine)
+        engine (case raw
+                 :tensor :tensor-closed-loop
+                 :tensor-loop :tensor-closed-loop
+                 raw)]
+    (when-not (contains? supported-engines engine)
+      (throw (ex-info "Unsupported metaevolve engine"
+                      {:engine engine
+                       :supported (vec (sort supported-engines))})))
+    engine))
+
+(defn- tensor-unsupported-opts [opts]
+  (->> tensor-unsupported-keys
+       (filter #(present? (get opts %)))
+       vec))
+
+(defn- report-top-tensor [ranked]
+  (println "Top tensor closed-loop rules:")
+  (doseq [{:keys [summary rule]} (take 5 ranked)]
+    (println (format "score %.2f | rule-sigil %s | backend %s"
+                     (double (or (:composite-score summary) 0.0))
+                     (or (:rule-sigil rule) "-")
+                     (name (or (:backend rule) :clj))))))
+
 (defn -main [& args]
-  (let [{:keys [help unknown length generations runs seed report no-freeze
+  (let [parsed (parse-args args)
+        {:keys [help unknown engine length generations runs seed report no-freeze
                 require-phenotype require-gate baldwin-share
                 lesion lesion-tick lesion-target lesion-half lesion-mode
                 feedback-top feedback-edn feedback-load feedback-every leaderboard-size leaderboard-chance aif-weight
                 aif-guide aif-guide-min aif-mutate aif-mutate-min
                 kernel-context exotype-update-threshold exotype-invert quiet-kernel
                 pulses no-pulses render-exotype
-                save-top save-top-dir save-top-pdf report-every]} (parse-args args)]
+                save-top save-top-dir save-top-pdf report-every
+                tensor-rule-sigil tensor-backend tensor-wrap tensor-boundary-bit
+                strict-parity tensor-explore-rate]} parsed]
     (cond
       help
       (println (usage))
@@ -1160,6 +1227,10 @@
             generations (or generations default-generations)
             runs (or runs default-runs)
             seed (or seed (System/currentTimeMillis))
+            engine (normalize-engine engine)
+            strict-parity (if (contains? parsed :strict-parity)
+                            (boolean strict-parity)
+                            true)
             aif-weight (if (number? aif-weight) aif-weight 0.2)
             aif-guide-min (when (number? aif-guide-min) aif-guide-min)
             aif-mutate-min (when (number? aif-mutate-min) aif-mutate-min)
@@ -1219,48 +1290,93 @@
                                   :leaderboard-chance leaderboard-chance
                                   :exotype-update-threshold exotype-update-threshold
                                   :exotype-invert (boolean exotype-invert)
-                                  :pulses-enabled pulses-enabled}})
-            {:keys [ranked history feedback-sigils learned-specs top-runs] :as result}
-            (binding [*quiet-kernel?* (boolean quiet-kernel)]
-              (evolve-meta-rules runs length generations seed no-freeze require-phenotype require-gate baldwin-share lesion-map feedback-top initial-feedback initial-learned-specs aif-opts kernel-context-opts pulses-enabled save-top leaderboard-opts checkpoint-opts report-opts))]
-        (println (format "Evolved %d runs | length %d | generations %d" runs length generations))
-        (report-baseline history)
-        (report-top ranked)
-        (when (and save-top (pos? save-top))
-          (let [dir (or save-top-dir "./mmca_top_runs")
-                paths (write-top-runs! dir top-runs render-opts)
-                images (mapv :img paths)]
-            (println (format "Saved top %d runs to %s" (long (count paths)) dir))
-            (when save-top-pdf
-              (render-pdf! images save-top-pdf)
-              (println "Wrote PDF" save-top-pdf))))
-        (when feedback-edn
-          (spit feedback-edn
-                (pr-str (feedback-payload {:meta {:seed seed
-                                                  :length length
-                                                  :generations generations
-                                                  :runs runs}
-                                           :feedback-sigils feedback-sigils
-                                           :learned-specs learned-specs
-                                           :leaderboard (:leaderboard result)}))))
-        (when report
-          (spit report
-                (pr-str (report-payload {:meta {:seed seed
-                                                :length length
-                                                :generations generations
-                                                :runs runs
-                                                :aif-weight aif-weight
-                                                :aif-guide (boolean aif-guide)
-                                                :aif-guide-min aif-guide-min
-                                                :aif-mutate (boolean aif-mutate)
-                                                :aif-mutate-min aif-mutate-min
-                                                :leaderboard-size leaderboard-size
-                                                :leaderboard-chance leaderboard-chance
-                                                :exotype-update-threshold exotype-update-threshold
-                                                :exotype-invert (boolean exotype-invert)
-                                                :pulses-enabled pulses-enabled}
-                                   :ranked ranked
-                                   :learned-specs learned-specs
-                                   :leaderboard (:leaderboard result)
-                                   :runs-detail history
-                                   :top-runs (map #(dissoc % :run-result) top-runs)}))))))))
+                                  :pulses-enabled pulses-enabled}})]
+        (case engine
+          :tensor-closed-loop
+          (let [unsupported (tensor-unsupported-opts parsed)
+                _ (when (seq unsupported)
+                    (throw (ex-info "Tensor engine does not support selected metaevolve options"
+                                    {:engine engine
+                                     :unsupported unsupported})))
+                init-rule-sigil (or tensor-rule-sigil
+                                    (get-in initial-leaderboard [0 :rule :rule-sigil])
+                                    (first initial-feedback))
+                explore-rate (cond
+                               (number? tensor-explore-rate) tensor-explore-rate
+                               (number? leaderboard-chance) leaderboard-chance
+                               :else 0.0)
+                tensor-result (tensor-loop/run-tensor-closed-loop
+                               (cond-> {:seed seed
+                                        :runs runs
+                                        :length length
+                                        :generations generations
+                                        :feedback-top feedback-top
+                                        :init-feedback-sigils initial-feedback
+                                        :explore-rate explore-rate
+                                        :strict-parity strict-parity
+                                        :with-phenotype (boolean require-phenotype)}
+                                 init-rule-sigil (assoc :init-rule-sigil init-rule-sigil)
+                                 tensor-backend (assoc :backend tensor-backend)
+                                 (contains? parsed :tensor-wrap) (assoc :wrap? (boolean tensor-wrap))
+                                 (number? tensor-boundary-bit) (assoc :boundary-bit tensor-boundary-bit)
+                                 (number? leaderboard-size) (assoc :leaderboard-size leaderboard-size)))]
+            (println (format "Evolved %d tensor closed-loop runs | length %d | generations %d"
+                             runs length generations))
+            (println (format "Parity %.2f%% | history parity %.2f%%"
+                             (* 100.0 (double (or (get-in tensor-result [:summary :parity-rate]) 0.0)))
+                             (* 100.0 (double (or (get-in tensor-result [:summary :history-parity-rate]) 0.0)))))
+            (report-top-tensor (:ranked tensor-result))
+            (when feedback-edn
+              (spit feedback-edn
+                    (pr-str (tensor-loop/feedback-payload tensor-result
+                                                          {:leaderboard-size leaderboard-size}))))
+            (when report
+              (spit report
+                    (pr-str (tensor-loop/report-payload tensor-result
+                                                        {:leaderboard-size leaderboard-size})))))
+
+          :mmca
+          (let [{:keys [ranked history feedback-sigils learned-specs top-runs] :as result}
+                (binding [*quiet-kernel?* (boolean quiet-kernel)]
+                  (evolve-meta-rules runs length generations seed no-freeze require-phenotype require-gate baldwin-share lesion-map feedback-top initial-feedback initial-learned-specs aif-opts kernel-context-opts pulses-enabled save-top leaderboard-opts checkpoint-opts report-opts))]
+            (println (format "Evolved %d runs | length %d | generations %d" runs length generations))
+            (report-baseline history)
+            (report-top ranked)
+            (when (and save-top (pos? save-top))
+              (let [dir (or save-top-dir "./mmca_top_runs")
+                    paths (write-top-runs! dir top-runs render-opts)
+                    images (mapv :img paths)]
+                (println (format "Saved top %d runs to %s" (long (count paths)) dir))
+                (when save-top-pdf
+                  (render-pdf! images save-top-pdf)
+                  (println "Wrote PDF" save-top-pdf))))
+            (when feedback-edn
+              (spit feedback-edn
+                    (pr-str (payload/feedback-payload {:meta {:seed seed
+                                                              :length length
+                                                              :generations generations
+                                                              :runs runs}
+                                                       :feedback-sigils feedback-sigils
+                                                       :learned-specs learned-specs
+                                                       :leaderboard (:leaderboard result)}))))
+            (when report
+              (spit report
+                    (pr-str (payload/report-payload {:meta {:seed seed
+                                                            :length length
+                                                            :generations generations
+                                                            :runs runs
+                                                            :aif-weight aif-weight
+                                                            :aif-guide (boolean aif-guide)
+                                                            :aif-guide-min aif-guide-min
+                                                            :aif-mutate (boolean aif-mutate)
+                                                            :aif-mutate-min aif-mutate-min
+                                                            :leaderboard-size leaderboard-size
+                                                            :leaderboard-chance leaderboard-chance
+                                                            :exotype-update-threshold exotype-update-threshold
+                                                            :exotype-invert (boolean exotype-invert)
+                                                            :pulses-enabled pulses-enabled}
+                                                       :ranked ranked
+                                                       :learned-specs learned-specs
+                                                       :leaderboard (:leaderboard result)
+                                                       :runs-detail history
+                                                       :top-runs (map #(dissoc % :run-result) top-runs)}))))))))))

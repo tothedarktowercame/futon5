@@ -19,54 +19,11 @@
   (:require [futon5.ca.core :as ca]
             [futon5.mmca.bitplane-analysis :as bitplane]
             [futon5.mmca.exotype :as exotype]
+            [futon5.mmca.local-physics :as local-physics]
             [futon5.tpg.core :as tpg]
             [futon5.tpg.diagnostics :as diag]
             [futon5.tpg.verifiers :as verifiers]
             [futon5.wiring.runtime :as wrt]))
-
-;; =============================================================================
-;; LOCAL PHYSICS KERNELS (same as runtime.clj)
-;; =============================================================================
-
-(def ^:private local-physics-kernels
-  "Kernel functions for local physics mode.
-   Duplicated from runtime.clj to avoid coupling to the full runtime."
-  (let [ensure-sigil (fn [result]
-                       (cond
-                         (string? result) result
-                         (map? result) (or (:sigil result) ca/default-sigil)
-                         (char? result) (str result)
-                         :else ca/default-sigil))
-        make-kernel (fn [base-fn]
-                      (fn [sigil pred succ context]
-                        (let [mutation-rate (or (:mutation-rate context) 0.2)
-                              result (if (< (rand) mutation-rate)
-                                       (ensure-sigil (base-fn sigil pred succ))
-                                       sigil)]
-                          {:sigil result})))
-        blend-fn (fn [sigil pred succ]
-                   (let [bits-self (ca/bits-for sigil)
-                         bits-pred (ca/bits-for pred)
-                         bits-succ (ca/bits-for succ)
-                         blended (apply str
-                                        (map (fn [s p n]
-                                               (let [ones (count (filter #(= \1 %) [s p n]))]
-                                                 (if (>= ones 2) \1 \0)))
-                                             bits-self bits-pred bits-succ))
-                         entry (ca/entry-for-bits blended)]
-                     (or (:sigil entry) ca/default-sigil)))
-        mult-fn (fn [sigil pred succ]
-                  (let [kernel-fn (ca/kernel-fn :mutating-template)
-                        result (binding [ca/*evolve-sigil-fn* kernel-fn]
-                                 (ca/evolve-sigil sigil pred succ))]
-                    (or (:sigil result) ca/default-sigil)))]
-    {:blending (make-kernel blend-fn)
-     :multiplication (make-kernel mult-fn)
-     :ad-hoc-template (make-kernel mult-fn)
-     :blending-mutation (make-kernel blend-fn)
-     :blending-baldwin (make-kernel blend-fn)
-     :collection-template (make-kernel mult-fn)
-     :mutating-template (make-kernel mult-fn)}))
 
 ;; =============================================================================
 ;; GENERATION STEP
@@ -78,33 +35,7 @@
    Takes the current state and returns the next state with updated
    genotype, phenotype, and history."
   [state global-rule bend-mode]
-  (let [genotype (:genotype state)
-        phenotype (:phenotype state)
-        prev-genotype (or (when (> (count (get-in state [:history :genotypes])) 1)
-                            (nth (get-in state [:history :genotypes])
-                                 (- (count (get-in state [:history :genotypes])) 2)))
-                          genotype)
-        ;; Evolve using TPG-selected operator
-        result (if global-rule
-                 (let [evolved (exotype/evolve-with-global-exotype
-                                genotype phenotype prev-genotype
-                                global-rule bend-mode local-physics-kernels)]
-                   {:genotype evolved :rules nil :kernels nil})
-                 ;; No global rule → pure local physics
-                 (exotype/evolve-string-local
-                  genotype phenotype prev-genotype local-physics-kernels))
-        next-gen (:genotype result)
-        next-phe (when phenotype
-                   (ca/evolve-phenotype-against-genotype genotype phenotype))]
-    (-> state
-        (assoc :generation (inc (:generation state))
-               :genotype next-gen)
-        (cond-> next-phe (assoc :phenotype next-phe))
-        (update-in [:history :genotypes] conj next-gen)
-        (cond-> next-phe
-          (update-in [:history :phenotypes]
-                     (fn [hist]
-                       (if hist (conj hist next-phe) [next-phe])))))))
+  (local-physics/advance-state state global-rule bend-mode))
 
 ;; =============================================================================
 ;; WIRING-DIAGRAM EVOLUTION

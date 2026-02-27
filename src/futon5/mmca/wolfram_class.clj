@@ -15,6 +15,24 @@
             [futon5.mmca.band-analysis :as band]
             [futon5.mmca.bitplane-analysis :as bitplane]))
 
+(defn- compute-metrics-history
+  "Build per-generation metrics history for interestingness.
+   Mirrors the internal metrics pipeline without reaching into private vars."
+  [history]
+  (let [entries (vec (remove nil? history))]
+    (mapv (fn [idx s]
+            (let [prev (when (pos? idx) (nth entries (dec idx)))
+                  len (count s)
+                  change (when (and prev (pos? len))
+                           (metrics/hamming-rate prev s))
+                  counts (frequencies s)]
+              {:entropy (metrics/shannon-entropy s)
+               :change-rate change
+               :unique-sigils (count counts)
+               :length len}))
+          (range (count entries))
+          entries)))
+
 (defn collect-features
   "Collect all features needed for class estimation from a run result.
    Returns a flat map of normalized [0,1] features.
@@ -26,7 +44,7 @@
     ;; Compute from run result
     (let [history (or (:gen-history run-or-features)
                       (:phe-history run-or-features))
-          metrics-history (metrics/series-metrics-history history)
+          metrics-history (compute-metrics-history history)
           interesting (metrics/interestingness metrics-history nil)
           compress (metrics/compressibility-metrics history)
           autocorr (metrics/autocorr-metrics history)

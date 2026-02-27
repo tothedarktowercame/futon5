@@ -377,7 +377,7 @@
 
     (println "\n" (apply str (repeat 60 "=")) "\n")
     (println "  EXOTYPE INVARIANTS: " (if exotype-pass "PASS" "FAIL"))
-    (println "  XENOTYPE INVARIANTS: " (if xenotype-pass "PASS" "FAIL (expected - not yet implemented)"))
+    (println "  XENOTYPE INVARIANTS: " (if xenotype-pass "PASS" "FAIL"))
     (println)
     (if exotype-pass
       (println "  Exotype system is ready for local physics runs.")

@@ -5,6 +5,7 @@
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
+            [futon5.wiring.runtime :as wrt]
             [futon5.mmca.render :as render]))
 
 (def ^:private legacy-cases
@@ -44,15 +45,56 @@
     :phenotype "01101000101111101110011100011001"
     :legacy-exotype-note "legacy exotype not directly mapped; tensor exotype program used"}])
 
+(def ^:private hybrid-cases
+  [{:id :hybrid-110-addself
+    :label "Hybrid R110+AddSelf"
+    :seed 352362012
+    :length 100
+    :generations 40
+    :hybrid-wiring-path "data/wiring-rules/hybrid-110-addself.edn"
+    :hybrid-warmup 80}
+   {:id :hybrid-110-carry
+    :label "Hybrid R110+Carry"
+    :seed 352362012
+    :length 100
+    :generations 40
+    :hybrid-wiring-path "data/wiring-rules/hybrid-110-carry.edn"
+    :hybrid-warmup 80}
+   {:id :hybrid-110-rotate
+    :label "Hybrid R110+Rotate"
+    :seed 352362012
+    :length 100
+    :generations 40
+    :hybrid-wiring-path "data/wiring-rules/hybrid-110-rotate.edn"
+    :hybrid-warmup 80}
+   {:id :hybrid-110-boundary-v2
+    :label "Hybrid R110+BoundaryV2"
+    :seed 352362012
+    :length 100
+    :generations 40
+    :hybrid-wiring-path "data/wiring-rules/hybrid-110-boundary-v2.edn"
+    :hybrid-warmup 80}
+   {:id :hybrid-110-avgself
+    :label "Hybrid R110+AvgSelf"
+    :seed 352362012
+    :length 100
+    :generations 40
+    :hybrid-wiring-path "data/wiring-rules/hybrid-110-avgself.edn"
+    :hybrid-warmup 80}])
+
 (defn- usage []
   (str/join
    "\n"
    ["usage: bb -m scripts.tensor-legacy-adapter-report [options]"
     ""
     "Options:"
+    "  --profile NAME      Case profile: legacy|hybrid (default legacy)."
     "  --out-dir PATH      Output directory (default out/tokamak/legacy-adapt-v1)."
     "  --rule SIGIL        Initial tensor rule sigil (default 手)."
     "  --gens N            Override generations for all cases."
+    "  --hybrid-warmup N   Override hybrid warmup generations before tensor run."
+    "  --pheno-evolve      Enable tensor phenotype evolution each generation."
+    "  --no-pheno-evolve   Disable tensor phenotype evolution."
     "  --help              Show this message."]))
 
 (defn- parse-int [s]
@@ -64,9 +106,13 @@
     (if (seq args)
       (let [[flag & more] args]
         (case flag
+          "--profile" (recur (rest more) (assoc opts :profile (first more)))
           "--out-dir" (recur (rest more) (assoc opts :out-dir (first more)))
           "--rule" (recur (rest more) (assoc opts :rule (first more)))
           "--gens" (recur (rest more) (assoc opts :gens (parse-int (first more))))
+          "--hybrid-warmup" (recur (rest more) (assoc opts :hybrid-warmup (parse-int (first more))))
+          "--pheno-evolve" (recur more (assoc opts :pheno-evolve true))
+          "--no-pheno-evolve" (recur more (assoc opts :pheno-evolve false))
           "--help" (recur more (assoc opts :help true))
           (recur more (assoc opts :unknown flag))))
       opts)))
@@ -90,16 +136,49 @@
 (defn- random-sigil [^java.util.Random rng sigils]
   (nth sigils (.nextInt rng (count sigils))))
 
+(defn- random-phenotype [^java.util.Random rng length]
+  (apply str (repeatedly (long length) #(if (zero? (.nextInt rng 2)) \0 \1))))
+
 (defn- seeded-initial-state [seed length]
   (let [rng (java.util.Random. (long seed))
         sigils (mapv :sigil (ca/sigil-entries))
         genotype (apply str (repeatedly (long length) #(random-sigil rng sigils)))
-        phenotype (apply str (repeatedly (long length) #(if (< (.nextDouble rng) 0.5) \1 \0)))]
+        phenotype (random-phenotype rng length)]
     {:genotype genotype
      :phenotype phenotype
      :source :seeded-reconstruction}))
 
-(defn- resolve-initial-state [case]
+(defn- hybrid-seeded-state
+  [{:keys [seed length hybrid-wiring-path hybrid-warmup]}]
+  (let [seed (long seed)
+        length (long length)
+        warmup (long (max 1 (or hybrid-warmup 80)))
+        genotype (wrt/random-genotype length seed)
+        phenotype (random-phenotype (java.util.Random. (unchecked-add seed 1)) length)
+        run (wrt/run-wiring-from-file {:wiring-path hybrid-wiring-path
+                                       :genotype genotype
+                                       :phenotype phenotype
+                                       :generations warmup
+                                       :collect-metrics? false})
+        final-genotype (or (last (:gen-history run))
+                           (throw (ex-info "Hybrid warmup produced no genotype history"
+                                           {:wiring-path hybrid-wiring-path
+                                            :seed seed
+                                            :length length
+                                            :warmup warmup})))
+        final-phenotype (or (last (:phe-history run))
+                            (throw (ex-info "Hybrid warmup produced no phenotype history"
+                                            {:wiring-path hybrid-wiring-path
+                                             :seed seed
+                                             :length length
+                                             :warmup warmup})))]
+    {:genotype final-genotype
+     :phenotype final-phenotype
+     :source :hybrid-warmup
+     :note (str "warmup from " hybrid-wiring-path " for " warmup " generations")})) 
+
+(defn- resolve-initial-state
+  [case {:keys [hybrid-warmup]}]
   (let [g (:genotype case)
         p (:phenotype case)
         length (:length case)]
@@ -108,6 +187,9 @@
       {:genotype g
        :phenotype p
        :source :legacy-explicit}
+
+      (seq (:hybrid-wiring-path case))
+      (hybrid-seeded-state (assoc case :hybrid-warmup (or hybrid-warmup (:hybrid-warmup case))))
 
       (and (number? length) (number? (:seed case)))
       (let [seeded (seeded-initial-state (:seed case) length)]
@@ -139,10 +221,63 @@
      :cells (reduce + 0 (map #(long (or (get-in % [:mutation :exotype :tilt :changed-cells]) 0))
                              ledger))}))
 
+(defn- mean-row-change
+  [rows]
+  (let [pairs (partition 2 1 rows)
+        rates (keep (fn [[a b]]
+                      (when (= (count a) (count b))
+                        (let [diffs (count (filter true? (map not= a b)))]
+                          (/ (double diffs) (double (max 1 (count a)))))))
+                    pairs)]
+    (if (seq rates)
+      (/ (reduce + 0.0 rates) (double (count rates)))
+      0.0)))
+
+(defn- row-barcode-score
+  [row]
+  (if (seq row)
+    (let [runs (partition-by identity row)
+          mean-run (/ (double (count row)) (double (max 1 (count runs))))]
+      (/ mean-run (double (count row))))
+    0.0))
+
+(defn- mean-barcode-score
+  [rows]
+  (if (seq rows)
+    (/ (reduce + 0.0 (map row-barcode-score rows))
+       (double (count rows)))
+    0.0))
+
+(defn- frozen-column-ratio
+  [rows lookback]
+  (let [rows (vec rows)
+        lookback (max 2 (long (or lookback 20)))
+        tail (vec (take-last lookback rows))]
+    (if (seq tail)
+      (let [width (count (first tail))
+            frozen-cols (count (filter identity
+                                       (for [idx (range width)]
+                                         (apply = (map #(nth % idx) tail)))))]
+        (/ (double frozen-cols) (double (max 1 width))))
+      0.0)))
+
+(defn- phenotype-striping
+  [history]
+  (let [barcode (mean-barcode-score history)
+        frozen (frozen-column-ratio history 20)
+        change (mean-row-change history)
+        index (+ (* 0.45 barcode)
+                 (* 0.45 frozen)
+                 (* 0.10 (- 1.0 change)))]
+    {:barcode-score barcode
+     :frozen-col-ratio frozen
+     :row-change change
+     :striping-index index}))
+
 (defn- run-case!
-  [case {:keys [out-dir rule gens use-png?]}]
+  [case {:keys [out-dir rule gens use-png? pheno-evolve? hybrid-warmup]}]
   (let [id-name (name (:id case))
-        {:keys [genotype phenotype source note]} (resolve-initial-state case)
+        {:keys [genotype phenotype source note]} (resolve-initial-state case {:hybrid-warmup hybrid-warmup})
         generations (long (or gens (:generations case) 40))
         length (count genotype)
         out-run-dir (str (io/file out-dir "runs"))
@@ -160,7 +295,9 @@
                      "--out" out-edn
                      "--report" out-md]
               (seq phenotype)
-              (into ["--phenotype" phenotype]))
+              (into ["--phenotype" phenotype])
+              pheno-evolve?
+              (conj "--pheno-evolve"))
         res (apply shell/sh cmd)]
     (when-not (zero? (:exit res))
       (throw (ex-info "tensor tokamak run failed"
@@ -178,7 +315,11 @@
                                       {:exotype? true})
           img-path (if use-png? (ppm->png! img-ppm img-png) img-ppm)
           exo (exo-stats run)
-          summary (or (:summary run) {})]
+          summary (or (:summary run) {})
+          history (or (seq (get-in run [:final :phe-history]))
+                      (seq (get-in run [:final :gen-history]))
+                      [])
+          striping (phenotype-striping history)]
       {:id (:id case)
        :label (:label case)
        :seed (:seed case)
@@ -194,22 +335,28 @@
        :attempts (:attempts exo)
        :selected (:selected exo)
        :cells (:cells exo)
+       :barcode-score (:barcode-score striping)
+       :frozen-col-ratio (:frozen-col-ratio striping)
+       :row-change (:row-change striping)
+       :striping-index (:striping-index striping)
        :run-edn out-edn
        :run-md out-md
        :img-path img-path})))
 
-(defn- write-report! [out-md rows]
+(defn- write-report! [out-md rows {:keys [profile pheno-evolve?]}]
   (let [lines (concat
-               ["# Tensor Legacy Adapter Report"
+               [(str "# Tensor " (str/capitalize (name profile)) " Adapter Report")
                 ""
-                "- Goal: replay legacy best-of-class initial conditions in tensor tokamak."
-                "- Mapping used: legacy `genotype/phenotype` are ported directly; legacy exotype kernels are not directly portable and are approximated by tensor exotype program dynamics."
+                "- Goal: adapt selected prior high-signal initial conditions into tensor tokamak runs."
+                (str "- Profile: `" (name profile) "`")
+                (str "- Tensor phenotype evolution: `" (boolean pheno-evolve?) "`")
+                "- Mapping used: source initial states are ported into tensor tokamak; legacy/wiring exotype kernels are not directly portable and are approximated by tensor exotype program dynamics."
                 "- Images are triptychs: genotype | phenotype | exotype."
                 ""
-                "| Case | Seed | Len | Gens | Best | Final | Regime | Rewinds | Exo sel/att | Cells |"
-                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+                "| Case | Seed | Len | Gens | Best | Final | Regime | Rewinds | Exo sel/att | Stripe idx | Frozen | Barcode | Δrow | Cells |"
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
                (map (fn [r]
-                      (format "| %s | %d | %d | %d | %s | %s | %s | %d | %d/%d | %d |"
+                      (format "| %s | %d | %d | %d | %s | %s | %s | %d | %d/%d | %s | %s | %s | %s | %d |"
                               (name (:id r))
                               (long (:seed r))
                               (long (:length r))
@@ -220,6 +367,10 @@
                               (long (:rewinds r))
                               (long (:selected r))
                               (long (:attempts r))
+                              (short-f (:striping-index r))
+                              (short-f (:frozen-col-ratio r))
+                              (short-f (:barcode-score r))
+                              (short-f (:row-change r))
                               (long (:cells r))))
                     rows)
                [""]
@@ -231,6 +382,11 @@
                                   (short-f (:final-total r))
                                   (name (or (:final-regime r) :unknown))
                                   (long (:rewinds r)))
+                          (format "- phenotype striping: idx `%s`, frozen `%s`, barcode `%s`, row-change `%s`"
+                                  (short-f (:striping-index r))
+                                  (short-f (:frozen-col-ratio r))
+                                  (short-f (:barcode-score r))
+                                  (short-f (:row-change r)))
                           (format "- exotype selected/attempts `%d/%d`, changed-cells `%d`"
                                   (long (:selected r))
                                   (long (:attempts r))
@@ -243,14 +399,23 @@
                           (when-let [n (:legacy-exotype-note r)]
                             (str "- note: " n))
                           ""
-                          (str "![](" (rel-path out-md (:img-path r)) ")")
+                         (str "![](" (rel-path out-md (:img-path r)) ")")
                           ""])
                        rows))]
     (spit out-md (str/join "\n" (remove nil? lines)))
     out-md))
 
+(defn- normalize-profile [profile]
+  (let [p (keyword (or profile "legacy"))]
+    (if (#{:legacy :hybrid} p) p :legacy)))
+
+(defn- profile-cases [profile]
+  (case profile
+    :hybrid hybrid-cases
+    legacy-cases))
+
 (defn -main [& args]
-  (let [{:keys [help unknown out-dir rule gens]} (parse-args args)]
+  (let [{:keys [help unknown out-dir rule gens profile hybrid-warmup pheno-evolve]} (parse-args args)]
     (cond
       help (println (usage))
       unknown (do
@@ -259,16 +424,28 @@
                 (println (usage))
                 (System/exit 2))
       :else
-      (let [out-dir (or out-dir "out/tokamak/legacy-adapt-v1")
+      (let [profile (normalize-profile profile)
+            out-dir (or out-dir
+                        (if (= profile :hybrid)
+                          "out/tokamak/hybrid-adapt-v1"
+                          "out/tokamak/legacy-adapt-v1"))
+            pheno-evolve? (if (some? pheno-evolve)
+                            (boolean pheno-evolve)
+                            (= profile :hybrid))
             use-png? (has-convert?)
             rows (mapv #(run-case! % {:out-dir out-dir
                                        :rule (or rule "手")
                                        :gens gens
+                                       :hybrid-warmup hybrid-warmup
+                                       :pheno-evolve? pheno-evolve?
                                        :use-png? use-png?})
-                       legacy-cases)
+                       (profile-cases profile))
             out-md (str (io/file out-dir "README.md"))]
         (ensure-dir! out-dir)
-        (write-report! out-md rows)
+        (write-report! out-md rows {:profile profile
+                                    :pheno-evolve? pheno-evolve?})
         (println "Wrote" out-md)
+        (println "Profile:" (name profile))
         (println "Runs:" (count rows))
+        (println "Phenotype evolution:" (if pheno-evolve? "enabled" "disabled"))
         (println "PNG conversion:" (if use-png? "enabled" "disabled"))))))

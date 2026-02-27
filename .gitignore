@@ -12,6 +12,7 @@ resources/ii_v_circle.pdf
 __pycache__/
 out/
 *.ppm
+data/
 data/nonstarter.db
 *.aux
 *.log

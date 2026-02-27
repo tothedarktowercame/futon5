@@ -23,6 +23,8 @@
     "  --phenotype STR       Starting phenotype bit string."
     "  --phenotype-length N  Random phenotype length."
     "  --generations N       Generations to run (default 64)."
+    "  --engine KW           Engine keyword: :mmca or :tensor (default :mmca)."
+    "  --rule-sigil SIGIL    Tensor engine update rule sigil."
     "  --kernel KW           Kernel keyword, e.g. :mutating-template."
     "  --mode KW             :god or :classic (default :god)."
     "  --pattern-sigils STR  Comma-separated sigils to activate operators."
@@ -55,6 +57,10 @@
     (when (seq tokens)
       (vec tokens))))
 
+(defn- parse-keyword [s]
+  (when (seq s)
+    (keyword (str/replace s #"^:" ""))))
+
 (defn- parse-args [args]
   (loop [args args
          opts {}]
@@ -78,6 +84,12 @@
 
           (= "--generations" flag)
           (recur (rest more) (assoc opts :generations (parse-int (first more))))
+
+          (= "--engine" flag)
+          (recur (rest more) (assoc opts :engine (parse-keyword (first more))))
+
+          (= "--rule-sigil" flag)
+          (recur (rest more) (assoc opts :rule-sigil (first more)))
 
           (= "--kernel" flag)
           (recur (rest more) (assoc opts :kernel (some-> (first more) keyword)))
@@ -161,7 +173,7 @@
 (defn -main [& args]
   (let [{:keys [help unknown genotype length phenotype phenotype-length generations kernel mode
                 pattern-sigils no-operators lock-kernel freeze-genotype genotype-gate
-                gate-signal seed input out save-run render-exotype] :as opts}
+                gate-signal seed input out save-run render-exotype engine rule-sigil] :as opts}
         (parse-args args)]
     (cond
       help
@@ -193,9 +205,11 @@
                                              (ca/random-phenotype-string phe-len)))))
                          base {:genotype genotype
                                :generations generations
-                               :mode (or mode :god)}
+                               :mode (or mode :god)
+                               :engine (or engine :mmca)}
                          base (cond-> base
                                 kernel (assoc :kernel kernel)
+                                rule-sigil (assoc :rule-sigil rule-sigil)
                                 phenotype (assoc :phenotype phenotype)
                                 lock-kernel (assoc :lock-kernel true)
                                 freeze-genotype (assoc :freeze-genotype true)
