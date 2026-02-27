@@ -125,6 +125,56 @@
   :group 'nonstarter)
 
 ;;; ---------------------------------------------------------------------------
+;;; Portfolio configuration
+;;; ---------------------------------------------------------------------------
+
+(defcustom nonstarter-futon5-api-url "http://127.0.0.1:7072"
+  "Base URL for the futon5 heartbeat API server."
+  :type 'string
+  :group 'nonstarter)
+
+(defcustom nonstarter-futon3c-api-url "http://127.0.0.1:7070"
+  "Base URL for the futon3c portfolio AIF server."
+  :type 'string
+  :group 'nonstarter)
+
+(defcustom nonstarter-effort-band-thresholds
+  '((1.0 . "trivial")
+    (3.0 . "easy")
+    (8.0 . "medium")
+    (20.0 . "hard")
+    (1000.0 . "epic"))
+  "Hours-to-effort-band mapping for T-8 compression.
+Each entry is (THRESHOLD . BAND); first entry whose threshold >= hours wins."
+  :type '(alist :key-type number :value-type string)
+  :group 'nonstarter)
+
+(defcustom nonstarter-portfolio-missions nil
+  "Mission identifiers for portfolio bid/clear prompting.
+Each entry is (MISSION-ID . DESCRIPTION).
+If nil, portfolio bid form fetches missions from futon3c."
+  :type '(alist :key-type string :value-type string)
+  :group 'nonstarter)
+
+(defcustom nonstarter-portfolio-category-mission-map nil
+  "Map personal categories to portfolio mission IDs for T-8 compression.
+Each entry is (CATEGORY . MISSION-ID)."
+  :type '(alist :key-type string :value-type string)
+  :group 'nonstarter)
+
+(defvar nonstarter-portfolio-actions
+  '("work-on" "review" "consolidate" "upvote" "wait")
+  "Portfolio action types, aligned with futon3c policy arena.")
+
+(defvar nonstarter-portfolio-outcomes
+  '("complete" "partial" "abandoned")
+  "Possible outcomes for portfolio clear entries.")
+
+(defvar nonstarter-portfolio-modes
+  '("BUILD" "MAINTAIN" "CONSOLIDATE")
+  "Portfolio operating modes.")
+
+;;; ---------------------------------------------------------------------------
 ;;; Local prototype (futon5) helpers
 ;;; ---------------------------------------------------------------------------
 
@@ -616,6 +666,64 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
           (kill-buffer (current-buffer))
           parsed)))))
 
+(defun nonstarter--external-request (base-url method path &optional data)
+  "Make an HTTP request to an external API at BASE-URL.
+Returns parsed JSON on success, nil on connection failure (graceful degradation)."
+  (condition-case err
+      (let* ((raw-data (nonstarter--json-encode data))
+             (payload (when raw-data (encode-coding-string raw-data 'utf-8)))
+             (url-request-method method)
+             (url-request-extra-headers '(("Content-Type" . "application/json")
+                                           ("Accept" . "application/json")))
+             (url-request-data payload)
+             (url (concat (nonstarter--trim-slashes base-url) path)))
+        (let ((buffer (url-retrieve-synchronously url t t nonstarter-timeout)))
+          (when buffer
+            (with-current-buffer buffer
+              (let ((parsed (nonstarter--json-parse-response (current-buffer))))
+                (kill-buffer (current-buffer))
+                parsed)))))
+    (error
+     (message "External request failed (%s%s): %s" base-url path (error-message-string err))
+     nil)))
+
+(defun nonstarter--futon5-request (method path &optional data)
+  "Make an HTTP request to the futon5 heartbeat API. Returns nil on failure."
+  (nonstarter--external-request nonstarter-futon5-api-url method path data))
+
+(defun nonstarter--futon3c-request (method path &optional data)
+  "Make an HTTP request to the futon3c portfolio AIF server. Returns nil on failure."
+  (nonstarter--external-request nonstarter-futon3c-api-url method path data))
+
+;;; ---------------------------------------------------------------------------
+;;; T-8 compression: hours -> effort bands
+;;; ---------------------------------------------------------------------------
+
+(defun nonstarter--hours-to-effort-band (hours)
+  "Compress HOURS into an effort band string using `nonstarter-effort-band-thresholds'."
+  (catch 'found
+    (dolist (entry nonstarter-effort-band-thresholds)
+      (when (<= hours (car entry))
+        (throw 'found (cdr entry))))
+    "epic"))
+
+(defun nonstarter--compress-bids-to-portfolio (category-bids)
+  "Convert personal CATEGORY-BIDS (hash-table of category->hours) into portfolio bids.
+Uses `nonstarter-portfolio-category-mission-map' to map categories to missions.
+Returns list of alists: ((action . \"work-on\") (mission . \"M-foo\") (effort . \"hard\"))."
+  (let ((portfolio-bids nil))
+    (maphash
+     (lambda (cat hours)
+       (when (and (numberp hours) (> hours 0))
+         (let ((mission (cdr (assoc cat nonstarter-portfolio-category-mission-map))))
+           (when mission
+             (push `((action . "work-on")
+                     (mission . ,mission)
+                     (effort . ,(nonstarter--hours-to-effort-band hours)))
+                   portfolio-bids)))))
+     category-bids)
+    (nreverse portfolio-bids)))
+
 (defun nonstarter--show (title payload)
   (let ((buf (get-buffer-create "*Nonstarter*")))
     (with-current-buffer buf
@@ -1016,6 +1124,9 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
     (define-key map (kbd "M-h") #'nonstarter-personal-goal-update)
     (define-key map (kbd "d") #'nonstarter-personal-apply-default-bids)
     (define-key map (kbd "t") #'nonstarter-toggle-deliverable-meta)
+    (define-key map (kbd "p") #'nonstarter-portfolio-step)
+    (define-key map (kbd "P") #'nonstarter-portfolio-bid-form)
+    (define-key map (kbd "C") #'nonstarter-portfolio-clear-form)
     map)
   "Keymap for nonstarter dashboard.")
 
@@ -1308,9 +1419,64 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                                 (alist-get 'bid-total entry)
                                 (alist-get 'clear-total entry))))
             (insert "No history.\n"))
+          ;; Portfolio section (fetches from futon5 heartbeat + futon3c AIF)
+          (nonstarter--dashboard-insert-portfolio)
           (goto-char (point-min))
           (nonstarter-dashboard-mode))
       (display-buffer buf))))
+
+(defun nonstarter--dashboard-insert-portfolio ()
+  "Insert the portfolio section into the dashboard buffer.
+Fetches from futon5 (heartbeat) and futon3c (AIF state).
+Silently skips if both servers are unreachable."
+  (let* ((heartbeat (nonstarter--futon5-request "GET" "/api/heartbeat"))
+         (aif-state (nonstarter--futon3c-request "GET" "/api/alpha/portfolio/state")))
+    (when (or heartbeat aif-state)
+      (insert "\nPortfolio\n")
+      ;; AIF state
+      (if (and aif-state (alist-get 'ok aif-state))
+          (let* ((state (alist-get 'state aif-state))
+                 (mode (alist-get 'mode state))
+                 (urgency (alist-get 'urgency state))
+                 (step-count (alist-get 'step-count state)))
+            (insert (format "  AIF: mode %s | urgency %.2f | steps %s\n"
+                            (or mode "?")
+                            (or urgency 0.0)
+                            (or step-count "?"))))
+        (insert "  AIF: unavailable\n"))
+      ;; Heartbeat bids
+      (if (and heartbeat (not (alist-get 'error heartbeat)))
+          (let* ((week-id (alist-get 'week_id heartbeat))
+                 (bids (alist-get 'bids heartbeat))
+                 (clears (alist-get 'clears heartbeat))
+                 (mode-pred (alist-get 'mode_prediction heartbeat))
+                 (mode-obs (alist-get 'mode_observed heartbeat)))
+            (insert (format "  Heartbeat: %s\n" (or week-id "?")))
+            (if bids
+                (progn
+                  (insert (format "  Bids (%d):" (length bids)))
+                  (when mode-pred (insert (format " [predicted: %s]" mode-pred)))
+                  (insert "\n")
+                  (dolist (bid bids)
+                    (insert (format "    - %s %s [%s]\n"
+                                    (or (alist-get 'action bid) "?")
+                                    (or (alist-get 'mission bid) "")
+                                    (or (alist-get 'effort bid) "?")))))
+              (insert "  Bids: none\n"))
+            (if clears
+                (progn
+                  (insert (format "  Clears (%d):" (length clears)))
+                  (when mode-obs (insert (format " [observed: %s]" mode-obs)))
+                  (insert "\n")
+                  (dolist (clear clears)
+                    (insert (format "    - %s %s [%s] => %s\n"
+                                    (or (alist-get 'action clear) "?")
+                                    (or (alist-get 'mission clear) "")
+                                    (or (alist-get 'effort clear) "?")
+                                    (or (alist-get 'outcome clear) "?")))))
+              (insert "  Clears: none\n")))
+        (insert "  Heartbeat: no data for current week\n"))
+      (insert "\n"))))
 
 ;;; Public API
 
@@ -1494,6 +1660,20 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                                     (hours . ,hours)
                                     (week-id . ,(unless (null week-id) week-id))))))
          totals)
+        ;; T-8 compression: optionally emit portfolio bids from personal bids
+        (when (and nonstarter-portfolio-category-mission-map
+                   (y-or-n-p "Also emit portfolio bids (effort bands)? "))
+          (let ((portfolio-bids (nonstarter--compress-bids-to-portfolio totals)))
+            (when portfolio-bids
+              (let* ((mode (completing-read "Mode prediction: "
+                                           nonstarter-portfolio-modes nil t nil nil "BUILD"))
+                     (payload `((week-id . ,(unless (null week-id) week-id))
+                                (bids . ,(apply #'vector portfolio-bids))
+                                (mode-prediction . ,mode)))
+                     (result (nonstarter--futon5-request "POST" "/api/heartbeat/bid" payload)))
+                (if result
+                    (message "Portfolio bids also recorded (%d entries)." (length portfolio-bids))
+                  (message "Warning: futon5 heartbeat API unreachable."))))))
         (nonstarter-dashboard))))
 
 (defun nonstarter-personal-clear (category hours &optional week-id)
@@ -1507,6 +1687,175 @@ With prefix arg UPDATE, refresh statuses if entries already exist."
                    (week-id . ,(unless (string= week-id "") week-id)))))
     (nonstarter--show "Personal clear"
                       (nonstarter--request "POST" "/api/personal/clear" payload))))
+
+;;; Portfolio API
+
+(defun nonstarter--portfolio-read-effort (prompt)
+  "Prompt for an effort band. Returns a string."
+  (completing-read prompt '("trivial" "easy" "medium" "hard" "epic") nil t))
+
+(defun nonstarter--portfolio-read-action (prompt)
+  "Prompt for a portfolio action. Returns a string."
+  (completing-read prompt nonstarter-portfolio-actions nil t nil nil "work-on"))
+
+(defun nonstarter--portfolio-read-outcome (prompt)
+  "Prompt for a clear outcome. Returns a string."
+  (completing-read prompt nonstarter-portfolio-outcomes nil t nil nil "complete"))
+
+(defun nonstarter--portfolio-read-mission (prompt)
+  "Prompt for a mission ID. Uses `nonstarter-portfolio-missions' or fetches from futon3c."
+  (let ((missions (or nonstarter-portfolio-missions
+                      (nonstarter--fetch-mission-list))))
+    (if missions
+        (completing-read prompt (mapcar #'car missions) nil nil)
+      (read-string prompt))))
+
+(defun nonstarter--fetch-mission-list ()
+  "Fetch the mission list from futon3c. Returns (ID . DESCRIPTION) alist or nil."
+  (let ((resp (nonstarter--futon3c-request "GET" "/api/alpha/missions")))
+    (when (and resp (listp resp) (alist-get 'ok resp))
+      (mapcar (lambda (m)
+                (cons (or (alist-get 'id m) (format "%s" m))
+                      (or (alist-get 'title m) "")))
+              (alist-get 'missions resp)))))
+
+(defun nonstarter-portfolio-bid-form (&optional week-id)
+  "Prompt for portfolio bids: mission/action/effort triples.
+Posts to futon5 /api/heartbeat/bid for persistence."
+  (interactive (list (read-string "Week ID (YYYY-Www, optional): " nil nil "")))
+  (let* ((week-id (unless (string= week-id "") week-id))
+         (bids nil)
+         (continue t))
+    (while continue
+      (let* ((mission (nonstarter--portfolio-read-mission "Mission: "))
+             (action (nonstarter--portfolio-read-action "Action: "))
+             (effort (nonstarter--portfolio-read-effort "Effort: ")))
+        (push `((action . ,action)
+                (mission . ,mission)
+                (effort . ,effort))
+              bids))
+      (setq continue (y-or-n-p "Add another bid? ")))
+    (setq bids (nreverse bids))
+    (let ((mode (completing-read "Mode prediction: "
+                                 nonstarter-portfolio-modes nil t nil nil "BUILD")))
+      (nonstarter--show-text
+       "Portfolio bid summary"
+       (format "Week: %s\nMode: %s\n\n%s"
+               (or week-id "current")
+               mode
+               (mapconcat
+                (lambda (bid)
+                  (format "- %s %s [%s]"
+                          (alist-get 'action bid)
+                          (alist-get 'mission bid)
+                          (alist-get 'effort bid)))
+                bids "\n")))
+      (when (y-or-n-p "Submit portfolio bids? ")
+        (let* ((payload `((week-id . ,week-id)
+                          (bids . ,(apply #'vector bids))
+                          (mode-prediction . ,mode)))
+               (result (nonstarter--futon5-request "POST" "/api/heartbeat/bid" payload)))
+          (if result
+              (progn (message "Portfolio bids recorded.")
+                     (nonstarter-dashboard))
+            (message "Failed to record portfolio bids (futon5 unreachable).")))))))
+
+(defun nonstarter-portfolio-clear-form (&optional week-id)
+  "Prompt for portfolio clears: mission/action/effort/outcome quads.
+Pre-populates from existing bids when available."
+  (interactive (list (read-string "Week ID (YYYY-Www, optional): " nil nil "")))
+  (let* ((week-id (unless (string= week-id "") week-id))
+         (heartbeat (nonstarter--futon5-request
+                     "GET" (if week-id
+                               (concat "/api/heartbeat?week-id=" week-id)
+                             "/api/heartbeat")))
+         (existing-bids (when (and heartbeat (not (alist-get 'error heartbeat)))
+                          (alist-get 'bids heartbeat)))
+         (clears nil))
+    ;; Walk existing bids and ask for outcomes
+    (when existing-bids
+      (dolist (bid existing-bids)
+        (let* ((mission (or (alist-get 'mission bid) "?"))
+               (action (or (alist-get 'action bid) "work-on"))
+               (bid-effort (or (alist-get 'effort bid) "medium"))
+               (effort (nonstarter--portfolio-read-effort
+                        (format "%s %s (bid: %s) — actual effort: " action mission bid-effort)))
+               (outcome (nonstarter--portfolio-read-outcome
+                         (format "%s %s — outcome: " action mission))))
+          (push `((action . ,action)
+                  (mission . ,mission)
+                  (effort . ,effort)
+                  (outcome . ,outcome))
+                clears))))
+    ;; Add unplanned work or free-form entries
+    (while (y-or-n-p (if existing-bids "Add unplanned work? " "Add a clear entry? "))
+      (let* ((mission (nonstarter--portfolio-read-mission "Mission: "))
+             (action (nonstarter--portfolio-read-action "Action: "))
+             (effort (nonstarter--portfolio-read-effort "Effort: "))
+             (outcome (nonstarter--portfolio-read-outcome "Outcome: ")))
+        (push `((action . ,action)
+                (mission . ,mission)
+                (effort . ,effort)
+                (outcome . ,outcome))
+              clears)))
+    (setq clears (nreverse clears))
+    (when clears
+      (let ((mode (completing-read "Mode observed: "
+                                   nonstarter-portfolio-modes nil t nil nil "BUILD")))
+        (nonstarter--show-text
+         "Portfolio clear summary"
+         (format "Week: %s\nMode observed: %s\n\n%s"
+                 (or week-id "current")
+                 mode
+                 (mapconcat
+                  (lambda (c)
+                    (format "- %s %s [%s] => %s"
+                            (alist-get 'action c)
+                            (alist-get 'mission c)
+                            (alist-get 'effort c)
+                            (alist-get 'outcome c)))
+                  clears "\n")))
+        (when (y-or-n-p "Submit portfolio clears? ")
+          ;; Persist to futon5
+          (let* ((payload `((week-id . ,week-id)
+                            (clears . ,(apply #'vector clears))
+                            (mode-observed . ,mode)))
+                 (f5-result (nonstarter--futon5-request "POST" "/api/heartbeat/clear" payload)))
+            (if f5-result
+                (message "Portfolio clears recorded.")
+              (message "Warning: futon5 unreachable, clears not persisted.")))
+          ;; Run AIF analysis
+          (when (y-or-n-p "Run AIF heartbeat analysis? ")
+            (let* ((hb-payload `((bids . ,(when existing-bids (apply #'vector existing-bids)))
+                                 (clears . ,(apply #'vector clears))
+                                 (mode-prediction . ,(when heartbeat
+                                                       (alist-get 'mode_prediction heartbeat)))
+                                 (mode-observed . ,mode)))
+                   (aif-result (nonstarter--futon3c-request
+                                "POST" "/api/alpha/portfolio/heartbeat" hb-payload)))
+              (if aif-result
+                  (nonstarter--show-text
+                   "Portfolio AIF Heartbeat"
+                   (format "Recommendation: %s\n\nAction: %s\nDiagnostics: %s"
+                           (or (alist-get 'recommendation aif-result) "?")
+                           (or (alist-get 'action aif-result) "?")
+                           (pp-to-string (alist-get 'diagnostics aif-result))))
+                (message "futon3c unreachable, skipping AIF analysis."))))
+          (nonstarter-dashboard))))))
+
+(defun nonstarter-portfolio-step ()
+  "Run one AIF portfolio step via futon3c and show the recommendation."
+  (interactive)
+  (let ((result (nonstarter--futon3c-request "POST" "/api/alpha/portfolio/step" nil)))
+    (if result
+        (nonstarter--show-text
+         "Portfolio AIF Step"
+         (format "Recommendation: %s\n\nAction: %s\nAbstain: %s\nDiagnostics:\n%s"
+                 (or (alist-get 'recommendation result) "?")
+                 (or (alist-get 'action result) "?")
+                 (if (alist-get 'abstain result) "yes" "no")
+                 (pp-to-string (alist-get 'diagnostics result))))
+      (message "futon3c unreachable."))))
 
 (defun nonstarter-personal-verdict (&optional week-id note tolerance)
   "Reconcile a week into a personal block."
