@@ -150,21 +150,21 @@
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
-   "-- Personal weeks: bids/clears for time allocation
-    CREATE TABLE IF NOT EXISTS personal_weeks (
+   "-- Portfolio heartbeats: weekly action-level bid/clear with effort bands
+    --   Bids: intended actions for the week [{:action :effort :mission}]
+    --   Clears: actual actions [{:action :effort :mission :outcome}]
+    --   Effort bands: :trivial :easy :medium :hard :epic (compressed from private hours)
+    --   Private hour data stays in futon5a; this table gets the masked/public view
+    CREATE TABLE IF NOT EXISTS portfolio_heartbeats (
       week_id TEXT PRIMARY KEY,
       bids TEXT,
       clears TEXT,
+      mode_prediction TEXT,
+      mode_observed TEXT,
+      delta TEXT,
+      aif_snapshot TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )"
-
-   "-- Personal blocks: reconciled week summaries
-    CREATE TABLE IF NOT EXISTS personal_blocks (
-      id TEXT PRIMARY KEY,
-      week_id TEXT NOT NULL REFERENCES personal_weeks(week_id),
-      summary TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )"
 
    "-- Indexes for common queries
@@ -178,7 +178,7 @@
    "CREATE INDEX IF NOT EXISTS idx_mana_events_session ON mana_events(session_id)"
    "CREATE INDEX IF NOT EXISTS idx_sidecar_events_session ON sidecar_events(session_id)"
    "CREATE INDEX IF NOT EXISTS idx_xenotypes_simulation ON xenotypes(simulation_id)"
-   "CREATE INDEX IF NOT EXISTS idx_personal_blocks_week ON personal_blocks(week_id)"
+   "CREATE INDEX IF NOT EXISTS idx_heartbeats_week ON portfolio_heartbeats(week_id)"
 
    "-- Initialize pool if empty
     INSERT OR IGNORE INTO pool (id, balance) VALUES (1, 0)"])

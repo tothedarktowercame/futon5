@@ -484,6 +484,70 @@
                      events)}))
 
 ;; =============================================================================
+;; Portfolio heartbeats (weekly action-level bid/clear)
+;; =============================================================================
+
+(defn upsert-heartbeat-bids!
+  "Record intended actions for a week.
+   bids: [{:action :work-on :mission \"M-foo\" :effort :hard} ...]
+   mode-prediction: keyword (:BUILD, :MAINTAIN, :CONSOLIDATE)"
+  [ds {:keys [week-id bids mode-prediction]}]
+  (when-not week-id
+    (throw (ex-info "Heartbeat requires :week-id" {})))
+  (sql/execute! ds
+    ["INSERT INTO portfolio_heartbeats (week_id, bids, mode_prediction)
+      VALUES (?, ?, ?)
+      ON CONFLICT(week_id)
+      DO UPDATE SET bids = ?, mode_prediction = ?, updated_at = CURRENT_TIMESTAMP"
+     week-id (pr-str bids) (when mode-prediction (name mode-prediction))
+     (pr-str bids) (when mode-prediction (name mode-prediction))]))
+
+(defn upsert-heartbeat-clears!
+  "Record actual actions for a week + AIF snapshot.
+   clears: [{:action :work-on :mission \"M-foo\" :effort :hard :outcome :partial} ...]
+   mode-observed: keyword
+   delta: computed prediction errors (EDN)
+   aif-snapshot: portfolio AIF state at clear time (EDN)"
+  [ds {:keys [week-id clears mode-observed delta aif-snapshot]}]
+  (when-not week-id
+    (throw (ex-info "Heartbeat requires :week-id" {})))
+  (sql/execute! ds
+    ["UPDATE portfolio_heartbeats
+      SET clears = ?, mode_observed = ?, delta = ?, aif_snapshot = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE week_id = ?"
+     (pr-str clears) (when mode-observed (name mode-observed))
+     (when delta (pr-str delta)) (when aif-snapshot (pr-str aif-snapshot))
+     week-id]))
+
+(defn get-heartbeat
+  "Get a heartbeat by week-id. Returns parsed EDN fields."
+  [ds week-id]
+  (when-let [row (sql/execute-one! ds
+                   ["SELECT * FROM portfolio_heartbeats WHERE week_id = ?" week-id])]
+    (-> row
+        (update :bids #(when % (read-string %)))
+        (update :clears #(when % (read-string %)))
+        (update :mode_prediction #(when % (keyword %)))
+        (update :mode_observed #(when % (keyword %)))
+        (update :delta #(when % (read-string %)))
+        (update :aif_snapshot #(when % (read-string %))))))
+
+(defn list-heartbeats
+  "List recent heartbeats, newest first."
+  ([ds] (list-heartbeats ds 10))
+  ([ds n]
+   (->> (sql/query ds
+          ["SELECT * FROM portfolio_heartbeats ORDER BY week_id DESC LIMIT ?" n])
+        (mapv #(-> %
+                   (update :bids (fn [v] (when v (read-string v))))
+                   (update :clears (fn [v] (when v (read-string v))))
+                   (update :mode_prediction (fn [v] (when v (keyword v))))
+                   (update :mode_observed (fn [v] (when v (keyword v))))
+                   (update :delta (fn [v] (when v (read-string v))))
+                   (update :aif_snapshot (fn [v] (when v (read-string v)))))))))
+
+;; =============================================================================
 ;; Demo / CLI helpers
 ;; =============================================================================
 
