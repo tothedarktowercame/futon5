@@ -14,13 +14,17 @@
 
    Use :exotype-mode :local-physics for new runs."
   (:require [futon5.ca.core :as ca]
+            [futon5.ct.tensor-mmca :as tensor-mmca]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.functor :as functor]
+            [futon5.mmca.local-physics :as local-physics]
             [futon5.mmca.operators :as operators]))
 
 (def ^:private default-generations 32)
 (def ^:private default-kernel :mutating-template)
 (def ^:private default-mode :god)
+(def ^:private default-engine :mmca)
+(def ^:private supported-engines #{:mmca :tensor})
 
 (defn- classic-mode? [mode]
   (= mode :classic))
@@ -30,6 +34,107 @@
     (throw (ex-info "MMCA runtime requires a starting genotype"
                     {:genotype genotype})))
   genotype)
+
+(defn- normalize-engine [engine]
+  (let [engine (cond
+                 (keyword? engine) engine
+                 (string? engine) (keyword engine)
+                 (nil? engine) default-engine
+                 :else engine)]
+    (when-not (contains? supported-engines engine)
+      (throw (ex-info "Unsupported MMCA engine"
+                      {:engine engine
+                       :supported (vec (sort supported-engines))})))
+    engine))
+
+(defn- rule-int->sigil [n]
+  (when (and (integer? n) (<= 0 (long n) 255))
+    (let [bits (Integer/toBinaryString (int n))
+          pad (max 0 (- 8 (count bits)))
+          padded (str (apply str (repeat pad "0")) bits)]
+      (ca/sigil-for padded))))
+
+(defn- resolve-tensor-rule-sigil [{:keys [rule-sigil tensor-rule-sigil global-rule]}]
+  (or rule-sigil
+      tensor-rule-sigil
+      (rule-int->sigil global-rule)))
+
+(def ^:private tensor-unsupported-keys
+  [:kernel :kernel-spec :kernel-fn :operators :learned-operators :pattern-sigils
+   :operator-scope :exotype :exotype-mode :bend-mode :lock-kernel
+   :freeze-genotype :genotype-gate :genotype-gate-signal :pulses-enabled])
+
+(defn- present? [v]
+  (cond
+    (nil? v) false
+    (false? v) false
+    (and (string? v) (empty? v)) false
+    (and (sequential? v) (empty? v)) false
+    :else true))
+
+(defn- tensor-unsupported-opts [opts]
+  (->> tensor-unsupported-keys
+       (keep (fn [k]
+               (when (present? (get opts k))
+                 k)))
+       vec))
+
+(defn- run-mmca-tensor
+  [{:keys [genotype generations phenotype mode step-opts diagram output-key seed lesion rule-plan] :as opts}]
+  (let [unsupported (tensor-unsupported-opts opts)
+        _ (when (seq unsupported)
+            (throw (ex-info "Tensor engine does not support requested MMCA options"
+                            {:engine :tensor
+                             :unsupported unsupported})))
+        genotype (ensure-genotype genotype)
+        generations (or generations default-generations)
+        mode (or mode default-mode)
+        rule-sigil (resolve-tensor-rule-sigil opts)
+        _ (when-not (seq rule-sigil)
+            (throw (ex-info "Tensor engine requires :rule-sigil (or numeric :global-rule)"
+                            {:engine :tensor
+                             :required [:rule-sigil]
+                             :accepted-fallback [:global-rule]})))
+        run (tensor-mmca/run-tensor-mmca {:genotype genotype
+                                          :rule-sigil rule-sigil
+                                          :generations generations
+                                          :phenotype phenotype
+                                          :lesion lesion
+                                          :rule-plan rule-plan
+                                          :step-opts step-opts
+                                          :diagram diagram
+                                          :output-key output-key
+                                          :seed seed})]
+    {:engine :tensor
+     :kernel :tensor-bitplane
+     :kernel-spec nil
+     :kernel-fn nil
+     :generations generations
+     :mode mode
+     :exotype nil
+     :exotype-mode nil
+     :exotype-system :tensor
+     :exotype-metadata {:exotype-system :tensor
+                        :timestamp (System/currentTimeMillis)
+                        :version "2026-02-21"}
+     :global-rule nil
+     :bend-mode nil
+     :local-physics-runs nil
+     :exotype-nominations nil
+     :exotype-mutations nil
+     :exotype-contexts nil
+     :operators []
+     :meta-states {}
+     :gen-history (:gen-history run)
+     :phe-history (:phe-history run)
+     :metrics-history (:metrics-history run)
+     :summary (:summary run)
+     :episode-summary (:episode-summary run)
+     :proposals nil
+     :lesion (:lesion run)
+     :tensor {:rule-sigil rule-sigil
+              :diagram-type (:diagram-type run)
+              :backend (:tensor-backend run)}}))
 
 (def ^:private operator-cache
   (delay (into {} (map (juxt :sigil identity) (functor/compile-patterns)))))
@@ -359,103 +464,6 @@
                      :genotype next-gen)
               (update-in [:history :genotypes] conj next-gen)))))))
 
-(def ^:private local-physics-kernels
-  "Kernel functions for local physics mode.
-
-   Each kernel function takes (sigil pred succ context) and returns {:sigil S}.
-   These are simplified versions that just apply the base CA evolution
-   with parameters from the context."
-  (let [;; Helper to ensure we always get a valid sigil string
-        ensure-sigil (fn [result]
-                       (cond
-                         (string? result) result
-                         (map? result) (or (:sigil result) ca/default-sigil)
-                         (char? result) (str result)
-                         :else ca/default-sigil))
-
-        make-kernel (fn [base-fn]
-                      (fn [sigil pred succ context]
-                        (let [mutation-rate (or (:mutation-rate context) 0.2)
-                              result (if (< (rand) mutation-rate)
-                                       (ensure-sigil (base-fn sigil pred succ))
-                                       sigil)]
-                          {:sigil result})))
-
-        blend-fn (fn [sigil pred succ]
-                   (let [bits-self (ca/bits-for sigil)
-                         bits-pred (ca/bits-for pred)
-                         bits-succ (ca/bits-for succ)
-                         ;; Majority vote per bit
-                         blended (apply str
-                                        (map (fn [s p n]
-                                               (let [ones (count (filter #(= \1 %) [s p n]))]
-                                                 (if (>= ones 2) \1 \0)))
-                                             bits-self bits-pred bits-succ))
-                         entry (ca/entry-for-bits blended)]
-                     (or (:sigil entry) ca/default-sigil)))
-
-        mult-fn (fn [sigil pred succ]
-                  ;; Standard CA: apply rule based on neighborhood
-                  (let [kernel-fn (ca/kernel-fn :mutating-template)
-                        result (binding [ca/*evolve-sigil-fn* kernel-fn]
-                                 (ca/evolve-sigil sigil pred succ))]
-                    ;; ca/evolve-sigil returns a map with :sigil key
-                    (or (:sigil result) ca/default-sigil)))]
-
-    {:blending (make-kernel blend-fn)
-     :multiplication (make-kernel mult-fn)
-     :ad-hoc-template (make-kernel mult-fn)
-     :blending-mutation (make-kernel blend-fn)
-     :blending-baldwin (make-kernel blend-fn)
-     :collection-template (make-kernel mult-fn)
-     :mutating-template (make-kernel mult-fn)}))
-
-(defn- advance-world-local-physics
-  "Advance the world using local per-cell physics.
-
-   Each cell computes its own 36-bit context (LEFT/EGO/RIGHT/NEXT/PHENOTYPE)
-   and applies the corresponding physics rule from the 256-rule space.
-
-   This is the CORRECT exotype implementation as of 2026-01-24."
-  [state global-rule bend-mode]
-  (let [genotype (:genotype state)
-        phenotype (:phenotype state)
-        prev-genotype (or (previous-entry (get-in state [:history :genotypes]))
-                          genotype)
-        ;; Use bent evolution if global rule specified
-        result (if global-rule
-                 (let [evolved (exotype/evolve-with-global-exotype
-                                genotype phenotype prev-genotype
-                                global-rule bend-mode local-physics-kernels)]
-                   {:genotype evolved
-                    :rules nil  ; Not tracked when using bent evolution
-                    :kernels nil})
-                 ;; Pure local physics
-                 (exotype/evolve-string-local
-                  genotype phenotype prev-genotype local-physics-kernels))
-        next-gen (:genotype result)
-        ;; Also evolve phenotype if present
-        next-phe (when phenotype
-                   (ca/evolve-phenotype-against-genotype genotype phenotype))]
-    (-> state
-        (assoc :generation (inc (:generation state))
-               :genotype next-gen)
-        (cond-> next-phe (assoc :phenotype next-phe))
-        (update-in [:history :genotypes] conj next-gen)
-        (cond-> next-phe
-          (update-in [:history :phenotypes]
-                     (fn [hist]
-                       (if hist
-                         (conj hist next-phe)
-                         [next-phe]))))
-        ;; Track local physics metadata
-        (update :local-physics-runs (fnil conj [])
-                {:generation (:generation state)
-                 :rules (:rules result)
-                 :kernels (:kernels result)
-                 :rule-diversity (when (:rules result)
-                                   (count (set (:rules result))))}))))
-
 (defn- rng-int [^java.util.Random rng n]
   (.nextInt rng n))
 
@@ -574,7 +582,7 @@
   (case exotype-mode
     :inline (update-kernel-by-exotype state exotype rng tick)
     :nominate (nominate-kernel-by-exotype state exotype rng tick)
-    ;; :local-physics is handled differently - see advance-world-local-physics
+    ;; :local-physics is handled by shared local-physics advance helpers.
     :local-physics state
     state))
 
@@ -657,6 +665,7 @@
   "Run a MetaMetaCA simulation alongside the CA kernel.
 
   opts keys:
+  - :engine (optional) :mmca (default) or :tensor
   - :genotype (required)
   - :phenotype (optional)
   - :generations (default 32)
@@ -677,177 +686,239 @@
   - :global-rule (optional, for :local-physics mode) - global rule (0-255 or keyword)
   - :bend-mode (optional, for :local-physics mode) - :sequential, :blend, or :matrix
 
+  Tensor engine (:engine :tensor) keys:
+  - :rule-sigil (required, or provide numeric :global-rule)
+  - :step-opts, :diagram, :output-key (optional; passed to tensor runner)
+
   Returns a map containing genotype history, phenotype history, metrics, and
   the final meta-state for each operator."
-  [{:keys [genotype generations mode lesion pulses-enabled] :as opts}]
-  (let [genotype (ensure-genotype genotype)
-        generations (or generations default-generations)
-        operators (resolve-operators opts genotype)
-        mode (or mode default-mode)
-        pulses-enabled (true? pulses-enabled)
-        exotype (exotype/resolve-exotype (:exotype opts))
-        exotype-mode (or (:exotype-mode opts) :inline)
-        use-local-physics? (= exotype-mode :local-physics)
-        global-rule (:global-rule opts)
-        bend-mode (or (:bend-mode opts) :blend)
-        exotype-rng (when (and exotype (not use-local-physics?))
-                      (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
-        lesion (when lesion (merge {:tick (quot generations 2)
-                                    :half :left
-                                    :mode :zero}
-                                   lesion))
-        initial-state (prepare-initial-state (assoc opts :genotype genotype))
-        {:keys [state metas proposals]}
-        (binding [operators/*pulses-enabled* pulses-enabled
-                  exotype/*exotype-system* (if use-local-physics?
-                                             :local-physics
-                                             :global-kernel)]
-          (let [world (build-world initial-state {})]
-            (run-operators operators [:init] world initial-state {} mode {})))
-        ;; After init hooks, refresh metrics in case they mutated the world
-        state (refresh-metrics state)
-        result
-        (binding [operators/*pulses-enabled* pulses-enabled
-                  exotype/*exotype-system* (if use-local-physics?
-                                             :local-physics
-                                             :global-kernel)]
-          (loop [state state
-                 metas metas
-                 proposals proposals
-                 tick 0
-                 lesion-applied? false
-                 operators operators]
-            (if (= tick generations)
-              {:state state :metas metas :proposals proposals :operators operators}
-              (let [operators (if (dynamic-operators? opts)
-                                (resolve-operators opts (:genotype state))
-                                operators)
-                    world (build-world state metas)
-                    {:keys [state metas proposals]} (run-operators operators [:observe :decide :act]
-                                                                 world state metas mode proposals)
-                    state (refresh-metrics state)
-                    lesion-now? (and lesion (not lesion-applied?) (= tick (:tick lesion)))
-                    state (if lesion-now?
-                            (refresh-metrics (apply-lesion state lesion) true)
-                            state)
-                    ;; Apply old exotype mode OR skip if using local physics
-                    state (if (and exotype (not use-local-physics?))
-                            (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
-                            state)
-                    ;; Advance world with appropriate physics
-                    state (if use-local-physics?
-                            (advance-world-local-physics state global-rule bend-mode)
-                            (advance-world state))
-                    state (refresh-metrics state true)]
-                (recur state metas proposals (inc tick) (or lesion-applied? lesion-now?) operators)))))]
-    (let [{:keys [state metas proposals operators]} result
-          {:keys [history metrics-history kernel kernel-spec]} state]
-      {:kernel kernel
-       :kernel-spec kernel-spec
-       :kernel-fn (:kernel-fn state)
-       :generations generations
-       :mode mode
-       :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
-       :exotype-mode exotype-mode
-       :exotype-system (if use-local-physics? :local-physics :global-kernel)
-       :exotype-metadata {:exotype-system (if use-local-physics? :local-physics :global-kernel)
-                          :timestamp (System/currentTimeMillis)
-                          :version "2026-01-24"}
-       :global-rule (when use-local-physics? global-rule)
-       :bend-mode (when use-local-physics? bend-mode)
-       :local-physics-runs (not-empty (:local-physics-runs state))
-       :exotype-nominations (not-empty (:exotype-nominations state))
-       :exotype-mutations (not-empty (:exotype-mutations state))
-       :exotype-contexts (not-empty (:exotype-contexts state))
-        :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
-                        operators)
-        :meta-states metas
-        :gen-history (:genotypes history)
-        :phe-history (:phenotypes history)
-       :metrics-history metrics-history
-       :proposals (not-empty proposals)
-        :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))
+  [{:keys [genotype generations mode lesion pulses-enabled engine] :as opts}]
+  (let [engine (normalize-engine engine)]
+    (if (= engine :tensor)
+      (run-mmca-tensor opts)
+      (let [genotype (ensure-genotype genotype)
+            generations (or generations default-generations)
+            operators (resolve-operators opts genotype)
+            mode (or mode default-mode)
+            pulses-enabled (true? pulses-enabled)
+            exotype (exotype/resolve-exotype (:exotype opts))
+            exotype-mode (or (:exotype-mode opts) :inline)
+            use-local-physics? (= exotype-mode :local-physics)
+            global-rule (:global-rule opts)
+            bend-mode (or (:bend-mode opts) :blend)
+            exotype-rng (when (and exotype (not use-local-physics?))
+                          (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
+            lesion (when lesion (merge {:tick (quot generations 2)
+                                        :half :left
+                                        :mode :zero}
+                                       lesion))
+            initial-state (prepare-initial-state (assoc opts :genotype genotype))
+            {:keys [state metas proposals]}
+            (binding [operators/*pulses-enabled* pulses-enabled
+                      exotype/*exotype-system* (if use-local-physics?
+                                                 :local-physics
+                                                 :global-kernel)]
+              (let [world (build-world initial-state {})]
+                (run-operators operators [:init] world initial-state {} mode {})))
+            ;; After init hooks, refresh metrics in case they mutated the world
+            state (refresh-metrics state)
+            result
+            (binding [operators/*pulses-enabled* pulses-enabled
+                      exotype/*exotype-system* (if use-local-physics?
+                                                 :local-physics
+                                                 :global-kernel)]
+              (loop [state state
+                     metas metas
+                     proposals proposals
+                     tick 0
+                     lesion-applied? false
+                     operators operators]
+                (if (= tick generations)
+                  {:state state :metas metas :proposals proposals :operators operators}
+                  (let [operators (if (dynamic-operators? opts)
+                                    (resolve-operators opts (:genotype state))
+                                    operators)
+                        world (build-world state metas)
+                        {:keys [state metas proposals]} (run-operators operators [:observe :decide :act]
+                                                                     world state metas mode proposals)
+                        state (refresh-metrics state)
+                        lesion-now? (and lesion (not lesion-applied?) (= tick (:tick lesion)))
+                        state (if lesion-now?
+                                (refresh-metrics (apply-lesion state lesion) true)
+                                state)
+                        ;; Apply old exotype mode OR skip if using local physics
+                        state (if (and exotype (not use-local-physics?))
+                                (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
+                                state)
+                        ;; Advance world with appropriate physics
+                        state (if use-local-physics?
+                                (local-physics/advance-state state global-rule bend-mode
+                                                             {:track-local? true})
+                                (advance-world state))
+                        state (refresh-metrics state true)]
+                    (recur state metas proposals (inc tick) (or lesion-applied? lesion-now?) operators)))))]
+        (let [{:keys [state metas proposals operators]} result
+              {:keys [history metrics-history kernel kernel-spec]} state]
+        {:engine :mmca
+           :kernel kernel
+           :kernel-spec kernel-spec
+           :kernel-fn (:kernel-fn state)
+           :generations generations
+           :mode mode
+           :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
+           :exotype-mode exotype-mode
+           :exotype-system (if use-local-physics? :local-physics :global-kernel)
+           :exotype-metadata {:exotype-system (if use-local-physics? :local-physics :global-kernel)
+                              :timestamp (System/currentTimeMillis)
+                              :version "2026-01-24"}
+           :global-rule (when use-local-physics? global-rule)
+           :bend-mode (when use-local-physics? bend-mode)
+           :local-physics-runs (not-empty (:local-physics-runs state))
+           :exotype-nominations (not-empty (:exotype-nominations state))
+           :exotype-mutations (not-empty (:exotype-mutations state))
+           :exotype-contexts (not-empty (:exotype-contexts state))
+            :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
+                            operators)
+            :meta-states metas
+            :gen-history (:genotypes history)
+            :phe-history (:phenotypes history)
+           :metrics-history metrics-history
+           :proposals (not-empty proposals)
+            :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))})))))
+
+(defn- tensor-stream-state [result tick]
+  (let [gen-history (vec (or (:gen-history result) []))
+        phe-history (vec (or (:phe-history result) []))
+        metrics-history (vec (or (:metrics-history result) []))
+        last-idx (max 0 (dec (count gen-history)))
+        idx (min (max 0 tick) last-idx)
+        hist-end (inc idx)
+        phe-end (min hist-end (count phe-history))
+        phenotype (when (< idx (count phe-history))
+                    (nth phe-history idx))
+        history {:genotypes (subvec gen-history 0 hist-end)
+                 :phenotypes (when (pos? phe-end)
+                               (subvec phe-history 0 phe-end))}]
+    {:generation idx
+     :genotype (nth gen-history idx "")
+     :phenotype phenotype
+     :history history
+     :metrics (when (< idx (count metrics-history))
+                (nth metrics-history idx))
+     :metrics-history (if (pos? (count metrics-history))
+                        (subvec metrics-history 0 (min hist-end (count metrics-history)))
+                        [])
+     :kernel (:kernel result)
+     :kernel-spec (:kernel-spec result)
+     :kernel-fn (:kernel-fn result)}))
+
+(defn- emit-tensor-stream! [result step-fn]
+  (when (and step-fn (seq (:gen-history result)))
+    (let [metas {}
+          proposals {}
+          operators []]
+      (step-fn {:phase :init
+                :tick 0
+                :state (tensor-stream-state result 0)
+                :metas metas
+                :proposals proposals
+                :operators operators})
+      (doseq [tick (range 1 (count (:gen-history result)))]
+        (step-fn {:phase :tick
+                  :tick tick
+                  :state (tensor-stream-state result tick)
+                  :metas metas
+                  :proposals proposals
+                  :operators operators})))))
 
 (defn run-mmca-stream
   "Run a MetaMetaCA simulation and call step-fn with each generation state.
 
   step-fn receives a map with :phase (:init or :tick), :tick, :state, :metas,
-  :proposals, and :operators."
-  [{:keys [genotype generations mode lesion pulses-enabled] :as opts} step-fn]
-  (let [genotype (ensure-genotype genotype)
-        generations (or generations default-generations)
-        operators (resolve-operators opts genotype)
-        mode (or mode default-mode)
-        pulses-enabled (true? pulses-enabled)
-        exotype (exotype/resolve-exotype (:exotype opts))
-        exotype-mode (or (:exotype-mode opts) :inline)
-        exotype-rng (when exotype
-                      (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
-        lesion (when lesion (merge {:tick (quot generations 2)
-                                    :half :left
-                                    :mode :zero}
-                                   lesion))
-        initial-state (prepare-initial-state (assoc opts :genotype genotype))
-        emit (fn [phase tick state metas proposals operators]
-               (when step-fn
-                 (step-fn {:phase phase
-                           :tick tick
-                           :state state
-                           :metas metas
-                           :proposals proposals
-                           :operators operators})))
-        {:keys [state metas proposals]}
-        (binding [operators/*pulses-enabled* pulses-enabled]
-          (let [world (build-world initial-state {})]
-            (run-operators operators [:init] world initial-state {} mode {})))
-        ;; After init hooks, refresh metrics in case they mutated the world
-        state (refresh-metrics state)]
-    (emit :init 0 state metas proposals operators)
-    (let [result
-          (binding [operators/*pulses-enabled* pulses-enabled]
-            (loop [state state
-                   metas metas
-                   proposals proposals
-                   tick 0
-                   lesion-applied? false
-                   operators operators]
-              (if (= tick generations)
-                {:state state :metas metas :proposals proposals :operators operators}
-                (let [operators (if (dynamic-operators? opts)
-                                  (resolve-operators opts (:genotype state))
-                                  operators)
-                      world (build-world state metas)
-                      {:keys [state metas proposals]} (run-operators operators [:observe :decide :act]
-                                                                   world state metas mode proposals)
-                      state (refresh-metrics state)
-                      lesion-now? (and lesion (not lesion-applied?) (= tick (:tick lesion)))
-                      state (if lesion-now?
-                              (refresh-metrics (apply-lesion state lesion) true)
-                              state)
-                      state (if exotype
-                              (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
-                              state)
-                      state (advance-world state)
-                      state (refresh-metrics state true)
-                      next-tick (inc tick)]
-                  (emit :tick next-tick state metas proposals operators)
-                  (recur state metas proposals next-tick (or lesion-applied? lesion-now?) operators)))))]
-      (let [{:keys [state metas proposals operators]} result
-            {:keys [history metrics-history kernel]} state]
-        {:kernel kernel
-         :kernel-fn (:kernel-fn state)
-         :generations generations
-         :mode mode
-         :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
-         :exotype-mode exotype-mode
-         :exotype-nominations (not-empty (:exotype-nominations state))
-         :exotype-mutations (not-empty (:exotype-mutations state))
-         :exotype-contexts (not-empty (:exotype-contexts state))
-         :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
-                         operators)
-         :meta-states metas
-         :gen-history (:genotypes history)
-         :phe-history (:phenotypes history)
-         :metrics-history metrics-history
-         :proposals (not-empty proposals)
-         :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))}))))
+  :proposals, and :operators.
+
+  When :engine :tensor is selected, states are synthesized from tensor history."
+  [{:keys [genotype generations mode lesion pulses-enabled engine] :as opts} step-fn]
+  (let [engine (normalize-engine engine)]
+    (if (= engine :tensor)
+      (let [result (run-mmca opts)]
+        (emit-tensor-stream! result step-fn)
+        result)
+      (let [genotype (ensure-genotype genotype)
+            generations (or generations default-generations)
+            operators (resolve-operators opts genotype)
+            mode (or mode default-mode)
+            pulses-enabled (true? pulses-enabled)
+            exotype (exotype/resolve-exotype (:exotype opts))
+            exotype-mode (or (:exotype-mode opts) :inline)
+            exotype-rng (when exotype
+                          (java.util.Random. (long (or (:seed opts) (System/nanoTime)))))
+            lesion (when lesion (merge {:tick (quot generations 2)
+                                        :half :left
+                                        :mode :zero}
+                                       lesion))
+            initial-state (prepare-initial-state (assoc opts :genotype genotype))
+            emit (fn [phase tick state metas proposals operators]
+                   (when step-fn
+                     (step-fn {:phase phase
+                               :tick tick
+                               :state state
+                               :metas metas
+                               :proposals proposals
+                               :operators operators})))
+            {:keys [state metas proposals]}
+            (binding [operators/*pulses-enabled* pulses-enabled]
+              (let [world (build-world initial-state {})]
+                (run-operators operators [:init] world initial-state {} mode {})))
+            ;; After init hooks, refresh metrics in case they mutated the world
+            state (refresh-metrics state)]
+        (emit :init 0 state metas proposals operators)
+        (let [result
+              (binding [operators/*pulses-enabled* pulses-enabled]
+                (loop [state state
+                       metas metas
+                       proposals proposals
+                       tick 0
+                       lesion-applied? false
+                       operators operators]
+                  (if (= tick generations)
+                    {:state state :metas metas :proposals proposals :operators operators}
+                    (let [operators (if (dynamic-operators? opts)
+                                      (resolve-operators opts (:genotype state))
+                                      operators)
+                          world (build-world state metas)
+                          {:keys [state metas proposals]} (run-operators operators [:observe :decide :act]
+                                                                       world state metas mode proposals)
+                          state (refresh-metrics state)
+                          lesion-now? (and lesion (not lesion-applied?) (= tick (:tick lesion)))
+                          state (if lesion-now?
+                                  (refresh-metrics (apply-lesion state lesion) true)
+                                  state)
+                          state (if exotype
+                                  (apply-exotype-mode state exotype exotype-rng tick exotype-mode)
+                                  state)
+                          state (advance-world state)
+                          state (refresh-metrics state true)
+                          next-tick (inc tick)]
+                      (emit :tick next-tick state metas proposals operators)
+                      (recur state metas proposals next-tick (or lesion-applied? lesion-now?) operators)))))]
+          (let [{:keys [state metas proposals operators]} result
+                {:keys [history metrics-history kernel]} state]
+            {:engine :mmca
+             :kernel kernel
+             :kernel-fn (:kernel-fn state)
+             :generations generations
+             :mode mode
+             :exotype (when exotype (select-keys exotype [:sigil :tier :params]))
+             :exotype-mode exotype-mode
+             :exotype-nominations (not-empty (:exotype-nominations state))
+             :exotype-mutations (not-empty (:exotype-mutations state))
+             :exotype-contexts (not-empty (:exotype-contexts state))
+             :operators (map #(select-keys % [:sigil :pattern :context :parameters :functor])
+                             operators)
+             :meta-states metas
+             :gen-history (:genotypes history)
+             :phe-history (:phenotypes history)
+             :metrics-history metrics-history
+             :proposals (not-empty proposals)
+             :lesion (when lesion (select-keys lesion [:tick :target :half :mode]))}))))))

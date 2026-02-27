@@ -21,6 +21,8 @@
     "  --genotype STR        Starting sigil string (required if no --length)."
     "  --length N            Random sigil string length (default 32)."
     "  --generations N       Generations to run (default 32)."
+    "  --engine KW           Engine keyword: :mmca or :tensor (default :mmca)."
+    "  --rule-sigil SIGIL    Tensor engine update rule sigil (or inferred from --global-rule)."
     "  --kernel KW           Kernel keyword, e.g. :mutating-template."
     "  --mode KW             :god or :classic (default :god)."
     "  --pattern-sigils STR  Comma-separated sigils to activate operators."
@@ -56,6 +58,10 @@
                     (remove str/blank?))]
     (when (seq tokens)
       (vec tokens))))
+
+(defn- parse-keyword [s]
+  (when (seq s)
+    (keyword (str/replace s #"^:" ""))))
 
 (defn- parse-args [args]
   (loop [args args
@@ -95,6 +101,12 @@
 
           (= "--generations" flag)
           (recur (rest more) (assoc opts :generations (parse-int (first more))))
+
+          (= "--engine" flag)
+          (recur (rest more) (assoc opts :engine (parse-keyword (first more))))
+
+          (= "--rule-sigil" flag)
+          (recur (rest more) (assoc opts :rule-sigil (first more)))
 
           (= "--kernel" flag)
           (recur (rest more) (assoc opts :kernel (some-> (first more) keyword)))
@@ -184,8 +196,9 @@
       s
       (str s (apply str (repeat (- width (count s)) " "))))))
 
-(defn- print-header [{:keys [kernel mode generations operators]}]
+(defn- print-header [{:keys [engine kernel mode generations operators]}]
   (println "MMCA run"
+           "| engine" (name (or engine :mmca))
            "| kernel" (ca/kernel-label kernel)
            "| mode" (name mode)
            "| generations" generations)
@@ -315,7 +328,7 @@
                 phenotype phenotype-length sleep-ms tty raw global-rule mutation
                 no-operators lock-kernel freeze-genotype genotype-gate gate-signal
                 lesion lesion-tick lesion-target lesion-half lesion-mode
-                seed]}
+                seed engine rule-sigil]}
         (parse-args args)]
     (cond
       help
@@ -329,8 +342,11 @@
 
       :else
       (let [length (or length default-length)
+            engine (or engine :mmca)
             global-rule (when (and global-rule (<= 0 global-rule 255))
                           global-rule)
+            tensor-rule-sigil (or rule-sigil
+                                  (when global-rule (rule->sigil global-rule)))
             rng (when seed (java.util.Random. (long seed)))
             genotype (cond
                        global-rule
@@ -358,8 +374,10 @@
                            lesion-mode (assoc :mode lesion-mode)))
             opts (cond-> {:genotype genotype
                           :generations generations
-                          :mode mode}
+                          :mode mode
+                          :engine engine}
                    phenotype (assoc :phenotype phenotype)
+                   tensor-rule-sigil (assoc :rule-sigil tensor-rule-sigil)
                    kernel (assoc :kernel kernel)
                    lock-kernel (assoc :lock-kernel true)
                    freeze-genotype (assoc :freeze-genotype true)
@@ -396,11 +414,13 @@
                             (fn [{:keys [state operators] :as step}]
                               (when-not @printed?
                                 (if raw
-                                  (write-raw (str "MMCA run | kernel "
-                                                  (ca/kernel-label (:kernel state))
+                                  (write-raw (str "MMCA run | engine "
+                                                  (name engine)
+                                                  " | kernel " (ca/kernel-label (:kernel state))
                                                   " | mode " (name mode)
                                                   " | generations " generations))
-                                  (print-header {:kernel (:kernel state)
+                                  (print-header {:engine engine
+                                                 :kernel (:kernel state)
                                                  :mode mode
                                                  :generations generations
                                                  :operators operators}))

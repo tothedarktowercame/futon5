@@ -6,7 +6,9 @@
 
    Calls Python tools via subprocess for SMT/JAX, keeps MMCA evaluation
    in Clojure for fidelity."
-  (:require [clojure.java.io :as io]
+  (:require [cheshire.core :as json]
+            [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
             [futon5.tpg.core :as tpg]
@@ -14,70 +16,56 @@
             [futon5.tpg.runner :as runner]))
 
 ;; =============================================================================
-;; JSON SERIALIZATION (minimal, no external deps)
+;; JSON SERIALIZATION
 ;; =============================================================================
 
-(defn- tpg->json
-  "Convert a TPG to JSON string for Python tools."
+(defn- tpg->json-data
+  "Convert a TPG graph into Python-tool JSON payload shape."
   [tpg-graph]
-  (let [programs->json (fn [programs]
-                         (str "["
-                              (str/join ","
-                                (map (fn [p]
-                                       (str "{\"program/id\":\"" (name (or (:program/id p) "unknown"))
-                                            "\",\"weights\":" (str "[" (str/join "," (map str (:weights p))) "]")
-                                            ",\"bias\":" (str (:bias p))
-                                            ",\"action\":{\"type\":\"" (name (get-in p [:action :type]))
-                                            "\",\"target\":\"" (name (get-in p [:action :target]))
-                                            "\"}}"))
-                                     programs))
-                              "]"))
-        teams->json (fn [teams]
-                      (str "["
-                           (str/join ","
-                             (map (fn [t]
-                                    (str "{\"team/id\":\"" (name (:team/id t))
-                                         "\",\"programs\":" (programs->json (:programs t))
-                                         "}"))
-                                  teams))
-                           "]"))]
-    (str "{\"tpg/id\":\"" (or (:tpg/id tpg-graph) "unknown")
-         "\",\"teams\":" (teams->json (:teams tpg-graph))
-         ",\"config\":{\"root-team\":\"" (name (or (get-in tpg-graph [:config :root-team]) :root))
-         "\",\"max-depth\":" (or (get-in tpg-graph [:config :max-depth]) 4)
-         "}}")))
+  {"tpg/id" (str (or (:tpg/id tpg-graph) "unknown"))
+   "teams" (mapv (fn [team]
+                   {"team/id" (name (:team/id team))
+                    "programs" (mapv (fn [program]
+                                        {"program/id" (name (or (:program/id program) :unknown))
+                                         "weights" (mapv double (:weights program))
+                                         "bias" (double (or (:bias program) 0.0))
+                                         "action" {"type" (name (or (get-in program [:action :type]) :operator))
+                                                   "target" (name (or (get-in program [:action :target]) :adaptation))}})
+                                      (:programs team))})
+                 (:teams tpg-graph))
+   "config" {"root-team" (name (or (get-in tpg-graph [:config :root-team]) :root))
+             "max-depth" (int (or (get-in tpg-graph [:config :max-depth]) 4))}})
 
-(defn- verifier-spec->json [spec]
-  (str "{"
-       (str/join ","
-         (map (fn [[k [center width]]]
-                (str "\"" (name k) "\":[" center "," width "]"))
-              spec))
-       "}"))
+(defn- verifier-spec->json-data [spec]
+  (into {}
+        (map (fn [[k [center width]]]
+               [(name k) [(double center) (double width)]]))
+        spec))
 
-(defn- traces->json
-  "Convert diagnostic traces to JSON for JAX."
+(defn- trace-diagnostic->json-data [diag]
+  (when diag
+    (let [named (:named diag)]
+      {"entropy" (double (or (:entropy named) 0.0))
+       "change" (double (or (:change named) 0.0))
+       "autocorr" (double (or (:autocorr named) 0.0))
+       "diversity" (double (or (:diversity named) 0.0))
+       "phenotype_coupling" (double (or (:phenotype-coupling named) 0.0))
+       "damage_spread" (double (or (:damage-spread named) 0.0))})))
+
+(defn- traces->json-data
+  "Convert diagnostic traces into JSON payload shape for JAX."
   [traces]
-  (str "["
-       (str/join ","
-         (map (fn [trace]
-                (str "["
-                     (str/join ","
-                       (map (fn [diag]
-                              (if diag
-                                (let [named (:named diag)]
-                                  (str "{\"entropy\":" (:entropy named 0.0)
-                                       ",\"change\":" (:change named 0.0)
-                                       ",\"autocorr\":" (:autocorr named 0.0)
-                                       ",\"diversity\":" (:diversity named 0.0)
-                                       ",\"phenotype_coupling\":" (:phenotype-coupling named 0.0)
-                                       ",\"damage_spread\":" (:damage-spread named 0.0)
-                                       "}"))
-                                "null"))
-                            trace))
-                     "]"))
-              traces))
-       "]"))
+  (mapv (fn [trace]
+          (mapv trace-diagnostic->json-data trace))
+        traces))
+
+(defn- parse-json-output [raw]
+  (try
+    {:ok? true :data (json/parse-string raw false)}
+    (catch Exception e
+      {:ok? false
+       :error (str "Failed to parse JSON output: " (.getMessage e))
+       :raw raw})))
 
 ;; =============================================================================
 ;; PYTHON TOOL INTEGRATION
@@ -157,34 +145,42 @@
 (defn smt-analyze
   "Run SMT analysis on a TPG. Returns parsed result map."
   [tpg-graph verifier-spec]
-  (let [input (str "{\"tpg\":" (tpg->json tpg-graph)
-                   ",\"verifier_spec\":" (verifier-spec->json verifier-spec) "}")
+  (let [input (json/generate-string {"tpg" (tpg->json-data tpg-graph)
+                                     "verifier_spec" (verifier-spec->json-data verifier-spec)})
         result (run-python-tool "smt_analyzer.py" input)]
     (if (:ok? result)
-      (let [out (:out result)]
-        {:raw out
-         :reachable-count (count (re-seq #"\"reachable" out))
-         :error nil
-         :python-path (:python-path result)
-         :python-source (:python-source result)})
+      (let [parsed (parse-json-output (:out result))]
+        (if (:ok? parsed)
+          (let [data (:data parsed)]
+            {:raw (:out result)
+             :parsed data
+             :reachable-count (count (or (get data "reachable_operators") []))
+             :python-path (:python-path result)
+             :python-source (:python-source result)})
+          {:error (:error parsed)
+           :raw (:raw parsed)
+           :python-path (:python-path result)
+           :python-source (:python-source result)}))
       (select-keys result [:error :hint :python-path :python-source :script-path :exit]))))
 
 (defn smt-score-details
   "Score a TPG using SMT analysis and return details.
    Score is in [0, 1]:
    - Penalizes unreachable operators
-   - Penalizes dead programs
-   - Rewards verifier satisfiability"
+  - Penalizes dead programs
+  - Rewards verifier satisfiability"
   [tpg-graph verifier-spec]
-  (let [input (str "{\"tpg\":" (tpg->json tpg-graph)
-                   ",\"verifier_spec\":" (verifier-spec->json verifier-spec) "}")
-        result (run-python-tool "smt_analyzer.py" input)]
-    (if (:ok? result)
-      (let [out (:out result)
-            ;; Parse key metrics from JSON output
-            n-unreachable (count (re-seq #"unreachable" out))
-            n-dead (count (re-seq #"never wins" out))
-            sat? (re-find #"\"verifier_satisfiable\": true" out)
+  (let [analysis (smt-analyze tpg-graph verifier-spec)]
+    (if-let [err (:error analysis)]
+      {:score 0.0
+       :error err
+       :hint (:hint analysis)
+       :python-path (:python-path analysis)
+       :python-source (:python-source analysis)}
+      (let [parsed (:parsed analysis)
+            n-unreachable (count (or (get parsed "unreachable_operators") []))
+            n-dead (count (or (get parsed "dead_programs") []))
+            sat? (true? (get parsed "verifier_satisfiable"))
             ;; Simple scoring: penalize structural issues
             base (if sat? 0.5 0.0)
             unreachable-penalty (* 0.0625 n-unreachable)  ;; 1/16 per unreachable
@@ -192,13 +188,11 @@
             score (max 0.0 (min 1.0 (- (+ base 0.5) unreachable-penalty dead-penalty)))]
         {:score score
          :error nil
-         :python-path (:python-path result)
-         :python-source (:python-source result)})
-      {:score 0.0
-       :error (:error result)
-       :hint (:hint result)
-       :python-path (:python-path result)
-       :python-source (:python-source result)})))
+         :unreachable-count n-unreachable
+         :dead-program-count n-dead
+         :verifier-satisfiable sat?
+         :python-path (:python-path analysis)
+         :python-source (:python-source analysis)}))))
 
 (defn smt-score
   "Score a TPG using SMT analysis.
@@ -206,24 +200,94 @@
   [tpg-graph verifier-spec]
   (:score (smt-score-details tpg-graph verifier-spec)))
 
+(defn- apply-refined-program
+  [program refined]
+  (let [weights (get refined "weights")
+        bias (get refined "bias")
+        n-weights (count (:weights program))
+        valid-weights? (and (sequential? weights)
+                            (= n-weights (count weights))
+                            (every? number? weights))
+        valid-bias? (number? bias)]
+    {:program (cond-> program
+                valid-weights? (assoc :weights (mapv double weights))
+                valid-bias? (assoc :bias (double bias)))
+     :weights-updated? valid-weights?
+     :bias-updated? valid-bias?}))
+
+(defn- apply-refined-weights
+  [tpg-graph refined-weights]
+  (let [stats (atom {:teams-updated 0
+                     :programs-updated 0
+                     :weights-updated 0
+                     :bias-updated 0})
+        teams' (mapv (fn [team]
+                       (let [team-key (name (:team/id team))
+                             refined-team (or (get refined-weights team-key)
+                                              (get refined-weights (keyword team-key))
+                                              (get refined-weights (:team/id team)))
+                             refined-team (when (map? refined-team) refined-team)]
+                         (if-not refined-team
+                           team
+                           (let [programs' (mapv (fn [idx program]
+                                                   (let [entry (or (get refined-team (str idx))
+                                                                   (get refined-team idx)
+                                                                   (get refined-team (keyword (str idx))))
+                                                         entry (when (map? entry) entry)]
+                                                     (if-not entry
+                                                       program
+                                                       (let [{:keys [program weights-updated? bias-updated?]}
+                                                             (apply-refined-program program entry)]
+                                                         (when (or weights-updated? bias-updated?)
+                                                           (swap! stats (fn [s]
+                                                                          (cond-> (update s :programs-updated inc)
+                                                                            weights-updated? (update :weights-updated inc)
+                                                                            bias-updated? (update :bias-updated inc)))))
+                                                         program))))
+                                                 (range (count (:programs team)))
+                                                 (:programs team))
+                                 team-updated? (not= programs' (:programs team))]
+                             (when team-updated?
+                               (swap! stats update :teams-updated inc))
+                             (assoc team :programs programs')))))
+                     (:teams tpg-graph))]
+    {:tpg (assoc tpg-graph :teams teams')
+     :stats @stats}))
+
 (defn jax-refine-weights
   "Run JAX weight refinement on a TPG given diagnostic traces.
    Returns the TPG with updated weights."
   [tpg-graph diagnostic-traces verifier-spec]
-  (let [input (str "{\"tpg\":" (tpg->json tpg-graph)
-                   ",\"traces\":" (traces->json diagnostic-traces)
-                   ",\"verifier_spec\":" (verifier-spec->json verifier-spec)
-                   ",\"config\":{\"n_steps\":30,\"learning_rate\":0.01}}")
+  (let [input (json/generate-string {"tpg" (tpg->json-data tpg-graph)
+                                     "traces" (traces->json-data diagnostic-traces)
+                                     "verifier_spec" (verifier-spec->json-data verifier-spec)
+                                     "config" {"n_steps" 30
+                                               "learning_rate" 0.01}})
         result (run-python-tool "jax_refine.py" input)]
     (if (:ok? result)
-      ;; For now, return original TPG (weight injection requires JSON parsing)
-      ;; The key metric is the improvement reported by JAX
-      {:tpg tpg-graph
-       :jax-output (:out result)
-       :improvement (when-let [m (re-find #"\"improvement\": ([0-9.+-]+)" (:out result))]
-                      (Double/parseDouble (second m)))
-       :python-path (:python-path result)
-       :python-source (:python-source result)}
+      (let [parsed (parse-json-output (:out result))]
+        (if-not (:ok? parsed)
+          {:tpg tpg-graph
+           :error (:error parsed)
+           :python-path (:python-path result)
+           :python-source (:python-source result)}
+          (let [data (:data parsed)
+                refined-weights (or (get data "refined_weights") {})
+                applied (if (map? refined-weights)
+                          (apply-refined-weights tpg-graph refined-weights)
+                          {:tpg tpg-graph
+                           :stats {:teams-updated 0
+                                   :programs-updated 0
+                                   :weights-updated 0
+                                   :bias-updated 0}})]
+            {:tpg (:tpg applied)
+             :jax-output (:out result)
+             :improvement (double (or (get data "improvement") 0.0))
+             :original-satisfaction (double (or (get data "original_satisfaction") 0.0))
+             :refined-satisfaction (double (or (get data "refined_satisfaction") 0.0))
+             :refinement-stats (:stats applied)
+             :python-path (:python-path result)
+             :python-source (:python-source result)})))
       {:tpg tpg-graph
        :error (:error result)
        :hint (:hint result)
@@ -369,5 +433,7 @@
 (defn -main [& args]
   (run-comparison
    (when (seq args)
-     (try (read-string (first args))
-          (catch Exception _ {})))))
+     (try
+       (let [cfg (edn/read-string (first args))]
+         (if (map? cfg) cfg {}))
+       (catch Exception _ {})))))
