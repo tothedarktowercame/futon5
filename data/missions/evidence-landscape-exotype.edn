@@ -32,7 +32,7 @@
 ;;   Same pattern as S-default in social-exotype and C-default in coordination.
 
 {:mission/id :evidence-landscape-exotype
- :mission/state :active
+ :mission/state :complete
 
  :ports
  {:input

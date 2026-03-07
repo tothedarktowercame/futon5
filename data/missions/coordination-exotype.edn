@@ -27,7 +27,7 @@
 ;; glacial timescale. Fast dynamics must never reach this path.
 
 {:mission/id :coordination-exotype
- :mission/state :active
+ :mission/state :complete
 
  :ports
  {:input

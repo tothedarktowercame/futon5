@@ -9,7 +9,7 @@
 ;;   :constraint   — true if this node is a preference/constraint (Invariant I4)
 
 {:mission/id :futon1a-rebuild
- :mission/state :active
+ :mission/state :complete
 
  :ports
  {:input

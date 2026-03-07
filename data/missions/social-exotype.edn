@@ -36,7 +36,7 @@
 ;; This is not analogy — it is the unimplemented half of the duality table.
 
 {:mission/id :social-exotype
- :mission/state :active
+ :mission/state :complete
 
  :ports
  {:input

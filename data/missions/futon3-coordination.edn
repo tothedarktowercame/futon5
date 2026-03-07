@@ -14,7 +14,7 @@
 ;;   → G2 Execution → G1 Validation → G0 Evidence Durability
 
 {:mission/id :futon3-coordination
- :mission/state :active
+ :mission/state :complete
 
  :ports
  {:input
