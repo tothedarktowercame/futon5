@@ -1,0 +1,266 @@
+;; FM-001 Mission Diagram — R(B_{n-1}, B_n) = 4n-1
+;;
+;; This is the AIF+ mission diagram for the first FrontierMath pilot
+;; problem. It maps the 5-mode proof protocol (SPEC → FALSIFY →
+;; CONSTRUCT → VERIFY → MAP) as a coordination pipeline, with the
+;; Lakatosian/Pólya ledger as shared state.
+;;
+;; The mission ran from 2026-03-07 to 2026-03-09 across three agents:
+;;   Tickle (dispatcher, haiku)  — time-like: pushed the clock forward
+;;   claude-2 / Mentor           — space-like: mapped territory, validated soundness
+;;   codex-1 (compute)           — execution: SAT, search, verification
+;;
+;; STRUCTURAL FINDING:
+;; The proof peripheral's 5-mode pipeline IS a gate pipeline (cf.
+;; coordination-exotype G5→G0). The modes project onto gates:
+;;   SPEC     ↔ G5 (is the problem well-defined?)
+;;   FALSIFY  ↔ G4 (is the approach authorized by evidence?)
+;;   CONSTRUCT ↔ G2 (do the work)
+;;   VERIFY   ↔ G1 (does the output satisfy criteria?)
+;;   MAP      ↔ G0 (is the proof durable and replayable?)
+;; G3 (pattern reference) is latent — the Pólya heuristic layer fills it.
+
+{:mission/id :fm001-book-ramsey
+ :mission/state :complete
+ :mission/problem "R(B_{n-1}, B_n) >= 4n-1 for all n >= 2"
+ :mission/answer "R(B_{n-1}, B_n) = 4n-1 for infinite family (Wesley 2025)"
+
+ :ports
+ {:input
+  [;; === PROBLEM INPUTS ===
+
+   ;; The FrontierMath problem statement
+   {:id :I-problem       :name "FM-001 problem statement"
+    :type :mathematical-claim
+    :source "FrontierMath pilot / problem bank"
+    :timescale :glacial
+    :constraint true}
+
+   ;; Literature — existing results on book Ramsey numbers
+   {:id :I-literature    :name "Book Ramsey literature"
+    :type :mathematical-knowledge
+    :source "Rousseau-Sheehan 1978, Nikiforov-Rousseau 2005, Wesley 2025"
+    :timescale :glacial
+    :constraint true}
+
+   ;; Computational tools — SAT solvers, CAS, verification scripts
+   {:id :I-compute       :name "Computational environment"
+    :type :compute-resource
+    :source "codex-1 / Python / Clojure REPL"
+    :timescale :fast}
+
+   ;; === COORDINATION INPUTS ===
+
+   ;; Proof ledger — the Lakatosian/Pólya shared state
+   ;; DUAL ROLE: environment for agents, constraint for validation
+   {:id :I-ledger        :name "Proof ledger (FM-001.edn)"
+    :type :proof-state
+    :source "data/proof-state/FM-001.edn"
+    :timescale :fast
+    :note "Lakatosian conjectures + Pólya heuristics + DAG obligations"}
+
+   ;; IRC coordination surface
+   {:id :I-irc           :name "IRC #math channel"
+    :type :transport
+    :source "irc:tickle, irc:claude-2, irc:codex-1"
+    :timescale :social}]
+
+  :output
+  [;; === PROOF OUTPUTS ===
+
+   ;; The formal proof document
+   {:id :O-proof         :name "Formal proof (FM-001-proof.md)"
+    :type :mathematical-proof
+    :consumer "publication / FrontierMath submission"
+    :timescale :glacial}
+
+   ;; Witness graph — the explicit construction
+   {:id :O-witness       :name "Wesley 2-block-circulant on GF(49)"
+    :type :mathematical-object
+    :consumer "proof verification"
+    :timescale :fast}
+
+   ;; Dead-end catalogue — the impossibility results
+   {:id :O-dead-ends     :name "Dead-end catalogue (6 approaches)"
+    :type :mathematical-knowledge
+    :consumer "future FM problems / methodology"
+    :timescale :glacial}
+
+   ;; Evidence trail — the ledger with full Lakatosian history
+   {:id :O-ledger-final  :name "Final proof ledger (v53+)"
+    :type :proof-state
+    :consumer "mission archive / PAR"
+    :timescale :medium}
+
+   ;; Approach evaluation — the strategic analysis
+   {:id :O-evaluation    :name "Approach evaluation document"
+    :type :mathematical-analysis
+    :consumer "methodology / pattern library"
+    :timescale :glacial}]}
+
+ :components
+ [;; ================================================================
+  ;; THE 5-MODE PROOF PIPELINE (projects onto gate pipeline)
+  ;; ================================================================
+
+  ;; SPEC: Problem formalization
+  ;; Book graph B_k = K_2 + K̄_k. Ramsey number definitions.
+  ;; Obligation DAG: F1,F2 → C1 → C2 → C3,C4 → T1,T2,T3
+  {:id :SPEC          :name "SPEC: Problem Formalization"
+   :type :proof-mode
+   :gate-projection :G5
+   :accepts #{:mathematical-claim}
+   :produces #{:proof-state}
+   :timescale :glacial
+   :outcome "9 obligations, acyclic DAG, B_k-freeness characterized"}
+
+  ;; FALSIFY: Attempt to disprove
+  ;; SAT encoding for small n. n=3,4 confirmed. n=5 timeout.
+  ;; Conclusion: no counterexample found, construction path warranted.
+  {:id :FALSIFY       :name "FALSIFY: Counterexample Search"
+   :type :proof-mode
+   :gate-projection :G4
+   :accepts #{:proof-state :compute-resource}
+   :produces #{:proof-state}
+   :timescale :fast
+   :outcome "H-F1 partially tested (n=3,4 refuted falsification, n=5 inconclusive)"
+   :agents ["codex-1" "claude-2"]}
+
+  ;; CONSTRUCT: Build witness
+  ;; 6 dead ends → literature pivot → Wesley 2-block-circulant
+  {:id :CONSTRUCT     :name "CONSTRUCT: Witness Construction"
+   :type :proof-mode
+   :gate-projection :G2
+   :accepts #{:proof-state :mathematical-knowledge :compute-resource}
+   :produces #{:mathematical-object :proof-state}
+   :timescale :fast
+   :outcome "Wesley Γ_{F_q}(Q,Q,N) found via literature after 6 dead ends"
+   :agents ["claude-2" "codex-1"]
+   :dead-ends
+   [{:id :DE-1 :approach "Extended Paley S=QR"
+     :status :refuted :reason "Twin obstruction (0 and ∞ are twins)"}
+    {:id :DE-2 :approach "Extended Paley (any S)"
+     :status :impossible :reason "α(Paley(97)) ≤ 6 vs complement needs |S| ≥ 24"}
+    {:id :DE-3 :approach "Cayley Z_98 (QR(97) embed)"
+     :status :refuted :reason "Not symmetric mod 98, CN=27"}
+    {:id :DE-4 :approach "Cayley Z_98 (SA search)"
+     :status :failed :reason "Best CN=26, target ≤23 after 20×50K SA restarts"}
+    {:id :DE-5 :approach "General 98-vertex SA"
+     :status :failed :reason "Converging too slowly (CN=33 after 10K steps)"}
+    {:id :DE-6 :approach "SRG(98,k,≤23,μ)"
+     :status :impossible :reason "97 prime, no integer solutions exist"}]}
+
+  ;; VERIFY: Validate construction
+  ;; Computational verification on GF(49): all 6 CN cases match theory
+  {:id :VERIFY        :name "VERIFY: Construction Validation"
+   :type :proof-mode
+   :gate-projection :G1
+   :accepts #{:mathematical-object :proof-state}
+   :produces #{:proof-state}
+   :timescale :fast
+   :outcome "All 6 cases verified: max G-CN=23<24, max comp-CN=24<25"
+   :agents ["claude-2"]}
+
+  ;; MAP: Formalize and document
+  ;; Formal proof, mission diagram, proof diagram
+  {:id :MAP           :name "MAP: Proof Formalization"
+   :type :proof-mode
+   :gate-projection :G0
+   :accepts #{:proof-state :mathematical-proof}
+   :produces #{:mathematical-proof :proof-state}
+   :timescale :glacial
+   :outcome "FM-001-proof.md (formal), FM-001-wesley-construction.md (analysis)"
+   :agents ["claude-2"]}
+
+  ;; ================================================================
+  ;; COORDINATION INFRASTRUCTURE
+  ;; ================================================================
+
+  ;; Mentor (claude-2): space-like — maps territory, validates soundness
+  {:id :MENTOR        :name "Mentor (claude-2)"
+   :type :agent-role
+   :ref "README-mentor.md"
+   :accepts #{:proof-state :transport}
+   :produces #{:proof-state :mathematical-analysis}
+   :timescale :social
+   :triggers ["QP-1..QP-8 (8 intervention triggers)"]}
+
+  ;; Tickle: time-like — dispatches work, maintains tempo
+  {:id :TICKLE        :name "Tickle (dispatcher)"
+   :type :agent-role
+   :accepts #{:transport :proof-state}
+   :produces #{:transport}
+   :timescale :social}
+
+  ;; Proof ledger bridge: persistence layer
+  {:id :LEDGER-BRIDGE :name "Proof ledger bridge"
+   :type :infrastructure
+   :ref "src/futon3c/proof/bridge.clj"
+   :accepts #{:proof-state}
+   :produces #{:proof-state}
+   :timescale :fast
+   :note "Lakatosian conjectures + Pólya heuristics + DAG + mode machine"}]
+
+ :edges
+ [;; === PROOF PIPELINE ===
+  {:from :I-problem     :to :SPEC          :type :mathematical-claim}
+  {:from :SPEC          :to :FALSIFY       :type :proof-state}
+  {:from :FALSIFY       :to :CONSTRUCT     :type :proof-state}
+  {:from :I-literature  :to :CONSTRUCT     :type :mathematical-knowledge}
+  {:from :I-compute     :to :FALSIFY       :type :compute-resource}
+  {:from :I-compute     :to :CONSTRUCT     :type :compute-resource}
+  {:from :I-compute     :to :VERIFY        :type :compute-resource}
+  {:from :CONSTRUCT     :to :VERIFY        :type :mathematical-object}
+  {:from :VERIFY        :to :MAP           :type :proof-state}
+  {:from :MAP           :to :O-proof       :type :mathematical-proof}
+  {:from :CONSTRUCT     :to :O-witness     :type :mathematical-object}
+  {:from :CONSTRUCT     :to :O-dead-ends   :type :mathematical-knowledge}
+  {:from :MAP           :to :O-evaluation  :type :mathematical-analysis}
+
+  ;; === COORDINATION ===
+  {:from :I-irc         :to :TICKLE        :type :transport}
+  {:from :I-irc         :to :MENTOR        :type :transport}
+  {:from :TICKLE        :to :FALSIFY       :type :transport :label "dispatch"}
+  {:from :TICKLE        :to :CONSTRUCT     :type :transport :label "dispatch"}
+  {:from :MENTOR        :to :LEDGER-BRIDGE :type :proof-state :label "ledger ops"}
+  {:from :LEDGER-BRIDGE :to :O-ledger-final :type :proof-state}
+
+  ;; === MENTOR FEEDBACK LOOPS ===
+  ;; Mentor reads proof state, validates soundness, intervenes on IRC
+  {:from :I-ledger      :to :MENTOR        :type :proof-state :label "observe"}
+  {:from :MENTOR        :to :I-irc         :type :transport :label "intervene"}]
+
+ :invariants
+ [;; I-FM1: Mode ordering is enforced (SPEC→FALSIFY→CONSTRUCT→VERIFY→MAP)
+  {:id :I-FM1 :desc "Mode transitions follow mandatory ordering"
+   :check "proof/bridge.clj mode! validates transitions"}
+
+  ;; I-FM2: FALSIFY must complete before CONSTRUCT
+  {:id :I-FM2 :desc "Cannot enter CONSTRUCT without falsification attempt"
+   :check ":proof/falsify-completed? flag in proof state"}
+
+  ;; I-FM3: Conjectures have dialectical history (Lakatosian)
+  {:id :I-FM3 :desc "Every conjecture tracks tests and refinements"
+   :check "conjecture-test! records :outcome, :evidence-ref, :agent"}
+
+  ;; I-FM4: Heuristics are typed and retirable (Pólya)
+  {:id :I-FM4 :desc "Heuristics use 9 valid types, can be retired"
+   :check "heuristic-add! validates type ∈ #{analogy simplification ...}"}
+
+  ;; I-FM5: Dead ends are recorded, not buried
+  {:id :I-FM5 :desc "Failed approaches generate :dead-end heuristics"
+   :check "Each CONSTRUCT failure has corresponding dead-end entry"}
+
+  ;; I-FM6: Mentor is space-like (observes, doesn't dispatch)
+  {:id :I-FM6 :desc "Mentor maps territory; Tickle pushes clock"
+   :check "MENTOR produces :proof-state and :analysis, not :dispatch"}]
+
+ :commits
+ {:spec       "Initial FM-001.edn setup"
+  :falsify    "SAT results from codex-1"
+  :construct  ["e88f30e — twin obstruction"
+               "0dae9b0 — all constructions failed"
+               "47b6508 — Wesley 2-block CONFIRMED"]
+  :verify     "47b6508 — computational verification on GF(49)"
+  :map        ["972bf18 — mode transition complete"
+               "2d16d14 — formal proof (futon6)"]}}

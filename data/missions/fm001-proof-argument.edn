@@ -1,0 +1,290 @@
+;; FM-001 Proof Argument Diagram — AIF+ formalization
+;;
+;; This is the argument structure of the mathematical proof, not the
+;; mission coordination. It captures the logical dependencies between
+;; claims, the evidence supporting each, and the refutation paths
+;; that were explored and closed.
+;;
+;; Format follows the AIF+ convention:
+;;   :I-nodes  — information nodes (claims, data, observations)
+;;   :S-nodes  — scheme nodes (inference steps, rules of inference)
+;;   :edges    — typed directed edges between nodes
+;;
+;; The argument has three layers:
+;;   1. The positive proof (Wesley construction → R = 4n-1)
+;;   2. The dead-end closure (6 approaches → impossible/failed)
+;;   3. The scope boundary (infinite family vs all n)
+
+{:argument/id :fm001-book-ramsey-proof
+ :argument/status :complete
+ :argument/conclusion "R(B_{n-1}, B_n) = 4n-1 for q = 2n-1 prime power ≡ 1 (mod 4)"
+
+ :I-nodes
+ [;; ================================================================
+  ;; PREMISES (established facts)
+  ;; ================================================================
+
+  {:id :P1
+   :type :premise
+   :content "B_k = K_2 + K̄_k (book graph: k triangles sharing an edge)"
+   :source "definition"}
+
+  {:id :P2
+   :type :premise
+   :content "G contains B_k iff ∃ edge (u,v) with |Γ(u,v)| ≥ k"
+   :source "definition"}
+
+  {:id :P3
+   :type :premise
+   :content "R(B_{n-1}, B_n) ≤ 4n-1 (Rousseau-Sheehan 1978, Thm 1(ii))"
+   :source "Rousseau-Sheehan 1978"}
+
+  {:id :P4
+   :type :premise
+   :content "For F_q with q ≡ 1 (mod 4): Δ(Q,Q,d) = (q-5)/4 for d ∈ Q,
+            Δ(Q,Q,d) = (q-1)/4 for d ∈ N, Δ(Q,N,d) = (q-1)/4 for d ≠ 0"
+   :source "Lemma 10, standard QR character sums"}
+
+  {:id :P5
+   :type :premise
+   :content "q ≡ 1 (mod 4) implies -1 ∈ Q, hence Q = -Q and N = -N"
+   :source "Euler's criterion"}
+
+  ;; ================================================================
+  ;; CONSTRUCTION (Wesley's 2-block-circulant)
+  ;; ================================================================
+
+  {:id :C1
+   :type :claim
+   :content "Let q = 2n-1 be prime power with q ≡ 1 (mod 4).
+            Define G = Γ_{F_q}(Q, Q, N) on V₁ ⊔ V₂ with |V| = 2q = 4n-2."}
+
+  {:id :C2
+   :type :claim
+   :content "D₁₁ = D₁₂ = Q, D₂₂ = N.
+            Complements: D̄₁₁ = N, D̄₂₂ = Q, D̄₁₂ = N ∪ {0}."}
+
+  ;; ================================================================
+  ;; B_{n-1}-FREENESS (6 sub-claims, 3 graph cases)
+  ;; ================================================================
+
+  {:id :G-free
+   :type :claim
+   :content "G is B_{n-1}-free (every G-edge has < n-1 common neighbors)"}
+
+  {:id :G1-calc
+   :type :observation
+   :content "Case V₁-V₁ (d ∈ Q): CN = 2·Δ(Q,Q,d) = 2·(q-5)/4 = n-3"}
+
+  {:id :G2-calc
+   :type :observation
+   :content "Case V₂-V₂ (d ∈ N): CN = Δ(N,N,d) + Δ(Q,Q,d) = (q-5)/4 + (q-1)/4 = n-2"}
+
+  {:id :G3-calc
+   :type :observation
+   :content "Case V₁-V₂ (d ∈ Q): CN = Δ(Q,Q,d) + Δ(Q,N,d) = (q-5)/4 + (q-1)/4 = n-2"}
+
+  {:id :G-max
+   :type :observation
+   :content "max(n-3, n-2, n-2) = n-2 < n-1 for all n ≥ 2"}
+
+  ;; ================================================================
+  ;; B_n-FREENESS OF COMPLEMENT (3 cases + sub-cases)
+  ;; ================================================================
+
+  {:id :Gc-free
+   :type :claim
+   :content "Ḡ is B_n-free (every complement-edge has < n common neighbors)"}
+
+  {:id :Gc1-calc
+   :type :observation
+   :content "Case comp V₁-V₁ (d ∈ N): CN = Δ(N,N,d) + Δ(N∪{0},N∪{0},d) = n-1"}
+
+  {:id :Gc2-calc
+   :type :observation
+   :content "Case comp V₂-V₂ (d ∈ Q): CN = Δ(Q,Q,d) + Δ(N∪{0},N∪{0},d) = n-2"}
+
+  {:id :Gc3-calc
+   :type :observation
+   :content "Case comp V₁-V₂ (d ∈ N∪{0}): CN ≤ n-1 (d=0 and d∈N sub-cases)"}
+
+  {:id :Gc-max
+   :type :observation
+   :content "max(n-1, n-2, n-1) = n-1 < n for all n ≥ 2"}
+
+  ;; ================================================================
+  ;; MAIN RESULT
+  ;; ================================================================
+
+  {:id :lower-bound
+   :type :claim
+   :content "R(B_{n-1}, B_n) ≥ 4n-1"}
+
+  {:id :exact-value
+   :type :claim
+   :content "R(B_{n-1}, B_n) = 4n-1
+            (for q = 2n-1 prime power ≡ 1 mod 4)"}
+
+  ;; ================================================================
+  ;; COMPUTATIONAL VERIFICATION (n=25)
+  ;; ================================================================
+
+  {:id :V-n25
+   :type :observation
+   :content "n=25, q=49=7²: GF(49) verification confirms all 6 cases.
+            G-edges: max CN = 23. Complement: max CN = 24."
+   :source "Python computation on GF(49) = F_7[x]/(x²+1)"}
+
+  ;; ================================================================
+  ;; SCOPE BOUNDARY
+  ;; ================================================================
+
+  {:id :scope-limit
+   :type :claim
+   :content "Result holds for infinite family, NOT all n.
+            When q = 2n-1 is not prime power (e.g. n=50, q=99=9×11),
+            construction does not apply. Wesley verifies n ≤ 20 via SAT.
+            Conjecture: R(B_{n-1}, B_n) = 4n-1 for ALL n ≥ 2 (open)."}
+
+  ;; ================================================================
+  ;; DEAD ENDS (refuted approaches — negative knowledge)
+  ;; ================================================================
+
+  {:id :DE-paley-ext
+   :type :claim
+   :content "Paley(q) + ∞ extension is IMPOSSIBLE for any adjacency set S.
+            Proof: S must be independent in Paley(q) (α ≤ √q ≈ 6 for q=97),
+            but complement B_n-free requires |S ∩ (v+NR)| ≥ 2n-1 for all
+            v ∉ S. Since α ≪ 2n-1, constraints are jointly unsatisfiable."}
+
+  {:id :DE-cayley-z98
+   :type :claim
+   :content "No Cayley graph on Z_98 achieves the bounds.
+            SA search: best max CN = 26 (target ≤ 23).
+            SRG(98,k,≤23,μ): no integer solutions (97 prime)."}
+
+  {:id :DE-insight
+   :type :claim
+   :content "1-block constructions fail because they cannot trade off
+            G-freeness against complement-freeness across blocks.
+            2-block-circulant succeeds: V₁ (QR-adj, CN=n-3) compensates
+            V₂ (NR-adj, CN=n-2) and vice versa in complement."}]
+
+ :S-nodes
+ [;; Inference schemes
+
+  {:id :S-construction
+   :type :inference
+   :scheme "Constructive proof: exhibit witness"
+   :from [:C1 :C2 :P4 :P5]
+   :to [:G1-calc :G2-calc :G3-calc :Gc1-calc :Gc2-calc :Gc3-calc]}
+
+  {:id :S-G-free-agg
+   :type :inference
+   :scheme "Maximum over cases"
+   :from [:G1-calc :G2-calc :G3-calc]
+   :to [:G-max]}
+
+  {:id :S-G-free-conclude
+   :type :inference
+   :scheme "n-2 < n-1 implies B_{n-1}-freeness"
+   :from [:G-max :P2]
+   :to [:G-free]}
+
+  {:id :S-Gc-free-agg
+   :type :inference
+   :scheme "Maximum over complement cases"
+   :from [:Gc1-calc :Gc2-calc :Gc3-calc]
+   :to [:Gc-max]}
+
+  {:id :S-Gc-free-conclude
+   :type :inference
+   :scheme "n-1 < n implies B_n-freeness of complement"
+   :from [:Gc-max :P2]
+   :to [:Gc-free]}
+
+  {:id :S-lower-bound
+   :type :inference
+   :scheme "Ramsey lower bound: (B_r,B_s)-free graph on N vertices → R(B_r,B_s) > N"
+   :from [:G-free :Gc-free :C1]
+   :to [:lower-bound]}
+
+  {:id :S-exact
+   :type :inference
+   :scheme "Lower bound ≥ upper bound → equality"
+   :from [:lower-bound :P3]
+   :to [:exact-value]}
+
+  {:id :S-verification
+   :type :support
+   :scheme "Computational verification (independent check)"
+   :from [:V-n25]
+   :to [:G-free :Gc-free]}
+
+  ;; Dead-end inference schemes
+
+  {:id :S-impossibility
+   :type :inference
+   :scheme "Joint constraint unsatisfiability (α bound vs complement CN)"
+   :from [:P2 :P4]
+   :to [:DE-paley-ext]}
+
+  {:id :S-de-insight
+   :type :inference
+   :scheme "Structural analysis: 1-block vs 2-block trade-off"
+   :from [:DE-paley-ext :DE-cayley-z98 :exact-value]
+   :to [:DE-insight]}]
+
+ :edges
+ [;; Positive proof path
+  {:from :P4    :to :S-construction  :type :premise}
+  {:from :P5    :to :S-construction  :type :premise}
+  {:from :C1    :to :S-construction  :type :premise}
+  {:from :C2    :to :S-construction  :type :premise}
+
+  {:from :S-construction :to :G1-calc  :type :inference}
+  {:from :S-construction :to :G2-calc  :type :inference}
+  {:from :S-construction :to :G3-calc  :type :inference}
+  {:from :S-construction :to :Gc1-calc :type :inference}
+  {:from :S-construction :to :Gc2-calc :type :inference}
+  {:from :S-construction :to :Gc3-calc :type :inference}
+
+  {:from :G1-calc :to :S-G-free-agg      :type :support}
+  {:from :G2-calc :to :S-G-free-agg      :type :support}
+  {:from :G3-calc :to :S-G-free-agg      :type :support}
+  {:from :S-G-free-agg :to :G-max        :type :inference}
+  {:from :G-max   :to :S-G-free-conclude :type :support}
+  {:from :P2      :to :S-G-free-conclude :type :premise}
+  {:from :S-G-free-conclude :to :G-free  :type :inference}
+
+  {:from :Gc1-calc :to :S-Gc-free-agg      :type :support}
+  {:from :Gc2-calc :to :S-Gc-free-agg      :type :support}
+  {:from :Gc3-calc :to :S-Gc-free-agg      :type :support}
+  {:from :S-Gc-free-agg :to :Gc-max        :type :inference}
+  {:from :Gc-max   :to :S-Gc-free-conclude :type :support}
+  {:from :P2       :to :S-Gc-free-conclude :type :premise}
+  {:from :S-Gc-free-conclude :to :Gc-free  :type :inference}
+
+  {:from :G-free      :to :S-lower-bound :type :support}
+  {:from :Gc-free     :to :S-lower-bound :type :support}
+  {:from :C1          :to :S-lower-bound :type :support}
+  {:from :S-lower-bound :to :lower-bound :type :inference}
+
+  {:from :lower-bound :to :S-exact :type :support}
+  {:from :P3          :to :S-exact :type :premise}
+  {:from :S-exact     :to :exact-value :type :inference}
+
+  ;; Computational verification (independent support)
+  {:from :V-n25        :to :S-verification :type :observation}
+  {:from :S-verification :to :G-free      :type :support}
+  {:from :S-verification :to :Gc-free     :type :support}
+
+  ;; Dead-end paths
+  {:from :P2    :to :S-impossibility   :type :premise}
+  {:from :P4    :to :S-impossibility   :type :premise}
+  {:from :S-impossibility :to :DE-paley-ext :type :inference}
+
+  {:from :DE-paley-ext  :to :S-de-insight :type :support}
+  {:from :DE-cayley-z98 :to :S-de-insight :type :support}
+  {:from :exact-value   :to :S-de-insight :type :support}
+  {:from :S-de-insight  :to :DE-insight   :type :inference}]}
