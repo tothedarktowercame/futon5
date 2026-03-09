@@ -1,0 +1,686 @@
+;; AIF+ argument model of the NPT paper
+;;
+;; Purpose: scratch work to understand what the paper is doing as a
+;; communication act, identify structural weaknesses, and decide what
+;; to keep, cut, or integrate properly (especially the role-based reanalysis).
+;;
+;; Node types:
+;;   :I-node  — information node (proposition, claim, datum)
+;;   :RA-node — inference scheme (support relation between I-nodes)
+;;   :CA-node — conflict scheme (attack relation between I-nodes)
+;;   :PA-node — preference scheme (priority between competing claims)
+;;
+;; Convention: IDs use section numbers to trace back to paper structure.
+;; Edge :type is one of :support, :attack, :preference, :evidence, :presupposition
+
+{:model/id :npt-paper-argument
+ :model/purpose "Structural analysis of paper's argument for coherence checking"
+
+ ;; =========================================================================
+ ;; LAYER 0: THE TWO GAPS (Introduction — the paper's warrant for existing)
+ ;; =========================================================================
+
+ :nodes
+ [{:id :I-practice-gap
+   :type :I-node
+   :section "1"
+   :text "Training does not reliably translate into sustained practice change"
+   :status :established
+   :grounding "Christensen et al. 2020, Haven & Van Grootel 2019, Pontika et al. 2015"}
+
+  {:id :I-research-gap
+   :type :I-node
+   :section "1"
+   :text "Literature evaluates content/satisfaction but not implementation processes"
+   :status :established
+   :grounding "Pontika et al. 2015, Stodden 2010"}
+
+  {:id :I-ukrn-as-lab
+   :type :I-node
+   :section "1"
+   :text "UKRN T3 programme provides a natural laboratory for addressing both gaps"
+   :status :claimed
+   :grounding "Programme description"}
+
+  ;; RA: Two gaps + UKRN → warrant for this study
+  {:id :RA-study-warrant
+   :type :RA-node
+   :scheme :argument-from-gap
+   :from [:I-practice-gap :I-research-gap :I-ukrn-as-lab]
+   :to :I-study-needed}
+
+  {:id :I-study-needed
+   :type :I-node
+   :section "1"
+   :text "A study examining HOW training translates (or fails to) into practice is needed"
+   :status :supported}
+
+  ;; =========================================================================
+  ;; LAYER 1: THEORETICAL POSITIONING (Background — what lenses, why these)
+  ;; =========================================================================
+
+  ;; --- NPT ---
+  {:id :I-npt-lens
+   :type :I-node
+   :section "2"
+   :text "NPT provides WHERE: identifies which domains of normalisation work are strong/weak"
+   :status :established
+   :grounding "May & Finch 2009, May et al. 2018, McEvoy et al. 2014"}
+
+  {:id :I-npt-new-domain
+   :type :I-node
+   :section "2"
+   :text "NPT applied to training programme (not individual adoption) in non-healthcare context"
+   :status :claimed
+   :note "Extension claim — Perreault & Dienlin 2024 did individual-level in comms"}
+
+  ;; --- Patterns ---
+  {:id :I-patterns-lens
+   :type :I-node
+   :section "2"
+   :text "Design patterns provide HOW: bridge from diagnosis to actionable design knowledge"
+   :status :claimed
+   :grounding "Alexander et al. 1977"
+   :note "This is the paper's most distinctive methodological claim"}
+
+  {:id :RA-diagnosis-to-design
+   :type :RA-node
+   :scheme :argument-from-insufficiency
+   :from [:I-npt-lens :I-patterns-lens]
+   :to :I-npt-plus-patterns
+   :text "NPT diagnoses but doesn't prescribe; patterns fill the prescriptive gap"}
+
+  {:id :I-npt-plus-patterns
+   :type :I-node
+   :section "2"
+   :text "NPT + patterns together give WHERE + HOW"
+   :status :supported}
+
+  ;; --- Sen ---
+  {:id :I-sen-lens
+   :type :I-node
+   :section "2"
+   :text "Sen's capability approach provides WHAT: institutional architecture = conversion factors"
+   :status :claimed
+   :grounding "Sen 1999"
+   :note "Frames the architecture/intervention distinction"}
+
+  ;; --- Ostrom ---
+  {:id :I-ostrom-lens
+   :type :I-node
+   :section "2"
+   :text "Ostrom's commons governance says HOW commons sustain across autonomous institutions"
+   :status :claimed
+   :grounding "Ostrom 1990, Ostrom 2005"
+   :note "Predicts divergent outcomes from same programme"}
+
+  {:id :I-alexander-ostrom-genealogy
+   :type :I-node
+   :section "2"
+   :text "Ostrom (2005 p.11) acknowledged Alexander (1964) — same pattern form, different substrate"
+   :status :established
+   :grounding "Direct quote from Ostrom 2005"}
+
+  ;; --- COM-B ---
+  {:id :I-comb-lens
+   :type :I-node
+   :section "2"
+   :text "COM-B provides supplementary diagnostic confirmation, not primary analysis"
+   :status :established
+   :grounding "Michie et al. 2011"}
+
+  ;; --- Roles ---
+  {:id :I-roles-lens
+   :type :I-node
+   :section "2 (Background) + 3.4 (Methods)"
+   :text "Role codebook provides WHO: which actors must coordinate for each pattern"
+   :status :INTEGRATED
+   :grounding "Partridge & Corneli codebook, 12 roles, 61 action codes"
+   :note "Now set up in Background, described in Methods, discharged in: per-pattern Coordination paragraphs (4.1.1), coordination complexity table (4.2), role overload mechanism (4.2 + 6.5)"}
+
+  ;; --- The full framework stack ---
+  {:id :RA-framework-composition
+   :type :RA-node
+   :scheme :argument-from-composition
+   :from [:I-npt-lens :I-patterns-lens :I-sen-lens :I-ostrom-lens :I-roles-lens]
+   :to :I-full-framework
+   :text "NPT(WHERE) + Patterns(HOW) + Roles(WHO) + Sen(WHAT) + Ostrom(HOW-SUSTAINED)"}
+
+  {:id :I-full-framework
+   :type :I-node
+   :section "2-3"
+   :text "Five complementary lenses compose into a multi-layered analysis"
+   :status :AT-RISK
+   :note "Is this over-layered? Reviewer will ask. Each must earn its keep in findings."}
+
+  ;; --- POTENTIAL CONFLICT ---
+  {:id :CA-framework-overload
+   :type :CA-node
+   :scheme :attack-from-parsimony
+   :from :I-full-framework
+   :to :I-study-needed
+   :text "Five frameworks for n=9 focus group participants may seem top-heavy"
+   :note "Reviewer attack surface. Defence: each does distinct work."}
+
+  ;; =========================================================================
+  ;; LAYER 2: METHOD (what was actually done)
+  ;; =========================================================================
+
+  {:id :I-data-qual
+   :type :I-node
+   :section "3.2"
+   :text "4 focus groups, n=9, 134 annotated turns"
+   :status :established}
+
+  {:id :I-data-quant
+   :type :I-node
+   :section "3.2"
+   :text "COM-B surveys: T3 immediate n=52, T3 6-month n=7, T1 baseline n=15"
+   :status :established
+   :note "Low n, especially follow-up"}
+
+  {:id :I-method-npt-coding
+   :type :I-node
+   :section "3.4"
+   :text "Transcripts coded to NPT 16 sub-constructs"
+   :status :established}
+
+  {:id :I-method-pattern-articulation
+   :type :I-node
+   :section "3.4"
+   :text "Tension clusters expressed as design patterns (if/however/then/because)"
+   :status :established}
+
+  {:id :I-method-logic-model
+   :type :I-node
+   :section "3.4"
+   :text "Patterns composed into logic model with three causal pathways"
+   :status :established}
+
+  {:id :I-method-robustness
+   :type :I-node
+   :section "3.4"
+   :text "Frequency analysis + structured stress-test for pattern robustness"
+   :status :established}
+
+  {:id :I-method-role-reanalysis
+   :type :I-node
+   :section "3.4"
+   :text "Second-pass coding using 12-role/61-action codebook; coded for present/absent roles"
+   :status :DISCHARGED
+   :note "Method described in 3.4; findings discharged in: 5 per-pattern Coordination paragraphs (4.1.1), coordination complexity table + gradient (4.2), role overload mechanism (4.2), decentralisation-Ostrom connection (4.2)"}
+
+  ;; =========================================================================
+  ;; LAYER 3: FINDINGS (what the paper claims to have found)
+  ;; =========================================================================
+
+  ;; --- Five patterns ---
+  {:id :I-pattern-1-CA
+   :type :I-node
+   :section "4.1.1"
+   :text "Confident Adaptation: trainers adapt when they know what is fixed vs flexible"
+   :status :well-evidenced
+   :npt "1.2 Communal Specification"
+   :tier :intervention
+   :evidence-sources ["T2A" "T2B" "T3"]}
+
+  {:id :I-pattern-2-PI
+   :type :I-node
+   :section "4.1.1"
+   :text "Protected Interaction: interaction protected when delivery structure absorbs variation"
+   :status :well-evidenced
+   :npt "3.3/3.4 Skill Set Workability / Contextual Integration"
+   :tier :intervention
+   :evidence-sources ["T1" "T2A" "T2B" "T3"]}
+
+  {:id :I-pattern-3-SM
+   :type :I-node
+   :section "4.1.1"
+   :text "Shared Maintenance: materials current when stewardship distributed"
+   :status :well-evidenced
+   :npt "3.2/3.4 Relational Integration / Contextual Integration"
+   :tier :intervention
+   :evidence-sources ["T1" "T2B" "T3"]}
+
+  {:id :I-pattern-4-CP
+   :type :I-node
+   :section "4.1.1"
+   :text "Contribution Pathways: engagement sustains when participants become co-producers"
+   :status :well-evidenced
+   :npt "2.4 Activation"
+   :tier :architecture
+   :evidence-sources ["T1" "T3"]}
+
+  {:id :I-pattern-5-VI
+   :type :I-node
+   :section "4.1.1"
+   :text "Visible Impact: programme learns when feedback structured, visible, shared"
+   :status :well-evidenced
+   :npt "4.2 Communal Appraisal"
+   :tier :architecture
+   :evidence-sources ["T2B" "T3"]}
+
+  ;; --- The tier distinction ---
+  {:id :I-intervention-tier
+   :type :I-node
+   :section "4.1.1/6.5"
+   :text "Patterns 1-3 operate at intervention level (within programme control)"
+   :status :supported}
+
+  {:id :I-architecture-tier
+   :type :I-node
+   :section "4.1.1/6.5"
+   :text "Patterns 4-5 operate at architecture level (requiring institutional partnership)"
+   :status :supported}
+
+  {:id :RA-tier-distinction
+   :type :RA-node
+   :scheme :argument-from-classification
+   :from [:I-intervention-tier :I-architecture-tier]
+   :to :I-architecture-is-binding
+   :text "Architecture-level patterns are most important AND least developed"}
+
+  {:id :I-architecture-is-binding
+   :type :I-node
+   :section "6.5"
+   :text "Primary constraint is institutional architecture, not training quality"
+   :status :supported
+   :note "THIS IS THE CENTRAL CLAIM of the paper"}
+
+  ;; --- Implementation modes ---
+  {:id :I-multiplied
+   :type :I-node
+   :section "4.1.3"
+   :text "Multiplied input: institutional architecture aligned → training amplified"
+   :status :evidenced
+   :evidence-sources ["T1"]}
+
+  {:id :I-absorbed
+   :type :I-node
+   :section "4.1.3"
+   :text "Absorbed input: individual goodwill carries unsupported practice"
+   :status :evidenced
+   :evidence-sources ["T3" "T2B"]}
+
+  {:id :I-mismatch
+   :type :I-node
+   :section "4.1.3"
+   :text "Architectural mismatch: no receiving structure → fragmentation despite motivation"
+   :status :evidenced
+   :evidence-sources ["T2A"]}
+
+  {:id :RA-modes-support-architecture-claim
+   :type :RA-node
+   :scheme :argument-from-cases
+   :from [:I-multiplied :I-absorbed :I-mismatch]
+   :to :I-architecture-is-binding
+   :text "Three modes show architecture, not motivation, as differentiator"}
+
+  ;; --- Cross-cutting themes ---
+  {:id :I-workload
+   :type :I-node
+   :section "4.2"
+   :text "Workload/capacity in ~25% of turns; modulates all patterns"
+   :status :well-evidenced}
+
+  {:id :I-decentralisation-paradox
+   :type :I-node
+   :section "4.2"
+   :text "Same programme, divergent outcomes across institutions"
+   :status :evidenced
+   :note "Ostrom predicts this — but the connection is only implicit"}
+
+  {:id :I-coordination-complexity
+   :type :I-node
+   :section "4.2"
+   :text "Patterns require progressively more actors to coordinate (1→2→community→infrastructure→6+)"
+   :status :WELL-GROUNDED
+   :note "Now: table with 5 rows showing roles/absent-roles/failure-modes per pattern; gradient explained; role overload as mechanism; Ostrom connection to decentralisation paradox"}
+
+  ;; =========================================================================
+  ;; LAYER 4: DISCUSSION (what the findings mean)
+  ;; =========================================================================
+
+  {:id :I-npt-non-healthcare
+   :type :I-node
+   :section "6.2"
+   :text "NPT works in non-healthcare open-research context; co-ownership is distinctive"
+   :status :supported}
+
+  {:id :I-comb-convergence
+   :type :I-node
+   :section "6.3"
+   :text "COM-B confirms qualitative: motivation high, institutional opportunity low"
+   :status :supported
+   :note "COM-B earns its keep here — clear triangulation"}
+
+  {:id :I-eval-by-design
+   :type :I-node
+   :section "6.4"
+   :text "Each pattern implies an operational signal; programme can evaluate itself"
+   :status :proposed
+   :note "Novel contribution — operational signals table"}
+
+  {:id :I-role-overload
+   :type :I-node
+   :section "4.2 + 6.5"
+   :text "Absorbed input = one person performing 4-6 roles that should be distributed"
+   :status :GROUNDED
+   :note "Now grounded in 4.2 (coordination complexity table + role overload paragraph) and referenced in 6.5 with Sen + Ostrom framing"}
+
+  {:id :I-sen-functioning-vs-capability
+   :type :I-node
+   :section "6.5"
+   :text "Same outcome but one durable (capability) and one fragile (functioning)"
+   :status :supported
+   :note "Sen earns his keep here"}
+
+  {:id :I-ostrom-monitoring
+   :type :I-node
+   :section "Pattern 5 Coordination (4.1.1) + 4.2 + 6.5"
+   :text "Monitoring chain has too many links for current governance to sustain"
+   :status :WELL-GROUNDED
+   :note "Now grounded in three locations: Pattern 5 Coordination paragraph (monitoring chain specific to feedback loop), 4.2 (recognised rights to organise, decentralisation paradox), 6.5 (commons fragility + Sen connection)"}
+
+  ;; =========================================================================
+  ;; LAYER 5: THE CENTRAL ARGUMENT (what the paper is FOR)
+  ;; =========================================================================
+
+  {:id :I-transformation-space
+   :type :I-node
+   :section "Abstract/7"
+   :text "Training operates within a transformation space that determines outcomes regardless of input quality"
+   :status :central-claim
+   :note "This IS the paper's thesis"}
+
+  {:id :RA-findings-support-thesis
+   :type :RA-node
+   :scheme :argument-from-evidence
+   :from [:I-architecture-is-binding :I-coordination-complexity :I-role-overload
+          :I-comb-convergence :I-eval-by-design]
+   :to :I-transformation-space}
+
+  ;; =========================================================================
+  ;; STRUCTURAL DIAGNOSIS
+  ;; =========================================================================
+
+  ;; PROBLEM 1: The role-based reanalysis is structurally disconnected
+  ;;
+  ;; It appears in:
+  ;;   - Methods 3.4 (described as "fifth analytical stage")
+  ;;   - Section 4.2 one paragraph (coordination complexity)
+  ;;   - Section 6.5 one sentence (role overload, 4-6 roles)
+  ;;
+  ;; It does NOT appear in:
+  ;;   - Pattern presentations (4.1.1) — no roles named per pattern
+  ;;   - Logic model description — no role annotations
+  ;;   - The tier distinction argument — roles could ground this but don't
+  ;;   - Ostrom connection — roles map to Ostrom's "recognised rights to organise"
+  ;;
+  ;; The role analysis produces three genuinely new claims:
+  ;;   (a) Coordination complexity gradient
+  ;;   (b) Role overload as mechanism of absorbed input
+  ;;   (c) Specific absent roles (esp. EV_analyse, ORCA support)
+  ;; But (a) gets one paragraph, (b) gets one sentence, (c) doesn't appear at all.
+
+  {:id :CA-role-disconnect
+   :type :CA-node
+   :scheme :attack-from-inconsistency
+   :from :I-method-role-reanalysis
+   :to :I-coordination-complexity
+   :text "Method described but findings don't show the work — reviewer will notice"}
+
+  ;; PROBLEM 2: Framework stack coherence
+  ;;
+  ;; The paper claims five lenses. Do they all earn their keep?
+  ;;
+  ;;   NPT:      YES — structures entire findings section, all 5 patterns mapped
+  ;;   Patterns:  YES — the finding format itself, distinctive contribution
+  ;;   Sen:       YES — functioning/capability distinction does real work in 6.3, 6.5
+  ;;   COM-B:     YES — triangulation in 6.3, clear and bounded
+  ;;   Ostrom:    MARGINAL — one paragraph in Background, two sentences in findings
+  ;;   Roles:     UNDERDELIVERED — method described, findings barely use it
+  ;;
+  ;; The question is whether to:
+  ;;   (a) Integrate roles properly (add ~1 paragraph per pattern, expand 4.2)
+  ;;   (b) Cut roles from Methods and mention coordination complexity as emergent observation
+  ;;   (c) Do (a) and also give Ostrom more grounding through the role analysis
+  ;;       (Ostrom's design principles MAP to role requirements — monitoring = EV chain)
+
+  ;; PROBLEM 3: The logic model
+  ;;
+  ;; Currently: patterns compose into causal pathways (success/weak/fail)
+  ;; What's missing: WHO must act at each link, WHERE the handoffs break
+  ;; The role analysis could annotate the logic model — but currently doesn't
+  ;; This is exactly what role_pattern_analysis.md already contains
+
+  ;; PROBLEM 4: The title promises NPT but the distinctive contribution is patterns
+  ;;
+  ;; NPT is the scaffolding; patterns are the product. The title foregrounds
+  ;; the scaffolding. This may be strategic (NPT is known in Implementation Science)
+  ;; but a reviewer might say "what's new here beyond applying NPT?"
+  ;; The answer is: patterns + tier distinction + implementation modes.
+  ;; These need to be defended as the novel contribution, not just NPT application.
+
+  ;; =========================================================================
+  ;; COMMUNICATION STRUCTURE: What each section is doing
+  ;; =========================================================================
+
+  ;; Section 1 (Introduction):
+  ;;   FUNCTION: Establish warrant (two gaps + UKRN as lab)
+  ;;   STATUS: Working well. Clear and focused.
+  ;;
+  ;; Section 2 (Background):
+  ;;   FUNCTION: Position lenses; each paragraph sets up something findings will use
+  ;;   STATUS: Mostly good. Ostrom paragraph is well-written but underdischarged.
+  ;;   Roles are NOT set up here — they appear only in Methods.
+  ;;   DECISION POINT: If roles stay, they need a Background paragraph too.
+  ;;   If roles go, Ostrom can still stay as a lighter framing device.
+  ;;
+  ;; Section 3 (Methods):
+  ;;   FUNCTION: Describe what was done
+  ;;   STATUS: Clear. But role-reanalysis paragraph makes a promise the paper doesn't keep.
+  ;;
+  ;; Section 4 (Findings):
+  ;;   FUNCTION: Present patterns as tension→resolution with evidence
+  ;;   STATUS: Strongest section. Each pattern works internally.
+  ;;   MISSING: Patterns don't show WHO — they show WHERE (NPT) and HOW (resolution)
+  ;;   but not who must coordinate or where the handoffs break.
+  ;;
+  ;;   Section 4.2 (Cross-cutting):
+  ;;   STATUS: Workload and decentralisation themes are solid.
+  ;;   Coordination complexity paragraph is the only role-analysis payoff — too thin.
+  ;;
+  ;; Section 5 (T1 placeholder):
+  ;;   FUNCTION: Signal planned work
+  ;;   STATUS: Fine as placeholder.
+  ;;
+  ;; Section 6 (Discussion):
+  ;;   FUNCTION: Synthesise, contextualise, extend
+  ;;   STATUS: 6.1-6.4 strong. 6.5 is the key section — architecture claim.
+  ;;   Role overload sentence in 6.5 is powerful but unsupported by shown analysis.
+  ;;   6.6 (implications) is good but could be sharper with role specificity.
+  ;;
+  ;; Section 7 (Conclusion):
+  ;;   FUNCTION: Restate transformation-space thesis
+  ;;   STATUS: Good. Clean.
+
+  ;; =========================================================================
+  ;; VERDICT: Three options for the role analysis
+  ;; =========================================================================
+
+  ;; OPTION A: INTEGRATE PROPERLY
+  ;;   - Add Background paragraph on roles (the WHO question)
+  ;;   - Add ~1 paragraph per pattern in 4.1.1: "Roles required / Roles absent"
+  ;;   - Expand 4.2 coordination complexity into a proper finding with table
+  ;;   - Expand 6.5 role overload with specific examples
+  ;;   - Annotate logic model description with role requirements
+  ;;   COST: ~1500 words added. Paper goes from ~8500 to ~10000.
+  ;;   BENEFIT: WHO question properly answered. Ostrom connection grounded.
+  ;;           Coordination complexity becomes a real finding not just an observation.
+  ;;           Tier distinction gets structural grounding (more actors = harder).
+  ;;
+  ;; OPTION B: CUT CLEANLY
+  ;;   - Remove role-reanalysis from Methods
+  ;;   - Remove coordination complexity paragraph
+  ;;   - Remove role overload sentence
+  ;;   - Keep everything else intact
+  ;;   COST: Lose coordination complexity finding and role-overload mechanism.
+  ;;   BENEFIT: Tighter paper. No unkept promises.
+  ;;
+  ;; OPTION C: KEEP THIN BUT HONEST
+  ;;   - Keep Methods description but frame as "supplementary validation"
+  ;;   - Keep coordination complexity as an observation, not a finding
+  ;;   - Keep role overload sentence with a footnote to supplementary material
+  ;;   COST: Still somewhat thin but doesn't promise what it doesn't deliver.
+  ;;   BENEFIT: Minimal disruption. Signals further work.
+
+  ;; =========================================================================
+  ;; STRUCTURAL NECESSITY TEST: What breaks without Roles and Ostrom?
+  ;; =========================================================================
+
+  ;; The paper's central argument is:
+  ;;
+  ;;   I-transformation-space: "Training outcomes depend on institutional
+  ;;   architecture, not input quality"
+  ;;
+  ;; This is supported by RA-findings-support-thesis, which draws on:
+  ;;   (a) I-architecture-is-binding
+  ;;   (b) I-coordination-complexity     ← REQUIRES ROLES
+  ;;   (c) I-role-overload               ← REQUIRES ROLES
+  ;;   (d) I-comb-convergence
+  ;;   (e) I-eval-by-design
+  ;;
+  ;; Without roles, supports (b) and (c) vanish. What remains?
+  ;;
+  ;; I-architecture-is-binding is supported by:
+  ;;   RA-tier-distinction (intervention vs architecture tiers)
+  ;;   RA-modes-support-architecture-claim (three implementation modes)
+  ;;
+  ;; These STILL WORK without roles. The paper can still claim architecture
+  ;; matters. But here's the gap:
+  ;;
+  ;; QUESTION THE PAPER CANNOT ANSWER WITHOUT ROLES:
+  ;;
+  ;;   "WHY are architecture-level patterns harder than intervention-level ones?"
+  ;;
+  ;; Without roles, the answer is rhetorical: "they require institutional
+  ;; partnership." That's a description, not a mechanism. A reviewer can ask:
+  ;; what SPECIFICALLY makes them harder? Is "institutional" just a label?
+  ;;
+  ;; With roles, the answer is structural: "they require more actors in longer
+  ;; coordination chains, and the most consistently absent role — cross-
+  ;; institutional evaluation — sits at the centre of the longest chain."
+  ;; That's a checkable, specific, mechanistic claim.
+  ;;
+  ;; In AIF+ terms: without roles, the RA-node connecting I-architecture-tier
+  ;; to I-architecture-is-binding is an UNSUPPORTED inference scheme. The
+  ;; scheme says "architecture patterns are harder because institutional"
+  ;; but the BECAUSE has no grounding. Roles supply the grounding.
+  ;;
+  ;; DEPENDENCY GRAPH (critical path to central claim):
+  ;;
+  ;;   I-transformation-space
+  ;;     ← RA-findings-support-thesis
+  ;;       ← I-architecture-is-binding
+  ;;         ← RA-tier-distinction
+  ;;           ← I-architecture-tier
+  ;;             ← ??? WHY are these harder ???
+  ;;               ← I-coordination-complexity  ← ROLES (the gradient)
+  ;;               ← I-role-overload            ← ROLES (the mechanism)
+  ;;
+  ;; Without that WHY, the tier distinction is ASSERTED not ARGUED.
+  ;; The paper says "architecture-level patterns are most important and least
+  ;; developed" but cannot explain WHY they are least developed beyond
+  ;; "they require institutional partnership." That's circular.
+  ;;
+  ;; ROLES BREAK THE CIRCULARITY by providing a structural explanation:
+  ;; more actors, longer chains, specific absent roles.
+
+  ;; =========================================================================
+  ;; WHAT ABOUT OSTROM? Same test.
+  ;; =========================================================================
+  ;;
+  ;; Without Ostrom, the paper makes three claims it cannot ground:
+  ;;
+  ;; 1. I-decentralisation-paradox: "same programme, divergent outcomes"
+  ;;    Without Ostrom: just an observation. Why would we expect otherwise?
+  ;;    With Ostrom: PREDICTED by commons theory. Divergence is not programme
+  ;;    failure but a structural property of polycentric governance.
+  ;;    This turns an awkward finding into a theoretically expected one.
+  ;;
+  ;; 2. I-ostrom-monitoring: "monitoring chain has too many links"
+  ;;    Without Ostrom: assertion about the Visible Impact pattern being hard.
+  ;;    With Ostrom: connects to design principle #4 (monitoring) and #5
+  ;;    (graduated sanctions). The monitoring problem is a KNOWN problem in
+  ;;    commons governance — we're not discovering it, we're recognising it.
+  ;;    This gives the finding theoretical depth.
+  ;;
+  ;; 3. The commons framing itself: "shared materials, community infrastructure,
+  ;;    programme reputation are common-pool resources"
+  ;;    Without Ostrom: the paper talks about "institutional architecture" as if
+  ;;    it's a novel concept. But it's a KNOWN problem type with known solutions.
+  ;;    With Ostrom: the paper positions training cascades within a mature
+  ;;    theoretical tradition that already knows how to think about multi-
+  ;;    institutional governance of shared resources.
+  ;;
+  ;; Most critically, Ostrom + Roles COMPOSE:
+  ;;
+  ;;   Ostrom says: "commons need monitoring, boundary rules, collective choice"
+  ;;   Roles say: "here are the specific actors and handoff chains for THIS commons"
+  ;;   Together: "Ostrom's design principles predict which roles must exist,
+  ;;             and the role analysis shows which ones are absent"
+  ;;
+  ;; This is the key composition. Ostrom without Roles is abstract theory.
+  ;; Roles without Ostrom is empirical observation. Together they produce
+  ;; a theoretically grounded, empirically specific diagnosis.
+  ;;
+  ;; In AIF+ terms: Ostrom provides the WARRANT (inference scheme) for
+  ;; interpreting the role-analysis findings. Without the warrant, the
+  ;; findings are ad hoc. Without the findings, the warrant is untested.
+
+  ;; =========================================================================
+  ;; WHAT HAPPENS TO THE PAPER WITHOUT BOTH?
+  ;; =========================================================================
+  ;;
+  ;; The paper still works as:
+  ;;   "We applied NPT to a training programme. Here are five patterns.
+  ;;    Some are harder than others. Architecture matters."
+  ;;
+  ;; That's a competent NPT application paper. Publishable, probably.
+  ;; But it's not what this paper SHOULD be, because:
+  ;;
+  ;; (a) The tier distinction (intervention vs architecture) is ASSERTED
+  ;;     not EXPLAINED. A reviewer asks "why harder?" and the paper shrugs.
+  ;;
+  ;; (b) The implementation modes (multiplied/absorbed/mismatch) are DESCRIBED
+  ;;     not MECHANISED. "Absorbed input" is a label. "One person performing
+  ;;     4-6 distributed roles" is a mechanism. Without roles, we have labels.
+  ;;
+  ;; (c) The decentralisation paradox is OBSERVED not THEORISED.
+  ;;     "Different institutions get different outcomes" — so what?
+  ;;     Without Ostrom, there's no theory predicting this or explaining why.
+  ;;
+  ;; (d) The evaluation-by-design proposal (6.4) hangs in the air. With Ostrom,
+  ;;     monitoring is a known commons design principle; the operational signals
+  ;;     table is the paper's concrete instantiation of that principle.
+  ;;
+  ;; (e) The Alexander genealogy (Alexander → Ostrom → this study) disappears.
+  ;;     The paper uses design patterns but can't explain why patterns are the
+  ;;     right analytical form beyond "Alexander invented them." With Ostrom,
+  ;;     the paper shows that the same structural form has been independently
+  ;;     discovered for institutional analysis — patterns are not just an
+  ;;     architectural metaphor borrowed for convenience.
+  ;;
+  ;; CONCLUSION: Roles and Ostrom are not optional extras. They are the
+  ;; structural support for the paper's three strongest claims:
+  ;;   1. WHY architecture-level patterns are harder (coordination complexity)
+  ;;   2. WHAT absorbed input actually is (role overload as mechanism)
+  ;;   3. WHY divergent outcomes are expected, not anomalous (commons theory)
+  ;;
+  ;; Removing them doesn't make the paper "simpler" — it makes it WEAKER
+  ;; by removing the mechanistic grounding of its central argument.
+  ;; The parsimony objection (CA-framework-overload) is answered by showing
+  ;; that each framework does work no other framework does, and that the
+  ;; composition produces claims none could produce alone.
+  ]}
