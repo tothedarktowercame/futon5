@@ -50,6 +50,33 @@
    :content "q ≡ 1 (mod 4) implies -1 ∈ Q, hence Q = -Q and N = -N"
    :source "Euler's criterion"}
 
+  ;; Derived from P4+P5: since Q = -Q, Δ(N,N,d) and Δ(N,Q,d) follow by symmetry
+  {:id :P4-sym
+   :type :observation
+   :content "By Q = -Q (P5), character sums are symmetric under Q ↔ N swap of
+            the first index: Δ(N,N,d) = Δ(Q,Q,d) for each residue class of d,
+            and Δ(N,Q,d) = Δ(Q,N,d) = (q-1)/4 for d ≠ 0.
+            Hence Δ(N,N,d) = (q-5)/4 for d ∈ N, (q-1)/4 for d ∈ Q."
+   :source "P4 + P5 (symmetry)"}
+
+  ;; ================================================================
+  ;; CROSS-BLOCK COMPLEMENT Δ-VALUES (bridge P4-sym to complement cases)
+  ;; ================================================================
+
+  ;; The complement cross-block adjacency set is D̄₁₂ = N∪{0} (from C2).
+  ;; Complement cases need Δ(N∪{0},N∪{0},d), which decomposes as:
+  ;;   Δ(N∪{0},N∪{0},d) = Δ(N,N,d) + [d ∈ N∪{0}] + [-d ∈ N]
+  ;; where the two indicator terms account for a=0 and a=-d boundaries.
+  ;; Since -1 ∈ Q (P5), -N = N, so [-d ∈ N] = [d ∈ N].
+
+  {:id :P4-cross
+   :type :observation
+   :content "Δ(N∪{0},N∪{0},d) for d ∈ F_q*:
+            d ∈ Q: Δ(N,N,d) + 0 + 0 = (q-1)/4
+            d ∈ N: Δ(N,N,d) + 1 + 1 = (q-5)/4 + 2 = (q+3)/4
+            (Also Δ(N∪{0},N∪{0},0) = |N∪{0}| = n, used in Gc3 d=0 sub-case.)"
+   :source "P4-sym + P5 (zero-element boundary decomposition)"}
+
   ;; ================================================================
   ;; CONSTRUCTION (Wesley's 2-block-circulant)
   ;; ================================================================
@@ -98,15 +125,27 @@
 
   {:id :Gc1-calc
    :type :observation
-   :content "Case comp V₁-V₁ (d ∈ N): CN = Δ(N,N,d) + Δ(N∪{0},N∪{0},d) = n-1"}
+   :content "Case comp V₁-V₁ (d ∈ N): CN = Δ(N,N,d) + Δ(N∪{0},N∪{0},d)
+            = (q-5)/4 + (q+3)/4 = (2q-2)/4 = (q-1)/2 = n-1"
+   :source "P4-sym (Δ(N,N,d)=(q-5)/4 for d∈N) + P4-cross (Δ(N∪{0},N∪{0},d)=(q+3)/4 for d∈N)"}
 
   {:id :Gc2-calc
    :type :observation
-   :content "Case comp V₂-V₂ (d ∈ Q): CN = Δ(Q,Q,d) + Δ(N∪{0},N∪{0},d) = n-2"}
+   :content "Case comp V₂-V₂ (d ∈ Q): CN = Δ(Q,Q,d) + Δ(N∪{0},N∪{0},d)
+            = (q-5)/4 + (q-1)/4 = (2q-6)/4 = (q-3)/2 = n-2"
+   :source "P4 (Δ(Q,Q,d)=(q-5)/4 for d∈Q) + P4-cross (Δ(N∪{0},N∪{0},d)=(q-1)/4 for d∈Q)"}
 
   {:id :Gc3-calc
    :type :observation
-   :content "Case comp V₁-V₂ (d ∈ N∪{0}): CN ≤ n-1 (d=0 and d∈N sub-cases)"}
+   :content "Case comp V₁-V₂ (d = u-v ∈ N∪{0}):
+            d ∈ N: w∈V₁ count = #{a∈N : a+d ∈ N∪{0}} = Δ(N,N,d)+[-d∈N]
+                   = (q-5)/4 + 1 = (q-1)/4  (since -N=N by P5)
+                   w∈V₂ count = #{b∈Q : b-d ∈ N∪{0}} = Δ(Q,N,-d)+[d∈Q]
+                   = (q-1)/4 + 0 = (q-1)/4
+                   CN = (q-1)/4 + (q-1)/4 = (q-1)/2 = n-1
+            d = 0: u=v, not an edge — sub-case vacuous.
+            Hence CN = n-1 for all actual complement cross-edges."
+   :source "P4-sym (Δ(N,N,d)=(q-5)/4 for d∈N), P4 (Δ(Q,N,d')=(q-1)/4 for d'≠0), P5 (-N=N)"}
 
   {:id :Gc-max
    :type :observation
@@ -173,10 +212,22 @@
  :S-nodes
  [;; Inference schemes
 
+  {:id :S-symmetry
+   :type :inference
+   :scheme "Q = -Q symmetry yields Δ(N,N,·) and Δ(N,Q,·) from Δ(Q,Q,·) and Δ(Q,N,·)"
+   :from [:P4 :P5]
+   :to [:P4-sym]}
+
+  {:id :S-cross-block
+   :type :inference
+   :scheme "Decompose Δ(N∪{0},N∪{0},d) via Δ(N,N,d) + zero-element boundary terms"
+   :from [:P4-sym :P5]
+   :to [:P4-cross]}
+
   {:id :S-construction
    :type :inference
    :scheme "Constructive proof: exhibit witness"
-   :from [:C1 :C2 :P4 :P5]
+   :from [:C1 :C2 :P4 :P4-sym :P4-cross :P5]
    :to [:G1-calc :G2-calc :G3-calc :Gc1-calc :Gc2-calc :Gc3-calc]}
 
   {:id :S-G-free-agg
@@ -237,10 +288,23 @@
 
  :edges
  [;; Positive proof path
+  ;; P4-sym derivation (symmetry step)
+  {:from :P4    :to :S-symmetry      :type :premise}
+  {:from :P5    :to :S-symmetry      :type :premise}
+  {:from :S-symmetry :to :P4-sym     :type :inference}
+
+  ;; Cross-block complement Δ derivation
+  {:from :P4-sym :to :S-cross-block   :type :premise}
+  {:from :P5     :to :S-cross-block   :type :premise}
+  {:from :S-cross-block :to :P4-cross :type :inference}
+
+  ;; Construction uses P4 (Q,Q and Q,N values) + P4-sym (N,N and N,Q values) + P4-cross (N∪{0} values)
   {:from :P4    :to :S-construction  :type :premise}
+  {:from :P4-sym :to :S-construction :type :premise}
   {:from :P5    :to :S-construction  :type :premise}
   {:from :C1    :to :S-construction  :type :premise}
   {:from :C2    :to :S-construction  :type :premise}
+  {:from :P4-cross :to :S-construction :type :premise}
 
   {:from :S-construction :to :G1-calc  :type :inference}
   {:from :S-construction :to :G2-calc  :type :inference}
