@@ -302,6 +302,7 @@
   {:from :P4    :to :S-construction  :type :premise}
   {:from :P4-sym :to :S-construction :type :premise}
   {:from :P5    :to :S-construction  :type :premise}
+  {:from :P6    :to :S-construction  :type :premise}
   {:from :C1    :to :S-construction  :type :premise}
   {:from :C2    :to :S-construction  :type :premise}
   {:from :P4-cross :to :S-construction :type :premise}
