@@ -2,7 +2,7 @@
         :label "Hybrid: prototype-001 + legacy 工 fallback"
         :source {:prototype "resources/xenotype-wirings/prototype-001-creative-peng.edn"
                  :baseline "Mission 17a 工"}
-        :description "Use prototype-001 output when diversity is moderate/high; fall back to legacy 工 kernel when diversity is low."}
+        :description "Boundary-aware hybrid: use prototype-001 when diversity is moderate; fall back to legacy 工 when diversity is very low or very high."}
 
  :diagram
  {:nodes [;; Context
@@ -32,6 +32,7 @@
                                      :mix-shift 0}}}
 
           ;; Hybrid chooser
+          {:id :choose-mid :component :threshold-sigil}
           {:id :choose-hybrid :component :threshold-sigil}
           {:id :out :component :output-sigil}]
 
@@ -55,15 +56,21 @@
           {:from :ctx-prev :from-port :sigil :to :legacy-step :to-port :prev}
           {:from :ctx-phe :from-port :bits :to :legacy-step :to-port :phe}
 
-          ;; Hybrid chooser: use prototype when diversity >= 0.45
+          ;; Boundary-aware chooser:
+          ;; low diversity -> legacy (frozen), moderate -> prototype, high -> legacy (chaotic)
+          {:from :diversity :from-port :score :to :choose-mid :to-port :score}
+          {:value 0.35 :value-type :scalar :to :choose-mid :to-port :threshold}
+          {:from :choose-proto :from-port :result :to :choose-mid :to-port :above}
+          {:from :legacy-step :from-port :result :to :choose-mid :to-port :below}
+
           {:from :diversity :from-port :score :to :choose-hybrid :to-port :score}
-          {:value 0.45 :value-type :scalar :to :choose-hybrid :to-port :threshold}
-          {:from :choose-proto :from-port :result :to :choose-hybrid :to-port :above}
-          {:from :legacy-step :from-port :result :to :choose-hybrid :to-port :below}
+          {:value 0.7 :value-type :scalar :to :choose-hybrid :to-port :threshold}
+          {:from :legacy-step :from-port :result :to :choose-hybrid :to-port :above}
+          {:from :choose-mid :from-port :result :to :choose-hybrid :to-port :below}
 
           {:from :choose-hybrid :from-port :result :to :out :to-port :sigil}]
 
   :output :out}
 
  :interpretation
- "Hybrid wiring: reuse prototype-001's diversity-based mutate/xor logic, but fall back to legacy 工 kernel when diversity is low (score < 0.45)."}
+ "Hybrid wiring: reuse prototype-001's diversity-based mutate/xor logic, but fall back to legacy 工 kernel when diversity is very low (<0.35) or high (>=0.7), keeping prototype behavior only in the moderate band."}
