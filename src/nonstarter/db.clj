@@ -197,6 +197,55 @@
      :note note
      :balance balance}))
 
+(defn block-already-credited?
+  "Check whether a block credit has already been recorded for this commit-sha.
+
+   Idempotency key for credit-block-mana!. The convention is reason='block-completion'
+   AND note=<full commit sha>. Any session-id."
+  [ds commit-sha]
+  (when (and commit-sha (string? commit-sha))
+    (-> (sql/execute-one!
+         ds
+         ["SELECT id FROM mana_events WHERE reason = 'block-completion' AND note = ? LIMIT 1"
+          commit-sha])
+        :id
+        boolean)))
+
+(defn credit-block-mana!
+  "Credit +1 mana to SESSION-ID for completing a Block (one revolution of the
+   futonic loop, per M-bounded-in-flight-state). Idempotent on COMMIT-SHA: a
+   second call with the same sha is a no-op.
+
+   Returns one of:
+     {:credited true   :session-id ... :balance N :commit-sha ...}
+     {:credited false  :reason :already-credited :commit-sha ...}
+     {:credited false  :reason :missing-session-id :commit-sha ...}
+
+   Optional :note-meta map gets pretty-printed alongside the sha into the
+   mana_events.note column for audit (sha is the canonical idempotency key)."
+  [ds {:keys [session-id commit-sha turn note-meta]}]
+  (cond
+    (or (nil? commit-sha) (str/blank? commit-sha))
+    {:credited false :reason :missing-commit-sha}
+
+    (or (nil? session-id) (str/blank? session-id))
+    {:credited false :reason :missing-session-id :commit-sha commit-sha}
+
+    (block-already-credited? ds commit-sha)
+    {:credited false :reason :already-credited :commit-sha commit-sha}
+
+    :else
+    (let [event (record-mana! ds {:session-id session-id
+                                  :turn turn
+                                  :delta 1
+                                  :reason :block-completion
+                                  :note commit-sha})]
+      {:credited true
+       :session-id session-id
+       :balance (:balance event)
+       :commit-sha commit-sha
+       :event-id (:id event)})))
+
 (defn mana-summary
   "Summarize mana activity for a session."
   [ds session-id]
