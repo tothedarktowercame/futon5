@@ -1,0 +1,49 @@
+;; E-alpha-next-locus-v2 — PRE-REGISTRATION GENOTYPE (C-substrate-completion §8.5)
+;; STATUS: :FROZEN. Freezing == committing this file; once frozen, NEVER edit post-hoc.
+;; Co-authors: claude-3 (E1 bridge-score) + claude-6 (harness/baselines/band). Joe-greenlit 2026-06-02.
+{:experiment :E-alpha-next-locus-v2
+ :status :FROZEN
+ :date "2026-06-02"
+ :parent "E-alpha-next-locus (frozen 52c97bb) — v2 is IDENTICAL except the SLICE (below)."
+ :frozen-by "git commit of this file == the pre-registration timestamp. Do not edit post-freeze;
+             results go ONLY to the separate E-alpha-next-locus-v2.result.md."
+
+ :motivation
+ "v1 (52c97bb) result: GATE FAIL, and 0/111 episodes non-degenerate — 30 empty F_M(T) + 81 flat-newman
+  (F_M≠∅ but no candidate shares a co-mention with F_M). claude-3 caveat: 130/183 missions are
+  single-version (mention-set static). v2 restricts to the temporally-evolving missions so the signal is
+  actually DEFINED — a FAIR test of newman/intent vs baselines, plus the descriptive growth-morphology v1
+  could not bank (0 non-degenerate)."
+
+ :SLICE-CHANGE  ;; the ONLY change from v1
+ {:restrict-to "missions with >= 2 mention-timeline versions in mention-graph-asof.json"
+  :n-such-missions 53
+  :why-not-outcome-selection
+  "timeline-length is an OUTCOME-INDEPENDENT property — a fact about the mission DOC's git history, NOT
+   the prediction or its lift. Restricting here = 'run where F_M(T) is non-degenerate / the signal is
+   defined', pre-registered EX ANTE (this commit precedes the run). It does NOT peek at AP/lift."}
+
+ :everything-else-identical-to-v1
+ {:task "at T, for mission M with footprint F_M, predict M's next NEW file (extension)"
+  :baselines [:recency :churn :preferential-attachment :common-neighbours :raw-co-mention]  ;; floor = best-of
+  :signal :newman-b  ;; score(f|M,T) = Σ_{g∈F_M(T)} w_newman(f,g); raw-co-mention(a) is in the floor (interpretability ablation)
+  :arm-c :DEFERRED   ;; Newman+curvature κ STILL not pre-registered with an exact formula -> deferred again (per claude-3)
+  :metric "per-episode AP -> MAP (mean across episodes), not pooled"
+  :gate "lift = newman_MAP - best_baseline_MAP; SUCCESS = episode-level bootstrap 95% CI excludes 0 AND point-lift >= 0.05"
+  :engine "futon5/tools/embed/forecast_harness.py (reused read-only)"
+  :extract "build_e_alpha_episodes.py episodes, filtered to the >=2-timeline missions"}
+
+ :pre-stated-expectation
+ "Still likely UNDERPOWERED (~53 missions, fewer episodes; CI wide). The WIN is (1) a FAIR newman-vs-baseline
+  test on episodes where the signal is DEFINED, and (2) the descriptive growth-morphology on the evolving
+  subset (the guaranteed bank). DISAMBIGUATION: v1's inertness had two causes (empty-F_M 30 + flat-candidate
+  81); v2 controls only the FIRST. If v2 is STILL largely flat, that isolates CANDIDATE-COVERAGE (the
+  code-files M touches next are mostly not doc-mentioned) as the real culprit — which would say doc-mention
+  signals cannot reach the code-locus target space, and point to the co-TOUCH graph (not doc-mentions) as
+  the signal to try next."
+
+ :artifact
+ {:genotype "futon5/tools/embed/genotypes/E-alpha-next-locus-v2.genotype.edn  ;; THIS; freeze = git commit"
+  :results  "futon5/tools/embed/genotypes/E-alpha-next-locus-v2.result.md     ;; written POST-run"
+  :runner   "futon5/tools/embed/genotypes/run_E-alpha-v2.py"
+  :campaign-ref "C-substrate-completion §8.5"}}
