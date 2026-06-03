@@ -1,0 +1,87 @@
+;; E-alpha-next-locus — PRE-REGISTRATION GENOTYPE (C-substrate-completion §8.5)
+;; STATUS: :DRAFT-UNFROZEN. Freezing == committing this file; once frozen, NEVER edit post-hoc.
+;; Results are written to a SEPARATE file (see :artifact), never back into this genotype.
+;; Co-authors: claude-3 (E1 bridge-score signal) + claude-6 (harness / baselines / band).
+{:experiment :E-alpha-next-locus
+ :status :FROZEN
+ :frozen-by "git commit of this file == the pre-registration timestamp. DO NOT edit post-freeze;
+             run results go ONLY to the separate .result.md (see :artifact)."
+ :date "2026-06-02"
+ :task "At time T, for mission M with footprint F_M (files M has touched < T), predict M's NEXT NEW file."
+
+ :slice
+ {:dataset "futon5a/data/turn-commit-mission-backfill.json -> :records"
+  :n-records-total 3618
+  :filter "records with non-null :bestguess_mission AND :turn_epoch; group by mission; keep missions with >= 2 such commits"
+  :n-mission-aligned "~327 (turn∧mission∧commit); 1965/3618 have NO mission and are excluded"
+  :CAVEAT-files-not-in-dataset
+  "records are COMMITS {:sha :repo :ct :msg :turn_epoch :session :bestguess_mission} with NO file list.
+   Files must be extracted READ-ONLY via `git -C <repo> show --name-only --format= <sha>`. as-of-T is
+   keyed on commit time :ct (train on commits ct<=T; target = next commit's new files)."}
+
+ :episode
+ {:unit "(mission M, commit c_i) for i>=2, M's commits ordered by :ct"
+  :T "ct(c_i)"
+  :footprint-F_M "union of files touched by M's commits c_1..c_{i-1} (strictly as-of-T)"
+  :target "NEW files in c_i that are NOT in F_M  ;; FREEZE-DECISION: extension only, re-touches excluded"
+  :candidates "files existing in M's repo(s) as-of-T (git ls-tree @ ct, or union of files seen <= T);
+               negatives = candidate files not in target"}
+
+ :baselines  ;; the FLOOR — forecast_harness builtins + churn/recency/raw-co-mention; best-of = the bar
+ {:recency               "score(f) = -(T - last_touch_ct(f))"
+  :churn                 "score(f) = #commits touching f in [T-w, T)   ;; VERIFY-DOMINANT — must include"
+  :preferential-attachment "score(f) = touch-count/degree of f as-of-T  ;; harness builtin"
+  :common-neighbours     "score(f) = |N(f) ∩ F_M| on the as-of-T dep/co-mention graph  ;; harness builtin"
+  :raw-co-mention        "score(f|M) = Σ_{g∈F_M} comention(f,g) as-of-T
+                           ;; INTERPRETABILITY ABLATION: E1 (Newman+curvature) must beat RAW co-mention,
+                           ;; else a 'win' is just 'co-mention works', not 'curvature works'."
+  :floor "best_baseline_MAP = max MAP over the above"}
+
+ :signal
+ {:name :E1-bridge-score :owner :claude-3
+  :F_M "F_M(T) = code-files M's doc MENTIONS as-of T (code endpoints only: .clj/.cljs/.cljc/.el/.py/.bb — same scope as the µ_x projection)"
+  :G_T "G(T) = mission↔file mention graph as-of T, projected to file↔file co-mention with Newman weighting:
+        w_newman(f,g) = Σ_{m : f,g ∈ mentions(m,T)} 1/(|files(m,T)| − 1)"
+  :score "score(f | M,T) = Σ_{g ∈ F_M(T)} w_newman(f,g),  for candidates f ∉ F_M(T)"
+  :ablation-arms {:a "raw co-mention (unweighted count) — IDENTICAL to the :raw-co-mention baseline"
+                  :b "Newman-weighted (THE signal)"
+                  :c "Newman + hop-curvature κ on G(T) (adds the bridge-strength term)"}
+  :win-condition "(b) and/or (c) beats the best baseline INCL raw-co-mention (a) at the band —
+                  directly isolates whether the weighting/curvature adds over plain co-mention"
+  :extractor-dep "mention-graph-as-of-T does NOT yet exist; claude-3 BUILDS it as a run-phase dependency:
+                  git-replay each M-*.md via `git show <sha≤T>:doc` (NO checkout, keyed on the doc's commit ≤ T),
+                  explicit path/ns rules (no fuzzy), code-files only; mirrors git_dep_graph_asof / git_callsig_asof.
+                  NOT a freeze blocker — the signal is fully specified above."}
+
+ :metric
+ {:per-episode :average-precision
+  :aggregate :mean-AP-across-episodes  ;; MAP, NOT pooled — else big missions dominate
+  :also [:precision-at-k :lift_over_best_baseline]
+  :engine "futon5/tools/embed/forecast_harness.py (tie-break shuffle fix in; E1 plugs in as a signal)"}
+
+ :gate  ;; THE pre-registered band — frozen BEFORE seeing E1's AP
+ {:statistic "lift = E1_MAP - best_baseline_MAP"
+  :bootstrap {:unit :EPISODE   ;; resample (M,c_i) units, NOT candidates (candidate-level = pseudoreplication = bogus-narrow CI)
+              :B 2000 :ci 0.95}
+  :SUCCESS "95% bootstrap CI of lift excludes 0  AND  point-lift >= :delta"
+  :delta 0.05  ;; PRE-REGISTERED
+  :pre-stated-expectation
+  "on n~327 (and fewer distinct episodes) the CI is LIKELY WIDE and does NOT clear delta. This PILOT
+   validates the genotype-template + banks the descriptive deliverable; the predictive verdict awaits
+   codex-2's going-forward clock-in/per-turn-commit data (§8.1). Same genotype re-runs as n grows."}
+
+ :descriptive-deliverable  ;; GUARANTEED output, banked regardless of the gate
+ {:guaranteed true
+  :content "mission->file growth morphology: which missions extend along intent-bridges (high E1) vs not;
+            correlate extension distance with mission-age / footprint-size (the grows-at-edges link)."}
+
+ :phases [:extract :baselines :signal :band-eval :descriptive :power-note]
+
+ :artifact
+ {:genotype "futon5/tools/embed/genotypes/E-alpha-next-locus.genotype.edn  ;; THIS file; freeze = git commit"
+  :results  "futon5/tools/embed/genotypes/E-alpha-next-locus.result.md     ;; written POST-run, never here"
+  :campaign-ref "C-substrate-completion §8.5 (claude-3 commit 13b0628)"}
+
+ :decisions-settled
+ [{:d :target :resolved :new-files-extension :by :joe}
+  {:d :mention-graph-as-of-T :resolved "build it (claude-3, run-phase dependency); spec in :signal :extractor-dep"}]}
