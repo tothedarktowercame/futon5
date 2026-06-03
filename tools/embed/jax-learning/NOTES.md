@@ -30,6 +30,14 @@ dm-haiku — all installed and **compatible under jax 0.9** (the real risk, clea
     chop-lesson: a GNN that "gets 0.9" usually hasn't beaten the cheap baselines.)
   - Toy graph still (replication); the candidate-coverage wall (E-α) is **structurally
     avoided** once candidates live in a dep/co-touch graph.
+  - **RAN (`it2_link_prediction.py`, toy SBM 60n/3-comm):** GCN AUC 0.605 vs Adamic-Adar
+    0.663 / common-neighbours 0.654 / pref-attach 0.576 / null 0.534 → **LIFT = −0.058**.
+    The GNN trained (loss 0.021, beats null) **but lost to the cheap heuristics** — exactly
+    claude-6's bar, and the same "fancy ≤ baseline" wall as E-α and the whole session.
+    *Chop learned:* always report lift-over-heuristics; a GNN at "decent AUC" usually
+    hasn't earned its keep. (Honest caveat: untuned/small/toy — the *lesson* is the
+    deliverable, not "GNNs never win"; the point is the default assumption "GNN wins" is
+    false, so you MUST measure the lift.)
 - **it-3 — (APPLICATION, parked):** it-2 → E-γ is then just **swap the toy graph for
   `git_dep_graph_asof`** (dep/co-touch candidates reach code-locus targets — the E-α wall
   gone by construction). That's research, gated on Joe; not yet.
