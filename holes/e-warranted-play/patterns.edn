@@ -1,0 +1,27 @@
+;; E-warranted-play as a pattern-backed strategy — the source pattern-language for the
+;; futon5 wiring diagram (the policy AND the simulator; one artifact, two readings).
+;; Each box is a REAL futon3 flexiarg — four authored THIS session, for this loop.
+;; Generate: bb -cp src:resources scripts/pattern_to_wiring.clj --all \
+;;   --patterns holes/e-warranted-play/patterns.edn \
+;;   --out-dir holes/e-warranted-play/wiring \
+;;   --manifest holes/e-warranted-play/wiring/manifest.edn
+[
+ {:sigil "探" :role "HalfBakedScout"
+  :pattern "structural-tension-as-observation"
+  :description "Find a half-baked pudding: a :held capability is un-discharged tension — read it as the observation of WHERE to attend (the loop's input)."}
+ {:sigil "配" :role "PatternWarrant"
+  :pattern "pattern-warranted-choice-point"
+  :description "Find a library pattern whose warrant fits the mission's lifecycle state — the operator's pre-given imprimatur (no per-turn ask)."}
+ {:sigil "安" :role "AdmissibilityGate"
+  :pattern "admissibility"
+  :description "Admit the move only if it is autonomous-safe (reversible, in-envelope); otherwise it NAGs to the operator."}
+ {:sigil "行" :role "ApplyAndEvaluate"
+  :pattern "learn-as-you-go"
+  :description "Apply the pattern to evolve the mission one step, then record the PUR — honest, incl. a negative result counted as information gained."}
+ {:sigil "枝" :role "ReversibleBranch"
+  :pattern "consent-gate"
+  :description "Commit to a branch — reversible (un-fire if junk); outward/irreversible acts still pass the consent gate."}
+ {:sigil "恒" :role "StrategicPersistence"
+  :pattern "advanceability"
+  :description "Persist on the chosen level (don't flit); each warranted move accumulates toward clearing it — the strategy, not a one-shot."}
+]
