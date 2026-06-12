@@ -20,3 +20,4 @@ data/nonstarter.db
 *.fdb_latexmk
 *.fls
 *.toc
+.clj-kondo/
