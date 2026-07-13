@@ -91,3 +91,108 @@ the eigen-hexagram reports was never explained).
   ablation to justify. Sonification, synesthesia, sospeso, AIF+ validator,
   portfolio loop — off the 1D-CA axis (AIF+ `ct.mission/validate` may return
   as a validator for our own mission diagrams).
+
+## Ambiguity series B (replay-ledger — exo/xeno replays)
+
+### B1: L5-creative wiring semantics (Tier-2 #2, boundary-guardian)
+
+**Pinned from executable ground truth** (`data/wiring-ladder/level-5-creative.edn`,
+`src/futon5/wiring/runtime.clj`, `src/futon5/xenotype/generator.clj`,
+`src/futon5/mmca/exotype.clj`):
+
+1. **Diversity gate** (generator.clj:371-373): `diversity = |set([pred,self,succ])| / 3`.
+   For 3-sigil neighborhoods: 1 unique → 1/3, 2 unique → 2/3, 3 unique → 1.0.
+   Gate (generator.clj:488-490): `score >= 0.5` → creative (above); `< 0.5` → legacy (below).
+   So diversity = 1/3 (all same) → legacy; 2/3 or 1.0 → creative.
+
+2. **Creative path** (generator.clj:149-150, bit-op :xor): bitwise XOR of pred and succ
+   sigil bits. Fully deterministic, no RNG. E.g., XOR(00000000, 00000001) = 00000001.
+
+3. **Legacy kernel path** (generator.clj:96-110, legacy-kernel-step): uses
+   `:mutating-template` kernel with exotype sigil "工" (tier :super), params:
+   rotation=0, match-threshold=4/9, invert-on-phenotype?=false, update-prob=0.5,
+   mix-mode=:rotate-left, mix-shift=0.
+
+4. **Cell update order** (runtime.clj:32-47): sequential `for [i (range len)]` with
+   circular boundary conditions (mod). All cells use the *current* generation's
+   values (not newly-computed ones) — synchronous update.
+
+5. **Stochastic elements**: The `seeded-rng` (generator.clj:89-93) creates
+   `java.util.Random.(hash [seed tick x pred self succ prev phe])`. In the wiring
+   runtime, `state` is nil (not passed in `evolve-cell` at runtime.clj:20), so
+   seed=0, tick=nil, x=nil. `prev` and `phe` are nil in `evolve-genotype`
+   (runtime.clj:28-46 passes only :pred/:self/:succ). So the RNG seed depends only
+   on [pred, self, succ] — fully deterministic *at the hash level*.
+
+   **BUT**: `exotype/apply-exotype` (exotype.clj:723-779) calls
+   `context->physics-family` (exotype.clj:389+) which computes eigenvalue
+   decomposition via `org.apache.commons.math3.linear.EigenDecomposition`.
+   This is **floating-point non-deterministic across JVM invocations** — the
+   same inputs can produce different eigenvalue orderings, leading to different
+   `physics-family` → different `rule->physics-params` → different
+   `mutation-bias` → different `update-prob` → different kernel spec →
+   different cell output.
+
+   **Conclusion**: the legacy path is **NOT deterministic across JVM processes**,
+   even though the hash and RNG seed are stable. The creative path IS deterministic.
+   Cross-check route: **statistical** (per M-lab-standard stochasticity rule).
+
+## Checkpoint R1a: boundary-guardian exo port + cross-check (2026-07-13)
+
+**Slice:** Tier-2 R1a (boundary-guardian / L5-creative exo port)
+**Agent:** zai-1
+**Commit:** (see commit SHA below)
+
+### Deliverables shipped
+
+1. `scirepro.exo` module: implements diversity gate, creative XOR path,
+   threshold gate, sigil tables (matching futon5/ca/core.clj), and evolution
+   scaffolding. Legacy path delegates to futon5 (not ported wholesale, per
+   M-lab-standard "port per-replay, never wholesale").
+
+2. `scirepro.exo-cross-check`: statistical cross-check. 30 seeds x 50 gen.
+   Phase 1: creative path verification (29,296 checks, 0 errors across 10 seeds
+   in gate run; 87,548 checks in full 30-seed run). Phase 2: distributional
+   comparison (mean change-rate = 0.8971 ± 0.0143, 3σ tolerance = 0.0430).
+
+3. Unit tests: 21 tests, 79 assertions, 0 failures (diversity, XOR, gate
+   routing, determinism, sigil roundtrips, IC generation).
+
+### Gate lines (un-piped, per ZU-4)
+
+```
+clojure -X:test:
+Ran 21 tests containing 79 assertions.
+0 failures, 0 errors.
+
+clojure -M -m scirepro.exo-cross-check:
+EXO CROSS-CHECK (statistical): 30 seeds x 50 gen
+Phase 1: Creative path verification (10 of 30 seeds for gate)
+  seed 42: checks=2917 errors=0
+  ...
+  TOTAL checks=29296 errors=0
+Phase 2: Distributional comparison (mean change-rate)
+  Mean=0.8971 StdDev=0.0143
+  Range=[0.8734 0.9138]
+  3sigma tolerance=0.0430
+EXO CROSS-CHECK OK route=statistical
+
+clojure -M -m scirepro.cross-check 120:
+CROSS-CHECK OK dynamics=[:multiply :blend :coupled] 3 ICs x 120 steps
+
+clj-kondo --lint src/scirepro/exo.clj src/scirepro/exo_cross_check.clj test/scirepro/exo_test.clj:
+linting took 106ms, errors: 0, warnings: 0
+
+check-parens: PARENS OK
+```
+
+### Determinism route: statistical (not grid-identity)
+
+The futon5 wiring runtime's legacy kernel path is non-deterministic across JVM
+invocations due to floating-point ordering in Apache Commons Math's
+`EigenDecomposition` (used in `exotype.clj:context->physics-family`). The
+`seeded-rng` hash IS stable, and the creative path (XOR) IS deterministic, but
+the legacy path's physics-family computation diverges. Per M-lab-standard, we
+use the statistical route: ≥30 seeds, compare distributions of aggregate
+metrics, with the deterministic creative path verified exactly (29K+ checks, 0
+errors).
