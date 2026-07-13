@@ -162,19 +162,28 @@ def main():
     for s, pid in sims[:6]:
         print(f"  {s:.3f}  {pid}  [{anchors[pid]['bits']}]")
 
+    # v0.1 — Golemization path: HEAD recast as design pattern, section-wise.
+    # Extracted up-front so the representation notes can report what actually
+    # happened (the per-section xenotype is computed iff the file carries a
+    # **IF:**/**HOWEVER:**/**THEN:**/**BECAUSE:** recast — independent of the
+    # `## HEAD` prose).
+    sections = extract_pattern_sections(md)
+    section_rows = None
+
     # Representation-mismatch report (the honest part).
     print("\nrepresentation notes:")
-    print("  - xenotype (36-bit) NOT computed: bridge derives it from "
-          "IF/HOWEVER/THEN/BECAUSE sections; a HEAD has none. -> DERIVE question.")
+    if len(sections) == 4:
+        print("  - xenotype (32-bit) computed from the file's "
+              "**IF:**/**HOWEVER:**/**THEN:**/**BECAUSE:** recast (see below).")
+    else:
+        print("  - xenotype (32-bit) NOT computed: bridge derives it from a "
+              "**IF:**/**HOWEVER:**/**THEN:**/**BECAUSE:** recast; this file has "
+              f"{len(sections)}/4 such sections. -> DERIVE question.")
     print(f"  - whole-text embedding of {len(head)} chars vs anchors trained on "
           "short pattern texts: length mismatch may flatten the projection.")
     if confidence < 0.35:
         print("  - bit-confidence is LOW: the ridge sees this text as near the "
               "decision boundary on most bits — default representation is weak here.")
-
-    # v0.1 — Golemization path: HEAD recast as design pattern, section-wise.
-    sections = extract_pattern_sections(md)
-    section_rows = None
     if len(sections) == 4:
         print("\n=== v0.1 — HEAD recast as design pattern (Golemization) ===")
         names = ["IF", "HOWEVER", "THEN", "BECAUSE"]
