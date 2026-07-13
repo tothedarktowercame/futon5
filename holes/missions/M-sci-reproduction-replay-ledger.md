@@ -196,3 +196,70 @@ the legacy path's physics-family computation diverges. Per M-lab-standard, we
 use the statistical route: ≥30 seeds, compare distributions of aggregate
 metrics, with the deterministic creative path verified exactly (29K+ checks, 0
 errors).
+
+### B1 correction (R1a.2, 2026-07-13): route justification corrected
+
+**Original B1 claim (REFUTED):** "Legacy path non-deterministic because
+exotype/apply-exotype uses Apache Commons Math EigenDecomposition which is
+FP-non-deterministic across JVM invocations."
+
+**Where the belief came from:** Observed divergence between two headless
+futon5 runs with the same IC (the cross-check reported "not deterministic").
+The divergence was real, but the attribution was wrong — I assumed the
+eigenvalue decomposition was the cause without isolating the actual
+divergence point.
+
+**True mechanism (FOUND):** `kernel-baldwin-mutate` in `ca/core.clj:414-421`
+calls `(rand)` — Clojure's `Math/random()` — an unseeded global RNG. This
+fires whenever `phenotype-context` is truthy. In the wiring runtime,
+`build-local-context` (exotype.clj:389-398) sets `phenotype-context` to
+`"0000"` (truthy) even when no phenotype is provided. So every legacy-kernel
+cell update calls `(rand)`, making the legacy path non-deterministic WITHIN
+a single JVM process. The `seeded-rng` in `generator.clj:89` gates a
+SEPARATE `update-prob` draw, but `kernel-baldwin-mutate`'s `rand` is
+independent and uncontrolled.
+
+**Claude-6's probe confirms:** `context->physics-family` IS deterministic
+across JVM processes (500-context cross-JVM probe, bit-identical). The
+eigenvalue decomposition is NOT the source of non-determinism.
+
+**Cross-check routes (corrected):**
+- Full grid-identity: FAILS at gen 33 (legacy path diverges via `rand`).
+  This is by design — the legacy path is genuinely stochastic.
+- Creative-path grid-identity: PASSES (18K+ checks, 0 errors across 3 ICs).
+- Statistical route (30 seeds, distributional comparison): PRIMARY, with
+  corrected justification (`ca/core.clj:416`, not eigenvalue FP).
+
+## Checkpoint R1a.2 (2026-07-13): grid-identity attempt + route correction
+
+**Agent:** zai-1
+
+### Grid-identity result
+
+Full grid-identity FAILS: first-diff at gen 33 across all 3 ICs (42, 43, 44).
+Root cause: `kernel-baldwin-mutate` (`ca/core.clj:414-421`) calls unseeded
+`(rand)` when phenotype-context is truthy ("0000" by default).
+
+Creative-path grid-identity PASSES: 17,763 checks, 0 errors (3 ICs × 50 gen).
+
+### Gate lines (un-piped)
+
+```
+clojure -X:test:
+Ran 21 tests containing 79 assertions.
+0 failures, 0 errors.
+
+clojure -M -m scirepro.exo-cross-check grid 50:
+EXO CROSS-CHECK OK route=grid-identity-creative
+  (full grid-identity fails on legacy path: ca/core.clj:416 unseeded rand)
+
+clojure -M -m scirepro.exo-cross-check 50:
+EXO CROSS-CHECK OK route=statistical
+(Phase 1: 29,049 creative-path checks, 0 errors; Phase 2 distributional)
+
+clojure -M -m scirepro.cross-check 120:
+CROSS-CHECK OK dynamics=[:multiply :blend :coupled] 3 ICs x 120 steps
+
+clj-kondo: errors: 0, warnings: 0
+check-parens: PARENS OK
+```
