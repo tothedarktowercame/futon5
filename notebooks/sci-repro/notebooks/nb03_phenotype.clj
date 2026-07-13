@@ -33,6 +33,18 @@
 ;; that remain unchanged for the measurement window. The phenotype in
 ;; the interior is compared with pure ECA-R evolution from the same
 ;; phenotype state.
+;;
+;; **Framing (added in review):** for interior cells inset by the light-cone
+;; radius, a fraction of exactly 1.0 is a *mathematical consequence* of the
+;; A5 update semantics — inside a frozen region, "apply the cell's own rule"
+;; IS pure ECA-R. So this is a machine-checked consistency proof of the A5
+;; resolution and the region-finder (in the same spirit as C7), not empirical
+;; evidence for the paper's claim: it would fail under any alternative reading
+;; of A5 (post-update rule, wrap-around phenotype boundaries), and it confirms
+;; frozen regions dominate the late field (227,227 interior comparisons). The
+;; *empirical* content of "phenotype follows genotype" is carried by C3b,
+;; where the coupled MI clears both the shuffled-pairing null and the
+;; frozen-random-genotype baseline.
 
 (:conformance findings)
 
@@ -65,12 +77,18 @@
 
 {:a5 "old genotype + old phenotype -> new phenotype; old genotype -> new genotype via S3.2 blend"}
 
-;; ## How to reproduce
+;; ## How to reproduce this notebook
 ;;
-;; ```bash
-;; cd /home/joe/code/futon5/notebooks/sci-repro
-;; clojure -X:test
-;; clojure -M -m scirepro.cross-check 120
-;; clojure -M -m scirepro.render
+;; From `futon5/notebooks/sci-repro/` (deps pinned in `deps.edn`, Clay 2-beta23):
+;;
 ;; ```
+;; clojure -X:test                          ; engine unit tests
+;; clojure -M -m scirepro.cross-check 120   ; grid-identity vs 256ca.el, all dynamics
+;; clojure -M -m scirepro.render            ; re-render these notebooks into out/
+;; ```
+;;
+;; Genotype and phenotype ICs are explicit EDN artifacts under
+;; `resources/ics/` and `resources/phenotype-ics/`. Ground truth is
+;; `futon5/256ca.el`. Claims table, ambiguity ledger (A1-A5), and per-slice
+;; checkpoints: `futon5/holes/missions/M-sci-reproduction.md`.
 

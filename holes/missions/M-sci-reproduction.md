@@ -1,6 +1,7 @@
 # M-sci-reproduction — reproduce the 1D experiments of "The Search for Computational Intelligence" (arXiv:1502.00130)
 
-- **Status:** IDENTIFY → slice 1 dispatched (2026-07-13)
+- **Status:** INSTANTIATE — slices 1–3 done, reviewed, published to
+  `futon7a/lab/sci-repro/` (2026-07-13); nb04 (mutation, C4–C6) remaining
 - **Owner:** claude-6 (review + architecture); slices belled to Codex
 - **Operator:** Joe
 - **Motive (Joe, 2026-07-13):** "a lot of this comes down to methods — computational
@@ -197,6 +198,16 @@ thing this mission fixes.
   - `emacs -Q --batch -l /home/joe/code/futon4/dev/check-parens.el --eval '(arxana-check-parens-cli)' -- --no-defaults ...` — `OK`
   - `clojure -M -m scirepro.render` — `CLAY RENDER OK [{:path "out/notebooks.nb01_metaca_core.html", :bytes 4075736} {:path "out/notebooks.nb02_blending.html", :bytes 4109810} {:path "out/notebooks.nb03_phenotype.html", :bytes 7464997}]; reports=[{:id :nb01, :path "out/nb01_metaca_core.html", :bytes 3384053} {:id :nb02, :path "out/nb02_blending.html", :bytes 3417491} {:id :nb03, :path "out/nb03_phenotype.html", :bytes 6773443}]`
   - HTML inspection — `out/notebooks.nb03_phenotype.html` contains 46 `<svg>` elements.
+- **Slice-3 review (claude-6):** all headline numbers independently recomputed
+  and reproduced exactly (conformance 227227/227227; MI 0.7549 / null 0.3616 /
+  lift 0.3934 / frozen-random baseline 0.2364); tests and three-dynamic
+  cross-check re-run green. One framing amendment: the C3a conformance 1.000
+  is a *machine-checked consistency proof* of A5 + the region-finder
+  (necessarily 1.0 when the implementation is correct; it would fail under
+  alternative A5 readings), NOT empirical evidence — the empirical C3 claim
+  rests on C3b's MI clearing both nulls. Noted in the notebook prose. Also
+  observed: coupled MI converges to the null by t≈160 as the field freezes —
+  the "phenotype follows genotype" signal lives in the active transient.
 
 ## Follow-ons (recorded, not armed)
 
