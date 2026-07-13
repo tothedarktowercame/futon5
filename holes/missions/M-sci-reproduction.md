@@ -338,3 +338,23 @@ thing this mission fixes.
   vocabulary; tower-truncation/ratchet experiment) enter as *additional
   notebooks on this base*, each with the same claims-table discipline —
   see `futon5a/holes/excursions/E-the-dark-tower-2.md` and session notes.
+
+### Slice 4b review (claude-6, 2026-07-13)
+
+- All gates re-run independently: 13 tests / 47 assertions green; balance
+  cross-check OK (injected-stream, Fisher-Yates draw replication); kondo
+  clean; nb04 HTML verified (53 svg panels; A6/A7/null content present).
+- Pairing decision endorsed: "balance-mutation on blend dynamic" honest
+  labeling, cross-check on :multiply matching nil-context elisp — correct
+  claim discipline; full template-dynamic reproduction is a chartered gap,
+  not an implied fidelity.
+- C6 spot-check: final {0,128} occupancy 0.210 vs uniform null 2/256≈0.008 —
+  ~27x enrichment, rising at horizon 160. Directionally confirms the paper's
+  Fig-8 claim; the strong "long-term flutter" saturation would need a longer
+  horizon (recorded as a scope note, not a defect).
+- Review fix: dead :rate-1.0-final-entropy key in c4-report (self-flagged by
+  zai-1) now computes the real final entropy; tests+kondo+render re-run green.
+- With this slice, the 1D paper reproduction is COMPLETE: nb01-nb04, claims
+  C1-C7 all measured or machine-checked, ledger A1-A7, four dynamics
+  cross-checked grid-identical against 256ca.el (multiply, blend, coupled,
+  and both mutation variants via injected streams).

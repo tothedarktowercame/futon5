@@ -590,7 +590,7 @@
      {:seeds (count c4-seeds)
       :steps c4-steps
       :width c4-width
-      :rate-1.0-final-entropy (:value (last (:uniform-rate-1.0-entropy {:dummy []})))
+      :rate-1.0-final-entropy (:value (last (entropy-curve (get uniform-sweep 1.0) c4-steps)))
       :balance-final-entropy (:value (last (entropy-curve balance-blend-runs c4-steps)))
       :no-mutation-final-entropy (:value (last (entropy-curve no-mutation-runs c4-steps)))
       :random-replace-final-entropy (:value (last (entropy-curve random-replace-runs c4-steps)))}}))
