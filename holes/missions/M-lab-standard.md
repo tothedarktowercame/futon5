@@ -34,6 +34,16 @@
    checks in the notebook (C7 precedent).
 7. **Self-reproduction section** — commands, pinned deps, artifact provenance,
    ledger pointer. Rendered HTML committed; browser-viewable with no toolchain.
+8. **Open publication (Joe, 2026-07-13)** — after a slice passes review, the
+   rendered notebooks are published to the public site:
+   `futon5/notebooks/sci-repro/publish.sh` copies the Clay renders into
+   `futon7a/lab/sci-repro/`, regenerates the section index with provenance
+   (futon5 SHA + date), commits, and pushes. Publish happens per accepted
+   slice — the lab notebook is open while the experiment series is running,
+   not after it. New experiment series get sibling dirs under `futon7a/lab/`
+   and their own publish scripts following the same pattern. Disclosure rule:
+   only rendered notebook artifacts and their index go to futon7a — never
+   mission internals, dispatch logs, or agent coordination material.
 
 ## Layer-stack standard (phase 2)
 
