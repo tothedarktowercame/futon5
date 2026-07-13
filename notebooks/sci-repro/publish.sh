@@ -34,6 +34,9 @@ DESC = {
     'nb02_blending': 'The blending dynamic (&sect;3.2): paired blend-vs-no-blend '
         'measurement on shared seeds (C2), entropy and change-rate curves, '
         'stable-band timing.',
+    'nb03_phenotype': 'The coupled genotype+phenotype dynamic (Figure 4): '
+        'phenotype update semantics pinned to 256ca.el (A5), region '
+        'conformance (C3), and genotype/phenotype MI against a shuffled null.',
 }
 items = []
 for f in nbs:

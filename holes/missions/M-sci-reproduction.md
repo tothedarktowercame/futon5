@@ -59,6 +59,19 @@ blends as **crossover operators at the meta/controller level** (Joe, 2026-07-13)
   as first committed was circular (it compared the blending expression to an
   inlined copy of itself and never referenced Rule 23); replaced in review
   with the non-circular enumeration in `scirepro.engine`.
+- **A5. Phenotype update semantics for Figure 4.** **Resolved slice 3:**
+  phenotype ICs are random bit strings from `random-phenotype-string`
+  (`256ca.el:399-402`). `evolve-phenotype-against-genotype` updates each
+  phenotype bit by applying the cell's own current genotype rule to the old
+  phenotype neighborhood, with fixed-zero phenotype boundaries
+  (`256ca.el:1175-1190`). `co-evolve-phenotype-and-genotype` computes the new
+  phenotype first from old genotype+phenotype, then computes the new genotype
+  from the old genotype plus old/new phenotype context (`256ca.el:1192-1199`).
+  Figure-4 rendering goes through `print-space-time-3`/`run-for-generations-3`
+  (`256ca.el:1227-1241`, `256ca.el:1323-1365`) and the batch reproduction
+  binds `evolve-sigil-fn` to `evolve-sigil-with-blending` so the genotype path
+  is the paper's deterministic S3.2 blend dynamic; the context is present but
+  ignored by that blend function.
 - (Add further findings here as they surface.)
 
 ## Claims table — every §4.1/§5 assertion becomes a measured proposition
@@ -160,6 +173,30 @@ thing this mission fixes.
   - `emacs -Q --batch -l /home/joe/code/futon4/dev/check-parens.el --eval '(arxana-check-parens-cli)' -- --no-defaults ...` — `OK`
   - `clojure -M -m scirepro.render` — `CLAY RENDER OK [{:path "out/notebooks.nb01_metaca_core.html", :bytes 3733974} {:path "out/notebooks.nb02_blending.html", :bytes 3768052}]; reports=[{:id :nb01, :path "out/nb01_metaca_core.html", :bytes 3043205} {:id :nb02, :path "out/nb02_blending.html", :bytes 3076657}]`
   - HTML inspection — `out/notebooks.nb02_blending.html` contains 41 `<svg>` elements.
+
+### Slice 3 — nb03 phenotype coupling + C3 measurement (2026-07-13)
+
+- Resolved A5 above and implemented deterministic Figure-4 pheno-geno
+  coupling in `scirepro.engine`: genotype takes the S3.2 blend step; phenotype
+  is driven by the old genotype's local rules over old phenotype bits.
+- Added explicit phenotype IC artifacts under
+  `notebooks/sci-repro/resources/phenotype-ics/` for the 30 width-80
+  measurement seeds plus 3 width-64 xcheck seeds.
+- Extended `scirepro.cross-check` with `:coupled`; both genotype and phenotype
+  grids are compared against `256ca.el` for 3 ICs x 120 steps.
+- Added `notebooks/nb03_phenotype.clj`, nb03 render artifacts, and the nb03
+  entry in `notebooks/sci-repro/publish.sh` without running publication.
+- C3 headline, width 80, 30 seeds, 160 steps: frozen-region conformance
+  227227/227227 = 1.000. Mean genotype/phenotype MI over rows = 0.7549;
+  shuffled-pairing null = 0.3616; lift = 0.3934. Frozen-random-genotype
+  phenotype baseline MI = 0.2364.
+- Validation:
+  - `clojure -X:test` — `Ran 6 tests containing 22 assertions. 0 failures, 0 errors.`
+  - `clojure -M -m scirepro.cross-check 120` — `CROSS-CHECK OK dynamics=[:multiply :blend :coupled] 3 ICs x 120 steps; report=out/cross-check.edn`
+  - `clj-kondo --lint src test notebooks` — `linting took 264ms, errors: 0, warnings: 0`
+  - `emacs -Q --batch -l /home/joe/code/futon4/dev/check-parens.el --eval '(arxana-check-parens-cli)' -- --no-defaults ...` — `OK`
+  - `clojure -M -m scirepro.render` — `CLAY RENDER OK [{:path "out/notebooks.nb01_metaca_core.html", :bytes 4075736} {:path "out/notebooks.nb02_blending.html", :bytes 4109810} {:path "out/notebooks.nb03_phenotype.html", :bytes 7464997}]; reports=[{:id :nb01, :path "out/nb01_metaca_core.html", :bytes 3384053} {:id :nb02, :path "out/nb02_blending.html", :bytes 3417491} {:id :nb03, :path "out/nb03_phenotype.html", :bytes 6773443}]`
+  - HTML inspection — `out/notebooks.nb03_phenotype.html` contains 46 `<svg>` elements.
 
 ## Follow-ons (recorded, not armed)
 

@@ -42,7 +42,14 @@
     (is (= 0.0 (engine/shannon-entropy [])))
     (is (= 0.0 (engine/shannon-entropy [7 7 7])))
     (is (< (abs (- 1.0 (engine/shannon-entropy [0 1]))) 1.0E-9))
-    (is (= 0.5 (engine/change-rate [0 1 1 0] [0 0 1 1])))))
+    (is (= 0.5 (engine/change-rate [0 1 1 0] [0 0 1 1]))))
+  (testing "mutual information and deterministic row rotation"
+    (is (= [2 3 1] (engine/rotate-row [1 2 3] 1)))
+    (is (= 0.0 (engine/mutual-information [] [])))
+    (is (< (abs (- 1.0 (engine/mutual-information [0 0 1 1] [0 0 1 1])))
+           1.0E-9))
+    (is (< (engine/mutual-information [0 0 1 1] [0 1 0 1])
+           1.0E-9))))
 
 (deftest c7-proof
   (let [{:keys [cases passed ok? wolfram-descending]}

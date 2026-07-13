@@ -107,9 +107,21 @@
   (let [rng (java.util.Random. (long seed))]
     (mapv (fn [_] (.nextInt rng 256)) (range width))))
 
+(defn seeded-phenotype-ic
+  [seed width]
+  (let [rng (java.util.Random. (long seed))]
+    (mapv (fn [_] (.nextInt rng 2)) (range width))))
+
 (defn save-ic! [path seed width]
   (let [f (io/file path)
         ic (seeded-ic seed width)]
+    (.mkdirs (.getParentFile f))
+    (spit f (with-out-str (prn {:seed seed :width width :ic ic})))
+    ic))
+
+(defn save-phenotype-ic! [path seed width]
+  (let [f (io/file path)
+        ic (seeded-phenotype-ic seed width)]
     (.mkdirs (.getParentFile f))
     (spit f (with-out-str (prn {:seed seed :width width :ic ic})))
     ic))
@@ -169,6 +181,35 @@
       (/ (count (filter false? (map = row-a row-b)))
          (double n)))))
 
+(defn mutual-information
+  "Empirical base-2 mutual information between paired categorical rows."
+  [xs ys]
+  (when-not (= (count xs) (count ys))
+    (throw (ex-info "rows must have equal width"
+                    {:left (count xs) :right (count ys)})))
+  (let [n (double (count xs))]
+    (if (zero? n)
+      0.0
+      (let [px (frequencies xs)
+            py (frequencies ys)
+            pxy (frequencies (map vector xs ys))]
+        (reduce (fn [acc [[x y] cxy]]
+                  (let [p-xy (/ cxy n)
+                        p-x (/ (get px x) n)
+                        p-y (/ (get py y) n)]
+                    (+ acc (* p-xy (/ (Math/log (/ p-xy (* p-x p-y)))
+                                      (Math/log 2.0))))))
+                0.0
+                pxy)))))
+
+(defn rotate-row [row n]
+  (let [v (vec row)
+        c (count v)]
+    (if (zero? c)
+      v
+      (let [shift (mod n c)]
+        (vec (concat (subvec v shift) (subvec v 0 shift)))))))
+
 (defn eca-next-bit
   "Fixed-rule ECA using the same elisp neighborhood order for comparability."
   [rule left center right]
@@ -186,6 +227,51 @@
 (defn eca-evolve
   [rule initial-bits steps]
   (vec (take (inc steps) (iterate #(eca-step rule %) (vec initial-bits)))))
+
+(defn phenotype-step
+  "Update phenotype bits using each cell's current genotype rule.
+   Boundary phenotype neighbors are fixed 0, matching 256ca.el."
+  [genotype-row phenotype-row]
+  (when-not (= (count genotype-row) (count phenotype-row))
+    (throw (ex-info "genotype and phenotype rows must have equal width"
+                    {:genotype (count genotype-row)
+                     :phenotype (count phenotype-row)})))
+  (mapv (fn [i rule center]
+          (let [left (if (zero? i) 0 (nth phenotype-row (dec i)))
+                right (if (= i (dec (count phenotype-row))) 0 (nth phenotype-row (inc i)))]
+            (eca-next-bit rule left center right)))
+        (range)
+        genotype-row
+        phenotype-row))
+
+(defn coupled-step
+  "Figure-4 deterministic pheno-geno step.
+   Phenotype is updated from the old genotype and old phenotype first;
+   genotype then takes one S3.2 blending step from the old genotype."
+  [{:keys [genotype phenotype]}]
+  {:genotype (step genotype :blend)
+   :phenotype (phenotype-step genotype phenotype)})
+
+(defn coupled-evolve
+  "Return coupled rows 0..steps inclusive as
+   {:genotype [...rows...] :phenotype [...rows...]}."
+  [genotype phenotype steps]
+  (when-not (= (count genotype) (count phenotype))
+    (throw (ex-info "genotype and phenotype ICs must have equal width"
+                    {:genotype (count genotype)
+                     :phenotype (count phenotype)})))
+  (let [states (vec (take (inc steps)
+                          (iterate coupled-step
+                                   {:genotype (vec genotype)
+                                    :phenotype (vec phenotype)})))]
+    {:genotype (mapv :genotype states)
+     :phenotype (mapv :phenotype states)}))
+
+(defn phenotype-evolve-under-genotype
+  "Phenotype baseline: evolve phenotype under a frozen genotype row."
+  [genotype phenotype steps]
+  (vec (take (inc steps)
+             (iterate #(phenotype-step genotype %) (vec phenotype)))))
 
 (defn genotype->initial-bits
   "Project a genotype IC to an ECA binary IC using bit position 0.

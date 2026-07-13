@@ -10,15 +10,26 @@
 (def figure-steps 120)
 (def stasis-steps 300)
 (def c2-steps 500)
+(def c3-steps 160)
 (def band-window 8)
+(def c3-region-window 8)
 
 (defn ic-path [seed]
   (io/file "resources/ics" (str "seed-" seed ".edn")))
+
+(defn phenotype-ic-path [seed]
+  (io/file "resources/phenotype-ics" (str "seed-" seed ".edn")))
 
 (defn ensure-ic! [seed]
   (let [path (ic-path seed)]
     (when-not (.exists path)
       (engine/save-ic! path seed width))
+    path))
+
+(defn ensure-phenotype-ic! [seed]
+  (let [path (phenotype-ic-path seed)]
+    (when-not (.exists path)
+      (engine/save-phenotype-ic! path seed width))
     path))
 
 (defn ic-for-seed [seed]
@@ -33,9 +44,19 @@
                        :expected width :actual (:width meta)})))
     ic))
 
+(defn phenotype-ic-for-seed [seed]
+  (let [path (ensure-phenotype-ic! seed)
+        {:keys [ic] :as meta} (engine/read-ic-meta path)]
+    (when (not= (:width meta) width)
+      (throw (ex-info "persisted phenotype IC width mismatch — regenerate or move it"
+                      {:seed seed :path (str path)
+                       :expected width :actual (:width meta)})))
+    ic))
+
 (defn ensure-all-ics! []
   (doseq [seed (sort (set (concat figure-seeds stasis-seeds)))]
-    (ensure-ic! seed)))
+    (ensure-ic! seed)
+    (ensure-phenotype-ic! seed)))
 
 (defn no-blend-runs []
   (ensure-all-ics!)
@@ -190,6 +211,116 @@
      :summary (paired-c2-summary pairs)
      :curves (c2-curves)}))
 
+(defn coupled-runs []
+  (ensure-all-ics!)
+  (mapv (fn [seed]
+          (let [genotype (ic-for-seed seed)
+                phenotype (phenotype-ic-for-seed seed)
+                rows (engine/coupled-evolve genotype phenotype figure-steps)]
+            {:seed seed
+             :genotype (:genotype rows)
+             :phenotype (:phenotype rows)}))
+        figure-seeds))
+
+(defn c3-coupled-runs []
+  (ensure-all-ics!)
+  (mapv (fn [seed]
+          (let [genotype (ic-for-seed seed)
+                phenotype (phenotype-ic-for-seed seed)
+                rows (engine/coupled-evolve genotype phenotype c3-steps)]
+            {:seed seed
+             :genotype (:genotype rows)
+             :phenotype (:phenotype rows)
+             :frozen-phenotype (engine/phenotype-evolve-under-genotype genotype phenotype c3-steps)}))
+        stasis-seeds))
+
+(defn- frozen-segments-at [genotype-rows t window]
+  (let [row (nth genotype-rows t)
+        width (count row)
+        stable? (fn [idx rule]
+                  (every? #(= rule (nth (nth genotype-rows %) idx))
+                          (range t (+ t window))))]
+    (loop [idx 0 segments []]
+      (if (>= idx width)
+        segments
+        (let [rule (nth row idx)]
+          (if-not (stable? idx rule)
+            (recur (inc idx) segments)
+            (let [end (loop [j (inc idx)]
+                        (if (and (< j width)
+                                 (= rule (nth row j))
+                                 (stable? j rule))
+                          (recur (inc j))
+                          j))]
+              (recur end (conj segments {:t t :start idx :end end :rule rule})))))))))
+
+(defn region-conformance [genotype-rows phenotype-rows]
+  (let [window c3-region-window
+        segments (mapcat #(frozen-segments-at genotype-rows % window)
+                         (range 0 (- (count genotype-rows) window)))
+        comparisons
+        (for [{:keys [t start end rule]} segments
+              :let [len (- end start)]
+              :when (>= len (inc (* 2 window)))
+              k (range 1 window)
+              i (range (+ start k) (- end k))
+              :let [segment-p0 (subvec (vec (nth phenotype-rows t)) start end)
+                    pure-rows (engine/eca-evolve rule segment-p0 k)
+                    predicted (nth (nth pure-rows k) (- i start))
+                    actual (nth (nth phenotype-rows (+ t k)) i)]]
+          (= predicted actual))]
+    {:segments (count segments)
+     :comparisons (count comparisons)
+     :matches (count (filter true? comparisons))
+     :fraction (if (seq comparisons)
+                 (/ (count (filter true? comparisons))
+                    (double (count comparisons)))
+                 0.0)}))
+
+(defn mi-series [runs layer-key]
+  (mapv (fn [t]
+          (let [actual (map #(engine/mutual-information
+                              (nth (:genotype %) t)
+                              (nth (layer-key %) t))
+                            runs)
+                null (map-indexed
+                      (fn [idx run]
+                        (engine/mutual-information
+                         (nth (:genotype run) t)
+                         (engine/rotate-row (nth (layer-key run) t) (+ 17 idx t))))
+                      runs)]
+            {:t t :mi (mean actual) :null (mean null)}))
+        (range (inc c3-steps))))
+
+(defn c3-report []
+  (let [runs (c3-coupled-runs)
+        conformances (mapv #(region-conformance (:genotype %) (:phenotype %)) runs)
+        totals {:comparisons (reduce + (map :comparisons conformances))
+                :matches (reduce + (map :matches conformances))
+                :segments (reduce + (map :segments conformances))}
+        mi (mi-series runs :phenotype)
+        frozen-mi (mi-series (mapv (fn [run]
+                                     (assoc run :phenotype (:frozen-phenotype run)))
+                                   runs)
+                             :phenotype)
+        avg-mi (mean (map :mi mi))
+        avg-null (mean (map :null mi))]
+    {:figure-runs (coupled-runs)
+     :conformance (assoc totals
+                         :fraction (if (pos? (:comparisons totals))
+                                     (/ (:matches totals)
+                                        (double (:comparisons totals)))
+                                     0.0))
+     :per-seed-conformance conformances
+     :mi mi
+     :frozen-mi frozen-mi
+     :summary {:steps c3-steps
+               :region-window c3-region-window
+               :mi-mean avg-mi
+               :mi-null-mean avg-null
+               :mi-lift (- avg-mi avg-null)
+               :frozen-random-genotype-mi-mean (mean (map :mi frozen-mi))}}))
+
 (defn binary-palette [v]
   (if (zero? v) "#f7f7f7" "#111111"))
 
@@ -319,6 +450,49 @@
                      pairs))
          "</body></html>")))
 
+(defn coupled-panel-html [{:keys [seed genotype phenotype]}]
+  (str "<figure><figcaption>seed " seed " genotype</figcaption>"
+       (engine/grid->svg genotype {:cell 3})
+       "</figure>"
+       "<figure><figcaption>seed " seed " phenotype</figcaption>"
+       (engine/grid->svg phenotype {:cell 3 :palette binary-palette})
+       "</figure>"))
+
+(defn c3-html-report []
+  (let [{:keys [figure-runs conformance mi frozen-mi summary]} (c3-report)
+        mi-points (mapv (fn [{:keys [t mi]}] {:t t :value mi}) mi)
+        null-points (mapv (fn [{:keys [t null]}] {:t t :value null}) mi)
+        frozen-points (mapv (fn [{:keys [t mi]}] {:t t :value mi}) frozen-mi)]
+    (str "<!doctype html><html><head><meta charset=\"utf-8\">"
+         "<title>nb03 MetaCA phenotype coupling reproduction</title>"
+         "<style>body{font-family:system-ui,sans-serif;max-width:1120px;margin:32px auto;line-height:1.45}"
+         ".grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}"
+         "figure{margin:0 0 20px 0}svg{max-width:100%;height:auto;border:1px solid #ccc;image-rendering:pixelated}"
+         "table{border-collapse:collapse;margin:16px 0;font-size:13px}th,td{border:1px solid #ccc;padding:4px 8px;text-align:right}"
+         "th{text-align:left;background:#f1f1f1}code{background:#eee;padding:1px 4px}</style></head><body>"
+         "<h1>nb03 MetaCA phenotype coupling reproduction</h1>"
+         "<p>Figure-4-style deterministic coupled genotype+phenotype dynamics, with phenotype driven by local genotype rules.</p>"
+         "<h2>Figure 4-style coupled panels</h2><div class=\"grid\">"
+         (apply str (map coupled-panel-html figure-runs))
+         "</div>"
+         "<h2>C3 region conformance</h2>"
+         (table ["segments" "comparisons" "matches" "fraction"]
+                [[(:segments conformance) (:comparisons conformance)
+                  (:matches conformance) (fmt (:fraction conformance))]])
+         "<h2>Mutual information</h2>"
+         (table ["steps" "MI mean" "shuffled null mean" "lift" "frozen-random-genotype MI mean"]
+                [[(:steps summary) (fmt (:mi-mean summary)) (fmt (:mi-null-mean summary))
+                  (fmt (:mi-lift summary)) (fmt (:frozen-random-genotype-mi-mean summary))]])
+         (chart-svg [{:label "coupled MI" :color "#b23b3b" :points mi-points}
+                     {:label "shuffled null" :color "#555" :points null-points}
+                     {:label "frozen genotype baseline" :color "#1f6fb2" :points frozen-points}]
+                    {:title "Mean genotype/phenotype mutual information"})
+         "<h2>A5 phenotype semantics</h2>"
+         "<p>Phenotype updates first from old genotype and old phenotype using each cell's own current genotype rule on phenotype neighbors with fixed-zero boundaries; genotype then takes the S3.2 blend step from old genotype.</p>"
+         "<h2>How to reproduce</h2>"
+         "<pre>cd /home/joe/code/futon5/notebooks/sci-repro\nclojure -X:test\nclojure -M -m scirepro.cross-check 120\nclojure -M -m scirepro.render</pre>"
+         "</body></html>")))
+
 (defn write-html! [path]
   (let [f (io/file path)]
     (.mkdirs (.getParentFile f))
@@ -329,6 +503,12 @@
   (let [f (io/file path)]
     (.mkdirs (.getParentFile f))
     (spit f (blend-html-report))
+    (.getPath f)))
+
+(defn write-c3-html! [path]
+  (let [f (io/file path)]
+    (.mkdirs (.getParentFile f))
+    (spit f (c3-html-report))
     (.getPath f)))
 
 (defn -main [& _]
