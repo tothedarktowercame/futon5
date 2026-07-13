@@ -69,6 +69,16 @@ NOT append to the sci-repro index.
 - Optional: the 500×500 Figure-4 showcase panel; A7 archaeology if new
   evidence surfaces.
 
+### 3.5 Tooling: `scirepro.runstore` (charter early — it unblocks everything long)
+Per M-lab-standard's Long-run rule (added after R1a.2's timeout thrashing):
+incremental keyed run artifacts (grids append rows every K generations,
+completion markers), drivers read through the store (re-runs skip completed
+seeds, resume partial ones), retrofit the cross-check drivers and the
+old-engine headless runner. Until it lands: detached launch (`nohup` + poll
+the log) and per-seed artifact splitting are the interim practice — never a
+long run inside one `timeout N` tool call. Zai-sized as two slices (store +
+retrofit).
+
 ### 4. Tier-2 continuation (after R1b establishes the replay-series pattern)
 Ranked in the replay ledger; key notes per replay:
 - **泰-zone (#5)** and **bitplane-MI (#3)**: zai-shaped, engine-local — the
