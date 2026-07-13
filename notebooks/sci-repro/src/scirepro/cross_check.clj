@@ -31,12 +31,17 @@
        (sort-by #(.getName %))
        vec))
 
-(defn- elisp-program [ic steps]
+(defn- elisp-fn-name [dynamic]
+  (case dynamic
+    :multiply "evolve-sigil"
+    :blend "evolve-sigil-with-blending"))
+
+(defn- elisp-program [ic steps dynamic]
   (str "(require 'cl)\n"
        "(provide 'hexrgb)\n"
        "(defalias 'string-to-int 'string-to-number)\n"
        "(load-file " (pr-str elisp-path) ")\n"
-       "(setq evolve-sigil-fn 'evolve-sigil)\n"
+       "(setq sci-evolve-fn '" (elisp-fn-name dynamic) ")\n"
        "(defun sci-binary8 (n)\n"
        "  (let ((s \"\"))\n"
        "    (dotimes (i 8 s)\n"
@@ -48,9 +53,9 @@
        "         (left (if (= i 0) 0 (aref row (- i 1))))\n"
        "         (center (aref row i))\n"
        "         (right (if (= i (- n 1)) 0 (aref row (+ i 1))))\n"
-       "         (result (first (evolve-sigil (sci-rule-to-sigil center)\n"
-       "                                      (sci-rule-to-sigil left)\n"
-       "                                      (sci-rule-to-sigil right)))))\n"
+       "         (result (first (funcall sci-evolve-fn (sci-rule-to-sigil center)\n"
+       "                                 (sci-rule-to-sigil left)\n"
+       "                                 (sci-rule-to-sigil right)))))\n"
        "    (string-to-number result 2)))\n"
        "(defun sci-evolve-row (row)\n"
        "  (let ((v (vconcat row)) (out nil))\n"
@@ -74,8 +79,8 @@
          (str/replace "(" "[")
          (str/replace ")" "]")))))
 
-(defn emacs-grid [ic steps]
-  (let [program (elisp-program ic steps)
+(defn emacs-grid [ic steps dynamic]
+  (let [program (elisp-program ic steps dynamic)
         file (java.io.File/createTempFile "sci-repro-cross-check" ".el")]
     (try
       (spit file program)
@@ -87,12 +92,13 @@
       (finally
         (.delete file)))))
 
-(defn compare-ic [file steps]
+(defn compare-ic [file steps dynamic]
   (let [ic (engine/read-ic file)
-        clj-grid (engine/evolve ic steps :multiply)
-        elisp-grid (emacs-grid ic steps)
+        clj-grid (engine/evolve ic steps dynamic)
+        elisp-grid (emacs-grid ic steps dynamic)
         identical? (= clj-grid elisp-grid)]
     {:file (.getPath file)
+     :dynamic dynamic
      :steps steps
      :rows (count clj-grid)
      :width (count ic)
@@ -106,12 +112,14 @@
 (defn run-cross-check
   ([] (run-cross-check 120))
   ([steps]
-   (let [results (mapv #(compare-ic % steps) (take 3 (ic-files)))
-         report {:dynamic :multiply
+   (let [files (take 3 (ic-files))
+         results {:multiply (mapv #(compare-ic % steps :multiply) files)
+                  :blend (mapv #(compare-ic % steps :blend) files)}
+         report {:dynamics [:multiply :blend]
                  :engine :scirepro.engine
                  :ground-truth elisp-path
                  :results results
-                 :ok? (every? :identical? results)}
+                 :ok? (every? :identical? (mapcat val results))}
          out-file (io/file "out/cross-check.edn")]
      (.mkdirs (.getParentFile out-file))
      (spit out-file (with-out-str (prn report)))
@@ -120,13 +128,14 @@
 (defn -main [& args]
   (let [steps (if-let [arg (first args)] (parse-long arg) 120)
         report (run-cross-check steps)]
-    (println (format "CROSS-CHECK %s %d ICs x %d steps; report=%s"
+    (println (format "CROSS-CHECK %s dynamics=%s %d ICs x %d steps; report=%s"
                      (if (:ok? report) "OK" "FAIL")
-                     (count (:results report))
+                     (pr-str (:dynamics report))
+                     (count (get-in report [:results :multiply]))
                      steps
                      "out/cross-check.edn"))
     (when-not (:ok? report)
-      (doseq [result (:results report)]
+      (doseq [result (mapcat val (:results report))]
         (when-not (:identical? result)
-          (println (:file result) (:first-diff result)))))
+          (println (:dynamic result) (:file result) (:first-diff result)))))
     (System/exit (if (:ok? report) 0 1))))

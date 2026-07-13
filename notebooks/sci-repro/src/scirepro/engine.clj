@@ -12,13 +12,22 @@
 (def triple->index
   (zipmap truth-table-3 (range)))
 
+(defn- validate-rule! [rule]
+  (when-not (and (integer? rule) (<= 0 rule 255))
+    (throw (ex-info "rule must be an integer in [0,255]" {:rule rule}))))
+
+(defn- rule->bits-raw [rule]
+  (mapv (fn [shift] (bit-and 1 (bit-shift-right rule shift)))
+        (range 7 -1 -1)))
+
+(def rule-bits-table
+  (mapv rule->bits-raw (range 256)))
+
 (defn rule->bits
   "Return the eight-bit representation used by 256ca.el, MSB first."
   [rule]
-  (when-not (<= 0 rule 255)
-    (throw (ex-info "rule must be an integer in [0,255]" {:rule rule})))
-  (mapv (fn [shift] (bit-and 1 (bit-shift-right rule shift)))
-        (range 7 -1 -1)))
+  (validate-rule! rule)
+  (nth rule-bits-table rule))
 
 (defn bits->rule
   [bits]
@@ -114,6 +123,46 @@
   (first (keep-indexed (fn [idx [a b]]
                          (when (= a b) (inc idx)))
                        (partition 2 1 rows))))
+
+(defn first-band-time
+  "First t whose row remains unchanged for WINDOW consecutive rows.
+   This is a deterministic stable-band proxy: every column is constant
+   across the window starting at t."
+  [rows window]
+  (when-not (pos-int? window)
+    (throw (ex-info "window must be a positive integer" {:window window})))
+  (first (keep-indexed
+          (fn [idx segment]
+            (let [row (first segment)]
+              (when (every? #(= row %) segment)
+                idx)))
+          (partition window 1 rows))))
+
+(defn shannon-entropy
+  "Base-2 entropy of the values in xs."
+  [xs]
+  (let [n (double (count xs))]
+    (if (zero? n)
+      0.0
+      (->> xs
+           frequencies
+           vals
+           (map (fn [count]
+                  (let [p (/ count n)]
+                    (- (* p (/ (Math/log p) (Math/log 2.0)))))))
+           (reduce + 0.0)))))
+
+(defn change-rate
+  "Fraction of positions that differ between two equal-width rows."
+  [row-a row-b]
+  (when-not (= (count row-a) (count row-b))
+    (throw (ex-info "rows must have equal width"
+                    {:left (count row-a) :right (count row-b)})))
+  (let [n (count row-a)]
+    (if (zero? n)
+      0.0
+      (/ (count (filter false? (map = row-a row-b)))
+         (double n)))))
 
 (defn eca-next-bit
   "Fixed-rule ECA using the same elisp neighborhood order for comparability."

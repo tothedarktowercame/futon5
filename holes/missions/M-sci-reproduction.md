@@ -127,6 +127,30 @@ thing this mission fixes.
   - `clojure -M -m scirepro.render` — `CLAY RENDER OK out/notebooks.nb01_metaca_core.html bytes=4074430; report=out/nb01_metaca_core.html bytes=3384053`
   - HTML inspection — `out/notebooks.nb01_metaca_core.html` contains 39 `<svg>` elements.
 
+### Slice 2 — nb02 blending + C2 paired measurement (2026-07-13)
+
+- Extended `scirepro.cross-check` to verify both `:multiply` and `:blend`
+  dynamics against `256ca.el`, using `evolve-sigil` and
+  `evolve-sigil-with-blending` respectively.
+- Added `notebooks/nb02_blending.clj` and report support for Figure-1-style
+  blend panels, paired C2 stasis/band timing, entropy curves, and change-rate
+  curves.
+- Persisted all 30 measurement ICs under `notebooks/sci-repro/resources/ics/`
+  so nb01 and nb02 both read explicit IC artifacts rather than hidden RNG.
+- C2 headline: horizon 500, same 30 seeds. No-blend stasis observed 27/30
+  with median 8; blend stasis observed 14/30 with median 20 among observed.
+  Using horizon+1 for censored runs in the paired sign count, blend lasted
+  longer on 27/30 seeds, no-blend longer on 3/30, ties 0; delta median 491.
+- Stable-band proxy: first row remaining unchanged for 8 consecutive rows.
+  No-blend band observed 27/30, median 7; blend band observed 14/30, median 19.
+- Validation:
+  - `clojure -X:test` — `Ran 6 tests containing 18 assertions. 0 failures, 0 errors.`
+  - `clojure -M -m scirepro.cross-check 120` — `CROSS-CHECK OK dynamics=[:multiply :blend] 3 ICs x 120 steps; report=out/cross-check.edn`
+  - `clj-kondo --lint src test notebooks` — `linting took 480ms, errors: 0, warnings: 0`
+  - `emacs -Q --batch -l /home/joe/code/futon4/dev/check-parens.el --eval '(arxana-check-parens-cli)' -- --no-defaults ...` — `OK`
+  - `clojure -M -m scirepro.render` — `CLAY RENDER OK [{:path "out/notebooks.nb01_metaca_core.html", :bytes 3733974} {:path "out/notebooks.nb02_blending.html", :bytes 3768052}]; reports=[{:id :nb01, :path "out/nb01_metaca_core.html", :bytes 3043205} {:id :nb02, :path "out/nb02_blending.html", :bytes 3076657}]`
+  - HTML inspection — `out/notebooks.nb02_blending.html` contains 41 `<svg>` elements.
+
 ## Follow-ons (recorded, not armed)
 
 - Blends as controller-level crossover (from 2D §4.2.1).

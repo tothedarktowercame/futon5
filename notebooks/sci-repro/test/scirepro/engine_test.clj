@@ -33,6 +33,17 @@
     (is (= (engine/evolve ic 12)
            (engine/evolve ic 12 :multiply)))))
 
+(deftest measurement-helpers
+  (testing "row-repeat stasis and stable-band window timing"
+    (let [rows [[1 2] [2 3] [2 3] [2 3] [4 5]]]
+      (is (= 2 (engine/first-stasis-time rows)))
+      (is (= 1 (engine/first-band-time rows 3)))))
+  (testing "entropy and change rate"
+    (is (= 0.0 (engine/shannon-entropy [])))
+    (is (= 0.0 (engine/shannon-entropy [7 7 7])))
+    (is (< (abs (- 1.0 (engine/shannon-entropy [0 1]))) 1.0E-9))
+    (is (= 0.5 (engine/change-rate [0 1 1 0] [0 0 1 1])))))
+
 (deftest c7-proof
   (let [{:keys [cases passed ok? wolfram-descending]}
         (engine/blending-censored-rule-23-proof)]

@@ -1,5 +1,6 @@
 (ns scirepro.report
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [scirepro.engine :as engine]))
 
 (def figure-seeds [150200130 150200131 150200132 150200133 150200134 150200135])
@@ -8,26 +9,139 @@
 (def width 80)
 (def figure-steps 120)
 (def stasis-steps 300)
+(def c2-steps 500)
+(def band-window 8)
+
+(defn ic-path [seed]
+  (io/file "resources/ics" (str "seed-" seed ".edn")))
+
+(defn ensure-ic! [seed]
+  (let [path (ic-path seed)]
+    (when-not (.exists path)
+      (engine/save-ic! path seed width))
+    path))
+
+(defn ic-for-seed [seed]
+  (engine/read-ic (ensure-ic! seed)))
+
+(defn ensure-all-ics! []
+  (doseq [seed (sort (set (concat figure-seeds stasis-seeds)))]
+    (ensure-ic! seed)))
 
 (defn no-blend-runs []
+  (ensure-all-ics!)
   (mapv (fn [seed]
           {:seed seed
-           :ic (engine/seeded-ic seed width)
-           :rows (engine/evolve (engine/seeded-ic seed width) figure-steps :multiply)})
+           :ic (ic-for-seed seed)
+           :rows (engine/evolve (ic-for-seed seed) figure-steps :multiply)})
         figure-seeds))
 
-(defn stasis-times []
+(defn blend-runs []
+  (ensure-all-ics!)
   (mapv (fn [seed]
-          (let [ic (engine/seeded-ic seed width)
-                rows (engine/evolve ic stasis-steps :multiply)]
-            {:seed seed
-             :time-to-stasis (engine/first-stasis-time rows)}))
-        stasis-seeds))
+          {:seed seed
+           :ic (ic-for-seed seed)
+           :rows (engine/evolve (ic-for-seed seed) figure-steps :blend)})
+        figure-seeds))
+
+(defn dynamic-times
+  ([dynamic steps] (dynamic-times dynamic steps stasis-seeds))
+  ([dynamic steps seeds]
+   (ensure-all-ics!)
+   (mapv (fn [seed]
+           (let [ic (ic-for-seed seed)
+                 rows (engine/evolve ic steps dynamic)]
+             {:seed seed
+              :time-to-stasis (engine/first-stasis-time rows)
+              :time-to-band (engine/first-band-time rows band-window)}))
+         seeds)))
+
+(defn stasis-times []
+  (dynamic-times :multiply stasis-steps))
+
+(defn paired-c2-times []
+  (let [multiply (zipmap stasis-seeds (dynamic-times :multiply c2-steps))
+        blend (zipmap stasis-seeds (dynamic-times :blend c2-steps))
+        censored-time (inc c2-steps)]
+    (mapv (fn [seed]
+            (let [m (get-in multiply [seed :time-to-stasis])
+                  b (get-in blend [seed :time-to-stasis])
+                  mb (get-in multiply [seed :time-to-band])
+                  bb (get-in blend [seed :time-to-band])
+                  m* (or m censored-time)
+                  b* (or b censored-time)]
+              {:seed seed
+               :multiply-stasis m
+               :blend-stasis b
+               :multiply-band mb
+               :blend-band bb
+               :delta (- b* m*)
+               :blend-longer? (> b* m*)
+               :same? (= b* m*)}))
+          stasis-seeds)))
+
+(defn paired-c2-summary [pairs]
+  (let [deltas (sort (map :delta pairs))
+        multiply-observed (keep :multiply-stasis pairs)
+        blend-observed (keep :blend-stasis pairs)
+        multiply-band-observed (keep :multiply-band pairs)
+        blend-band-observed (keep :blend-band pairs)]
+    {:n (count pairs)
+     :horizon c2-steps
+     :censored-time (inc c2-steps)
+     :multiply-observed (count multiply-observed)
+     :blend-observed (count blend-observed)
+     :multiply-censored (- (count pairs) (count multiply-observed))
+     :blend-censored (- (count pairs) (count blend-observed))
+     :multiply-median (when (seq multiply-observed)
+                        (nth (vec (sort multiply-observed))
+                             (quot (count multiply-observed) 2)))
+     :blend-median (when (seq blend-observed)
+                     (nth (vec (sort blend-observed))
+                          (quot (count blend-observed) 2)))
+     :multiply-band-observed (count multiply-band-observed)
+     :blend-band-observed (count blend-band-observed)
+     :multiply-band-median (when (seq multiply-band-observed)
+                             (nth (vec (sort multiply-band-observed))
+                                  (quot (count multiply-band-observed) 2)))
+     :blend-band-median (when (seq blend-band-observed)
+                          (nth (vec (sort blend-band-observed))
+                               (quot (count blend-band-observed) 2)))
+     :delta-min (first deltas)
+     :delta-median (nth (vec deltas) (quot (count deltas) 2))
+     :delta-max (last deltas)
+     :sign-test-blend-longer (count (filter :blend-longer? pairs))
+     :sign-test-multiply-longer (count (filter #(neg? (:delta %)) pairs))
+     :sign-test-ties (count (filter :same? pairs))}))
+
+(defn mean [xs]
+  (if (seq xs)
+    (/ (reduce + xs) (double (count xs)))
+    0.0))
+
+(defn curve-for
+  [dynamic steps seeds metric]
+  (let [runs (mapv #(engine/evolve (ic-for-seed %) steps dynamic) seeds)]
+    (mapv (fn [t]
+            (let [values (case metric
+                           :entropy (map #(engine/shannon-entropy (nth % t)) runs)
+                           :change-rate (if (zero? t)
+                                          (repeat (count runs) 0.0)
+                                          (map #(engine/change-rate (nth % (dec t)) (nth % t)) runs)))]
+              {:t t :value (mean values)}))
+          (range (inc steps)))))
+
+(defn c2-curves []
+  (ensure-all-ics!)
+  {:multiply-entropy (curve-for :multiply c2-steps stasis-seeds :entropy)
+   :blend-entropy (curve-for :blend c2-steps stasis-seeds :entropy)
+   :multiply-change-rate (curve-for :multiply c2-steps stasis-seeds :change-rate)
+   :blend-change-rate (curve-for :blend c2-steps stasis-seeds :change-rate)})
 
 (defn baseline-stasis []
   (mapv (fn [rule]
           (let [times (mapv (fn [seed]
-                              (let [ic (engine/seeded-ic seed width)
+                              (let [ic (ic-for-seed seed)
                                     bits (engine/genotype->initial-bits ic)
                                     rows (engine/eca-evolve rule bits stasis-steps)]
                                 (engine/first-stasis-time rows)))
@@ -60,6 +174,13 @@
       :a2 "The string evolution uses fixed zero boundary cells, represented by sigil 一."
       :a3 "Blending copies agreed left/right alleles; only disagreements use the central local rule."}}))
 
+(defn blend-report []
+  (let [pairs (paired-c2-times)]
+    {:figure-runs (blend-runs)
+     :pairs pairs
+     :summary (paired-c2-summary pairs)
+     :curves (c2-curves)}))
+
 (defn binary-palette [v]
   (if (zero? v) "#f7f7f7" "#111111"))
 
@@ -71,6 +192,45 @@
               (for [row rows]
                 (str "<tr>" (apply str (map #(str "<td>" % "</td>") row)) "</tr>")))
        "</tbody></table>"))
+
+(defn- fmt [x]
+  (cond
+    (nil? x) "censored"
+    (float? x) (format "%.3f" x)
+    (double? x) (format "%.3f" x)
+    :else (str x)))
+
+(defn chart-svg
+  [series {:keys [width height y-max title]
+           :or {width 900 height 260}}]
+  (let [all-points (mapcat :points series)
+        max-x (double (apply max 1 (map :t all-points)))
+        max-y (double (or y-max (apply max 1.0 (map :value all-points))))
+        pad 32
+        plot-w (- width (* 2 pad))
+        plot-h (- height (* 2 pad))
+        x-scale (fn [t] (+ pad (* plot-w (/ t max-x))))
+        y-scale (fn [v] (- height pad (* plot-h (/ v max-y))))
+        path-for (fn [points]
+                   (->> points
+                        (map-indexed
+                         (fn [idx {:keys [t value]}]
+                           (str (if (zero? idx) "M" "L")
+                                (format "%.2f,%.2f" (x-scale t) (y-scale value)))))
+                        (str/join " ")))]
+    (str "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " width " " height
+         "\" width=\"" width "\" height=\"" height "\" role=\"img\">"
+         "<rect x=\"0\" y=\"0\" width=\"" width "\" height=\"" height "\" fill=\"#fff\"/>"
+         "<text x=\"" pad "\" y=\"20\" font-size=\"14\" font-family=\"sans-serif\">" title "</text>"
+         "<line x1=\"" pad "\" y1=\"" (- height pad) "\" x2=\"" (- width pad) "\" y2=\"" (- height pad) "\" stroke=\"#555\"/>"
+         "<line x1=\"" pad "\" y1=\"" pad "\" x2=\"" pad "\" y2=\"" (- height pad) "\" stroke=\"#555\"/>"
+         (apply str
+                (for [[idx {:keys [label color points]}] (map-indexed vector series)]
+                  (str "<path d=\"" (path-for points) "\" fill=\"none\" stroke=\"" color
+                       "\" stroke-width=\"2\"/>"
+                       "<text x=\"" (- width 160) "\" y=\"" (+ 44 (* 18 idx))
+                       "\" fill=\"" color "\" font-size=\"12\" font-family=\"sans-serif\">" label "</text>")))
+         "</svg>")))
 
 (defn html-report []
   (let [{:keys [figure-runs stasis-summary baselines c7 ambiguities]} (report)]
@@ -106,10 +266,60 @@
          (apply str (for [[k v] ambiguities] (str "<li><code>" (name k) "</code>: " v "</li>")))
          "</ul></body></html>")))
 
+(defn blend-html-report []
+  (let [{:keys [figure-runs pairs summary curves]} (blend-report)]
+    (str "<!doctype html><html><head><meta charset=\"utf-8\">"
+         "<title>nb02 MetaCA blending reproduction</title>"
+         "<style>body{font-family:system-ui,sans-serif;max-width:1120px;margin:32px auto;line-height:1.45}"
+         "figure{margin:0 0 24px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}"
+         "svg{max-width:100%;height:auto;border:1px solid #ccc;image-rendering:pixelated}"
+         "table{border-collapse:collapse;margin:16px 0;font-size:13px}th,td{border:1px solid #ccc;padding:4px 8px;text-align:right}"
+         "th{text-align:left;background:#f1f1f1}code{background:#eee;padding:1px 4px}</style></head><body>"
+         "<h1>nb02 MetaCA blending reproduction</h1>"
+         "<p>Reproduction of arXiv:1502.00130v1 §3.2 blending dynamics and measured C2: blend transient length versus no-blend on matched ICs.</p>"
+         "<h2>Figure 1-style blend runs</h2><div class=\"grid\">"
+         (apply str
+                (for [{:keys [seed rows]} figure-runs]
+                  (str "<figure><figcaption>seed " seed "</figcaption>"
+                       (engine/grid->svg rows {:cell 3})
+                       "</figure>")))
+         "</div>"
+         "<h2>C2 paired stasis result</h2>"
+         (table ["n" "horizon" "multiply observed" "blend observed" "multiply median" "blend median"
+                 "blend>multiply" "multiply>blend" "ties" "delta median"]
+                [[(:n summary) (:horizon summary) (:multiply-observed summary) (:blend-observed summary)
+                  (:multiply-median summary) (:blend-median summary)
+                  (:sign-test-blend-longer summary) (:sign-test-multiply-longer summary)
+                  (:sign-test-ties summary) (:delta-median summary)]])
+         "<h2>Time-to-band</h2>"
+         "<p>Band time is first row that remains unchanged for " band-window " consecutive rows.</p>"
+         (table ["multiply band observed" "blend band observed" "multiply band median" "blend band median"]
+                [[(:multiply-band-observed summary) (:blend-band-observed summary)
+                  (:multiply-band-median summary) (:blend-band-median summary)]])
+         "<h2>Entropy and change-rate curves</h2>"
+         (chart-svg [{:label "multiply entropy" :color "#444" :points (:multiply-entropy curves)}
+                     {:label "blend entropy" :color "#b23b3b" :points (:blend-entropy curves)}]
+                    {:title "Mean row entropy" :y-max 7.0})
+         (chart-svg [{:label "multiply change" :color "#444" :points (:multiply-change-rate curves)}
+                     {:label "blend change" :color "#1f6fb2" :points (:blend-change-rate curves)}]
+                    {:title "Mean row change-rate" :y-max 1.0})
+         "<h2>Per-seed paired deltas</h2>"
+         (table ["seed" "multiply stasis" "blend stasis" "delta" "multiply band" "blend band"]
+                (map (fn [{:keys [seed multiply-stasis blend-stasis delta multiply-band blend-band]}]
+                       [seed (fmt multiply-stasis) (fmt blend-stasis) delta (fmt multiply-band) (fmt blend-band)])
+                     pairs))
+         "</body></html>")))
+
 (defn write-html! [path]
   (let [f (io/file path)]
     (.mkdirs (.getParentFile f))
     (spit f (html-report))
+    (.getPath f)))
+
+(defn write-blend-html! [path]
+  (let [f (io/file path)]
+    (.mkdirs (.getParentFile f))
+    (spit f (blend-html-report))
     (.getPath f)))
 
 (defn -main [& _]
