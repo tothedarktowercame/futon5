@@ -1,5 +1,7 @@
 # Replay ledger — futon5 "bright ideas" mined for M-sci-reproduction
 
+**Status:** OPEN (companion artifact; parent mission in INSTANTIATE)
+
 Companion to `M-sci-reproduction.md`. Compiled 2026-07-13 (claude-6, from a
 forensic audit of the CyberAnts transfer + a 25-idea census of the repo).
 Rule of the ledger: an idea gets replayed only as a notebook with a claims
