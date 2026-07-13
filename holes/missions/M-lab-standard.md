@@ -111,3 +111,29 @@ installed; `~/code` repo farm present. Outstanding before first dispatch:
    runners — engine-local, single-repo, zai-shaped.
 4. **Later:** evaluator-population (#4, first xeno module), CyberAnts (#1,
    cross-repo — codex or close review, futon2 SHA pinned).
+
+## Long-run rule (added 2026-07-13 after R1a.2 timeout thrashing; Joe)
+
+Zai/codex tool calls have hard timeouts; headless JVM startup is expensive;
+a killed run that restarts from zero wastes everything it computed. Therefore:
+
+1. **Incremental keyed artifacts.** Every long computation persists its state
+   as it goes: grids append rows every K generations to
+   `resources/runs/<dynamic>-<seed>-<params-hash>.edn` (or equivalent), with
+   an explicit completion marker. Drivers READ THROUGH the store: a re-run
+   skips completed seeds and resumes partial ones from the last row. Killed
+   work costs at most K generations. (The artifacts double as the
+   reproducibility record — this is the genre contract's explicit-state rule
+   applied to intermediate compute.)
+2. **Detached launch.** Any run expected to exceed ~2 minutes launches
+   detached (`nohup ... > log 2>&1 &`; `systemd-run` for >30 min), and the
+   agent polls the log/artifacts with short tool calls. Never put a long run
+   inside a single `timeout N` tool call and hope.
+3. **No silent scope reduction.** If a gate's scope must shrink to fit
+   compute limits, the checkpoint states the reduction and why, and a
+   full-scope corroborating path is named.
+
+Tooling slice to charter: `scirepro.runstore` implementing (1) for both the
+scirepro engines and the old-engine headless runner, then retrofit the
+cross-check drivers. Until it lands, rule (2) + per-seed artifact splitting
+is the interim practice.
