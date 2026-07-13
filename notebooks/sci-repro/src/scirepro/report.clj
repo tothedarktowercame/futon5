@@ -22,7 +22,16 @@
     path))
 
 (defn ic-for-seed [seed]
-  (engine/read-ic (ensure-ic! seed)))
+  (let [path (ensure-ic! seed)
+        {:keys [ic] :as meta} (engine/read-ic-meta path)]
+    ;; Loud guard: a persisted IC at the wrong width silently corrupts the
+    ;; cohort (slice-2 defect: three width-64 cross-check leftovers were
+    ;; reused inside the width-80 paired measurement). Never reuse silently.
+    (when (not= (:width meta) width)
+      (throw (ex-info "persisted IC width mismatch — regenerate or move it"
+                      {:seed seed :path (str path)
+                       :expected width :actual (:width meta)})))
+    ic))
 
 (defn ensure-all-ics! []
   (doseq [seed (sort (set (concat figure-seeds stasis-seeds)))]

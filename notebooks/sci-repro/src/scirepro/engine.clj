@@ -114,8 +114,13 @@
     (spit f (with-out-str (prn {:seed seed :width width :ic ic})))
     ic))
 
+(defn read-ic-meta
+  "Read a persisted IC artifact as its full {:seed :width :ic} map."
+  [path]
+  (edn/read-string (slurp path)))
+
 (defn read-ic [path]
-  (:ic (edn/read-string (slurp path))))
+  (:ic (read-ic-meta path)))
 
 (defn first-stasis-time
   "First t > 0 whose row is identical to t-1, or nil if none is observed."

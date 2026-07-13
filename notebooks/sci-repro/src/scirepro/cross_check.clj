@@ -13,9 +13,13 @@
   (.getPath (io/file project-root "256ca.el")))
 
 (def default-ics
-  [{:name "seed-150200130" :seed 150200130 :width 64}
-   {:name "seed-150200131" :seed 150200131 :width 64}
-   {:name "seed-150200132" :seed 150200132 :width 64}])
+  ;; Cross-check ICs live under their own xcheck- prefix: the seed-*.edn files
+  ;; belong to the measurement cohort (width 80) and must stay homogeneous.
+  ;; Reusing them here at width 64 is what caused the slice-2 mixed-width
+  ;; cohort defect (see mission checkpoint, slice-2 review).
+  [{:name "xcheck-150200130" :seed 150200130 :width 64}
+   {:name "xcheck-150200131" :seed 150200131 :width 64}
+   {:name "xcheck-150200132" :seed 150200132 :width 64}])
 
 (defn ensure-default-ics! []
   (doseq [{:keys [name seed width]} default-ics]
@@ -27,6 +31,7 @@
   (ensure-default-ics!)
   (->> (file-seq (io/file "resources/ics"))
        (filter #(.isFile %))
+       (filter #(str/starts-with? (.getName %) "xcheck-"))
        (filter #(str/ends-with? (.getName %) ".edn"))
        (sort-by #(.getName %))
        vec))

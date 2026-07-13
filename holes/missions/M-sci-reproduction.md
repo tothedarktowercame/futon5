@@ -137,12 +137,22 @@ thing this mission fixes.
   curves.
 - Persisted all 30 measurement ICs under `notebooks/sci-repro/resources/ics/`
   so nb01 and nb02 both read explicit IC artifacts rather than hidden RNG.
-- C2 headline: horizon 500, same 30 seeds. No-blend stasis observed 27/30
-  with median 8; blend stasis observed 14/30 with median 20 among observed.
+- C2 headline (as corrected in review — see defect note below): horizon 500,
+  same 30 seeds, homogeneous width 80. No-blend stasis observed 27/30 with
+  median 8; blend stasis observed 15/30 with median 20 among observed.
   Using horizon+1 for censored runs in the paired sign count, blend lasted
-  longer on 27/30 seeds, no-blend longer on 3/30, ties 0; delta median 491.
+  longer on 27/30 seeds, no-blend longer on 3/30, ties 0; delta median 490.
 - Stable-band proxy: first row remaining unchanged for 8 consecutive rows.
-  No-blend band observed 27/30, median 7; blend band observed 14/30, median 19.
+  No-blend band observed 27/30, median 7; blend band observed 15/30, median 19.
+- **Slice-2 review defect (fixed): mixed-width cohort.** As committed, seeds
+  150200130-132 reused width-64 IC artifacts left by the slice-1 cross-check
+  (`ensure-ic!` reuses any existing file), so 3 of 30 paired runs were at a
+  different width — caught because the reviewer's independent width-80
+  recomputation gave blend-observed 15 vs the reported 14 (and delta median
+  490 vs 491). Fix: cross-check ICs moved to their own `xcheck-*` namespace;
+  the three cohort files regenerated at width 80; `ic-for-seed` now throws
+  loudly on a persisted-width mismatch. Conclusion unchanged; numbers above
+  are from the homogeneous cohort. All gates re-run green post-fix.
 - Validation:
   - `clojure -X:test` — `Ran 6 tests containing 18 assertions. 0 failures, 0 errors.`
   - `clojure -M -m scirepro.cross-check 120` — `CROSS-CHECK OK dynamics=[:multiply :blend] 3 ICs x 120 steps; report=out/cross-check.edn`
