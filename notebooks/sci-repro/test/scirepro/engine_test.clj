@@ -34,5 +34,12 @@
            (engine/evolve ic 12 :multiply)))))
 
 (deftest c7-proof
-  (is (= {:cases 2048 :passed 2048 :ok? true}
-         (engine/blending-censored-rule-23-proof))))
+  (let [{:keys [cases passed ok? wolfram-descending]}
+        (engine/blending-censored-rule-23-proof)]
+    (testing "blending = Rule 23 censored by local logic, in the elisp bit order"
+      (is (= 8192 cases))
+      (is (= cases passed))
+      (is (true? ok?)))
+    (testing "the S5.3 'Rule 23' label fails under Wolfram descending order (convention-dependent, cf. A1)"
+      (is (false? (:ok? wolfram-descending)))
+      (is (< (:passed wolfram-descending) (:cases wolfram-descending))))))

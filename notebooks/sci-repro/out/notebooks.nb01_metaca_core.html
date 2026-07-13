@@ -69,7 +69,10 @@
  {:rule 110, :stasis-count 0, :median-time nil}
  {:rule 128, :stasis-count 0, :median-time nil}
  {:rule 184, :stasis-count 0, :median-time nil}]
-</code></pre></div></div><div style="margin:15px;"><div><h2 id="c7:-blending-as-censored-rule-23">C7: blending as censored Rule 23</h2><p>Exhaustive enumeration over all 256 local rules and all 8 bit triples.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(:c7 findings)</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">{:cases 2048, :passed 2048, :ok? true}
+</code></pre></div></div><div style="margin:15px;"><div><h2 id="c7:-blending-as-censored-rule-23">C7: blending as censored Rule 23</h2><p>Exhaustive, non-circular enumeration: the actual side is computed by <code>blend-cell</code>, the expected side reads Rule 23's own bit table on the neighbor-match rows. The identity holds in the <code>256ca.el</code> bit order and fails under Wolfram's descending order (<code>:wolfram-descending</code>), so the paper's §5.3 "Rule 23" label is convention-dependent — same finding family as A1.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(:c7 findings)</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">{:cases 8192,
+ :passed 8192,
+ :ok? true,
+ :wolfram-descending {:cases 8192, :passed 4096, :ok? false}}
 </code></pre></div></div><div style="margin:15px;"><div><h2 id="a1-a3-resolved-from-256ca.el">A1-A3 resolved from <code>256ca.el</code></h2><p>These are copied into the mission ledger with line references.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(:ambiguities findings)</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">{:a1
  &quot;Rules are byte strings in 256ca.el truth-table-3 order 000,001,010,100,011,101,110,111.&quot;,
  :a2

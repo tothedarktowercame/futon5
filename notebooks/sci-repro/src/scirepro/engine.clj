@@ -139,26 +139,47 @@
   [ic]
   (mapv #(bit-at % 0) ic))
 
-(defn censored-rule-23-bit
-  [left _center right local-rule-bit-value]
-  (if (= left right)
-    left
-    local-rule-bit-value))
+(def wolfram-table-3
+  "Wolfram's descending neighborhood order, kept for convention contrast."
+  ["111" "110" "101" "100" "011" "010" "001" "000"])
+
+(defn- rule-bit-under
+  "Bit of RULE for the neighborhood (L C R) with the byte read in ORDER."
+  [rule order l c r]
+  (nth (rule->bits rule) (get (zipmap order (range)) (str l c r))))
 
 (defn blending-censored-rule-23-proof
-  "Exhaustively check all local rules and allele triples against the
-   deterministic censoring rule used by 256ca.el."
+  "S5.3 claim, checked non-circularly: for every center rule C and every
+   allele position, the blend-cell output bit equals Rule 23's own table
+   entry on the neighbor-match triples (left = right) and C's entry on the
+   others — i.e. blending IS 'Rule 23 censored by local logic'. The actual
+   side comes from blend-cell on constructed bytes; the expected side reads
+   Rule 23's bit table, so the two sides are independent.
+
+   The identity holds when Rule 23's byte is read in the 256ca.el
+   truth-table-3 order and FAILS under Wolfram's descending order (returned
+   as :wolfram-descending) — the S5.3 'Rule 23' label is convention-
+   dependent, the same finding family as A1."
   []
-  (let [checks (for [rule (range 256)
-                     left [0 1]
-                     center [0 1]
-                     right [0 1]
-                     :let [local (local-rule-bit rule left center right)
-                           blended (if (= left right) left local)]]
-                 (= blended (censored-rule-23-bit left center right local)))]
-    {:cases (count checks)
-     :passed (count (filter true? checks))
-     :ok? (every? true? checks)}))
+  (let [const-byte (fn [bit] (if (= 1 bit) 255 0))
+        run (fn [order]
+              (let [results
+                    (for [center (range 256)
+                          l [0 1]
+                          r [0 1]
+                          :let [out (blend-cell (const-byte l) center (const-byte r))]
+                          i (range 8)]
+                      (let [actual (nth (rule->bits out) i)
+                            c (nth (rule->bits center) i)
+                            expected (if (= l r)
+                                       (rule-bit-under 23 order l c r)
+                                       (local-rule-bit center l c r))]
+                        (= actual expected)))]
+                {:cases (count results)
+                 :passed (count (filter true? results))
+                 :ok? (every? true? results)}))]
+    (assoc (run truth-table-3)
+           :wolfram-descending (run wolfram-table-3))))
 
 (defn palette-color
   [rule]

@@ -50,6 +50,15 @@ blends as **crossover operators at the meta/controller level** (Joe, 2026-07-13)
   right neighbor bits are both `0`, output `0`; if both are `1`, output `1`;
   otherwise fall back to the same central-rule lookup as no-blend
   (`256ca.el:453-490`). There is no random tie-break and no second update pass.
+- **A4. §5.3 "Rule 23" is convention-dependent.** (Found in slice-1 review.)
+  The censored-rule identity — blending = Rule 23 on neighbor-match rows,
+  local logic elsewhere — is TRUE with Rule 23's byte read in the `256ca.el`
+  truth-table-3 order (8192/8192 cases) and FALSE under Wolfram's descending
+  order (4096/8192). Same finding family as A1: the paper's rule labels are
+  correct in the code's convention, not Wolfram's. Also: the slice-1 C7 check
+  as first committed was circular (it compared the blending expression to an
+  inlined copy of itself and never referenced Rule 23); replaced in review
+  with the non-circular enumeration in `scirepro.engine`.
 - (Add further findings here as they surface.)
 
 ## Claims table — every §4.1/§5 assertion becomes a measured proposition
@@ -107,8 +116,9 @@ thing this mission fixes.
   `01101110 x 01010100 x 01010101 -> 00101011` under the elisp table order.
 - C1 headline from nb01: 27/30 seeded no-blend runs reached row-repeat stasis
   by 300 steps; observed median 8, range 7-11; 3 runs censored at 300.
-- C7 headline: exhaustive enumeration over 2048 cases passed for the
-  bitwise censored-rule form of blending.
+- C7 headline (as amended in review): non-circular exhaustive enumeration,
+  8192/8192 cases — blending = Rule 23 (elisp bit order) censored by local
+  logic; Wolfram-descending reading fails 4096/8192 (finding A4).
 - Validation:
   - `clj-kondo --lint src test notebooks` — `linting took 248ms, errors: 0, warnings: 0`
   - `emacs -Q --batch -l /home/joe/code/futon4/dev/check-parens.el --eval '(arxana-check-parens-cli)' -- --no-defaults ...` — `OK`

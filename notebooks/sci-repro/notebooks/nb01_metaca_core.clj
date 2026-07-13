@@ -45,7 +45,12 @@
 
 ;; ## C7: blending as censored Rule 23
 ;;
-;; Exhaustive enumeration over all 256 local rules and all 8 bit triples.
+;; Exhaustive, non-circular enumeration: the actual side is computed by
+;; `blend-cell`, the expected side reads Rule 23's own bit table on the
+;; neighbor-match rows. The identity holds in the `256ca.el` bit order and
+;; fails under Wolfram's descending order (`:wolfram-descending`), so the
+;; paper's §5.3 "Rule 23" label is convention-dependent — same finding
+;; family as A1.
 
 (:c7 findings)
 
