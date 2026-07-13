@@ -73,6 +73,53 @@ blends as **crossover operators at the meta/controller level** (Joe, 2026-07-13)
   binds `evolve-sigil-fn` to `evolve-sigil-with-blending` so the genotype path
   is the paper's deterministic S3.2 blend dynamic; the context is present but
   ignored by that blend function.
+- **A6. Mutation mechanism for Figures 5–8.** **Resolved slice 4a:** The elisp
+  has **three** mutation-bearing evolve-sigil variants, each with distinct
+  semantics:
+  1. `evolve-sigil-with-blending-mutation` (`256ca.el:595-627`): performs the
+     S3.2 blend step, then unconditionally calls `mutate-rule-n` with
+     `mutation=1` (`256ca.el:596`) — so **every cell flips exactly one bit per
+     generation**, AFTER the evolve step. `mutate-rule-n` (`256ca.el:571-591`)
+     picks a uniform `(random 8)` allele position (`256ca.el:573`) and toggles
+     it (0→1 or 1→0). There is **no rate gate** in this variant; the per-cell
+     probability of flipping is 1.0 (one flip always happens), and the bit
+     position is uniform over 0–7.
+  2. `evolve-sigil-with-mutating-template` (`256ca.el:990-1065`): the DEFAULT
+     `evolve-sigil-fn` (aliased at `256ca.el:1069`). Performs a context-driven
+     template lookup, then applies `balance-mutation` (`256ca.el:971-986`):
+     with probability **1/20** (5%), if the byte has `>6` ones it flips one
+     randomly chosen 1-bit; if `<2` ones it flips one randomly chosen 0-bit;
+     otherwise the byte is unchanged (`256ca.el:979-985`). This is the
+     "reduced mutation rate" referenced in S4.1.
+  3. `evolve-sigil-with-blending-baldwin` (`256ca.el:636-686`): a Baldwin-effect
+     variant with stochastic 1/3 gating and context-count-dependent mutation
+     count (`256ca.el:677-685`); not used for the headline figures.
+
+  **Figure-8 "first-bit-only" skewed variant:** The paper prose (Fig 8 caption:
+  "erroneously-programmed mutation... only ever flips the first bit") has **NO
+  code implementation** in `256ca.el`. No function restricts the flipped allele
+  to position 0. This is a prose-only construct. The Clojure engine implements
+  it as a named variant (`evolve-with-first-bit-mutation`, `:first-bit` stream
+  mode) so the notebook can measure its effect, but it is not cross-checked
+  against elisp ground truth because no such ground truth exists.
+
+  **Paper-vs-code discrepancies (S4.1):**
+  - Paper S4.1 says "random mutations" without specifying the rate or mechanism.
+    The code's `evolve-sigil-with-blending-mutation` uses rate 1.0 (every cell,
+    every generation); `balance-mutation` uses 1/20 = 5%. These are very
+    different effective rates.
+  - Paper S4.1 says "reduced mutation rate" — this matches `balance-mutation`
+    (the default `evolve-sigil-fn`), not `evolve-sigil-with-blending-mutation`.
+  - Paper Fig 8 "first-bit-only" has no code counterpart.
+
+  **Cross-check route taken:** Deterministic injected-stream (preferred route).
+  `evolve-sigil-with-blending-mutation` was cross-checked because its mutation
+  structure (one `(random 8)` call per cell per generation, unconditional) can
+  be fully driven by an injected stream: we shadow `random` via `fset` in the
+  elisp batch program so both engines consume the same explicit flip events.
+  `balance-mutation`'s state-dependent allele selection (choose among current
+  majority bits) cannot be driven by a pre-generated stream — but was not needed
+  because the simpler variant gave grid-identity on the first try.
 - (Add further findings here as they surface.)
 
 ## Claims table — every §4.1/§5 assertion becomes a measured proposition
@@ -208,6 +255,29 @@ thing this mission fixes.
   rests on C3b's MI clearing both nulls. Noted in the notebook prose. Also
   observed: coupled MI converges to the null by t≈160 as the field freezes —
   the "phenotype follows genotype" signal lives in the active transient.
+
+### Slice 4a — mutation engine + streams + elisp cross-check (2026-07-14)
+
+- Resolved A6 above: pinned the exact mutation mechanism from `256ca.el`. Three
+  variants exist; the cross-check uses `evolve-sigil-with-blending-mutation`
+  (rate-1.0, one uniform flip per cell per generation, applied AFTER the blend
+  step). Figure-8 first-bit-only is prose-only (no code).
+- Extended `scirepro.engine` with mutation as an EXPLICIT EVENT-STREAM consumer:
+  `generate-mutation-stream` (seeded, persisted EDN artifact), `flip-bit`,
+  `apply-flips`, `stream->event-map`, `evolve-with-mutation` (fully deterministic
+  given IC + stream — no hidden RNG in the dynamics path),
+  `evolve-with-first-bit-mutation` (Figure-8 named variant), and stream
+  persistence (`save-mutation-stream!`, `read-mutation-stream`,
+  `mutation-stream->path` under `resources/mutation-streams/`).
+- Added `scirepro.mutation-cross-check`: deterministic injected-stream route.
+  Shadows `random` via `fset` in the elisp batch so both engines consume the
+  same explicit flip events. Grid-identity required for 3 ICs × 120 steps.
+- Validation:
+  - `clojure -X:test` — `Ran 10 tests containing 42 assertions. 0 failures, 0 errors.`
+  - `clojure -M -m scirepro.cross-check 120` — `CROSS-CHECK OK dynamics=[:multiply :blend :coupled] 3 ICs x 120 steps; report=out/cross-check.edn`
+  - `clojure -M -m scirepro.mutation-cross-check 120` — `MUTATION CROSS-CHECK OK route=injected-stream variant=evolve-sigil-with-blending-mutation 3 ICs x 120 steps; report=out/mutation-cross-check.edn`
+  - `clj-kondo --lint src test` — `linting took 395ms, errors: 0, warnings: 0`
+  - `emacs -Q --batch -l futon4/dev/check-parens.el ... (src test)` — `OK`
 
 ## Follow-ons (recorded, not armed)
 

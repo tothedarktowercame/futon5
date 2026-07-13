@@ -78,7 +78,7 @@
        "  (princ \"\\nSCI_REPRO_EDN \")\n"
        "  (princ (prin1-to-string (vconcat (reverse rows)))))\n"))
 
-(defn- normalize-elisp-output [out]
+(defn normalize-elisp-output [out]
   (when-let [line (some #(when (str/starts-with? % "SCI_REPRO_EDN ")
                           (subs % (count "SCI_REPRO_EDN ")))
                         (str/split-lines out))]
