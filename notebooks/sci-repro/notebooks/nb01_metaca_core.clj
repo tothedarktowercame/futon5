@@ -60,3 +60,19 @@
 
 (:ambiguities findings)
 
+
+;; ## How to reproduce this notebook
+;;
+;; From `futon5/notebooks/sci-repro/` (deps pinned in `deps.edn`, Clay 2-beta23):
+;;
+;; ```
+;; clojure -X:test                          ; engine unit tests, incl. the C7 proof
+;; clojure -M -m scirepro.cross-check 120   ; grid-identity vs 256ca.el, both dynamics
+;; clojure -M -m scirepro.render            ; re-render these notebooks into out/
+;; ```
+;;
+;; All initial conditions are explicit EDN artifacts under `resources/ics/`
+;; (named seeds, width 80; the elisp cross-check uses its own `xcheck-*` ICs).
+;; Ground truth for the dynamics is `futon5/256ca.el` (2014, the paper's own
+;; implementation). Claims table, ambiguity ledger (A1-A4), and per-slice
+;; checkpoints: `futon5/holes/missions/M-sci-reproduction.md`.
