@@ -37,6 +37,10 @@ DESC = {
     'nb03_phenotype': 'The coupled genotype+phenotype dynamic (Figure 4): '
         'phenotype update semantics pinned to 256ca.el (A5), region '
         'conformance (C3), and genotype/phenotype MI against a shuffled null.',
+    'nb04_mutation': 'Mutation dynamics (Figures 5&ndash;8): mutation-rate sweep '
+        '(C4) with no-mutation control and random-replacement null, popcount-class '
+        'frequencies and flagged-rule patch lifetimes (C5), and first-bit-only '
+        'mutation on coupled runs with Rule-0/128 occupancy (C6).',
 }
 items = []
 for f in nbs:

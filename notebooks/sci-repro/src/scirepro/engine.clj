@@ -510,3 +510,181 @@
   ([initial steps seed rate]
    (let [stream (generate-mutation-stream seed (count initial) steps rate :first-bit)]
      (evolve-with-mutation initial steps stream))))
+
+;;; ---------------------------------------------------------------------------
+;;; Balance-mutation mode (slice 4b) — state-dependent, seeded.
+;;;
+;;; Matches 256ca.el:971-986 (balance-mutation) semantics exactly:
+;;;  - Gate: (random 20) < 1, i.e. probability 1/20 = 5%.
+;;;  - The gate is only evaluated when popcount is >6 or <2 (elisp `and`
+;;;    short-circuits on the popcount test first).
+;;;  - If popcount > 6 AND gate passes: flip ONE uniformly-chosen 1-bit.
+;;;  - If popcount < 2 AND gate passes: flip ONE uniformly-chosen 0-bit.
+;;;  - Otherwise: byte unchanged.
+;;;
+;;; Because the allele selection depends on the CURRENT byte's popcount, this
+;;; cannot be expressed as a pre-generated event stream (the 4a review finding).
+;;; Instead it is deterministic given a persisted seed: the engine draws from
+;;; java.util.Random(seed) in the same conceptual order as the elisp.
+;;;
+;;; Cross-check note: the elisp `balance-mutation` RNG consumption order is:
+;;;   1. If ones > 6: draw (random 20) for the gate.
+;;;      If gate passes: draw from randomize-sequence (Fisher-Yates over the
+;;;      matching positions) — for quantity=1 this is len(matching) draws of
+;;;      (random k) for k = len, len-1, ..., 1.
+;;;   2. Elif ones < 2: draw (random 20) for the gate.
+;;;      If gate passes: same randomize-sequence draws over 0-bit positions.
+;;;   3. Else: no draw.
+;;; The cross-check shadows the elisp random with a scripted sequence matched
+;;; to the Clojure engine's draw order (see mutation_cross_check.clj).
+
+(defn- popcount
+  "Number of 1-bits in a rule byte (0-255)."
+  [rule]
+  (Integer/bitCount (int rule)))
+
+(defn- bit-positions
+  "Return allele indexes (0-7, MSB-first) where the bit equals VALUE."
+  [rule value]
+  (keep-indexed (fn [i b] (when (= b value) i))
+                (rule->bits rule)))
+
+(defn- select-among
+  "Select one element from COLL using RNG (uniform).  Matches the elisp
+   randomize-sequence + nthcdr truncation: for quantity=1 this is equivalent
+   to picking a uniform random element."
+  [^java.util.Random rng coll]
+  (let [v (vec coll)
+        n (count v)]
+    (if (zero? n)
+      nil
+      (nth v (.nextInt rng n)))))
+
+(defn balance-mutate-rule
+  "Apply balance-mutation semantics to one rule byte, drawing from RNG.
+   Returns the (possibly mutated) rule.  Matches 256ca.el:971-986.
+
+   RNG consumption order (must match elisp for cross-check):
+     1. If popcount > 6: draw gate = (.nextInt rng 20).
+        If gate == 0: draw allele among 1-bit positions (uniform), flip it.
+     2. Elif popcount < 2: draw gate = (.nextInt rng 20).
+        If gate == 0: draw allele among 0-bit positions (uniform), flip it.
+     3. Else: no draw (gate not evaluated — elisp `and` short-circuits)."
+  [^java.util.Random rng rule]
+  (let [ones (popcount rule)]
+    (cond
+      (and (> ones 6) (zero? (.nextInt rng 20)))
+      (let [positions (bit-positions rule 1)
+            allele (select-among rng positions)]
+        (flip-bit rule allele))
+
+      (and (< ones 2) (zero? (.nextInt rng 20)))
+      (let [positions (bit-positions rule 0)
+            allele (select-among rng positions)]
+        (flip-bit rule allele))
+
+      :else rule)))
+
+(defn- balance-mutation-step
+  "One generation of DYNAMIC + balance-mutation.  DYNAMIC may be :blend or
+   :multiply (the elisp default evolve-sigil-with-mutating-template falls
+   back to local-rule lookup = :multiply when context is nil)."
+  [row _generation rng dynamic]
+  (let [evolved (step row dynamic)]
+    (mapv #(balance-mutate-rule rng %) evolved)))
+
+(defn evolve-with-balance-mutation
+  "Evolve an IC under DYNAMIC (:blend or :multiply) with balance-mutation
+   applied after each step.  Deterministic given (IC, seed).
+   Returns rows 0..steps inclusive.
+
+   This matches the elisp default evolve-sigil-fn (evolve-sigil-with-
+   mutating-template) when context is nil: the template falls back to local
+   rule lookup, then balance-mutation is applied.  See A6/A7 ledger entries."
+  ([initial steps seed]
+   (evolve-with-balance-mutation initial steps seed :blend))
+  ([initial steps seed dynamic]
+   (when-not (and (integer? steps) (not (neg? steps)))
+     (throw (ex-info "steps must be a non-negative integer" {:steps steps})))
+   (let [rng (java.util.Random. (long seed))]
+     (loop [rows [(vec initial)]
+            gen 1]
+       (if (> gen steps)
+         (vec rows)
+         (recur (conj rows (balance-mutation-step (peek rows) gen rng dynamic))
+                (inc gen)))))))
+
+;; --- uniform-random-replacement null model (C4 baseline) --------------------
+
+(defn- random-replace-step
+  "One generation of DYNAMIC + uniform-random-replacement at RATE.
+   Each cell, with probability RATE, has its rule replaced by a fresh uniform
+   random byte (0-255).  This is the generic-noise null for C4."
+  [row _generation rng dynamic rate]
+  (let [evolved (step row dynamic)
+        threshold (double rate)]
+    (mapv (fn [rule]
+            (if (< (.nextDouble rng) threshold)
+              (.nextInt rng 256)
+              rule))
+          evolved)))
+
+(defn evolve-with-random-replacement
+  "Evolve an IC under DYNAMIC with uniform-random-replacement at RATE.
+   Deterministic given (IC, seed).  Returns rows 0..steps inclusive.
+   This is the C4 null model: replaces the cell's rule with a fresh uniform
+   byte at the same event rate, distinguishing structured mutation from
+   generic noise."
+  ([initial steps seed rate]
+   (evolve-with-random-replacement initial steps seed rate :blend))
+  ([initial steps seed rate dynamic]
+   (when-not (and (integer? steps) (not (neg? steps)))
+     (throw (ex-info "steps must be a non-negative integer" {:steps steps})))
+   (let [rng (java.util.Random. (long seed))]
+     (loop [rows [(vec initial)]
+            gen 1]
+       (if (> gen steps)
+         (vec rows)
+         (recur (conj rows (random-replace-step (peek rows) gen rng dynamic rate))
+                (inc gen)))))))
+
+;; --- coupled evolution with mutation (C6) -----------------------------------
+
+(defn- coupled-mutation-step
+  "Coupled pheno-geno step with first-bit-only mutation on the genotype.
+   Phenotype is updated from old genotype + old phenotype first;
+   genotype takes one blend step, then first-bit mutation is applied
+   via the injected stream."
+  [{:keys [genotype phenotype]} generation event-map]
+  (let [blended (step genotype :blend)
+        gen-events (get event-map generation)
+        new-genotype (if gen-events
+                       (mapv (fn [cell rule]
+                               (if-let [alleles (get gen-events cell)]
+                                 (apply-flips rule alleles)
+                                 rule))
+                             (range)
+                             blended)
+                       blended)
+        new-phenotype (phenotype-step genotype phenotype)]
+    {:genotype new-genotype :phenotype new-phenotype}))
+
+(defn coupled-evolve-with-mutation
+  "Coupled pheno-geno evolution with first-bit-only mutation on the genotype.
+   STREAM is a sequence of {:generation :cell :allele} maps.
+   Returns {:genotype [...rows...] :phenotype [...rows...]}.
+   Used for C6 (Figure-8 first-bit-only variant on coupled runs)."
+  [genotype phenotype steps stream]
+  (when-not (= (count genotype) (count phenotype))
+    (throw (ex-info "genotype and phenotype ICs must have equal width"
+                    {:genotype (count genotype)
+                     :phenotype (count phenotype)})))
+  (let [event-map (stream->event-map stream)]
+    (loop [states [{:genotype (vec genotype) :phenotype (vec phenotype)}]
+           gen 1]
+      (if (> gen steps)
+        {:genotype (mapv :genotype states)
+         :phenotype (mapv :phenotype states)}
+        (recur (conj states
+                     (coupled-mutation-step (peek states) gen event-map))
+               (inc gen))))))

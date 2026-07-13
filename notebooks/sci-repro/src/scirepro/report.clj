@@ -517,3 +517,188 @@
     (println (format "REPORT OK %s stasis observed=%d/%d median=%s"
                      path (:observed summary) (:n summary) (:median summary)))
     (System/exit 0)))
+
+;;; ---------------------------------------------------------------------------
+;;; C4-C6 mutation report functions (slice 4b)
+;;;
+
+(def c4-seeds (range 150200130 150200140))  ; 10 seeds
+(def c4-steps 200)
+(def c4-width width)
+
+(defn- ic-for-c4 [seed]
+  (let [path (ensure-ic! seed)
+        {:keys [ic] :as meta} (engine/read-ic-meta path)]
+    (when (not= (:width meta) width)
+      (throw (ex-info "persisted IC width mismatch" {:seed seed :expected width :actual (:width meta)})))
+    ic))
+
+(defn mutation-runs [mode rate steps seeds]
+  (mapv (fn [seed]
+          (let [ic (ic-for-c4 seed)]
+            {:seed seed
+             :ic ic
+             :rows (case mode
+                     :uniform (engine/evolve-with-mutation ic steps
+                               (engine/generate-mutation-stream seed (count ic) steps rate :uniform))
+                     :first-bit (engine/evolve-with-mutation ic steps
+                                  (engine/generate-mutation-stream seed (count ic) steps rate :first-bit))
+                     :balance-blend (engine/evolve-with-balance-mutation ic steps seed :blend)
+                     :balance-multiply (engine/evolve-with-balance-mutation ic steps seed :multiply)
+                     :random-replace (engine/evolve-with-random-replacement ic steps seed rate :blend)
+                     :no-mutation (engine/evolve ic steps :blend))}))
+        seeds))
+
+(defn- entropy-curve [runs steps]
+  (mapv (fn [t]
+          {:t t :value (mean (map #(engine/shannon-entropy (nth (:rows %) t)) runs))})
+        (range (inc steps))))
+
+(defn- change-rate-curve [runs steps]
+  (mapv (fn [t]
+          (if (zero? t)
+            {:t t :value 0.0}
+            {:t t :value (mean (map #(engine/change-rate (nth (:rows %) (dec t)) (nth (:rows %) t)) runs))}))
+        (range (inc steps))))
+
+(defn c4-report []
+  (let [rates [1.0 0.1 0.01 0.001 0.0]
+        uniform-sweep (into {}
+                            (for [rate rates]
+                              [rate (mutation-runs :uniform rate c4-steps c4-seeds)]))
+        balance-blend-runs (mutation-runs :balance-blend nil c4-steps c4-seeds)
+        no-mutation-runs (mutation-runs :no-mutation nil c4-steps c4-seeds)
+        random-replace-runs (mutation-runs :random-replace 0.05 c4-steps c4-seeds)]
+    {:rates rates
+     :uniform-sweep uniform-sweep
+     :balance-blend-runs balance-blend-runs
+     :no-mutation-runs no-mutation-runs
+     :random-replace-runs random-replace-runs
+     :curves
+     {:uniform-rate-1.0-entropy (entropy-curve (get uniform-sweep 1.0) c4-steps)
+      :uniform-rate-0.1-entropy (entropy-curve (get uniform-sweep 0.1) c4-steps)
+      :uniform-rate-0.01-entropy (entropy-curve (get uniform-sweep 0.01) c4-steps)
+      :uniform-rate-0.001-entropy (entropy-curve (get uniform-sweep 0.001) c4-steps)
+      :balance-entropy (entropy-curve balance-blend-runs c4-steps)
+      :no-mutation-entropy (entropy-curve no-mutation-runs c4-steps)
+      :random-replace-entropy (entropy-curve random-replace-runs c4-steps)
+      :uniform-rate-1.0-change-rate (change-rate-curve (get uniform-sweep 1.0) c4-steps)
+      :balance-change-rate (change-rate-curve balance-blend-runs c4-steps)
+      :no-mutation-change-rate (change-rate-curve no-mutation-runs c4-steps)
+      :random-replace-change-rate (change-rate-curve random-replace-runs c4-steps)}
+     :summary
+     {:seeds (count c4-seeds)
+      :steps c4-steps
+      :width c4-width
+      :rate-1.0-final-entropy (:value (last (:uniform-rate-1.0-entropy {:dummy []})))
+      :balance-final-entropy (:value (last (entropy-curve balance-blend-runs c4-steps)))
+      :no-mutation-final-entropy (:value (last (entropy-curve no-mutation-runs c4-steps)))
+      :random-replace-final-entropy (:value (last (entropy-curve random-replace-runs c4-steps)))}}))
+
+;;; C5: popcount-class frequencies and flagged-rule patch lifetimes
+
+(def flagged-rules
+  "Rules the paper highlights: 110, 30, 90, 184 and their bit-reversals/inverses."
+  #{110 30 90 184
+    200 57 165 18    ; bit-reversals of 110, 30, 90, 184 (approx — Wolfram convention)
+    145 225 74})     ; inverses of 110, 30, 184 (165 already in set)
+
+(defn- popcount-class [rule]
+  (Integer/bitCount (int rule)))
+
+(defn popcount-histogram [row]
+  (let [counts (vec (repeat 9 0))]
+    (reduce (fn [acc rule]
+              (assoc acc (popcount-class rule) (inc (nth acc (popcount-class rule)))))
+            counts
+            row)))
+
+(defn popcount-histogram-series [runs steps]
+  (mapv (fn [t]
+          (let [hists (map #(popcount-histogram (nth (:rows %) t)) runs)
+                n (double (count hists))
+                mean-hist (mapv #(if (pos? n) (/ % n) 0.0)
+                                (apply map + hists))]
+            {:t t :hist mean-hist}))
+        (range 0 (inc steps) (max 1 (quot steps 20)))))
+
+(defn- patch-lifetimes [runs rule-set _steps]
+  (for [seed-run runs
+        :let [rows (:rows seed-run)]
+        i (range (count (first rows)))
+        :let [lifetime (loop [t 0 best 0]
+                         (if (>= t (count rows))
+                           best
+                           (let [rule (nth (nth rows t) i)]
+                             (if (contains? rule-set rule)
+                               (recur (inc t) (inc best))
+                               (recur (inc t) best)))))]]
+    lifetime))
+
+(defn c5-report []
+  (let [runs (mutation-runs :uniform 0.1 c4-steps c4-seeds)
+        balance-runs (mutation-runs :balance-blend nil c4-steps c4-seeds)
+        uniform-hists (popcount-histogram-series runs c4-steps)
+        balance-hists (popcount-histogram-series balance-runs c4-steps)
+        patch-lifetimes-uniform (patch-lifetimes runs flagged-rules c4-steps)
+        patch-lifetimes-balance (patch-lifetimes balance-runs flagged-rules c4-steps)
+        non-zero-lifetimes (filter pos? patch-lifetimes-uniform)
+        sorted-lifetimes (sort non-zero-lifetimes)]
+    {:uniform-popcount-hists uniform-hists
+     :balance-popcount-hists balance-hists
+     :flagged-rules (sort flagged-rules)
+     :patch-lifetimes {:uniform
+                       {:total-patches (count non-zero-lifetimes)
+                        :median (when (seq sorted-lifetimes)
+                                  (nth (vec sorted-lifetimes) (quot (count sorted-lifetimes) 2)))
+                        :max (when (seq sorted-lifetimes) (last sorted-lifetimes))}
+                       :balance
+                       (let [bz (sort (filter pos? patch-lifetimes-balance))]
+                         {:total-patches (count bz)
+                          :median (when (seq bz) (nth (vec bz) (quot (count bz) 2)))
+                          :max (when (seq bz) (last bz))})}}))
+
+;;; C6: first-bit-only variant on coupled runs
+
+(defn c6-report []
+  (let [runs (mapv (fn [seed]
+                     (let [genotype (ic-for-c4 seed)
+                           phenotype (phenotype-ic-for-seed seed)
+                           stream (engine/generate-mutation-stream
+                                   seed (count genotype) c3-steps 0.1 :first-bit)
+                           rows (engine/coupled-evolve-with-mutation genotype phenotype c3-steps stream)]
+                       {:seed seed
+                        :genotype (:genotype rows)
+                        :phenotype (:phenotype rows)}))
+                   (take 6 c4-seeds))
+        occupancy (mapv (fn [t]
+                          (let [gen-rows (map #(nth (:genotype %) t) runs)
+                                total (* (count gen-rows) (count (first gen-rows)))
+                                count-0 (count (filter zero? (apply concat gen-rows)))
+                                count-128 (count (filter #(= 128 %) (apply concat gen-rows)))]
+                            {:t t
+                             :rule-0-frac (/ count-0 (double total))
+                             :rule-128-frac (/ count-128 (double total))
+                             :rule-0-or-128-frac (/ (+ count-0 count-128) (double total))}))
+                        (range (inc c3-steps)))
+        pheno-entropy (mapv (fn [t]
+                              {:t t
+                               :value (mean (map #(engine/shannon-entropy
+                                                   (nth (:phenotype %) t)) runs))})
+                            (range (inc c3-steps)))
+        pheno-change-rate (mapv (fn [t]
+                                  (if (zero? t)
+                                    {:t t :value 0.0}
+                                    {:t t
+                                     :value (mean (map #(engine/change-rate
+                                                         (nth (:phenotype %) (dec t))
+                                                         (nth (:phenotype %) t)) runs))}))
+                                (range (inc c3-steps)))]
+    {:runs runs
+     :occupancy occupancy
+     :pheno-entropy pheno-entropy
+     :pheno-change-rate pheno-change-rate
+     :summary {:steps c3-steps
+               :seeds (count runs)
+               :final-0-or-128-frac (:rule-0-or-128-frac (last occupancy))
+               :mean-0-or-128-frac (mean (map :rule-0-or-128-frac occupancy))}}))

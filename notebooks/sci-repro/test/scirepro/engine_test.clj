@@ -139,3 +139,51 @@
           emap (engine/stream->event-map stream)]
       (is (= (engine/evolve-with-mutation ic 20 stream)
              (engine/evolve-with-mutation ic 20 emap))))))
+
+;;; --- Balance-mutation tests (slice 4b) --------------------------------------
+
+(deftest balance-mutation-determinism
+  (testing "evolve-with-balance-mutation is deterministic given (IC, seed)"
+    (let [ic (engine/seeded-ic 150200150 24)]
+      (is (= (engine/evolve-with-balance-mutation ic 30 42 :multiply)
+             (engine/evolve-with-balance-mutation ic 30 42 :multiply)))))
+  (testing "different seeds produce different results"
+    (let [ic (engine/seeded-ic 150200150 24)]
+      (is (not= (engine/evolve-with-balance-mutation ic 20 1 :multiply)
+                (engine/evolve-with-balance-mutation ic 20 2 :multiply))))))
+
+(deftest balance-mutation-homeostasis
+  (testing "popcount in [2,6] never triggers mutation when the rule doesn't change"
+    ;; Balance-mutation is only evaluated when popcount > 6 or < 2.
+    ;; We test this directly: a rule with popcount 4 never changes.
+    ;; Rule 60 = 00111100, popcount 4.
+    (let [rng (java.util.Random. 42)
+          result (engine/balance-mutate-rule rng 60)]
+      (is (= 60 result) "popcount-4 rule unchanged (gate not evaluated)")))
+  (testing "balance-mutation only fires at popcount extremes"
+    ;; Over many trials, rules with popcount in [2,6] are never mutated
+    ;; regardless of the RNG state.
+    (let [rng (java.util.Random. 999)
+          rules-in-range [60 90 106 120 150 170 180 195 204 225 240]
+          all-unchanged? (every? identity
+                                 (for [_ (range 100)
+                                       rule rules-in-range]
+                                   (= rule (engine/balance-mutate-rule rng rule))))]
+      (is all-unchanged? "no popcount-[2,6] rule was mutated"))))
+
+(deftest balance-mutation-gate-rate
+  (testing "gate rate is approximately 1/20 = 5% over many trials"
+    ;; Create a rule with popcount 7 (e.g. 254 = 11111110) and run many
+    ;; balance-mutation steps with different RNG seeds, counting how often
+    ;; the rule changes.
+    (let [rule 254  ; popcount 7 > 6, so gate is evaluated
+          trials 1000
+          rng (java.util.Random. 12345)
+          changes (count (filter #(not= rule %)
+                                 (for [_ (range trials)]
+                                   (engine/balance-mutate-rule rng rule))))
+          observed-rate (/ changes (double trials))
+          expected 0.05]
+      ;; Allow generous tolerance (binomial): 0.05 ± 0.04
+      (is (< (abs (- observed-rate expected)) 0.04)
+          (str "observed rate " observed-rate " expected " expected)))))

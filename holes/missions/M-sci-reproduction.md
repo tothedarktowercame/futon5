@@ -120,6 +120,24 @@ blends as **crossover operators at the meta/controller level** (Joe, 2026-07-13)
   `balance-mutation`'s state-dependent allele selection (choose among current
   majority bits) cannot be driven by a pre-generated stream — but was not needed
   because the simpler variant gave grid-identity on the first try.
+- **A7. Which elisp variant produced Figures 5–8?** **Resolved slice 4b
+  (unresolvable-from-code):** `256ca.el` has a single commit (`92fa793`,
+  initial commit) with no figure-generation trace. No comments or docstrings
+  link specific functions to specific figures. All batch generators
+  (`multiverse-files*`, 256ca.el:1444-1497) call `print-space-time` through
+  `print-space-time-4`, all of which use `run-for-generations` or
+  `run-for-generations-3`, all of which call `evolve-sigil-fn` (the global
+  alias at 256ca.el:1069 = the default `evolve-sigil-with-mutating-template`).
+  So the DEFAULT dynamic for ALL batch generation is template + balance-
+  mutation. However, the operator could have re-bound `evolve-sigil-fn`
+  interactively before running the batch (the code is designed for this), and
+  there is no record of what binding was active when the paper's figures were
+  generated. **Scope note:** nb04 pairs balance-mutation with the blend
+  dynamic (labeled "balance-mutation on blend dynamic") because the template
+  dynamic is out of scope for this slice — implementing the context-driven
+  template lookup faithfully would require reproducing the full
+  `evolve-sigil-string-contextually` → `evolve-sigil-with-mutating-template`
+  pipeline with phenotype context, which is future work.
 - (Add further findings here as they surface.)
 
 ## Claims table — every §4.1/§5 assertion becomes a measured proposition
@@ -278,6 +296,40 @@ thing this mission fixes.
   - `clojure -M -m scirepro.mutation-cross-check 120` — `MUTATION CROSS-CHECK OK route=injected-stream variant=evolve-sigil-with-blending-mutation 3 ICs x 120 steps; report=out/mutation-cross-check.edn`
   - `clj-kondo --lint src test` — `linting took 395ms, errors: 0, warnings: 0`
   - `emacs -Q --batch -l futon4/dev/check-parens.el ... (src test)` — `OK`
+
+### Slice 4b — balance-mutation + nb04 (C4-C6) (2026-07-14)
+
+- Resolved A7: **unresolvable from code** — single commit, no figure traces.
+  All batch generators use the default `evolve-sigil-fn` (template + balance-
+  mutation), but the operator could re-bind interactively. nb04 pairs balance-
+  mutation with blend dynamic (labeled accordingly); template dynamic is out
+  of scope (scope note in A7).
+- Implemented seeded balance-mutation (`balance-mutate-rule`,
+  `evolve-with-balance-mutation`) matching 256ca.el:971-986 exactly: 5% gate
+  (`(random 20) < 1`), homeostatic (popcount >6 flips a 1-bit, <2 flips a
+  0-bit, [2,6] unchanged). Deterministic given a persisted seed
+  (java.util.Random). Applied after the evolve step, same point as elisp.
+- Added uniform-random-replacement null model (`evolve-with-random-replacement`)
+  for C4 baseline.
+- Added coupled evolution with mutation (`coupled-evolve-with-mutation`) for C6.
+- Balance-mutation cross-check: deterministic injected-stream route (shadowing
+  `random` via `fset`). Replicates the elisp's Fisher-Yates shuffle draw
+  sequence exactly. Grid-identity 3 ICs x 60 steps, all identical=true.
+- Added nb04_mutation.clj: C4 (rate sweep {1.0, 0.1, 0.01, 0.001, 0} x 10
+  seeds, entropy + change-rate, no-mutation control + random-replacement
+  null), C5 (popcount-class frequencies + flagged-rule patch lifetimes),
+  C6 (first-bit-only on coupled runs, {0,128} occupancy + phenotype
+  transients). A6+A7 findings sections. How-to-reproduce section.
+- Added nb04 to render.clj and publish.sh (DESC entry).
+- Validation:
+  - `clojure -X:test` — `Ran 13 tests containing 47 assertions. 0 failures, 0 errors.`
+  - `clojure -M -m scirepro.cross-check 120` — `CROSS-CHECK OK dynamics=[:multiply :blend :coupled] 3 ICs x 120 steps; report=out/cross-check.edn`
+  - `clojure -M -m scirepro.mutation-cross-check 120` — `MUTATION CROSS-CHECK OK route=injected-stream variant=evolve-sigil-with-blending-mutation 3 ICs x 120 steps; report=out/mutation-cross-check.edn`
+  - `clojure -M -m scirepro.balance-cross-check 60` — `BALANCE CROSS-CHECK OK route=injected-stream variant=evolve-sigil-with-mutating-template 3 ICs x 60 steps; report=out/balance-cross-check.edn`
+  - `clj-kondo --lint src test notebooks` — `linting took 1131ms, errors: 0, warnings: 0`
+  - `emacs -Q --batch -l futon4/dev/check-parens.el ... (all 8 touched files)` — `OK`
+  - `clojure -M -m scirepro.render` — `CLAY RENDER OK [... nb04 bytes=14638793 ...]`
+  - HTML inspection — `out/notebooks.nb04_mutation.html` contains 9 `<svg>` elements.
 
 ## Follow-ons (recorded, not armed)
 

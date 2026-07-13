@@ -7,7 +7,8 @@
 (def clay-targets
   ["out/notebooks.nb01_metaca_core.html"
    "out/notebooks.nb02_blending.html"
-   "out/notebooks.nb03_phenotype.html"])
+   "out/notebooks.nb03_phenotype.html"
+   "out/notebooks.nb04_mutation.html"])
 
 (def report-targets
   {:nb01 "out/nb01_metaca_core.html"
@@ -17,7 +18,8 @@
 (defn render! []
   (clay/make! {:source-path ["notebooks/nb01_metaca_core.clj"
                              "notebooks/nb02_blending.clj"
-                             "notebooks/nb03_phenotype.clj"]
+                             "notebooks/nb03_phenotype.clj"
+                             "notebooks/nb04_mutation.clj"]
                :base-source-path "."
                :base-target-path "out"
                :format [:html]
