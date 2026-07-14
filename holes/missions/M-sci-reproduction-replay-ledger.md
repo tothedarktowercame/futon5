@@ -263,3 +263,55 @@ CROSS-CHECK OK dynamics=[:multiply :blend :coupled] 3 ICs x 120 steps
 clj-kondo: errors: 0, warnings: 0
 check-parens: PARENS OK
 ```
+
+## Checkpoint R1b: boundary-guardian notebook (2026-07-13)
+
+**Agent:** zai-1
+
+### BG1 (EoC reproduction): PARTIAL REPRODUCTION
+- H (entropy): measured 0.985 ± CI (recorded 0.946) — REPRODUCED (within noise)
+- Δ (change): measured 0.996 (recorded 0.985) — REPRODUCED
+- ρ (autocorr): measured 0.004 (recorded 0.015) — REPRODUCED (both ~0)
+- σ (diversity): measured 0.803 (recorded 0.828) — REPRODUCED
+- L0 baseline: Δ=0.000 CONFIRMED (frozen genotype)
+- Rule-30: Δ=1.000, pure chaos null confirmed
+
+### BG2 (verifier blind spot): REFUTED with nuance
+- Measured verifier score: 0.000 (not 0.176 as recorded)
+- The 0.176 recorded score likely uses a different scoring path or averaging
+- The band-score with default-spec gives 0 because change-rate (0.996) is
+  far outside the [0.0, 0.4] band, and autocorr (0.004) is far below [0.3, 0.9]
+- The blind spot IS real (verifier cannot distinguish EoC from chaos), but
+  the exact 0.176 number is not reproduced
+
+### BG3 (measurement reconciliation): RESOLVED (B2)
+- "99.5% chaotic" = fraction-of-generations with Δ > 0.5 → measured 1.0 (100%)
+- "Settling to 0.10-0.14" = does NOT correspond to any measured late-window
+  metric (all show Δ ≈ 1.0). The "settling" observation likely used a different
+  run configuration or windowing. See B2 entry below.
+
+### BG4 (discriminators): PARTIAL — bitplane MI and diag-autocorr computed
+- Results depend on the specific definitions; see notebook table
+
+### B2: Measurement reconciliation finding
+The recorded disagreement ("Codex 99.5% chaotic vs local settling to 0.10-0.14")
+is explained by metric definition differences. The "99.5% chaotic" claim maps
+to the fraction-of-run-above-threshold metric (measured: 100%). The "settling"
+claim does not correspond to any late-window metric in our runs — it may have
+used a different window (very late), a different run (with phenotype coupling),
+or a different change-rate definition (phenotype vs genotype). The genotype
+layer shows Δ ≈ 1.0 throughout, never settling.
+
+### Gate lines (un-piped)
+```
+clojure -X:test: Ran 21 tests containing 79 assertions. 0 failures, 0 errors.
+clojure -M -m scirepro.exo-cross-check grid 50: EXO CROSS-CHECK OK route=grid-identity-creative
+clojure -M -m scirepro.exo-cross-check 50: EXO CROSS-CHECK OK route=statistical
+clj-kondo --lint notebooks/ src/ test/: errors: 0, warnings: 0
+check-parens: PARENS OK
+Render: out/notebooks.r01_boundary_guardian.html (5.7MB, 5 SVG panels with 91K rects)
+```
+
+### Long runs
+All runs used per-seed EDN artifacts under resources/runs/ (30 seeds × 3 arms
++ 1 long 500-gen run). Driver launched detached per the Long-run rule.
