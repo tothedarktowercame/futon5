@@ -6,6 +6,8 @@
         ring/ring-jetty-adapter {:mvn/version "1.12.1"}
         ;; Reuse futon3a's flexiarg parsing and pattern search.
         futon3a/futon3a {:local/root "../futon3a"}
+        ;; Shared AIF core (g-efe, precision, belief) lives in futon2.
+        futon2/futon2 {:local/root "../futon2"}
         common/common {:local/root "../futon1/apps/common"}
         ;; Nonstarter persistence
         com.github.seancorfield/next.jdbc {:mvn/version "1.3.909"}
