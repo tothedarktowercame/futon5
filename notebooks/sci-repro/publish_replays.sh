@@ -21,6 +21,14 @@ DESC = {
         'disagreement reconciled (BG3); and two discriminators — bitplane MI '
         'and diagonal autocorrelation — shown to separate structured chaos '
         'from generic chaos where the old diagnostics could not (BG4).',
+    'r02_evaluator_population': 'Two statistical evaluator-population arms: '
+        'naive genotype evolution collapses diversity from about 45 to 17 '
+        'unique sigils, while a xenotype guard reduces — but does not '
+        'eliminate — evaluator degeneracy with disjoint confidence intervals.',
+    'r03_cyberants': 'A controlled statistical CyberAnts replay: L5-creative '
+        'beats the starving sigil-gradient arm on patchy and sparse, but '
+        'matches random-wiring and shuffled-parameter controls; snowdrift '
+        'shows no supported difference, with the adapter limitation explicit.',
 }
 items = ''.join(
     f'<li><a href="{html.escape(f)}">{html.escape(re.sub(r"^notebooks\.|\.html$","",f))}</a>'

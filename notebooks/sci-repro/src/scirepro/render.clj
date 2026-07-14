@@ -8,7 +8,10 @@
   ["out/notebooks.nb01_metaca_core.html"
    "out/notebooks.nb02_blending.html"
    "out/notebooks.nb03_phenotype.html"
-   "out/notebooks.nb04_mutation.html"])
+   "out/notebooks.nb04_mutation.html"
+   "out/notebooks.r01_boundary_guardian.html"
+   "out/notebooks.r02_evaluator_population.html"
+   "out/notebooks.r03_cyberants.html"])
 
 (def report-targets
   {:nb01 "out/nb01_metaca_core.html"
@@ -19,7 +22,10 @@
   (clay/make! {:source-path ["notebooks/nb01_metaca_core.clj"
                              "notebooks/nb02_blending.clj"
                              "notebooks/nb03_phenotype.clj"
-                             "notebooks/nb04_mutation.clj"]
+                             "notebooks/nb04_mutation.clj"
+                             "notebooks/r01_boundary_guardian.clj"
+                             "notebooks/r02_evaluator_population.clj"
+                             "notebooks/r03_cyberants.clj"]
                :base-source-path "."
                :base-target-path "out"
                :format [:html]
