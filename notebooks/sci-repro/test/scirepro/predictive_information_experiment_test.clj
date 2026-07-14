@@ -1,5 +1,6 @@
 (ns scirepro.predictive-information-experiment-test
   (:require [clojure.test :refer [deftest is testing]]
+            [scirepro.coherence-experiment :as coherence]
             [scirepro.baldwin :as baldwin]
             [scirepro.engine :as engine]
             [scirepro.mutating-template :as mutating-template]
@@ -35,3 +36,16 @@
     (let [hybrid (weighted/weighted-evolve genotype phenotype steps seed 0.5)]
       (is (not= (:genotype template) (:genotype hybrid)))
       (is (not= (:genotype baldwin) (:genotype hybrid))))))
+
+(deftest coherence-eye-check-uses-predeclared-ci-order
+  (let [summary
+        {:bitplane {0.9 {:mean 0.8 :ci95 0.1}
+                    0.5 {:mean 0.4 :ci95 0.1}}
+         :coarse-8 {0.9 {:mean 0.5 :ci95 0.1}
+                    0.5 {:mean 0.5 :ci95 0.1}}
+         :full-cell {0.9 {:mean 0.2 :ci95 0.1}
+                     0.5 {:mean 0.4 :ci95 0.1}}}
+        checks (coherence/eye-check summary)]
+    (is (true? (get-in checks [:bitplane :passes?])))
+    (is (false? (get-in checks [:coarse-8 :passes?])))
+    (is (false? (get-in checks [:full-cell :passes?])))))
