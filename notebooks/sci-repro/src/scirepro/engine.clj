@@ -549,16 +549,36 @@
   (keep-indexed (fn [i b] (when (= b value) i))
                 (rule->bits rule)))
 
-(defn- select-among
-  "Select one element from COLL using RNG (uniform).  Matches the elisp
-   randomize-sequence + nthcdr truncation: for quantity=1 this is equivalent
-   to picking a uniform random element."
+(defn- randomize-and-select-last
+  "Faithfully replicate the elisp `randomize-sequence` (256ca.el:934-941)
+   Fisher-Yates shuffle over COLL, then return the LAST element (matching
+   `(nthcdr (- n 1) shuffled)` for to-flip=1 in
+   randomly-flip-some-selected-values, 256ca.el:942-968).
+
+   The elisp loops `for i from 0 upto (- len 1)`, drawing
+   `(random (- len i))` each iteration — that is len draws total,
+   of sizes len, len-1, ..., 1 — and swaps vector[i] with
+   vector[i + draw].  We consume RNG in the EXACT same order so that
+   a shadow-random injection cross-check reaches grid-identity.
+
+   Returns the selected element, or nil if COLL is empty."
   [^java.util.Random rng coll]
   (let [v (vec coll)
         n (count v)]
-    (if (zero? n)
-      nil
-      (nth v (.nextInt rng n)))))
+    (when (pos? n)
+      (if (= n 1)
+        (first v)
+        (loop [v v
+               i 0]
+          (if (>= i n)
+            (nth v (dec n))
+            (let [remaining (- n i)
+                  r (.nextInt rng remaining)
+                  j (+ i r)]
+              (recur (assoc v
+                            i (nth v j)
+                            j (nth v i))
+                     (inc i)))))))))
 
 (defn balance-mutate-rule
   "Apply balance-mutation semantics to one rule byte, drawing from RNG.
@@ -566,21 +586,27 @@
 
    RNG consumption order (must match elisp for cross-check):
      1. If popcount > 6: draw gate = (.nextInt rng 20).
-        If gate == 0: draw allele among 1-bit positions (uniform), flip it.
+        If gate == 0: draw the full Fisher-Yates over 1-bit positions
+        (len draws of sizes len, len-1, ..., 1) and flip the selected bit.
      2. Elif popcount < 2: draw gate = (.nextInt rng 20).
-        If gate == 0: draw allele among 0-bit positions (uniform), flip it.
-     3. Else: no draw (gate not evaluated — elisp `and` short-circuits)."
+        If gate == 0: draw the full Fisher-Yates over 0-bit positions.
+     3. Else: no draw (gate not evaluated — elisp `and` short-circuits).
+
+   NOTE: the elisp `randomize-sequence` (256ca.el:934-941) performs a FULL
+   Fisher-Yates (len draws) even though only one position is selected.  This
+   function replicates that draw count exactly so that shadow-random injection
+   produces grid-identity."
   [^java.util.Random rng rule]
   (let [ones (popcount rule)]
     (cond
       (and (> ones 6) (zero? (.nextInt rng 20)))
       (let [positions (bit-positions rule 1)
-            allele (select-among rng positions)]
+            allele (randomize-and-select-last rng positions)]
         (flip-bit rule allele))
 
       (and (< ones 2) (zero? (.nextInt rng 20)))
       (let [positions (bit-positions rule 0)
-            allele (select-among rng positions)]
+            allele (randomize-and-select-last rng positions)]
         (flip-bit rule allele))
 
       :else rule)))
@@ -613,6 +639,126 @@
          (vec rows)
          (recur (conj rows (balance-mutation-step (peek rows) gen rng dynamic))
                 (inc gen)))))))
+
+;;; ---------------------------------------------------------------------------
+;;; Recorded balance-mutation (R-repro-5) — capture RNG draws for cross-check.
+;;;
+;;; The shadow-random injection cross-check needs the EXACT sequence of random
+;;; return values the Clojure engine consumes, in order, so it can script the
+;;; elisp `random` to return the same values.  These wrappers record that
+;;; sequence while remaining faithful to the elisp draw order (full
+;;; Fisher-Yates in randomize-sequence).
+
+(defn balance-mutate-rule-recorded
+  "Like balance-mutate-rule but returns {:rule new-rule :draws [...]} where
+   each draw is the integer value returned by (.nextInt rng k).  The :draws
+   sequence is exactly what the elisp shadow-random must return, in order.
+
+   This is the single faithful source for the cross-check injection: it uses
+   the same randomize-and-select-last (full Fisher-Yates) as the production
+   balance-mutate-rule, so the draw order is elisp-faithful by construction."
+  [^java.util.Random rng rule]
+  (let [ones (popcount rule)]
+    (cond
+      (> ones 6)
+      (let [gate (.nextInt rng 20)]
+        (if (zero? gate)
+          (let [positions (bit-positions rule 1)
+                v (vec positions)
+                n (count v)
+                allele (loop [vv v
+                              i 0
+                              draws [gate]]
+                         (if (>= i n)
+                           [(nth vv (dec n)) draws]
+                           (let [remaining (- n i)
+                                 r (.nextInt rng remaining)
+                                 j (+ i r)]
+                             (recur (assoc vv
+                                           i (nth vv j)
+                                           j (nth vv i))
+                                    (inc i)
+                                    (conj draws r)))))]
+             {:rule (flip-bit rule (first allele))
+              :draws (second allele)})
+          {:rule rule :draws [gate]}))
+
+      (< ones 2)
+      (let [gate (.nextInt rng 20)]
+        (if (zero? gate)
+          (let [positions (bit-positions rule 0)
+                v (vec positions)
+                n (count v)
+                allele (loop [vv v
+                              i 0
+                              draws [gate]]
+                         (if (>= i n)
+                           [(nth vv (dec n)) draws]
+                           (let [remaining (- n i)
+                                 r (.nextInt rng remaining)
+                                 j (+ i r)]
+                             (recur (assoc vv
+                                           i (nth vv j)
+                                           j (nth vv i))
+                                    (inc i)
+                                    (conj draws r)))))]
+             {:rule (flip-bit rule (first allele))
+              :draws (second allele)})
+          {:rule rule :draws [gate]}))
+
+      :else
+      {:rule rule :draws []})))
+
+(defn balance-mutation-step-recorded
+  "One generation of DYNAMIC + balance-mutation, recording all RNG draws.
+   Returns {:row new-row :draws [...]}."
+  [row _generation rng dynamic]
+  (let [evolved (step row dynamic)
+        results (mapv #(balance-mutate-rule-recorded rng %) evolved)]
+    {:row (mapv :rule results)
+     :draws (mapcat :draws results)}))
+
+(defn evolve-with-mutating-template
+  "Evolve an IC under the DEFAULT elisp dynamic (evolve-sigil-with-mutating-
+   template, 256ca.el:990-1065, aliased evolve-sigil-fn at :1069) with
+   context=nil.  With context=nil the template is nil so every cell falls to
+   the local-rule branch (= :multiply step) followed by balance-mutation on
+   each new cell's genotype byte.
+
+   This is the NON-CONTEXTUAL default only.  The contextual generalization
+   (template from phenotype quadruples) is out of scope (R-repro-5b).
+
+   Deterministic given (IC, seed).  Returns rows 0..steps inclusive."
+  ([initial steps seed]
+   (when-not (and (integer? steps) (not (neg? steps)))
+     (throw (ex-info "steps must be a non-negative integer" {:steps steps})))
+   (let [rng (java.util.Random. (long seed))]
+     (loop [rows [(vec initial)]
+            gen 1]
+       (if (> gen steps)
+         (vec rows)
+         (recur (conj rows (:row (balance-mutation-step-recorded
+                                  (peek rows) gen rng :multiply)))
+                (inc gen)))))))
+
+(defn evolve-with-mutating-template-recorded
+  "Like evolve-with-mutating-template but also returns the full flat sequence
+   of RNG draw values (for shadow-random injection into elisp).
+   Returns {:rows [...] :all-draws [...]}."
+  [initial steps seed]
+  (when-not (and (integer? steps) (not (neg? steps)))
+    (throw (ex-info "steps must be a non-negative integer" {:steps steps})))
+  (let [rng (java.util.Random. (long seed))]
+    (loop [rows [(vec initial)]
+           gen 1
+           all-draws []]
+      (if (> gen steps)
+        {:rows (vec rows) :all-draws all-draws}
+        (let [{:keys [row draws]} (balance-mutation-step-recorded
+                                   (peek rows) gen rng :multiply)]
+          (recur (conj rows row)
+                 (inc gen)
+                 (into all-draws draws)))))))
 
 ;; --- uniform-random-replacement null model (C4 baseline) --------------------
 
