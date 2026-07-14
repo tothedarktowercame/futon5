@@ -81,8 +81,22 @@
                       "</tr>")))
         "</table>")))
 
-;; **BG1 verdict:** (filled by the rendered data — check which recorded numbers
-;; reproduce within CI and which do not.)
+;; **BG1 verdict (written at review):** QUALITATIVE reproduction, quantitative
+;; deltas honestly beyond CI. The *regime* reproduces decisively: L5-creative
+;; shows the recorded EoC signature (high H, Δ≈1, ρ≈0) and separates cleanly
+;; from both baselines (L0 frozen at Δ=0.000; Rule-30 at Δ=1.000). But the
+;; exact recorded values do NOT reproduce within the (very tight, n=30)
+;; confidence intervals: measured Δ=0.996 vs recorded 0.985, H=0.985 vs
+;; recorded 0.946, ρ=0.004 vs recorded 0.015 — small gaps, many σ at these
+;; CIs. Most likely cause: unrecorded configuration differences in the
+;; original run (width, generations, or exact metric definitions — the
+;; original artifacts died with their /tmp files, so the recorded numbers
+;; cannot be re-derived). Note also that H is definition-sensitive: an
+;; independent review recomputation using sigil-distribution entropy (rather
+;; than the ported diagnostics definition) gives H=0.810 on the same
+;; artifacts, while Δ reproduces exactly (0.996) under an independent
+;; implementation — change-rate is the robust diagnostic here; entropy
+;; comparisons require the definition to be pinned. This is finding B3.
 
 ;; ## BG2: Verifier blind spot
 ;;

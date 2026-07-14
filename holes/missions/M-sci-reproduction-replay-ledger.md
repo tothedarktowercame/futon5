@@ -315,3 +315,35 @@ Render: out/notebooks.r01_boundary_guardian.html (5.7MB, 5 SVG panels with 91K r
 ### Long runs
 All runs used per-seed EDN artifacts under resources/runs/ (30 seeds × 3 arms
 + 1 long 500-gen run). Driver launched detached per the Long-run rule.
+
+### R1b checkpoint + review (2026-07-14, zai-1 author / claude-6 reviewer)
+
+Commit `c817a5f` + review amendments. Notebook: `r01_boundary_guardian.clj`.
+- **BG1: qualitative reproduction, exact values beyond CI** (finding B3): the
+  EoC regime reproduces decisively vs both baselines (L5 Δ=0.996, H=0.985,
+  ρ=0.004; L0 Δ=0.000; Rule-30 Δ=1.000), but recorded values (Δ=0.985,
+  H=0.946, ρ=0.015) differ by many σ at n=30 CIs — original /tmp artifacts
+  are gone, so the gap is unattributable (width/gens/definitions). Reviewer
+  independently recomputed Δ=0.996 exactly via a separate Python path on the
+  persisted artifacts; H is definition-sensitive (sigil-distribution H=0.810
+  on the same data) — change-rate is the robust diagnostic; entropy claims
+  must pin their definition.
+- **BG2: blind spot REAL, recorded number REFUTED.** Measured verifier score
+  0.000 (Δ≈1.0 lies outside the [0,0.4] band), not 0.176. CORRECTION to this
+  ledger's own Tier-2 #2 headline: "scores 0.176" is not reproducible with
+  the default band-score; the blind-spot claim stands on the 0.000 result
+  (verifier cannot distinguish EoC from chaos — both floor).
+- **BG3/B2: half-reconciled.** "99.5% chaotic" = fraction of generations with
+  Δ>0.5 (measured 100%). "Settling to 0.10–0.14" matches no genotype metric
+  in these runs — likely phenotype-layer or different config; recorded as
+  unresolved residue in B2.
+- **BG4: POSITIVE (2 of 3).** Bitplane MI separates L5-creative from Rule-30
+  (0.098±0.008 vs 0.760±0.004) and so does diagonal autocorrelation
+  (0.004±0.001 vs 0.453±0.008) — non-overlapping CIs, huge margins. The
+  proposed discriminators DO see what the 6D vector could not. Note the
+  direction: L5's "structured chaos" has LOWER bitplane MI and autocorr than
+  generic chaos. Triangle density not implemented (the honest gap in
+  "partial"); charter as a small follow-up.
+- Long-run rule applied: 91 per-seed artifacts under `resources/runs/`,
+  detached driver. Gates re-run by reviewer: tests 21/79 green; render OK;
+  42 svgs in r01 HTML.
