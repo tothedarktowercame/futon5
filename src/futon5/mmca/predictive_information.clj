@@ -5,7 +5,9 @@
    :self-past (AIS), :nearest-neighbor (local TE), or an
    {:type :offset :d d :tau tau} source (distance/lagged TE). MetaCA histories
    additionally expose the :bitplane, [:coarse n], and :full-cell alphabets.
-   Entropies include the Miller-Madow finite-sample correction."
+   The aggregate fill selects either the bulk mean or spatial heterogeneity
+   (population variance) of the per-source field. Entropies include the
+   Miller-Madow finite-sample correction."
   (:require [futon5.mmca.bitplane-analysis :as bitplane]))
 
 (defn- log2 [x]
@@ -130,6 +132,24 @@
           (range (inc (- t tau source-history))
                  (inc (- t tau))))))
 
+(defn- normalize-aggregate [aggregate]
+  (if (#{:mean :heterogeneity} aggregate)
+    aggregate
+    (throw (ex-info "unknown predictive-information aggregate fill"
+                    {:aggregate aggregate}))))
+
+(defn- field-aggregates [values]
+  (let [values (mapv double values)
+        n (count values)
+        mean (/ (reduce + 0.0 values) (double n))
+        variance (/ (reduce + 0.0
+                            (map (fn [value]
+                                   (let [delta (- value mean)]
+                                     (* delta delta)))
+                                 values))
+                    (double n))]
+    {:mean mean :heterogeneity variance}))
+
 (defn predictive-information
   "Run one evaluator-comb occupant on a categorical [time][cell] grid.
 
@@ -139,15 +159,17 @@
    - :k              destination-past length (default 8)
    - :source-history source-past length for TE occupants (default 1)
    - :burn-in        first eligible destination time (default k)
+   - :aggregate      :mean (default) or :heterogeneity (spatial variance)
 
    :self-past estimates I(destination-past; destination-next). Transfer
    occupants estimate I(source-past; destination-next | destination-past).
    The sampling, correction, and aggregation paths are otherwise identical."
   ([grid source-hole] (predictive-information grid source-hole {}))
-  ([grid source-hole {:keys [k source-history burn-in]
-                      :or {k 8 source-history 1}}]
+  ([grid source-hole {:keys [k source-history burn-in aggregate]
+                      :or {k 8 source-history 1 aggregate :mean}}]
    (let [grid (validate-grid! grid)
          source-hole (normalize-source-hole source-hole)
+         aggregate (normalize-aggregate aggregate)
          k (long k)
          source-history (long source-history)
          burn-in (long (or burn-in k))
@@ -204,11 +226,11 @@
                        :tau tau
                        :link link)))
             links)
-           avg (fn [key]
-                 (/ (reduce + 0.0 (map key per-source))
-                    (double (count per-source))))]
+           plugin-field (field-aggregates (map :plugin per-source))
+           corrected-field (field-aggregates (map :miller-madow per-source))]
        {:measure :predictive-information
         :source-hole source-hole
+        :aggregate aggregate
         :k k
         :source-history (if transfer? source-history k)
         :burn-in burn-in
@@ -216,8 +238,12 @@
         :width width
         :samples-per-source (- times start)
         :source-count (count per-source)
-        :score-plugin (avg :plugin)
-        :score-corrected (avg :miller-madow)
+        :mean-plugin (:mean plugin-field)
+        :mean-corrected (:mean corrected-field)
+        :heterogeneity-plugin (:heterogeneity plugin-field)
+        :heterogeneity-corrected (:heterogeneity corrected-field)
+        :score-plugin (get plugin-field aggregate)
+        :score-corrected (get corrected-field aggregate)
         :per-source per-source}))))
 
 (defn active-information-storage

@@ -50,6 +50,22 @@
     (is (= (:te-corrected distance) (:score-corrected generic-distance)))
     (is (pos? (:te-corrected distance)))))
 
+(deftest aggregate-fill-reuses-the-local-field
+  (let [initial (mapv #(if (< % 20) (mod % 2) 0) (range 65))
+        step (fn [row] (vec (cons (peek row) (pop row))))
+        grid (vec (take 90 (iterate step initial)))
+        mean-score (pi/predictive-information
+                    grid {:type :offset :d -2 :tau 2}
+                    {:k 2 :burn-in 4 :aggregate :mean})
+        heterogeneous-score (pi/predictive-information
+                             grid {:type :offset :d -2 :tau 2}
+                             {:k 2 :burn-in 4 :aggregate :heterogeneity})]
+    (is (= (:per-source mean-score) (:per-source heterogeneous-score)))
+    (is (= (:mean-corrected mean-score) (:score-corrected mean-score)))
+    (is (= (:heterogeneity-corrected heterogeneous-score)
+           (:score-corrected heterogeneous-score)))
+    (is (pos? (:score-corrected heterogeneous-score)))))
+
 (deftest metaca-bitplane-adapter
   (let [history (vec (repeat 20 (apply str (repeat 8 "一"))))
         ais (pi/score-metaca-history history {:k 3 :burn-in 5})
