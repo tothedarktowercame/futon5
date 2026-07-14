@@ -5,9 +5,21 @@
 
 ;; # R03: CyberAnts controlled replay
 ;;
-;; This is a self-contained view of the reviewed futon2 statistical replay.
-;; The source simulation is unseeded: each cell below summarizes 30 runs of
-;; 300 ticks, and intervals are two-sided 95% t intervals.
+;; ## What this replay asked
+;;
+;; The archived result: an **L5-creative** ant wiring beat a **sigil-gradient**
+;; heuristic 20/20 on patchy food, 10/10 on sparse, and lost 16/20 on snowdrift.
+;; The implicit reading was that *the L5-creative wiring design* is what won.
+;;
+;; This replay re-runs that comparison with two controls the original lacked —
+;; a **random wiring** and a **shuffled-parameter** config — and reports
+;; starvation explicitly, over 30 unseeded runs/arm × 300 ticks, 95% t intervals.
+;;
+;; ## What it found, in one line
+;;
+;; **The direction reproduces, but the win cannot be credited to the L5-creative
+;; wiring** — for two independent reasons below. (This is *not* a refutation of
+;; L5-creative; see the caveat for why we stop at "not isolated.")
 
 ;; ## Pinned source
 
@@ -17,9 +29,7 @@
 (def reviewed-claims
   (slurp (io/file resource-root "CLAIMS.md")))
 
-;; futon2 harness SHA: `73ec130a5befdc321ae1a04d51ef59d6bbabbc44`
-;;
-;; `src/ants/compare.clj` blob: `412a87b7f14467a49f069b7b30d24a139179e5ee`
+;; futon2 harness SHA `73ec130`; `src/ants/compare.clj` blob `412a87b`.
 
 (def scenarios [:patchy :sparse :snowdrift])
 (def arms [:l5 :sigil-gradient :random-wiring :shuffled-parameter])
@@ -47,7 +57,47 @@
                      "</tr>")))
        "</tbody></table>"))
 
-;; ## Arm summaries
+;; ## The picture at a glance
+;;
+;; One bar per arm, per scenario. Read it directly: on **patchy** and **sparse**
+;; the sigil-gradient bar is flat on the floor (it starves to 0), while
+;; **L5-creative, random-wiring, and shuffled-parameter are indistinguishable**.
+;; On **snowdrift** all four are the same. Nowhere does L5-creative stand out.
+
+(def arm-colors
+  {:l5 "#33aa77" :sigil-gradient "#cc4444"
+   :random-wiring "#3388cc" :shuffled-parameter "#aa66cc"})
+
+;; Bars are normalized within each scenario (the scenario's best arm = full
+;; width), since absolute scores differ ~10x between patchy/sparse and snowdrift.
+
+(kind/html
+ (apply str
+   (for [s scenarios
+         :let [means (into {} (for [a arms]
+                                [a (double (:mean (get-in replay-summary
+                                                          [:results s a])))]))
+               mx (apply max 0.001 (vals means))]]
+     (str "<div style='margin:10px 0'><b>" (name s) "</b>"
+          "<table style='border-collapse:collapse;font-size:90%'>"
+          (apply str
+            (for [a arms :let [m (means a) pct (* 100.0 (/ m mx))]]
+              (str "<tr>"
+                   "<td style='padding:2px 8px;text-align:right;white-space:nowrap'>"
+                   (name a) "</td>"
+                   "<td style='padding:2px'>"
+                   "<div style='width:220px;background:#eee;border:1px solid #ccc'>"
+                   "<div style='height:14px;width:" (format "%.1f" pct)
+                   "%;background:" (arm-colors a) "'></div></div></td>"
+                   "<td style='padding:2px 8px;font-variant-numeric:tabular-nums'>"
+                   (format "%.3f" m) "</td></tr>")))
+          "</table></div>"))))
+
+;; ## Finding 1 — the baseline it beat is degenerate
+;;
+;; On patchy and sparse, **sigil-gradient scores 0.000 — it starves in 30/30
+;; runs.** So "L5 beats sigil-gradient" here means only "L5 isn't dead." That is
+;; a floor any surviving ant clears; on its own it says nothing about the wiring.
 
 (kind/html
  (html-table
@@ -57,11 +107,15 @@
         :let [result (get-in replay-summary [:results scenario arm])]]
     [(name scenario) (name arm) (result-cell result) (starvation-cell result)])))
 
-;; Patchy and sparse show an apparent L5 advantage over sigil-gradient only
-;; because sigil-gradient scores 0.000 and starves in 30/30 runs. Both control
-;; arms match L5: their difference intervals include zero in every scenario.
-
-;; ## Claims and controls
+;; ## Finding 2 — random and shuffled wiring do just as well as L5-creative
+;;
+;; Each row is an L5 − control (or L5 − sigil) difference with its 95% interval.
+;; "Supported?" is *yes* only when the interval excludes zero in the
+;; pre-registered direction. L5 beats **sigil-gradient** on patchy/sparse (but
+;; that's beating a corpse, per Finding 1). Against the **controls**, every
+;; interval includes zero: scrambling the wiring changes nothing, so the
+;; advantage is **not specific to the L5-creative wiring**. Snowdrift: no
+;; supported difference between any arms.
 
 (kind/html
  (html-table
@@ -85,26 +139,28 @@
      (str (fmt delta) " [" (fmt (first ci95)) ", " (fmt (second ci95)) "]")
      (if supported? "yes" "no")])))
 
-;; **Finding:** L5-creative beats sigil-gradient on patchy and sparse only
-;; because sigil-gradient fully starves. The random-wiring and
-;; shuffled-parameter controls match L5, so this replay does not establish a
-;; wiring-specific advantage. Snowdrift shows no supported difference.
+;; ## What this means
+;;
+;; The archived "20/20" result reproduces as a **direction** but not as an
+;; **interpretation**. The credit it implicitly gave to the L5-creative *design*
+;; is not earned here: a random wiring matches it, over a baseline that simply
+;; dies. This does not say L5-creative is worthless — it says this comparison
+;; **does not isolate any wiring-specific advantage**.
 
-;; ## Interpretation constraint
+;; ## Caveat — why "not isolated," not "refuted"
 ;;
-;; The current futon2 external-config adapter applies numeric precision to
-;; live AIF state, while retaining policy, pattern-sense, and adaptation
-;; wiring mainly as provenance. The random-wiring control is therefore a
-;; valid structural permutation but may be operationally equivalent to L5 in
-;; this harness. The shuffled-parameter control includes a precision
-;; permutation and can be operationally distinct. Any null control result is
-;; evidence about this executed boundary, not evidence that arbitrary wiring
-;; is generally equivalent.
-;;
-;; The copied `CLAIMS.md` is loaded above alongside `summary.edn`; its presence
-;; keeps the reviewed prose and the machine-readable numbers together in the
-;; published notebook resource bundle.
+;; In this futon2 harness, the external-config adapter applies the wiring's
+;; **numeric precision** to live AIF state but keeps policy / pattern-sense /
+;; adaptation wiring mainly as **provenance**. So a random wiring may be
+;; *operationally equivalent* to L5-creative simply because the harness barely
+;; reads the wiring — meaning the null control is evidence about **this executed
+;; boundary**, not proof that arbitrary wiring is generally as good. Crucially,
+;; the original 20/20 claim was made on this same boundary. Honest verdict: **as
+;; executed, the comparison cannot support "the L5-creative wiring is the
+;; reason."** Distinguishing wiring from precision would need an adapter that
+;; actually exercises the policy/pattern-sense wiring.
 
 (kind/html
- (str "<p><small>Reviewed claims source loaded: "
-      (count reviewed-claims) " characters.</small></p>"))
+ (str "<p><small>Self-contained: reviewed <code>CLAIMS.md</code> ("
+      (count reviewed-claims) " chars) and <code>summary.edn</code> are bundled "
+      "with this notebook; numbers above are read from <code>summary.edn</code>.</small></p>"))
