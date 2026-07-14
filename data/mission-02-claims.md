@@ -27,7 +27,12 @@ that diversity without evolution is just noise.
 ## Protocol
 
 - length=50, generations=80, kernel=:mutating-template, no exotype
-- 30 seeds (42–71), deterministic (java.util.Random seeded)
+- 30 seeds (42–71); the initial genotype is seeded, but `run-mmca`'s mutation
+  RNG is **not fully reproducible per-seed** (verified 2026-07-14 at review:
+  re-running seed 42 shifts composite by ~0.15%). This is therefore a
+  **statistical** replay — the proposition holds over the distribution
+  (mean ± 95% CI, n=30), not as per-seed grid-identity; the committed EDN are
+  sample runs, not reproducible fixtures. (cf. the R1a statistical route.)
 - Null: random genotype each generation (no evolution)
 - Per-run EDN artifacts committed in-repo at `data/mission-02-runs/`
 
