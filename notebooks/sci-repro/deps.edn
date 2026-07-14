@@ -1,6 +1,7 @@
 {:deps {org.clojure/clojure {:mvn/version "1.12.3"}
         org.scicloj/clay {:mvn/version "2-beta23"}
-        org.slf4j/slf4j-nop {:mvn/version "2.0.17"}}
+        org.slf4j/slf4j-nop {:mvn/version "2.0.17"}
+        futon5/futon5 {:local/root "../.."}}
  :paths ["." "src" "resources"]
  :aliases
  {:test {:extra-paths ["test"]

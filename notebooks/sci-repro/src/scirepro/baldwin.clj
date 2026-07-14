@@ -63,8 +63,23 @@
          rule rule-byte]
     (if (>= j n)
       rule
-      (let [pos (rng-fn)]                      ; (random 8)
+      (let [pos (rng-fn 8)]                    ; (random 8)
         (recur (inc j) (engine/flip-bit rule pos))))))
+
+(defn mutate-combined-rule
+  "Apply Baldwin's MUTATE stage to an already-combined rule byte.
+
+   CONTEXT-STR is the four-bit phenotype context or nil at a boundary.
+   RNG-FN accepts a positive bound and returns an integer below it, matching
+   the source `(random 3)` gate and `(random 8)` bit-position draws. This seam
+   lets experiments combine another dynamic's COMBINE stage with Baldwin's
+   verified mutation stage without reimplementing either."
+  [combined-rule context-str rng-fn]
+  (if (and context-str (< (rng-fn 3) 1))
+    (let [mutations (count-context-matches context-str)
+          n (+ mutations 2)]
+      (mutate-rule-n-clj combined-rule n rng-fn))
+    combined-rule))
 
 (defn- baldwin-cell
   "Evolve one genotype cell under the Baldwin dynamic.
@@ -76,11 +91,7 @@
    Returns the new rule byte for this cell."
   [left-rule center-rule right-rule context-str rng-fn]
   (let [output-rule (baldwin-blend-output left-rule center-rule right-rule)]
-    (if (and context-str (< (rng-fn) 1))        ; (and context (< (random 3) 1))
-      (let [mutations (count-context-matches context-str)
-            n (+ mutations 2)]
-        (mutate-rule-n-clj output-rule n rng-fn))
-      output-rule)))
+    (mutate-combined-rule output-rule context-str rng-fn)))
 
 (defn build-context-quadruples
   "Build the phenotype context quadruple strings for middle cells, mirroring
@@ -111,7 +122,8 @@
   "One co-evolution generation under the Baldwin dynamic.
 
    STATE is {:genotype [...] :phenotype [...]} (both vectors of length width).
-   RNG-FN is a thunk returning successive shadow-random values (0..limit-1).
+   RNG-FN accepts a positive bound and returns successive shadow-random values
+   in 0..limit-1.
 
    Returns the next {:genotype :phenotype} state.
 
@@ -145,7 +157,7 @@
    STEPS generations.  Returns {:genotype [rows] :phenotype [rows]} where
    rows 0..steps inclusive are included.
 
-   RNG-FN is a thunk returning successive shadow-random values.  The caller
+   RNG-FN accepts a positive bound and returns successive shadow-random values. The caller
    is responsible for ensuring the RNG stream matches the elisp consumption
    order (see baldwin-cross-check)."
   [genotype phenotype steps rng-fn]
