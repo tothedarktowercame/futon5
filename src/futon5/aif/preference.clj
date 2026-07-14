@@ -32,9 +32,10 @@
    :activity    {:mean 0.5  :sd 0.15}}) ; mid-band activity
 
 (def ^:private regime-penalty
-  "Penalty for predicted regimes that are NOT :eoc. Added to g-efe's risk
-   as an extra 'virtual channel' — a principled approximation that converts
-   the discrete regime label into a continuous cost."
+  "Penalty for predicted regimes that are NOT :eoc. This is a NAMED
+   AUGMENTATION term — it is NOT part of the unit-pure g-efe (which stays
+   in futon2.aif.core-efe). It carries a typed residual:
+   {:term :regime-penalty :tag :principled-approx :residual ...}."
   {:freeze 3.0   ; dead order — strongly penalized
    :magma  3.0   ; chaos/boil — strongly penalized
    :static 1.0   ; sub-EoC — mildly penalized
@@ -77,40 +78,76 @@
 (defn regime-cost
   "The regime-preference cost for a predicted regime keyword.
    Returns the penalty from regime-penalty (0.0 for :eoc, up to 3.0 for
-   :freeze/:magma). This is added to g-efe's risk as a discrete-regime term."
+   :freeze/:magma). This is a NAMED AUGMENTATION — NOT inside g-efe."
   [regime]
   (double (get regime-penalty regime 0.0)))
 
-(defn score-action
-  "Score a single action's forward-predict result against C.
-
-   Args:
-     fp-result  — the {:mean :variance} map from forward-predict
-     action     — the action keyword (for telemetry)
-     opts       — {:weights per-channel risk weights (optional)}
-
+(defn regime-augmentation
+  "Compute the regime-penalty augmentation term with a typed residual.
    Returns:
-     {:action  the action
-      :risk    Σ KL(N(μ,σ²)‖N(C_μ,C_σ²))  + regime-cost
-      :ambiguity Σ ½·ln(2πe·σ²)
-      :g-efe   risk + ambiguity + regime-cost
-      :regime  the predicted regime}
+     {:term :regime-penalty
+      :tag :principled-approx
+      :value  the penalty (0.0 for :eoc, up to 3.0 for :freeze/:magma)
+      :residual {:regime regime :note \"discrete->continuous conversion\"}}
+   This is added to g-efe OUTSIDE the unit-pure kernel to form
+   controller-score."
+  [regime]
+  {:term :regime-penalty
+   :tag :principled-approx
+   :value (regime-cost regime)
+   :residual {:regime regime :note "discrete->continuous conversion"}})
 
-   The regime-cost is added to :risk so it enters g-efe as a pragmatic term.
-   This is tagged :principled-approx (the discrete→continuous conversion is a
-   modeling choice, not a derived identity)."
-  ([fp-result action]
-   (score-action fp-result action {}))
-  ([fp-result action {:keys [weights]}]
+(defn g-efe-pure
+  "Compute the PURE g-efe (risk + ambiguity only, NO augmentation) for a
+   forward-predict result against C.
+
+   This calls futon2.aif.core-efe/g-efe via the re-export. The result is
+   the unit-pure 2-term core — nothing else may be called EFE."
+  ([fp-result]
+   (g-efe-pure fp-result {}))
+  ([fp-result {:keys [weights]}]
    (let [{:keys [mean variance]} fp-result
          {:keys [means variances]} (macro-features->vectors mean variance)
-         {:keys [c-means c-variances]} (c-vectors)
-         efe-result (efe/g-efe means variances c-means c-variances
-                               {:weights weights})
-         r-cost (regime-cost (:regime mean))
-         total-risk (+ (:risk efe-result) r-cost)]
+         {:keys [c-means c-variances]} (c-vectors)]
+     (efe/g-efe means variances c-means c-variances {:weights weights}))))
+
+(defn controller-score
+  "Compute the controller-score = g-efe (pure) + regime-penalty augmentation.
+
+   This is the EXPLICIT split:
+   - g-efe: the unit-pure 2-term core (risk + ambiguity) from futon2.aif.core-efe
+   - regime-penalty: a named augmentation with typed residual, NOT inside g-efe
+
+   Returns:
+     {:action     the action keyword
+      :g-efe      the pure g-efe {:risk :ambiguity :g-efe}
+      :augmentations [regime-augmentation-map]
+      :controller-score  g-efe + augmentation values
+      :regime     the predicted regime}"
+  ([fp-result action]
+   (controller-score fp-result action {}))
+  ([fp-result action opts]
+   (let [pure (g-efe-pure fp-result opts)
+         reg-aug (regime-augmentation (:regime (:mean fp-result)))
+         aug-value (:value reg-aug)
+         total-score (+ (:g-efe pure) aug-value)]
      {:action action
-      :risk total-risk
-      :ambiguity (:ambiguity efe-result)
-      :g-efe (+ total-risk (:ambiguity efe-result))
-      :regime (:regime mean)})))
+      :g-efe pure
+      :augmentations [reg-aug]
+      :controller-score total-score
+      :regime (:regime (:mean fp-result))})))
+
+(defn score-action
+  "Backward-compatible score function. Returns the same shape as S2 but now
+   delegates to controller-score (which has the explicit split)."
+  ([fp-result action]
+   (score-action fp-result action {}))
+  ([fp-result action opts]
+   (let [cs (controller-score fp-result action opts)
+         pure (:g-efe cs)]
+     {:action (:action cs)
+      :risk (:risk pure)
+      :ambiguity (:ambiguity pure)
+      :g-efe (:controller-score cs)
+      :regime (:regime cs)
+      :augmentations (:augmentations cs)})))
