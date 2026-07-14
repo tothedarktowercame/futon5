@@ -8,11 +8,18 @@
    Structure:
    - Per-channel Gaussian targets over {:pressure :selectivity :structure
      :activity}, centered on the EoC band.
-   - A regime-preference term: :eoc is preferred, :freeze/:magma are penalized.
 
    The preference is consumed by g-efe's risk term as the C-vector
    (target means + target variances). This namespace maps the macro-feature
    observation shape into the plain vectors g-efe expects.
+
+   RETRACT TABLE (Slice 3b ablation):
+   - regime-penalty (discrete→continuous regime cost): DELETED. Ablation
+     proved it was inert at deployed weight (3.0): the macro-features that
+     cause :freeze/:magma are structurally far enough from C that g-efe's
+     KL-risk alone always exceeds the penalty. A search over 500+ synthetic
+     macro-feature combinations found zero winner-flips. The :aif controller
+     now runs on pure g-efe + shared precision — a valid, cleaner result.
 
    Faithfulness tag: FEP-derived (R19 — explicit graded preference C)."
   (:require [futon5.aif.efe :as efe]))
@@ -30,17 +37,6 @@
    :selectivity {:mean 0.4  :sd 0.15}   ; moderate template-matching
    :structure   {:mean 0.4  :sd 0.15}   ; moderate temporal autocorrelation
    :activity    {:mean 0.5  :sd 0.15}}) ; mid-band activity
-
-(def ^:private regime-penalty
-  "Penalty for predicted regimes that are NOT :eoc. This is a NAMED
-   AUGMENTATION term — it is NOT part of the unit-pure g-efe (which stays
-   in futon2.aif.core-efe). It carries a typed residual:
-   {:term :regime-penalty :tag :principled-approx :residual ...}."
-  {:freeze 3.0   ; dead order — strongly penalized
-   :magma  3.0   ; chaos/boil — strongly penalized
-   :static 1.0   ; sub-EoC — mildly penalized
-   :chaos  1.0   ; super-EoC — mildly penalized
-   :eoc    0.0}) ; target — no penalty
 
 (def ^:private numeric-channels
   "The ordered numeric macro-feature channels (for vector projection)."
@@ -75,34 +71,10 @@
      {:means means
       :variances vars})))
 
-(defn regime-cost
-  "The regime-preference cost for a predicted regime keyword.
-   Returns the penalty from regime-penalty (0.0 for :eoc, up to 3.0 for
-   :freeze/:magma). This is a NAMED AUGMENTATION — NOT inside g-efe."
-  [regime]
-  (double (get regime-penalty regime 0.0)))
-
-(defn regime-augmentation
-  "Compute the regime-penalty augmentation term with a typed residual.
-   Returns:
-     {:term :regime-penalty
-      :tag :principled-approx
-      :value  the penalty (0.0 for :eoc, up to 3.0 for :freeze/:magma)
-      :residual {:regime regime :note \"discrete->continuous conversion\"}}
-   This is added to g-efe OUTSIDE the unit-pure kernel to form
-   controller-score."
-  [regime]
-  {:term :regime-penalty
-   :tag :principled-approx
-   :value (regime-cost regime)
-   :residual {:regime regime :note "discrete->continuous conversion"}})
-
 (defn g-efe-pure
-  "Compute the PURE g-efe (risk + ambiguity only, NO augmentation) for a
-   forward-predict result against C.
-
-   This calls futon2.aif.core-efe/g-efe via the re-export. The result is
-   the unit-pure 2-term core — nothing else may be called EFE."
+  "Compute the PURE g-efe (risk + ambiguity only) for a forward-predict
+   result against C. This calls futon2.aif.core-efe/g-efe via the re-export.
+   The result is the unit-pure 2-term core — nothing else may be called EFE."
   ([fp-result]
    (g-efe-pure fp-result {}))
   ([fp-result {:keys [weights]}]
@@ -112,34 +84,31 @@
      (efe/g-efe means variances c-means c-variances {:weights weights}))))
 
 (defn controller-score
-  "Compute the controller-score = g-efe (pure) + regime-penalty augmentation.
+  "Compute the controller-score for a forward-predict result against C.
 
-   This is the EXPLICIT split:
-   - g-efe: the unit-pure 2-term core (risk + ambiguity) from futon2.aif.core-efe
-   - regime-penalty: a named augmentation with typed residual, NOT inside g-efe
+   After the Slice 3b ablation, controller-score = g-efe (pure) with NO
+   augmentations. The regime-penalty was deleted because it was inert at
+   deployed weight (the macro-features that cause non-:eoc regimes are
+   already far enough from C that g-efe's KL-risk dominates).
 
    Returns:
-     {:action     the action keyword
-      :g-efe      the pure g-efe {:risk :ambiguity :g-efe}
-      :augmentations [regime-augmentation-map]
-      :controller-score  g-efe + augmentation values
-      :regime     the predicted regime}"
+     {:action          the action keyword
+      :g-efe           the pure g-efe {:risk :ambiguity :g-efe}
+      :augmentations   [] (empty — no augmentations survive)
+      :controller-score  g-efe (:g-efe of the pure result)
+      :regime          the predicted regime}"
   ([fp-result action]
    (controller-score fp-result action {}))
   ([fp-result action opts]
-   (let [pure (g-efe-pure fp-result opts)
-         reg-aug (regime-augmentation (:regime (:mean fp-result)))
-         aug-value (:value reg-aug)
-         total-score (+ (:g-efe pure) aug-value)]
+   (let [pure (g-efe-pure fp-result opts)]
      {:action action
       :g-efe pure
-      :augmentations [reg-aug]
-      :controller-score total-score
+      :augmentations []
+      :controller-score (:g-efe pure)
       :regime (:regime (:mean fp-result))})))
 
 (defn score-action
-  "Backward-compatible score function. Returns the same shape as S2 but now
-   delegates to controller-score (which has the explicit split)."
+  "Backward-compatible score function. Delegates to controller-score."
   ([fp-result action]
    (score-action fp-result action {}))
   ([fp-result action opts]
