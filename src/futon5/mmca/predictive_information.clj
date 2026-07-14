@@ -5,6 +5,8 @@
    :self-past (AIS), :nearest-neighbor (local TE), or an
    {:type :offset :d d :tau tau} source (distance/lagged TE). MetaCA histories
    additionally expose the :bitplane, [:coarse n], and :full-cell alphabets.
+   The estimate fill selects conditional mutual information or fluctuation-field
+   shifted coherence.
    The aggregate fill selects either the bulk mean or spatial heterogeneity
    (population variance) of the per-source field. Entropies include the
    Miller-Madow finite-sample correction."
@@ -74,6 +76,39 @@
      :destination-past-states (:observed-states hz)
      :joint-states (:observed-states hxyz)}))
 
+(defn coherence-estimate
+  "Mean-subtracted shifted self-similarity of aligned fluctuation samples.
+
+   Inputs are binary activity fields: 1 when a cell changed since its previous
+   time step. The score is their positive Pearson/phi correlation. A constant
+   field has zero variance and scores zero, so frozen domains cannot pass by
+   matching every shift."
+  [source-fluctuations destination-fluctuations]
+  (when-not (= (count source-fluctuations) (count destination-fluctuations))
+    (throw (ex-info "coherence samples must have equal length"
+                    {:source (count source-fluctuations)
+                     :destination (count destination-fluctuations)})))
+  (let [xs (mapv double source-fluctuations)
+        ys (mapv double destination-fluctuations)
+        n (count xs)
+        mean-x (if (pos? n) (/ (reduce + 0.0 xs) (double n)) 0.0)
+        mean-y (if (pos? n) (/ (reduce + 0.0 ys) (double n)) 0.0)
+        centered (mapv (fn [x y] [(- x mean-x) (- y mean-y)]) xs ys)
+        covariance (reduce + 0.0 (map (fn [[x y]] (* x y)) centered))
+        spread-x (reduce + 0.0 (map (fn [[x _]] (* x x)) centered))
+        spread-y (reduce + 0.0 (map (fn [[_ y]] (* y y)) centered))
+        denominator (Math/sqrt (* spread-x spread-y))
+        score (if (pos? denominator)
+                (max 0.0 (/ covariance denominator))
+                0.0)]
+    {:plugin score
+     :miller-madow score
+     :samples n
+     :source-activity mean-x
+     :destination-activity mean-y
+     :fluctuation-field :binary-change
+     :normalization :positive-pearson}))
+
 (defn- validate-grid! [grid]
   (let [rows (mapv vec grid)
         widths (set (map count rows))]
@@ -138,6 +173,14 @@
     (throw (ex-info "unknown predictive-information aggregate fill"
                     {:aggregate aggregate}))))
 
+(defn- normalize-estimate [estimate]
+  (case estimate
+    :conditionalMI :conditional-mi
+    :conditional-mi :conditional-mi
+    :coherence :coherence
+    (throw (ex-info "unknown predictive-information estimate fill"
+                    {:estimate estimate}))))
+
 (defn- field-aggregates [values]
   (let [values (mapv double values)
         n (count values)
@@ -159,16 +202,19 @@
    - :k              destination-past length (default 8)
    - :source-history source-past length for TE occupants (default 1)
    - :burn-in        first eligible destination time (default k)
+   - :estimate       :conditional-mi (default) or :coherence
    - :aggregate      :mean (default) or :heterogeneity (spatial variance)
 
    :self-past estimates I(destination-past; destination-next). Transfer
    occupants estimate I(source-past; destination-next | destination-past).
    The sampling, correction, and aggregation paths are otherwise identical."
   ([grid source-hole] (predictive-information grid source-hole {}))
-  ([grid source-hole {:keys [k source-history burn-in aggregate]
-                      :or {k 8 source-history 1 aggregate :mean}}]
+  ([grid source-hole {:keys [k source-history burn-in estimate aggregate]
+                      :or {k 8 source-history 1
+                           estimate :conditional-mi aggregate :mean}}]
    (let [grid (validate-grid! grid)
          source-hole (normalize-source-hole source-hole)
+         estimate (normalize-estimate estimate)
          aggregate (normalize-aggregate aggregate)
          k (long k)
          source-history (long source-history)
@@ -181,13 +227,20 @@
                    :self-past 0
                    :nearest-neighbor 1
                    :offset (:tau source-hole))
-         source-start (if transfer? (+ max-tau (dec source-history)) 0)
+         source-start (cond
+                        (= estimate :coherence) (inc max-tau)
+                        transfer? (+ max-tau (dec source-history))
+                        :else 0)
          start (max k burn-in source-start)]
      (when-not (pos? k)
        (throw (ex-info "destination-past k must be positive" {:k k})))
      (when-not (pos? source-history)
        (throw (ex-info "source-history must be positive"
                        {:source-history source-history})))
+     (when (and (= estimate :coherence)
+                (not= :offset (:type source-hole)))
+       (throw (ex-info "coherence estimate requires an offset sourceHole"
+                       {:source-hole source-hole})))
      (when (empty? links)
        (throw (ex-info "sourceHole has no valid links at this grid width"
                        {:width width :source-hole source-hole})))
@@ -208,18 +261,37 @@
                                  (source-observation grid source t tau source-history)
                                  destination-past)
                                :destination-next (nth (nth grid t) destination)
-                               :destination-past destination-past}))
+                               :destination-past destination-past
+                               :source-fluctuation
+                               (if (= estimate :coherence)
+                                 (if (= (nth (nth grid (- t tau)) source)
+                                        (nth (nth grid (dec (- t tau))) source))
+                                   0 1)
+                                 0)
+                               :destination-fluctuation
+                               (if (= estimate :coherence)
+                                 (if (= (nth (nth grid t) destination)
+                                        (nth (nth grid (dec t)) destination))
+                                   0 1)
+                                 0)}))
                           (range start times))
-                    estimate
-                    (if transfer?
-                      (conditional-mutual-information-estimate
-                       (mapv :source-past samples)
-                       (mapv :destination-next samples)
-                       (mapv :destination-past samples))
-                      (mutual-information-estimate
-                       (mapv :source-past samples)
-                       (mapv :destination-next samples)))]
-                (assoc estimate
+                    estimate-result
+                    (case estimate
+                      :coherence
+                      (coherence-estimate
+                       (mapv :source-fluctuation samples)
+                       (mapv :destination-fluctuation samples))
+
+                      :conditional-mi
+                      (if transfer?
+                        (conditional-mutual-information-estimate
+                         (mapv :source-past samples)
+                         (mapv :destination-next samples)
+                         (mapv :destination-past samples))
+                        (mutual-information-estimate
+                         (mapv :source-past samples)
+                         (mapv :destination-next samples))))]
+                (assoc estimate-result
                        :source source
                        :destination destination
                        :offset d
@@ -230,6 +302,7 @@
            corrected-field (field-aggregates (map :miller-madow per-source))]
        {:measure :predictive-information
         :source-hole source-hole
+        :estimate estimate
         :aggregate aggregate
         :k k
         :source-history (if transfer? source-history k)
@@ -245,6 +318,15 @@
         :score-plugin (get plugin-field aggregate)
         :score-corrected (get corrected-field aggregate)
         :per-source per-source}))))
+
+(defn shifted-coherence
+  "Coherence occupant at signed spatial offset D and temporal lag TAU."
+  ([grid d tau] (shifted-coherence grid d tau {}))
+  ([grid d tau opts]
+   (assoc (predictive-information
+           grid {:type :offset :d d :tau tau}
+           (assoc opts :estimate :coherence))
+          :measure :shifted-fluctuation-coherence)))
 
 (defn active-information-storage
   "AIS occupant: sourceHole = self-past. Legacy result keys are preserved."

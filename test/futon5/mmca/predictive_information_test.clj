@@ -66,6 +66,17 @@
            (:score-corrected heterogeneous-score)))
     (is (pos? (:score-corrected heterogeneous-score)))))
 
+(deftest coherence-uses-fluctuations-not-raw-frozen-matches
+  (let [frozen (vec (repeat 40 (vec (repeat 24 1))))
+        base (mapv #(if (#{0 1 4 7} (mod % 11)) 1 0) (range 24))
+        shift-right (fn [row] (vec (cons (peek row) (pop row))))
+        travelling (vec (take 40 (iterate shift-right base)))
+        frozen-score (pi/shifted-coherence frozen -2 2 {:k 4 :burn-in 8})
+        travelling-score (pi/shifted-coherence
+                           travelling -2 2 {:k 4 :burn-in 8})]
+    (is (zero? (:score-corrected frozen-score)))
+    (is (> (:score-corrected travelling-score) 0.9))))
+
 (deftest metaca-bitplane-adapter
   (let [history (vec (repeat 20 (apply str (repeat 8 "一"))))
         ais (pi/score-metaca-history history {:k 3 :burn-in 5})
