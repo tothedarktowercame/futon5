@@ -17,7 +17,7 @@ Per compliance invariant 1 and the "Lean stages ≙ Clojure stages" gate, the
 The *current* cyber-MMCA controller (`run-controller`,
 `cyber_mmca_compare.clj:195–246`) has only 4 bare stages (step → select → apply
 → commit — see `r-map.md` §"per-tick stages"). The AIF port will expand this to
-the following 8 stages, which the Lean `Stage` enum must mirror:
+the following 9 stages, which the Lean `Stage` enum must mirror:
 
 ```lean
 inductive Stage where
