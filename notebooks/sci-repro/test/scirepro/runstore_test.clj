@@ -17,8 +17,7 @@
         (f)
         (finally
           (doseq [f (reverse (file-seq root))]
-            (.delete f))))))
-  (use-fixtures :each temp-root-fixture))
+            (.delete f)))))))
 
 (use-fixtures :each temp-root-fixture)
 

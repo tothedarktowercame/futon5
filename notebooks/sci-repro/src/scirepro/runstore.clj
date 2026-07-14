@@ -206,15 +206,21 @@
     {:status :partial   :rows [...]  :meta {...}    — run in progress, rows-so-far
     {:status :absent}                                — no run found for this key
 
-  For :partial runs, :rows contains all rows flushed so far. The resume
-  point is (:rows-written meta) — the driver should continue evolving from
-  that generation."
+  For :partial runs, :rows contains all rows flushed so far. The resume point
+  is (:rows-written meta), which lookup reconciles to the actual rows on disk
+  — so a crash between the row append and the meta write cannot make a
+  resuming driver re-append already-persisted rows."
   ([root key-str]
    (if-let [meta (read-meta root key-str)]
-     (let [rows (read-rows root key-str)]
+     (let [rows (read-rows root key-str)
+           ;; Authoritative resume point = rows actually on disk. meta's
+           ;; :rows-written can lag if a crash struck between the row append
+           ;; and the meta write inside flush-rows!; the file is the truth, so
+           ;; a resuming driver never re-appends already-persisted rows.
+           meta* (assoc meta :rows-written (count rows))]
        {:status (:status meta)
         :rows rows
-        :meta meta})
+        :meta meta*})
      {:status :absent}))
   ([key-str]
    (lookup default-root key-str)))
