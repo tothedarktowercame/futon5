@@ -14,9 +14,10 @@
 
   This namespace deliberately does NOT edit engine.clj.  It requires
   scirepro.engine for the reusable helpers (rule<->bits, multiply-cell /
-  local-rule-bit, phenotype-step, flip-bit, truth-table-3) and carries its
-  OWN copy of `balance-mutation` (flagged :balance-mutation/dedupe-candidate
-  for the reviewer to fold into engine.clj alongside zai-6's copy).
+  local-rule-bit, phenotype-step, flip-bit, truth-table-3) and for the
+  canonical `balance-mutation` (engine/balance-mutate-rule[-recorded]). The
+  R-repro-5b port originally carried its own copy; it was verified bit-for-bit
+  identical to zai-6's engine.clj copy and deduped (claude-1 review 2026-07-14).
 
   TEMPLATE CONSTRUCTION (256ca.el:1023-1033):
     actual = context quadruple (4 ints)
@@ -158,149 +159,11 @@
            (range 8)))))
 
 ;; ---------------------------------------------------------------------------
-;; balance-mutation (256ca.el:971-986) — LOCAL COPY, flagged for dedupe.
+;; balance-mutation: use scirepro.engine's canonical port (engine/balance-
+;; mutate-rule and engine/balance-mutate-rule-recorded).  R-repro-5b first
+;; carried its own copy; verified bit-for-bit identical to engine's across
+;; 266k cases (draw path incl.) and deduped here (claude-1 review 2026-07-14).
 ;; ---------------------------------------------------------------------------
-;; NOTE: :balance-mutation/dedupe-candidate
-;; This is a faithful port of 256ca.el:971-986 (balance-mutation) plus its
-;; helpers randomly-flip-some-selected-values (942-968) and randomize-sequence
-;; (934-941).  zai-6 is porting the SAME function into engine.clj for the
-;; non-contextual slice (R-repro-5).  The reviewer (claude-1) will dedupe the
-;; two independent copies into one canonical engine.clj definition; the fact
-;; that two independent ports must agree is itself a correctness check.
-
-(defn- popcount
-  "Number of 1-bits in a rule byte (0-255)."
-  [rule]
-  (Integer/bitCount (int rule)))
-
-(defn- bit-positions
-  "Allele indexes (0-7, MSB-first) where the bit equals VALUE."
-  [rule value]
-  (keep-indexed (fn [i b] (when (= b value) i))
-                (engine/rule->bits rule)))
-
-(defn- randomize-and-select-last
-  "Faithfully replicate elisp randomize-sequence (256ca.el:934-941) Fisher-Yates
-  over COLL, then return the LAST element (matching (nthcdr (- n 1) shuffled)
-  for to-flip=1 in randomly-flip-some-selected-values, 256ca.el:942-968).
-
-  The elisp loops `for i from 0 upto (- len 1)`, drawing (random (- len i))
-  each iteration (len draws total: sizes len, len-1, ..., 1) and swaps
-  vector[i] with vector[i + draw].  We consume RNG in the EXACT same order so
-  a shadow-random injection cross-check reaches grid-identity.
-
-  Returns the selected element, or nil if COLL is empty."
-  [^java.util.Random rng coll]
-  (let [v (vec coll)
-        n (count v)]
-    (when (pos? n)
-      (if (= n 1)
-        (first v)
-        (loop [v v
-               i 0]
-          (if (>= i n)
-            (nth v (dec n))
-            (let [remaining (- n i)
-                  r (.nextInt rng remaining)
-                  j (+ i r)]
-              (recur (assoc v
-                            i (nth v j)
-                            j (nth v i))
-                     (inc i)))))))))
-
-(defn balance-mutate-rule
-  "Apply balance-mutation (256ca.el:971-986) to one rule byte, drawing from RNG.
-  Returns the (possibly mutated) rule.
-
-  RNG consumption order (must match elisp for cross-check):
-    1. If popcount > 6: draw gate = (.nextInt rng 20).
-       If gate == 0: draw the full Fisher-Yates over 1-bit positions and flip
-       the selected bit.
-    2. Elif popcount < 2: draw gate = (.nextInt rng 20).
-       If gate == 0: draw the full Fisher-Yates over 0-bit positions.
-    3. Else: no draw (elisp `and` short-circuits on the popcount test first).
-
-  :balance-mutation/dedupe-candidate — see namespace doc."
-  {:balance-mutation/dedupe-candidate true}
-  [^java.util.Random rng rule]
-  (let [ones (popcount rule)]
-    (cond
-      (and (> ones 6) (zero? (.nextInt rng 20)))
-      (let [positions (bit-positions rule 1)
-            allele (randomize-and-select-last rng positions)]
-        (engine/flip-bit rule allele))
-
-      (and (< ones 2) (zero? (.nextInt rng 20)))
-      (let [positions (bit-positions rule 0)
-            allele (randomize-and-select-last rng positions)]
-        (engine/flip-bit rule allele))
-
-      :else rule)))
-
-(defn balance-mutate-rule-recorded
-  "Like balance-mutate-rule but returns {:rule new-rule :draws [...]} where each
-  draw is the integer value returned by (.nextInt rng k).  The :draws sequence
-  is exactly what the elisp shadow-random must return, in order, for the
-  cross-check injection.
-
-  Uses the same full-Fisher-Yates draw count as balance-mutate-rule so the draw
-  order is elisp-faithful by construction.
-
-  :balance-mutation/dedupe-candidate — see namespace doc."
-  {:balance-mutation/dedupe-candidate true}
-  [^java.util.Random rng rule]
-  (let [ones (popcount rule)]
-    (cond
-      (> ones 6)
-      (let [gate (.nextInt rng 20)]
-        (if (zero? gate)
-          (let [positions (bit-positions rule 1)
-                v (vec positions)
-                n (count v)]
-            (if (zero? n)
-              {:rule rule :draws [gate]}
-              (loop [vv v
-                     i 0
-                     draws [gate]]
-                (if (>= i n)
-                  {:rule (engine/flip-bit rule (nth vv (dec n)))
-                   :draws draws}
-                  (let [remaining (- n i)
-                        r (.nextInt rng remaining)
-                        j (+ i r)]
-                    (recur (assoc vv
-                                  i (nth vv j)
-                                  j (nth vv i))
-                           (inc i)
-                           (conj draws r)))))))
-          {:rule rule :draws [gate]}))
-
-      (< ones 2)
-      (let [gate (.nextInt rng 20)]
-        (if (zero? gate)
-          (let [positions (bit-positions rule 0)
-                v (vec positions)
-                n (count v)]
-            (if (zero? n)
-              {:rule rule :draws [gate]}
-              (loop [vv v
-                     i 0
-                     draws [gate]]
-                (if (>= i n)
-                  {:rule (engine/flip-bit rule (nth vv (dec n)))
-                   :draws draws}
-                  (let [remaining (- n i)
-                        r (.nextInt rng remaining)
-                        j (+ i r)]
-                    (recur (assoc vv
-                                  i (nth vv j)
-                                  j (nth vv i))
-                           (inc i)
-                           (conj draws r)))))))
-          {:rule rule :draws [gate]}))
-
-      :else
-      {:rule rule :draws []})))
 
 ;; ---------------------------------------------------------------------------
 ;; evolve-sigil-with-mutating-template (single cell, 256ca.el:990-1065).
@@ -316,7 +179,7 @@
   combine-with-template then balance-mutate-rule."
   [^java.util.Random rng left-rule center-rule right-rule context]
   (let [combined (combine-with-template left-rule center-rule right-rule context)]
-    (balance-mutate-rule rng combined)))
+    (engine/balance-mutate-rule rng combined)))
 
 (defn evolve-cell-recorded
   "Like evolve-cell but returns {:rule new-rule :draws [...]}.  The :draws are
@@ -324,7 +187,7 @@
   injection."
   [^java.util.Random rng left-rule center-rule right-rule context]
   (let [combined (combine-with-template left-rule center-rule right-rule context)]
-    (balance-mutate-rule-recorded rng combined)))
+    (engine/balance-mutate-rule-recorded rng combined)))
 
 ;; ---------------------------------------------------------------------------
 ;; evolve-sigil-string-contextually (256ca.el:1109) — one generation.
