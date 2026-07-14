@@ -2,6 +2,7 @@
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
             [futon5.ca.core :as ca]
+            [futon5.aif.controller :as aif-controller]
             [futon5.mmca.exotype :as exotype]
             [futon5.mmca.metrics :as metrics]
             [futon5.mmca.runtime :as runtime]
@@ -217,12 +218,20 @@
                          kick-target (assoc :target kick-target)
                          kick-half (assoc :half kick-half)))
               {:keys [state window]} (next-window state {:W W :S S :seed (when seed (+ seed idx)) :lesion lesion})
-              {:keys [actions chosen-sigil]} (cond
+              {:keys [actions chosen-sigil aif-g-efe aif-regime]} (cond
                                                (= controller-id :sigil)
                                                (let [{:keys [sigil actions]} (choose-actions-sigil sigils window)]
                                                  {:actions actions :chosen-sigil sigil})
                                                (= controller-id :null)
                                                {:actions [:hold]}
+                                               (= controller-id :aif)
+                                               (let [aif-result (aif-controller/choose-actions-aif
+                                                                 state window
+                                                                 {:seed (when seed (+ seed idx))
+                                                                  :W W :S (or S W)})]
+                                                 {:actions (:actions aif-result)
+                                                  :aif-g-efe (:g-efe aif-result)
+                                                  :aif-regime (:regime aif-result)})
                                                :else
                                                {:actions (choose-actions-hex window)})
               params-before (get-in state [:exotype :params])
@@ -250,6 +259,8 @@
                                            :delta-update delta-update
                                            :delta-match delta-match
                                            :applied? applied?
+                                           :aif-g-efe aif-g-efe
+                                           :aif-regime aif-regime
                                            :kernel (:kernel state)))))))))
 
 (defn- segment-lengths [pred xs]
