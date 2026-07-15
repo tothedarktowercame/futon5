@@ -60,4 +60,11 @@ git commit --only -m \
   "Propagator composition index: 40320/40320 via 20256 mirror orbits" \
   "$artifact_dir" "$manifest_dir" "$index_file" \
   data/propagator-index/coverage.edn "$report_file"
-git rev-parse HEAD > /tmp/propagator-index-final.sha
+final_sha=$(git rev-parse HEAD)
+printf '%s\n' "$final_sha" > /tmp/propagator-index-final.sha
+
+printf '%s\n' \
+  "BACKGROUND PROPAGATOR INDEX COMPLETE. Commit $final_sha covers 40,320/40,320 sigma via 20,256 proven mirror orbits; 3 seeds each; dense 121x256 standard-Wolfram censuses; all anchors and static gates pass." \
+  | python3 /home/joe/code/futon3c/scripts/agency_send.py \
+      --to claude-3 --from codex-7 --kind bell --type answer \
+      --ref invoke-1784138059136-567-09b2bf3d
