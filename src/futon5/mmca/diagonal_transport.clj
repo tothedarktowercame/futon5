@@ -109,3 +109,57 @@
     (if (odd? n)
       (nth scores (quot n 2))
       (/ (+ (nth scores (dec (quot n 2))) (nth scores (quot n 2))) 2.0))))
+
+(defn- genotype-byte [cell]
+  (let [bits (cond
+               (string? cell) cell
+               (sequential? cell) (apply str cell)
+               :else nil)]
+    (when-not (and (= 8 (count bits)) (every? #{\0 \1} bits))
+      (throw (ex-info "genotype cells must be eight-bit rule strings"
+                      {:cell cell})))
+    bits))
+
+(defn genotype-bitplanes
+  "Split an eight-bit-rule genotype spacetime into eight binary fields.
+
+   Each input cell is the canonical eight-character rule string returned by
+   MetaCA's `get-genotype-from-sigil`.  Keeping the truth-table bits separate
+   avoids collapsing distinct rule changes into a single changed/not-changed
+   category."
+  [grid]
+  (let [rows (mapv (fn [row] (mapv genotype-byte row)) grid)
+        widths (set (map count rows))]
+    (when (or (< (count rows) 3)
+              (not= 1 (count widths))
+              (zero? (or (first widths) 0)))
+      (throw (ex-info "genotype spacetime must have >=3 non-empty equal-width rows"
+                      {:rows (count rows) :widths widths})))
+    (mapv (fn [bit-index]
+            (mapv (fn [row]
+                    (mapv #(binary-cell (nth % bit-index)) row))
+                  rows))
+          (range 8))))
+
+(defn genotype-profile
+  "Return windowed transport for an eight-bit-rule genotype spacetime.
+
+   The binary probe is applied independently to each canonical truth-table
+   bit-plane.  A window's genotype :score is the arithmetic mean of its eight
+   bit-plane bilateral scores; :innovation-density is likewise the mean and is
+   therefore the mean per-bit Hamming change.  Per-plane values remain in the
+   result so this declared aggregation is auditable."
+  ([grid] (genotype-profile grid {}))
+  ([grid opts]
+   (let [plane-profiles (mapv #(profile % opts) (genotype-bitplanes grid))]
+     (apply mapv
+            (fn [& windows]
+              (let [scores (mapv :score windows)
+                    densities (mapv :innovation-density windows)]
+                {:t-start (:t-start (first windows))
+                 :t-end (:t-end (first windows))
+                 :score (/ (reduce + scores) 8.0)
+                 :innovation-density (/ (reduce + densities) 8.0)
+                 :bit-plane-scores scores
+                 :bit-plane-innovation-densities densities}))
+            plane-profiles))))

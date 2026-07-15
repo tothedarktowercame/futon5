@@ -38,3 +38,18 @@
             (str "complex > chaotic at seed " seed))
         (is (> (apply min chaotic) (apply max settled))
             (str "chaotic > settled at seed " seed))))))
+
+(deftest genotype-profile-keeps-rule-bits-separate
+  (let [row ["00000000" "10101010" "11110000"]
+        frozen (vec (repeat 30 row))
+        p (transport/genotype-profile frozen)]
+    (is (= 8 (count (transport/genotype-bitplanes frozen))))
+    (is (every? zero? (map :score p)))
+    (is (every? zero? (map :innovation-density p)))
+    (is (every? #(= 8 (count (:bit-plane-scores %))) p))))
+
+(deftest genotype-profile-rejects-coarse-rule-identifiers
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                        #"eight-bit rule strings"
+                        (transport/genotype-profile
+                         (vec (repeat 3 [0 1 255]))))))

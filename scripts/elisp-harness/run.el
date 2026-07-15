@@ -38,17 +38,28 @@
               (cl-pushnew (first (get-genotype-from-sigil c)) rs :test #'string=)) (length rs)))
 
 (defun run-propagator (perm seed width steps &optional no-invert)
-  "=> (:death t :rules n :activity n :phe rows). death = last t with any change."
+  "Run the authoritative MetaCA propagator seam.
+
+Return (:death t :rules n :activity n :phe rows :gen rows).  PHE contains
+binary phenotype strings and GEN contains the corresponding genotype sigil
+strings, including both initial rows.  Death is the last phenotype time with
+any change."
   (install-prop! perm no-invert)
   (random (format "prop-%d" seed))
-  (let* ((g (random-sigil-string width)) (p (random-phenotype-string width)) (ps (list p)))
+  (let* ((g (random-sigil-string width))
+         (p (random-phenotype-string width))
+         (ps (list p))
+         (gs (list g)))
     (dotimes (_ steps)
       (setq p (evolve-phenotype-against-genotype g p))
       (setq g (evolve-sigil-string g))
-      (push p ps))
+      (push p ps)
+      (push g gs))
     (setq ps (nreverse ps))
+    (setq gs (nreverse gs))
     (let* ((acts (cl-loop for k from 1 below (length ps) collect (phe-chg (nth (1- k) ps) (nth k ps))))
            (death (let ((x 0)) (cl-loop for k from 0 below (length acts)
                                         do (when (> (nth k acts) 0) (setq x (1+ k)))) x)))
-      (list :death death :rules (n-rules g) :activity (apply #'+ acts) :phe ps))))
+      (list :death death :rules (n-rules g) :activity (apply #'+ acts)
+            :phe ps :gen gs))))
 (provide 'run)
