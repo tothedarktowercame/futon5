@@ -15,7 +15,7 @@
   [base-fn]
   (fn [sigil pred succ context]
     (let [mutation-rate (or (:mutation-rate context) 0.2)
-          result (if (< (rand) mutation-rate)
+          result (if (< (ca/rnd) mutation-rate)
                    (ensure-sigil (base-fn sigil pred succ))
                    sigil)]
       {:sigil result})))

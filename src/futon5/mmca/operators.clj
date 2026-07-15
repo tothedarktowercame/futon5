@@ -84,8 +84,8 @@
                     acc chars]
                (if (zero? idx)
                  acc
-                 (let [pos (rand-int len)
-                       replacement (rand-nth targets)]
+                 (let [pos (ca/rnd-int len)
+                       replacement (ca/rnd-nth targets)]
                    (recur (dec idx) (assoc acc pos replacement)))))))))
 
 ;; -----------------------------------------------------------------------------
@@ -150,7 +150,7 @@
              acc chars]
         (if (zero? remaining)
           (apply str acc)
-          (let [idx (rand-int len)
+          (let [idx (ca/rnd-int len)
                 replacement (random-char)]
             (recur (dec remaining) (assoc acc idx replacement))))))))
 
@@ -187,8 +187,8 @@
       :act
       (fn [& {:keys [meta]}]
         (if (:pulse? meta)
-          (let [new-kernel (when (< (rand) switch-prob)
-                             (rand-nth pulse-kernels))]
+          (let [new-kernel (when (< (ca/rnd) switch-prob)
+                             (ca/rnd-nth pulse-kernels))]
             {:grid (fn [genotype]
                      (flip-sigils genotype flip-fraction))
              :rule (when new-kernel {:kernel new-kernel})
@@ -216,7 +216,7 @@
         (if (pos? denominator)
           (min 1.0 (/ entropy denominator))
           0.0))
-      :random (rand)
+      :random (ca/rnd)
       0.5)))
 
 (def default-child-a {:kernel :blending})
@@ -251,7 +251,7 @@
             (let [kernel-a (ca/kernel-fn (:kernel child-a :blending))
                   kernel-b (ca/kernel-fn (:kernel child-b :mutating-template))
                   blended (fn [sigil pred next context]
-                            (if (< (rand) alpha)
+                            (if (< (ca/rnd) alpha)
                               (kernel-a sigil pred next context)
                               (kernel-b sigil pred next context)))]
               {:rule {:kernel :blend-hand
@@ -282,7 +282,7 @@
 
 (defn- reinforce-motifs [genotype motifs learning-rate]
   (reduce (fn [g motif]
-            (if (< (rand) learning-rate)
+            (if (< (ca/rnd) learning-rate)
               (let [chars (string-chars g)
                     motif-chars (string-chars motif)
                     len (count chars)
@@ -293,7 +293,7 @@
                   (> mlen len)
                   (apply str motif-chars)
                   :else
-                  (let [start (rand-int (inc (- len mlen)))
+                  (let [start (ca/rnd-int (inc (- len mlen)))
                         updated (reduce (fn [acc [offset ch]]
                                           (assoc acc (+ start offset) ch))
                                         chars
@@ -375,7 +375,7 @@
            (= (count genotype) (count evolved)))
     (apply str
            (map (fn [old new]
-                  (if (< (rand) rate) new old))
+                  (if (< (ca/rnd) rate) new old))
                 genotype
                 evolved))
     evolved))
@@ -402,7 +402,7 @@
            (seq mask))
     (apply str
            (map-indexed (fn [idx ch]
-                          (if (and (nth mask idx) (< (rand) rate))
+                          (if (and (nth mask idx) (< (ca/rnd) rate))
                             (nth evolved idx)
                             ch))
                         genotype))

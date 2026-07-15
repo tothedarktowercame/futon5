@@ -10,7 +10,31 @@
 ;; Data tables
 
 (def truth-table-3
-  ["000" "001" "010" "011" "100" "101" "110" "111"])
+  "Neighborhood order for a 3-cell (l c r) rule byte, paired with the MSB-first
+   bit vector from `bits-for`: index i of this table names the neighborhood whose
+   output is bits[i].
+
+   *** STANDARDISED 2026-07-15 (Joe's call). This is WOLFRAM'S order. ***
+
+   It was previously [\"000\" \"001\" \"010\" \"011\" \"100\" \"101\" \"110\" \"111\"]
+   (natural ascending), which paired with MSB-first bits means neighborhood
+   (l,c,r) read bit (7 - 4l-2c-r) — i.e. THE RULE BYTE BACKWARDS. Measured: that
+   convention agrees with the standard on only 16/256 rules, and renders Rule 110
+   as diagonal stripes rather than the glider lattice (see
+   holes/labs/M-aif-tokamak/rule110_conventions.png).
+
+   The standard (Wolfram) convention is: the output for neighborhood (l,c,r) is
+   bit k of the rule number, k = 4l+2c+r. That is what \"Rule 110\" universally
+   MEANS. Descending order + MSB-first bits gives exactly that: \"111\" -> bits[0]
+   -> bit 7, \"000\" -> bits[7] -> bit 0.
+
+   NOTE this changes the dynamics of EVERY futon5 CA — the whole wiring ladder
+   included. Historical runs made under the old convention are not comparable to
+   new ones; anything relying on a pre-2026-07-15 number must be re-measured.
+   (The separate scirepro engine uses a THIRD order — Wolfram's with positions
+   3/4 swapped — which coincidentally equals the standard on 32/256 rules,
+   including 110. It is not changed here.)"
+  ["111" "110" "101" "100" "011" "010" "001" "000"])
 
 (def sigils
   (delay (-> "futon5/sigils.edn" io/resource slurp edn/read-string)))
@@ -48,15 +72,73 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Random helpers
+;;
+;; SEEDING SEAM (2026-07-14). Every stochastic draw in this namespace goes
+;; through the helpers below. When `*rng*` is unbound (the default) they call
+;; the global RNG exactly as before, so EVERY existing caller is byte-identical
+;; to its historical behaviour. When `*rng*` is bound to a java.util.Random,
+;; the kernel's dynamics become reproducible from a seed.
+;;
+;; Why this matters: the legacy kernel drew from the global RNG at nine sites,
+;; which is why (a) L5/r01's legacy path was only "statistical" while its
+;; creative path was grid-identical, and (b) the tokamak's run-mmca planned
+;; against a "phantom future" — run-mmca's :seed reached the IC/exotype but
+;; never the dynamics. One seam fixes both.
+;;
+;; The pattern is lifted from the REPRODUCTION, which already got this right:
+;; scirepro.baldwin/mutate-rule-n-clj threads an explicit rng-fn where this
+;; namespace called global (rand-int). A dynamic var is used here rather than
+;; threading rng-fn through ~9 call chains, because those chains are deep and
+;; the CA path is single-threaded (no pmap/future/agent anywhere in
+;; ca.core / mmca.runtime / wiring.runtime).
+
+(def ^:dynamic *rng*
+  "Bind to a java.util.Random to make this namespace's stochastic draws
+   reproducible. Unbound => global RNG => historical behaviour preserved."
+  nil)
+
+(defn rnd
+  "Uniform double in [0,1). Seeded iff *rng* is bound."
+  []
+  (if-let [^java.util.Random r *rng*] (.nextDouble r) (rand)))
+
+(defn rnd-int
+  "Uniform int in [0,n). Seeded iff *rng* is bound."
+  [n]
+  (if-let [^java.util.Random r *rng*] (.nextInt r (int n)) (rand-int n)))
+
+(defn rnd-nth
+  "Random element. Seeded iff *rng* is bound."
+  [coll]
+  (if *rng* (nth (vec coll) (rnd-int (count coll))) (rand-nth coll)))
+
+(defn rnd-shuffle
+  "Shuffle. Seeded iff *rng* is bound (Fisher-Yates against *rng*).
+   NB clojure.core/shuffle is itself a global-RNG source — easy to miss."
+  [coll]
+  (if *rng*
+    (let [a (object-array coll)]
+      (doseq [i (range (dec (alength a)) 0 -1)]
+        (let [j (rnd-int (inc i)) tmp (aget a i)]
+          (aset a i (aget a j))
+          (aset a j tmp)))
+      (vec a))
+    (shuffle coll)))
+
+(defmacro with-seed
+  "Run BODY with this namespace's draws seeded from SEED.
+   Makes the CA dynamics reproducible: same seed => identical trajectory."
+  [seed & body]
+  `(binding [*rng* (java.util.Random. (long ~seed))] ~@body))
 
 (defn random-sigil []
-  (:sigil (rand-nth (sigil-entries))))
+  (:sigil (rnd-nth (sigil-entries))))
 
 (defn random-sigil-string [len]
   (apply str (repeatedly len random-sigil)))
 
 (defn random-phenotype-string [len]
-  (apply str (repeatedly len #(rand-int 2))))
+  (apply str (repeatedly len #(rnd-int 2))))
 
 ;; -----------------------------------------------------------------------------
 ;; Bit manipulation helpers
@@ -87,7 +169,7 @@
          remaining n]
     (if (zero? remaining)
       (apply str chars)
-      (let [idx (rand-int (count chars))]
+      (let [idx (rnd-int (count chars))]
         (recur (assoc chars idx (if (= (chars idx) \0) \1 \0))
                (dec remaining))))))
 
@@ -157,7 +239,7 @@
   (let [positions (keep-indexed (fn [idx bit]
                                   (when (= bit value) idx))
                                 bits)
-        to-flip (->> positions shuffle (take (min quantity (count positions))))]
+        to-flip (->> positions rnd-shuffle (take (min quantity (count positions))))]
     (reduce (fn [acc idx]
               (update acc idx flip-bit))
             bits
@@ -413,7 +495,7 @@
 
 (defn- kernel-baldwin-mutate
   [bits-str phenotype-context]
-  (if (and phenotype-context (< (rand) 0.33))
+  (if (and phenotype-context (< (rnd) 0.33))
     (let [matches (context-match-count phenotype-context)]
       (mutate-rule-n bits-str (+ (or matches 0) 2)))
     bits-str))
@@ -506,9 +588,9 @@
           min-ones (long (or min-ones 0))
           max-ones (long (or max-ones (count bits)))]
       (cond
-        (and (> ones max-ones) (< (rand) chance))
+        (and (> ones max-ones) (< (rnd) chance))
         (ints->bits (randomly-flip-selected bits 1 flip-count))
-        (and (< ones min-ones) (< (rand) chance))
+        (and (< ones min-ones) (< (rnd) chance))
         (ints->bits (randomly-flip-selected bits 0 flip-count))
         :else bits-str))))
 
@@ -589,7 +671,7 @@
                                          (neighbors-match? ints 1) 1
                                          :else (apply-rule ctx triple))))
          match-count (context-match-count context)
-         final (if (and match-count (zero? (rand-int 3)))
+         final (if (and match-count (zero? (rnd-int 3)))
                  (mutate-rule-n outputs (+ match-count 2))
                  outputs)]
      (entry-for-bits final))))
@@ -708,7 +790,7 @@
 (defn- mutation-count
   [{:keys [mode count offset prob]} context]
   (let [prob (double (or prob 1.0))]
-    (if (and (not= mode :none) (< (rand) prob))
+    (if (and (not= mode :none) (< (rnd) prob))
       (case mode
         :fixed (max 0 (long (or count 0)))
         :baldwin (let [matches (context-match-count context)

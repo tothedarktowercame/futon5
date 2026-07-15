@@ -8,6 +8,15 @@ layer table, stochasticity rule, dispatch standard), `M-sci-reproduction.md`
 ranking + B-series ledger), `futon3c/holes/excursions/E-park-delivery-losses.md`
 (park protocol state + open items).
 
+## Direction update (2026-07-14, claude-1 + Joe)
+
+The "how do we *search* the space?" question has crystallized into a new mission,
+`M-metaca-search.md`: turn the reproduced dynamics into a two-frame search engine
+(model frame = DarkTower combs; behaviour frame = CA grid + discriminator
+registry; coordinated by Smithe's `Flow: DiffSys→Coalg`, `arXiv:2208.12173`).
+Step 1 (a functor probe realizing one dynamic as a DarkTower object) is in flight
+to codex-4. The reproduction queue below continues as the vocabulary supply.
+
 ## Where things stand (2026-07-13 end of session)
 
 - **M-sci-reproduction: COMPLETE and published.** nb01–nb04 at

@@ -18,42 +18,71 @@
    live-step and prediction).  The MetaCA's structural advantage over the ant
    port is that `run-mmca` is already a real generative kernel — R4 wraps it,
    it does not have to be factored out of a mutating world."
-  (:require [futon5.mmca.runtime :as runtime]
+  (:require [futon5.ca.core :as ca]
+            [futon5.mmca.runtime :as runtime]
             [futon5.mmca.metrics :as metrics]))
 
 ;; --------------------------------------------------------------------------- ;;
-;; Action → exotype-param translation (mirrors cyber_mmca_compare/adjust-params).
-;; This is the MetaCA action vocabulary (R6): {:pressure-up :pressure-down
-;; :selectivity-up :selectivity-down :hold}.
+;; Action → exotype-param translation.  This is the MetaCA action vocabulary
+;; (R6): {:rotate-up :rotate-down :hold}.
+;;
+;; MEASURED ACTUATOR (2026-07-15).  The previous vocabulary was
+;; {:pressure-up :pressure-down :selectivity-up :selectivity-down :hold},
+;; actuating :update-prob and :match-threshold.  BOTH are inert — measured
+;; paired (same seed, knob varied), 12 seeds, every sigil, both exotype modes:
+;; effect EXACTLY 0.000, trajectory byte-identical.  Mechanism:
+;;   - :update-prob     — exotype.clj:748-750 takes the context's :mutation-bias
+;;                        whenever physics-params exist; the :update-prob read is
+;;                        an else-branch that never fires.
+;;   - :match-threshold — exotype.clj:756 puts it in ctx, but
+;;                        ca/mutate-kernel-spec-contextual ignores it: the output
+;;                        kernel spec is byte-identical at 0.0 / 0.5 / 1.0.
+;; Only :mix-mode/:mix-shift propagate into the kernel spec (exotype.clj:767-771),
+;; and they are LIVE: paired SNR 3.05, moves the trajectory 12/12 seeds.
+;;
+;; The live actuator is exactly the cyclic group Z/8 acting on the 8-bit sigil.
+;; Verified to 1e-9 on all pairs: rotate-left k ≡ rotate-right (8-k).  So the
+;; honest parameterisation is ONE signed rotation r ∈ Z/8, realised as
+;; (:mix-mode :rotate-left, :mix-shift r); r=0 is the identity.  All 8 rotations
+;; give distinct (pressure, selectivity), so this covers the whole reachable set
+;; with no redundant dimension.
+;;
+;; Actions are named for what they DO, not for an intended effect.  A 1-D
+;; rotation cannot independently raise pressure — pressure and selectivity are
+;; both functions of the same scalar r — so an action named :pressure-up would
+;; be writing a promise the plant cannot keep.  The forward model below is what
+;; discovers which rotation achieves which macro-state.
+;;
+;; NOTE :mix-mode is only live when :mix-shift ≠ 0 (rotate-by-zero IS identity),
+;; so r=0 is a degenerate corner where the mode knob has no authority.  Forcing
+;; :mix-mode :rotate-left here means a :none-mode exotype (e.g. the 一 sigil,
+;; which derives :mix-mode :none) is still controllable.
 ;; --------------------------------------------------------------------------- ;;
 
-(def ^:private pressure-step 0.1)
-(def ^:private select-step 0.1)
+(def rotation-modulus
+  "The sigil is 8 bits, so rotations live in Z/8.  Wrapping (not clamping) is
+   the true geometry of the actuator: clamping would invent a boundary the
+   plant does not have."
+  8)
 
-(defn- clamp
-  [x lo hi]
-  (max lo (min hi x)))
+(defn- rotate-by
+  "Step the exotype's rotation by `delta` within Z/8, forcing the mix-mode that
+   makes the rotation live."
+  [p delta]
+  (assoc p
+         :mix-mode :rotate-left
+         :mix-shift (mod (+ (long (or (:mix-shift p) 0)) delta) rotation-modulus)))
 
 (defn apply-action-to-params
   "Translate a candidate action (or sequence of actions) into exotype param
-   deltas.  Mirrors `cyber-mmca-compare/adjust-params` exactly so the forward
-   model and the live controller share the same action semantics."
+   deltas.  The forward model and the live controller share these action
+   semantics, so this is the single definition of what the tokamak can DO."
   [params action]
   (let [actions (if (sequential? action) action [action])
         apply-one (fn [p a]
                     (case a
-                      :pressure-up
-                      (update p :update-prob
-                              #(clamp (+ (double (or % 1.0)) pressure-step) 0.05 1.0))
-                      :pressure-down
-                      (update p :update-prob
-                              #(clamp (- (double (or % 1.0)) pressure-step) 0.05 1.0))
-                      :selectivity-up
-                      (update p :match-threshold
-                              #(clamp (+ (double (or % 0.5)) select-step) 0.0 1.0))
-                      :selectivity-down
-                      (update p :match-threshold
-                              #(clamp (- (double (or % 0.5)) select-step) 0.0 1.0))
+                      :rotate-up   (rotate-by p 1)
+                      :rotate-down (rotate-by p -1)
                       ;; :hold and any unknown action → no change
                       p))]
     (reduce apply-one (or params {}) actions)))
@@ -102,7 +131,7 @@
    Args:
      state     — a macro-state map (see `macro-state`).
      action    — a candidate action keyword or vector of actions
-                 (from R6: :pressure-up/-down, :selectivity-up/-down, :hold).
+                 (from R6: :rotate-up, :rotate-down, :hold).
      opts      — optional map:
        :generations  window length (default 10)
        :seed         RNG seed for the CA step (default 42)
@@ -134,16 +163,57 @@
                     (assoc exotype :params params-after)
                     exotype)
          ;; Run the real CA kernel forward.
-         result (runtime/run-mmca
-                 {:genotype (:genotype state)
+         ;;
+         ;; ca/with-seed is what makes R4 ("one PURE forward kernel") true.
+         ;; Without it this function is not pure: run-mmca's :seed only drives
+         ;; the exotype rng, while the CA dynamics draw from the GLOBAL rand, so
+         ;; the result depends on how much RNG the process happened to consume
+         ;; first.  That silently confounds the experiment it is used in — the
+         ;; :aif arm burns global RNG running rollouts before every choice and
+         ;; the :null arm does not, so the two arms' trajectories diverge for
+         ;; reasons unrelated to control.  Observed before this fix: a trial in
+         ;; which :aif chose :hold for ALL 12 windows (an action-for-action
+         ;; identical arm to :null) still reported a different distance from
+         ;; null — the two arms were not comparable at all.
+         ;;
+         ;; Seeding here makes forward-predict a pure function of
+         ;; (state, action, seed), so identical action sequences give identical
+         ;; trajectories and aif-vs-null is a PAIRED comparison.
+         result (ca/with-seed seed
+                  (runtime/run-mmca
+                   {:genotype (:genotype state)
                   :phenotype (:phenotype state)
                   :generations generations
                   :kernel (:kernel state)
                   :lock-kernel false
+                  ;; SCOPE DECISION (2026-07-15): the tokamak runs on the
+                  ;; operator-free plant.  Without this, `resolve-operators`
+                  ;; derives operators FROM THE GENOTYPE, and BlendHand
+                  ;; (operators.clj:257) sets :kernel :blend-hand — a kernel
+                  ;; ca/kernel-spec-for does not know.  That throw is swallowed
+                  ;; at runtime.clj:540, kernel-spec goes nil, and the whole
+                  ;; exotype path short-circuits: the actuator is DEAD and the
+                  ;; run still reports success.  Measured: 0 exotype mutations
+                  ;; with genotype-derived operators, 105 with :operators [].
+                  ;;
+                  ;; So the exotype actuator and kernel-overwriting operators are
+                  ;; INCOMPATIBLE, and this is a real scope limit, not a tidy-up:
+                  ;; the tokamak currently cannot steer a plant whose operators
+                  ;; rewrite the kernel.  The principled fix is to give such
+                  ;; kernels a spec (ca/kernel-specs) so the exotype can act on
+                  ;; them; until then the experiment is honestly scoped to the
+                  ;; operator-free plant rather than silently running with no
+                  ;; actuator.
+                  :operators []
                   :exotype exotype'
+                  ;; :inline is marked "(deprecated)" in runtime.clj, but it is
+                  ;; the CORRECT mode here and the only one where this actuator
+                  ;; acts: :local-physics SKIPS the exotype entirely
+                  ;; (runtime.clj:750-754 routes to local-physics/advance-state,
+                  ;; which never receives it).
                   :exotype-mode :inline
                   :seed seed
-                  :lesion lesion})
+                  :lesion lesion}))
          ;; Project to macro-features (the R2 observation ABI).
          metrics-history' (into (or (:metrics-history state) [])
                                 (:metrics-history result))

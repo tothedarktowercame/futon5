@@ -7,7 +7,62 @@
         :label "Legacy + diversity + gate + creative"
         :description "Full boundary-guardian pattern. Gate chooses legacy vs creative based on diversity."
         :additions [:creative-path :conditional-behavior]
-        :expected "Behavior SHOULD differ from Level 4. If same, creative path isn't activating."}
+        :expected "Behavior SHOULD differ from Level 4. If same, creative path isn't activating."
+
+        ;; --- UNIFIED FOOTING (2026-07-14) --------------------------------- ;;
+        ;; Leg 2 of 3: the CT-backed model this design occupies, the way
+        ;; MetaCATokamakExample.lean specifies the tokamak. AIF-COMPLIANCE §25:
+        ;; "generators, evaluators, and the Tokamak are one comb — the
+        ;; distinction is WIRING, not species." This is an occupant of the
+        ;; generator comb, with a COMPOSITE fill at the combine hole.
+        :ct-model
+        {:lean "DarkTower/MetaCAExample.lean"
+         :comb "cellUpdate"    ; (readPhe ⅋ readL ⅋ readC ⅋ readR) ◁ combine ◁ mutate ◁ write
+         :occupant
+         {:read-phenotype-context :active        ; :ctx-phe feeds the legacy kernel
+          :read-left-rule  :neighbour-rule       ; :ctx-pred
+          :read-center-rule :self-rule           ; :ctx-self
+          :read-right-rule :neighbour-rule       ; :ctx-succ
+          ;; The combine hole is filled by a GATED CHOICE between two
+          ;; sub-combines — this is what makes L5 a composite occupant rather
+          ;; than a leaf one, and is the structure the ladder builds up to.
+          :combine {:gate :threshold-sigil
+                    :on :diversity                ; diversity of :context-neighbors
+                    :threshold 0.5
+                    :below :legacy-kernel-step    ; exploit  (工/super params)
+                    :above :bit-xor}              ; explore  (creative path)
+          :mutate  :none
+          :write   :output-sigil}
+         :differs-from {:level-4-gate [:combine]} ; L4's gate exists but always
+                                                  ; selects :below; L5 fills :above
+         :note
+         "Feed-forward per cell-step: the gate SELECTS between sub-combines, it
+          does not feed a later stage back into an earlier port. The
+          open-diagram (Comb.lean coend) layer is NOT triggered."}
+
+        ;; Leg 3 of 3: reproducibility. HONEST CAVEAT — this design is only
+        ;; PARTLY reproducible, and r01 says so itself.
+        :reproducibility
+        {:runtime "futon5.wiring.runtime (headless)"
+         :standard-protocol {:seeds [4242 238310129 352362012]   ; ladder README
+                             :widths [100 120]
+                             :generations 100}
+         :status :partial
+         :caveat
+         "r01_boundary_guardian's cross-check: the CREATIVE path is grid-identical
+          (18K+ checks, 0 errors) but the LEGACY path is only statistical — it
+          uses unseeded `rand`. So per-seed reproducibility does NOT hold for the
+          legacy sub-combine. Same global-RNG defect found in the tokamak's
+          run-mmca. Fixing it = threading a seeded rng through the legacy kernel."
+         :replay "notebooks/sci-repro/notebooks/r01_boundary_guardian.clj"}
+
+        ;; Why this member matters to the cohort.
+        :cohort-note
+        "r01 records this as 'the only genotype-layer edge-of-chaos run ever
+         recorded in the futon5 repo' — strong EoC diagnostics, yet only 0.176 on
+         the standard verifier. That tension makes it the prime anchor candidate
+         for validating Cμ against the eye: if a measure calls this EoC, it agrees
+         with the visual read that the verifier missed."}
 
  :diagram
  {:nodes [;; Context extraction

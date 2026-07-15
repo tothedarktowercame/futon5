@@ -404,6 +404,57 @@
    :doc "Extract [pred self succ] as list"}
 
   ;;; ============================================================
+  ;;; METACA CORE DYNAMICS (the sci-repro cohort's occupants)
+  ;;; ============================================================
+  ;;
+  ;; Added 2026-07-15. The sci-repro wirings (nb01-nb04) were written in this
+  ;; schema and claimed to be crossable-over with the ladder, but named five
+  ;; components that existed in NEITHER this library nor the implementation
+  ;; registry — so they threw "Unknown component" while every ladder wiring ran.
+  ;; The unified footing was a property of the schema, not of the runtime.
+  ;;
+  ;; Implementations: futon5.xenotype.generator/metaca-registry. They read
+  ;; ca/core's WOLFRAM-STANDARD tables, so these are the paper's STRUCTURE under
+  ;; the standard order, not a bit-exact replay of its figures (that lives in the
+  ;; separate `scirepro` engine, pinned to the legacy order because grid-identity
+  ;; with the 2014 elisp is the evidence it exists to provide).
+
+  :multiply-cell
+  {:inputs [[:pred :sigil] [:self :sigil] [:succ :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "MetaCA S3.1 no-blending update: the centre's own rule applied bitwise to
+         the (left, centre, right) bits at each of the 8 allele positions."}
+
+  :blend-cell
+  {:inputs [[:pred :sigil] [:self :sigil] [:succ :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "MetaCA S3.2 blending update: where the neighbours agree, copy their
+         shared bit (this is a left-shift); otherwise fall back to the S3.1 local
+         rule. Under the standard order this is 'Rule 240 censored by local
+         logic' — the paper's 'Rule 23' was an artifact of its neighbourhood
+         ordering; 240 is the shift."}
+
+  :mutate-combined-rule
+  {:inputs [[:rule :sigil] [:context :context]]
+   :outputs [[:result :sigil]]
+   :doc "Mutate the combined rule (256ca.el mutate-rule-n). Draws route through
+         ca/rnd-int, so runs are reproducible under ca/with-seed."}
+
+  :phenotype-step
+  {:inputs [[:rule :sigil] [:phe :bits]]
+   :outputs [[:result :bits]]
+   :doc "One phenotype bit, updated by the cell's own genotype rule applied to
+         the phenotype neighbourhood. Absent neighbours take :boundary-phenotype
+         (256ca.el pins this to 0)."}
+
+  :output-phenotype
+  {:inputs [[:bits :bits]]
+   :outputs [[:out :bits]]
+   :doc "Phenotype output node. NOTE run-wiring already evolves the phenotype
+         uniformly for every wiring via ca/evolve-phenotype-against-genotype, so
+         this node DECLARES in the diagram what the runtime does regardless."}
+
+  ;;; ============================================================
   ;;; KERNEL STEPS: Legacy vs Local Physics
   ;;; ============================================================
 

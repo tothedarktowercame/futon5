@@ -528,16 +528,36 @@
           kernel-spec
           ctxs))
 
+;; Kernels seen to have no spec, so the warning below fires once per kernel
+;; rather than once per tick.
+(defonce ^:private unspecced-kernels (atom #{}))
+
 (defn- update-kernel-by-exotype
   [state exotype ^java.util.Random rng tick]
   (if (or (nil? exotype) (:lock-kernel state))
     state
     (let [[ctxs state'] (resolve-exotype-context state rng tick)
           kernel (or (:kernel-spec state') (:kernel state'))
+          ;; A kernel with no spec silently disables the ENTIRE exotype path:
+          ;; kernel-spec goes nil, the (and kernel-spec ...) below short-circuits,
+          ;; apply-exotype never runs, and every exotype param is inert while the
+          ;; run still reports success. That is exactly how the tokamak spent a
+          ;; session measuring 0.000 authority on every knob (2026-07-15): the
+          ;; genotype-derived BlendHand operator sets :kernel :blend-hand, which
+          ;; ca/kernel-spec-for does not know. Swallowing this is what hid it, so
+          ;; the nil is preserved (callers depend on it) but the failure is loud.
           kernel-spec (when kernel
                         (try
                           (ca/kernel-spec-for kernel)
-                          (catch Exception _ nil)))]
+                          (catch Exception e
+                            (let [k (if (map? kernel) (:label kernel) kernel)]
+                              (when-not (contains? @unspecced-kernels k)
+                                (swap! unspecced-kernels conj k)
+                                (binding [*out* *err*]
+                                  (println (str "WARNING: exotype DISABLED for kernel " (pr-str k)
+                                                " — ca/kernel-spec-for threw (" (.getMessage e) ")."
+                                                " All exotype params are inert for this run.")))))
+                            nil)))]
       (if-let [next-kernel (and kernel-spec
                                 (seq ctxs)
                                 (apply-exotype-chain kernel-spec exotype ctxs rng))]

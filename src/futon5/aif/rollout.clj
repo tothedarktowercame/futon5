@@ -29,14 +29,21 @@
   0.9)
 
 (def ^:private candidate-actions
-  "The R6 action vocabulary (mirrors controller)."
-  [:pressure-up :pressure-down :selectivity-up :selectivity-down :hold])
+  "The R6 action vocabulary (mirrors controller).  Every action here is
+   PROVEN to move the plant — see the measured-actuator note in
+   `futon5.aif.forward`.  The previous vocabulary (:pressure-up/-down,
+   :selectivity-up/-down) actuated :update-prob and :match-threshold, both of
+   which are inert: paired effect exactly 0.000 on every seed.  An action that
+   cannot move the plant is not a candidate, it is a no-op wearing a name."
+  [:rotate-up :rotate-down :hold])
 
 (defn- score-step
   "Score a single forward-predict step by g-efe against C.
-   Returns the g-efe scalar (lower = better)."
-  [fp-result weights]
-  (:g-efe (pref/g-efe-pure fp-result {:weights weights})))
+   Returns the g-efe scalar (lower = better).
+   `target-c` (optional) overrides the default EoC set-point — this is what
+   lets the controller be re-targeted to an arbitrary C."
+  [fp-result weights target-c]
+  (:g-efe (pref/g-efe-pure fp-result {:weights weights :target-c target-c})))
 
 (defn- rollout-branch
   "Roll out a single branch (fixed action sequence) to depth H.
@@ -44,7 +51,7 @@
    After the first action, subsequent actions are greedy 1-step (pick the
    action that minimizes g-efe at each step). This is a common rollout
    heuristic that keeps the branching factor manageable."
-  [state first-action weights opts depth discount]
+  [state first-action weights opts depth discount target-c]
   (loop [d 0
          current-state state
          actions [first-action]
@@ -59,12 +66,12 @@
                      ;; Greedy continuation: pick the best action at this step.
                      (let [step-scores (for [a candidate-actions]
                                          (let [fp (forward/forward-predict current-state a opts)
-                                               s (score-step fp weights)]
+                                               s (score-step fp weights target-c)]
                                            [a s fp]))
                            best (apply min-key second step-scores)]
                        (first best)))
             fp (forward/forward-predict current-state action opts)
-            step-score (score-step fp weights)
+            step-score (score-step fp weights target-c)
             discounted (* (Math/pow discount d) step-score)
             next-state (:next-state fp)]
         (recur (inc d)
@@ -81,10 +88,11 @@
    Args:
      state     — the controller's macro-state
      weights   — precision weights for g-efe
-     opts      — {:horizon H :discount ρ :seed :W :S :generations}"
+     opts      — {:horizon H :discount ρ :seed :W :S :generations :target-c}
+                 :target-c overrides the default EoC set-point (re-targeting)."
   ([state weights]
    (rollout-score state weights {}))
-  ([state weights {:keys [horizon discount seed W S generations]}]
+  ([state weights {:keys [horizon discount seed W S generations target-c]}]
    (let [h (or horizon default-horizon)
          rho (or discount default-discount)
          predict-opts {:generations (or generations 10)
@@ -92,10 +100,10 @@
                        :W (or W 10)
                        :S (or S W)}
          results (for [action candidate-actions]
-                   (let [branch (rollout-branch state action weights predict-opts h rho)
+                   (let [branch (rollout-branch state action weights predict-opts h rho target-c)
                          ;; Also compute the greedy 1-step score for comparison.
                          fp (forward/forward-predict state action predict-opts)
-                         greedy (score-step fp weights)]
+                         greedy (score-step fp weights target-c)]
                      {:action action
                       :rollout-score (:score branch)
                       :greedy-score greedy

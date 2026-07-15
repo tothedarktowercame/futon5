@@ -130,7 +130,7 @@
   ([state _window]
    (choose-actions-aif state nil {}))
   ([state _window {:keys [seed W S tau generations precision-state regime-history
-                          horizon discount]}]
+                          horizon discount target-c]}]
    (let [predict-opts {:generations (or generations 10)
                        :seed (or seed 42)
                        :W (or W 10)
@@ -143,7 +143,8 @@
          rollout-scores (rollout/rollout-score state weights
                                                 (assoc predict-opts
                                                        :horizon h
-                                                       :discount discount))
+                                                       :discount discount
+                                                       :target-c target-c))
          ;; Select by softmax(-rollout-score/τ)
          selected (softmax-select rollout-scores effective-tau :rollout-score)
          selected-action (:action selected)

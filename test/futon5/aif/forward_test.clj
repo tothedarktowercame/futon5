@@ -2,11 +2,16 @@
   "Tests for the MetaCA forward model (R4).
 
   Acceptance 1: forward-predict's mean equals the run-mmca deterministic
-  next-macro-state on a fixed seed.  Since run-mmca is non-deterministic
-  (the exotype RNG is seeded but the CA kernel advance uses global rand),
-  we verify this by checking that forward-predict's :mean is the correct
-  windowed-macro-features projection of the SAME run-mmca call (exposed
-  via :run-result in the return map)."
+  next-macro-state on a fixed seed.
+
+  NOTE (2026-07-15): this docstring used to read '...since run-mmca is
+  non-deterministic (the exotype RNG is seeded but the CA kernel advance uses
+  global rand), we verify this by checking the projection of the SAME run-mmca
+  call'.  The impurity was known, documented, and DESIGNED AROUND rather than
+  fixed — and it was exactly what confounded the aif-vs-null comparison the
+  forward model exists to serve.  forward-predict now binds ca/with-seed and is
+  genuinely pure, so the acceptance is stated directly and pinned by
+  `forward-predict-is-pure` below."
   (:require [clojure.test :refer [deftest is testing]]
             [futon5.ca.core :as ca]
             [futon5.mmca.metrics :as metrics]
@@ -54,14 +59,62 @@
 (deftest forward-predict-applies-action-before-step
   (testing "forward-predict applies the action to exotype params before run-mmca"
     ;; Verify the action was applied: the next-state exotype should reflect
-    ;; :pressure-up (update-prob increased from the base).
+    ;; :rotate-up (mix-shift stepped within Z/8).
     (let [state (make-test-state)
-          base-update-prob (get-in state [:exotype :params :update-prob])
-          result (forward/forward-predict state :pressure-up
-                                           {:generations test-W :seed test-seed})
-          after-update-prob (get-in (:next-state result) [:exotype :params :update-prob])]
-      (is (> after-update-prob base-update-prob)
-          "pressure-up should increase update-prob before the CA step"))))
+          base-shift (long (or (get-in state [:exotype :params :mix-shift]) 0))
+          result (forward/forward-predict state :rotate-up
+                                          {:generations test-W :seed test-seed})
+          after-shift (get-in (:next-state result) [:exotype :params :mix-shift])]
+      (is (= (mod (inc base-shift) 8) after-shift)
+          ":rotate-up should step mix-shift within Z/8 before the CA step"))))
+
+(deftest forward-predict-actions-have-authority
+  ;; THE GATE THAT WAS MISSING (2026-07-15).
+  ;;
+  ;; The test replaced above asserted "pressure-up increases update-prob" — and
+  ;; it PASSED, for the whole life of the tokamak, while :update-prob moved the
+  ;; plant by EXACTLY 0.000.  It verified the WIRE and never asked whether the
+  ;; field it wrote did anything.  A green test certifying a no-op is the
+  ;; cyberant defect in test form: wiring written, never read.
+  ;;
+  ;; So: assert AUTHORITY, not assignment.  An action must change the plant's
+  ;; OBSERVABLE, or it is a no-op wearing a name.  Paired by construction (same
+  ;; seed, only the action differs), because unpaired this measures the plant's
+  ;; own variance and calls it control.
+  (testing "every actuating action changes the plant's observable"
+    (let [state (make-test-state)
+          opts {:generations test-W :seed test-seed :W test-W :S test-W}
+          press (fn [action]
+                  (double (or (:pressure (:mean (forward/forward-predict state action opts)))
+                              0.5)))
+          held (press :hold)]
+      (doseq [action [:rotate-up :rotate-down]]
+        (is (not= held (press action))
+            (str (name action) " must MOVE the plant, not merely set a param. "
+                 "If this fails the action is inert and any ablation over it "
+                 "passes for free.")))))
+  (testing ":hold is inert — that is its job"
+    (let [state (make-test-state)
+          opts {:generations test-W :seed test-seed :W test-W :S test-W}]
+      (is (= (:mean (forward/forward-predict state :hold opts))
+             (:mean (forward/forward-predict state :hold opts)))
+          ":hold must be deterministic and unchanging"))))
+
+(deftest forward-predict-is-pure
+  ;; R4 says "one PURE forward kernel".  It was not pure: run-mmca's :seed drove
+  ;; only the exotype rng while the CA dynamics drew from the GLOBAL rand, so the
+  ;; result depended on how much RNG the process had already burned.  That
+  ;; confounded aif-vs-null directly — the :aif arm burns RNG on rollouts, :null
+  ;; does not, so identical action sequences produced different trajectories.
+  (testing "forward-predict is a pure function of (state, action, seed)"
+    (let [state (make-test-state)
+          opts {:generations test-W :seed test-seed :W test-W :S test-W}
+          a (:mean (forward/forward-predict state :hold opts))]
+      (dotimes [_ 1000] (rand))
+      (let [b (:mean (forward/forward-predict state :hold opts))]
+        (is (= a b)
+            "intervening global rand must not change the result — else every
+             paired comparison built on this kernel is confounded")))))
 
 (deftest forward-predict-returns-variance
   (testing "variance map is present and well-formed"

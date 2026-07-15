@@ -628,6 +628,80 @@
    :new-kernel-step new-kernel-step})
 
 ;;; ============================================================
+;;; MetaCA core dynamics (the sci-repro cohort's occupants)
+;;; ============================================================
+;;
+;; Added 2026-07-15 so the sci-repro wirings (nb01-nb04) actually EXECUTE.
+;; They were written in the shared :diagram schema, and their headers claim "any
+;; of these diagrams can be crossed over" — but they referenced five components
+;; that did not exist, so they threw "Unknown component" while the ladder ran
+;; fine. The unified footing was a claim about the schema, not a fact about the
+;; runtime. These five make it a fact.
+;;
+;; CONVENTION: these read ca/core's tables, which are now WOLFRAM-STANDARD
+;; (ca/core.clj:12, standardised 2026-07-15). So these components are the
+;; paper's STRUCTURE (multiply / blend / mutate) under the standard order — they
+;; are NOT a bit-exact reproduction of arXiv:1502.00130's figures, which used a
+;; neighbourhood order with positions 3/4 swapped. The bit-exact reproduction
+;; lives in the separate `scirepro` engine and stays pinned to the legacy order,
+;; because its evidence IS grid-identity with the original 2014 elisp; changing
+;; it would destroy the thing it exists to demonstrate.
+;;
+;; Under the standard order the paper's S5.3 identity restates cleanly:
+;; "blending is Rule 23 censored by local logic" becomes "blending is Rule 240
+;; censored by local logic" — and Rule 240 is the LEFT-SHIFT rule (output = left
+;; neighbour). The 23 was an artifact of the ordering; the shift is the content.
+
+(defn- sigil-bits [s] (ca/bits-for (str s)))
+
+(defn- metaca-combine
+  "One MetaCA cell update, bitwise over the 8 allele positions.
+
+   :multiply (S3.1) — the centre's own rule is applied to the (left, centre,
+     right) bits at each allele position.
+   :blend (S3.2) — where the neighbours AGREE, copy their shared bit (this is
+     the shift); otherwise fall back to the S3.1 local rule."
+  [mode pred self succ]
+  (let [lb (sigil-bits pred), cb (sigil-bits self), rb (sigil-bits succ)]
+    (ca/sigil-for
+     (apply str
+            (for [i (range 8)]
+              (let [l (nth lb i), c (nth cb i), r (nth rb i)]
+                (if (and (= mode :blend) (= l r))
+                  (Character/digit ^char l 2)
+                  (ca/evolve-digits-by-rule l c r cb))))))))
+
+(def metaca-registry
+  {:multiply-cell
+   (fn [{:keys [pred self succ]} _ _]
+     {:result (metaca-combine :multiply pred self succ)})
+
+   :blend-cell
+   (fn [{:keys [pred self succ]} _ _]
+     {:result (metaca-combine :blend pred self succ)})
+
+   :mutate-combined-rule
+   ;; nb04's mutate leg: 256ca.el mutate-rule-n over the COMBINED rule.
+   ;; Draws go through ca/rnd-int, so a run is reproducible under ca/with-seed
+   ;; and unseeded behaviour is byte-preserved.
+   (fn [{:keys [rule]} params _]
+     (let [n (long (or (:mutations params) 1))]
+       {:result (ca/sigil-for (ca/mutate-rule-n (sigil-bits rule) n))}))
+
+   :phenotype-step
+   ;; One phenotype bit, updated by the cell's own genotype rule applied to the
+   ;; phenotype neighbourhood. `phe` is the (prev self next) bit triple; absent
+   ;; neighbours take :boundary-phenotype (256ca.el pins this to 0).
+   (fn [{:keys [rule phe]} params _]
+     (let [b (str (or (:boundary-phenotype params) 0))
+           [l c r] (if (sequential? phe) phe [b (str phe) b])]
+       {:result (ca/evolve-digits-by-rule l c r (sigil-bits rule))}))
+
+   :output-phenotype
+   (fn [{:keys [bits]} _ _]
+     {:out bits})})
+
+;;; ============================================================
 ;;; Combined Registry
 ;;; ============================================================
 
@@ -639,4 +713,5 @@
          level-5-registry
          context-registry
          kernel-registry
+         metaca-registry
          output-registry))

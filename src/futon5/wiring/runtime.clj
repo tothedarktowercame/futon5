@@ -35,17 +35,33 @@
 
    prev-genotype, when provided, supplies :prev context (same cell,
    previous generation) for temporal-aware wirings."
-  ([diagram genotype] (evolve-genotype diagram genotype nil))
-  ([diagram genotype prev-genotype]
+  ([diagram genotype] (evolve-genotype diagram genotype nil nil))
+  ([diagram genotype prev-genotype] (evolve-genotype diagram genotype prev-genotype nil))
+  ([diagram genotype prev-genotype phenotype]
+   ;; :phe supplies the cell's phenotype neighbourhood [prev self next] as bit
+   ;; chars, with 0 at the boundaries (256ca.el pins this).
+   ;;
+   ;; BUG FIXED 2026-07-15: this context previously carried only
+   ;; :pred/:self/:succ/:prev, so `:context-phe` returned nil for EVERY wiring and
+   ;; the phenotype never reached a diagram. Diagrams declared a phenotype leg
+   ;; (level-5-creative.edn wires ctx-phe -> legacy :phe; nb03 is ABOUT the
+   ;; coupling) and the runtime silently fed it nothing — the phenotype was a
+   ;; pure downstream readout that could never influence the genotype. Same class
+   ;; as the cyberant's :cyber-pattern and the tokamak's :update-prob: a wire
+   ;; written and never read.
    (let [len (count genotype)
          chars (vec (seq genotype))
-         prev-chars (when prev-genotype (vec (seq prev-genotype)))]
+         prev-chars (when prev-genotype (vec (seq prev-genotype)))
+         phe-chars (when phenotype (vec (seq phenotype)))]
      (apply str
             (for [i (range len)]
               (let [ctx (cond-> {:pred (str (get chars (mod (dec i) len)))
                                  :self (str (get chars i))
                                  :succ (str (get chars (mod (inc i) len)))}
-                          prev-chars (assoc :prev (str (get prev-chars i))))]
+                          prev-chars (assoc :prev (str (get prev-chars i)))
+                          phe-chars (assoc :phe [(str (get phe-chars (dec i) \0))
+                                                 (str (get phe-chars i \0))
+                                                 (str (get phe-chars (inc i) \0))]))]
                 (evolve-cell diagram ctx)))))))
 
 (defn evolve-phenotype
@@ -230,7 +246,7 @@
                  :generations (count gen-history)}
           phe-history (assoc :phe-history phe-history)
           metrics-history (assoc :metrics-history metrics-history))
-        (let [next-gen (evolve-genotype diagram current-gen prev-gen)
+        (let [next-gen (evolve-genotype diagram current-gen prev-gen current-phe)
               next-phe (when current-phe (evolve-phenotype current-gen current-phe))
               next-metrics (when collect-metrics?
                             (compute-metrics next-gen current-gen next-phe))]

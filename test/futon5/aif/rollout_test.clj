@@ -96,13 +96,17 @@
       (is (number? (:F result)) ":F must be a number"))))
 
 (deftest rollout-score-returns-all-actions
-  (testing "rollout-score returns scores for all 5 candidate actions"
+  ;; 3, not 5: the R6 vocabulary is now {:rotate-up :rotate-down :hold}.  The
+  ;; two dropped actions (:pressure-up/-down, :selectivity-up/-down) actuated
+  ;; :update-prob and :match-threshold, both measured inert — scoring them was
+  ;; spending rollout budget ranking no-ops against each other.
+  (testing "rollout-score returns scores for all 3 candidate actions"
     (let [state (make-state test-seed)
           weights [1.0 1.0 1.0 1.0]
           scores (rollout/rollout-score state weights
                                          {:seed test-seed :W test-W :S test-W
                                           :horizon 2})]
-      (is (= 5 (count scores)) "should score all 5 actions")
+      (is (= 3 (count scores)) "should score all 3 actions")
       (is (every? #(contains? % :rollout-score) scores))
       (is (every? #(contains? % :greedy-score) scores))
       ;; Rollout scores should be sorted ascending (best first)
