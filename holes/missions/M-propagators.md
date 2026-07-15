@@ -135,6 +135,16 @@ activity, distinct rules at t_end, {0,128}-fraction.
 doesn't, gcd-2 rows appear to. r01 already banked "diagonal autocorrelation" as an
 axis — developed on L5, which we now know is bitwise Rule 90.
 
+**Diagonal transport — BANKED (2026-07-15, H-diagonal-transport).** A normalized,
+windowed bilateral innovation-transport statistic cleared the ECA anchor on every
+seed (class-4 > class-3 > settled), then failed the preregistered barcode gate:
+the frozen heterogeneous l0 rule field scored 0.1814, above Rule 110's five-seed
+range. The static rule barcode sustains correlated moving phenotype activity, so
+diagonal correlation is not sufficient evidence of glider-borne computation.
+The valued propagator regimes were not evaluated after the failure. Reproducer:
+`scripts/diagonal_transport_anchor.clj`; full profiles:
+`data/diagonal-transport/anchor-and-barcode.edn`.
+
 ---
 
 ## 3. What this is for
