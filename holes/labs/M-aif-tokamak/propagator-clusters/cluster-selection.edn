@@ -1,0 +1,155 @@
+{:metadata
+ {:fingerprint "ac2ff1681eae5b85",
+  :coverage 580,
+  :expected 20256,
+  :feature-names
+  [:death-mean
+   :death-range
+   :terminal-rules-mean
+   :phenotype-activity-per-cell
+   :entropy-early
+   :entropy-middle
+   :entropy-late
+   :entropy-terminal
+   :top1-terminal
+   :top4-terminal
+   :active-rules-terminal
+   :terminal-rule-flux
+   :class4-early
+   :class4-middle
+   :class4-late
+   :class4-terminal
+   :class4-peak
+   :entropy-delta],
+  :standardization
+  {:means
+   [116.83448275862067
+    2.786206896551724
+    21.831609195402315
+    0.25677147190293714
+    0.5700271799233498
+    0.4646935747736445
+    0.4463752540717732
+    0.43834852419853654
+    0.3008812260536398
+    0.5639463601532576
+    21.831609195402315
+    0.2617624521072797
+    0.06536805555555553
+    0.08801197318007671
+    0.089029296327446
+    0.08662835249042151
+    0.21362068965517245
+    -0.12365192585157642],
+   :sds
+   [13.81157403132901
+    11.88460969831705
+    10.952098632695867
+    0.10866917654785559
+    0.06766505046566597
+    0.1496162232001863
+    0.16278498015684506
+    0.1688016624105227
+    0.23772520264358213
+    0.2323786501696159
+    10.952098632695867
+    0.133096458567524
+    0.049759129380683526
+    0.1062694481251958
+    0.1167524247570163
+    0.12134831520159882
+    0.15389709237783242
+    0.11282120605736287]},
+  :cluster-selection
+  {:chosen-k 2,
+   :strength :weak,
+   :curve
+   [{:k 2,
+     :silhouette 0.4440627444787465,
+     :silhouette-sample-size 580,
+     :inertia 6557.807869555386,
+     :stability 1.0}
+    {:k 3,
+     :silhouette 0.3948693730769457,
+     :silhouette-sample-size 580,
+     :inertia 4861.588711762809,
+     :stability 0.9904504961962448}
+    {:k 4,
+     :silhouette 0.32947643597951665,
+     :silhouette-sample-size 580,
+     :inertia 3843.418544278994,
+     :stability 0.8929155306864759}
+    {:k 5,
+     :silhouette 0.2879109308338393,
+     :silhouette-sample-size 580,
+     :inertia 3302.5928546799064,
+     :stability 0.6279271159256923}
+    {:k 6,
+     :silhouette 0.2953870678476335,
+     :silhouette-sample-size 580,
+     :inertia 2847.2079122461473,
+     :stability 0.8692693665614868}
+    {:k 7,
+     :silhouette 0.3058997617579648,
+     :silhouette-sample-size 580,
+     :inertia 2614.6251623282146,
+     :stability 0.7839908903524917}
+    {:k 8,
+     :silhouette 0.3074935061536975,
+     :silhouette-sample-size 580,
+     :inertia 2369.3385725466687,
+     :stability 0.6855365103055691}
+    {:k 9,
+     :silhouette 0.29522206870206147,
+     :silhouette-sample-size 580,
+     :inertia 2210.9030661699553,
+     :stability 0.6791998319504462}
+    {:k 10,
+     :silhouette 0.25794904448960043,
+     :silhouette-sample-size 580,
+     :inertia 2036.121890685594,
+     :stability 0.6599950526507183}]},
+  :pca-eigenvalues [9.773922930941858 4.706057545929712]},
+ :cluster-sizes {0 133, 1 447},
+ :render-selection
+ [{:sigma [5 2 6 4 3 0 7 1],
+   :cluster 0,
+   :cluster-size 133,
+   :role :medoid}
+  {:sigma [1 0 4 7 2 3 5 6],
+   :cluster 0,
+   :cluster-size 133,
+   :role :pc-extreme}
+  {:sigma [1 7 4 6 2 0 5 3],
+   :cluster 0,
+   :cluster-size 133,
+   :role :pc-extreme}
+  {:sigma [4 2 6 7 3 5 1 0],
+   :cluster 0,
+   :cluster-size 133,
+   :role :pc-extreme}
+  {:sigma [5 2 4 1 0 7 3 6],
+   :cluster 0,
+   :cluster-size 133,
+   :role :pc-extreme}
+  {:sigma [0 2 7 5 6 4 3 1],
+   :cluster 1,
+   :cluster-size 447,
+   :role :medoid}
+  {:sigma [4 1 2 3 7 5 6 0],
+   :cluster 1,
+   :cluster-size 447,
+   :role :pc-extreme}
+  {:sigma [2 0 1 4 7 5 3 6],
+   :cluster 1,
+   :cluster-size 447,
+   :role :pc-extreme}
+  {:sigma [7 1 4 3 0 5 6 2],
+   :cluster 1,
+   :cluster-size 447,
+   :role :pc-extreme}
+  {:sigma [2 0 6 7 1 5 3 4],
+   :cluster 1,
+   :cluster-size 447,
+   :role :pc-extreme}],
+ :render-status :blocked-no-spatial-histories}
