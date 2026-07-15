@@ -145,6 +145,21 @@ The valued propagator regimes were not evaluated after the failure. Reproducer:
 `scripts/diagonal_transport_anchor.clj`; full profiles:
 `data/diagonal-transport/anchor-and-barcode.edn`.
 
+**Genotype transport — registered-null separation, not an EoC instrument
+(2026-07-15).** A preregistered follow-on decoded each rule sigil into eight
+truth-table bit-planes and applied the same windowed bilateral innovation probe
+per plane. There is no ECA genotype field and therefore no positive Wolfram
+anchor: this probe can reject impostors but cannot certify edge-of-chaos. The
+trivial frozen l0 null scored exactly 0. More importantly, the busy identity
+propagator scored 0.1230–0.1436 across five seeds, while all 15 live-regime runs
+scored higher (global live floor 0.1962; rotate+2 mean 0.2623, observed sigma
+mean 0.2217, 3+5-cycle mean 0.2488). Figure 8 began high and decayed to exactly
+zero window-by-window as its genotype froze. This establishes directed
+rule-space transport relative to the registered nulls, while leaving the EoC
+question open. Preregistration and report:
+`holes/labs/M-aif-tokamak/genotype_transport_{PREREG,REPORT}.md`; full profiles:
+`data/genotype-transport/gates.edn`.
+
 ---
 
 ## 3. What this is for
