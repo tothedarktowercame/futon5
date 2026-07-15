@@ -160,6 +160,20 @@ question open. Preregistration and report:
 `holes/labs/M-aif-tokamak/genotype_transport_{PREREG,REPORT}.md`; full profiles:
 `data/genotype-transport/gates.edn`.
 
+**2014 Baldwin-default cross-check — Figure 8 is not default-function robust
+(2026-07-15).** The Figure-8 commit aliases `evolve-sigil-fn` to Baldwin, not to
+the blending-mutation function used in the original reconstruction.  A direct
+15-seed replay of unedited 2014 Elisp found that Baldwin makes phenotype
+activity reach exactly zero in 15/15 runs, but reaches the exact 42/170 rule
+pair in 0/15 (versus 15/15 for blending-mutation).  All terminal Baldwin fields
+also contain rule 0 and retain 3--8 rules.  The buggy write path is active:
+positive mutation requests occur on 74.067% of all cells, measured bit 0 gets
+24.946% of writes, and bit 7 gets none.  The fixed 2015 Baldwin control remains
+phenotypically active through generation 120 in 15/15 runs.  Report, paired
+genotype/phenotype panels, and reproducer:
+`holes/labs/M-aif-tokamak/baldwin-repro/README.md` and
+`scripts/baldwin_repro.{clj,el}`.
+
 ---
 
 ## 3. What this is for
