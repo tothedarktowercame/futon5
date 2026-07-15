@@ -101,6 +101,41 @@ Across held-out cases, sampled final-set counts range from 13 to 30 while nearly
 all survive.  The isolated operator is informative about constraint consistency,
 but is not a sufficient regime classifier.
 
+### Addendum: rule-space classification
+
+The proposed rule-space view is useful as an **instrument on the coupled run**, but
+it cannot by itself supply the requested propagator-alone property.  The two
+opposite-outcome 4-cycle anchors make this an exact result, not a sampling result.
+
+Let `sigma_L = (0 2 4 6)(1 3 5 7)` and
+`sigma_D = (0 1 2 3)(4 5 6 7)`.  The relabeling
+
+```text
+tau = [0 4 1 5 2 6 3 7]
+```
+
+satisfies `sigma_D(tau(k)) = tau(sigma_L(k))`.  Relabeling a byte by `tau` and
+relabeling each random update choice `k` by `tau(k)` therefore maps every isolated
+trajectory of the live twin to a trajectory of the dead twin.  Their 256-state,
+eight-action transition graphs are isomorphic.  Consequently every intrinsic
+quantity of the isolated stochastic system is identical up to labels: absorption
+probability, absorption-time distribution, transient graph, recurrent classes,
+and attractor count.
+
+The driver verifies this exhaustively for all **256 bytes x 8 update choices** and
+records `twin-transition-conjugacy-check: t` in the raw artifact.  This explains
+why the sampled isolated attractors have the same cardinality despite opposite CA
+outcomes.
+
+There is no contradiction with the rule-space image: a cell's rule byte inside the
+full MetaCA is also changed by neighbor blending.  Its non-freezing trace measures
+the interaction of propagator, semantic bit placement, and lattice coupling.  That
+trace may be an excellent diagnostic or a target for a new instrument, but it is
+not computed from the isolated propagator alone.  The exact conjugacy result rules
+out freeze time or stochastic rule-space class as a standalone `P(sigma)` for this
+anchor pair.  A successful mechanism must include how the labelled rule vertices
+couple back to neighborhood semantics and blending.
+
 ## Reproduction
 
 ```sh
