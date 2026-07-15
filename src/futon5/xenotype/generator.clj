@@ -671,6 +671,87 @@
                   (Character/digit ^char l 2)
                   (ca/evolve-digits-by-rule l c r cb))))))))
 
+;;; ============================================================
+;;; The propagator: rule-permute
+;;; ============================================================
+;;
+;; Added 2026-07-15 (M-propagators). This is the occupant of the `mutate` hole in
+;; DarkTower/MetaCAExample.lean's comb:
+;;   cellUpdate = (readPhe ⅋ readL ⅋ readC ⅋ readR) ◁ combine ◁ MUTATE ◁ write
+;; nb01's header says it "leaves mutate empty". This fills it.
+;;
+;; WHAT IT IS. Reconstructing a 2014 Emacs off-by-one (the bug that produced
+;; Figure 8 of arXiv:1502.00130) showed that mutation can be a CONSTRAINT
+;; PROPAGATOR rather than noise: pick a neighbourhood at random and copy the
+;; INVERSE of its response into another neighbourhood's response. Ordinary
+;; mutation flips bits independently — a random walk with no attractor. A
+;; propagator COUPLES the rule's responses and has a fixed point, which selects
+;; the rule the landscape settles on. 112 of 202 sampled permutations produce a
+;; persistent structured regime; the live regime is generic, the dead set is rare.
+;;
+;; *** THE PARAMETER IS A MAP OVER NEIGHBOURHOODS, NOT A VECTOR OVER BIT POSITIONS.
+;;
+;; This is not a style choice, it is forced. Two facts:
+;;   1. codex-4 PROVED (commit dbb8453, exhaustive over 256 bytes x 8 actions) that
+;;      the live twin (0 2 4 6)(1 3 5 7) and the dead twin (0 1 2 3)(4 5 6 7) are
+;;      EXACTLY CONJUGATE as isolated systems — τ = [0 4 1 5 2 6 3 7] maps every
+;;      transition of one onto the other. So every intrinsic property of σ-as-a-
+;;      permutation-of-positions is identical between a σ that lives and one that
+;;      dies. Position indices carry NO information about the outcome. The
+;;      mechanism is necessarily relational: it is about WHICH NEIGHBOURHOODS get
+;;      coupled.
+;;   2. This repo now hosts TWO neighbourhood conventions. futon5's ca/core was
+;;      standardised to Wolfram order on 2026-07-15; the vendored 2014 elisp uses
+;;      the 256ca.el order. Only 2 of 8 bit positions mean the same neighbourhood
+;;      in both. A σ expressed as positions is therefore a DIFFERENT OPERATOR in
+;;      each engine — it would port silently and wrongly, and every measured
+;;      live/dead result would quietly mean nothing here.
+;;
+;; So the parameter is {"000" "010", "001" "100", ...}: convention-independent,
+;; portable, and it says what the operator actually does. Callers holding a legacy
+;; position-vector must convert THROUGH the source engine's truth table; see
+;; `positional-sigma->neighbourhood-sigma`.
+;;
+;; NOTE the operator is stochastic (one random neighbourhood per application) and
+;; routes its draw through ca/rnd-int, so a run is reproducible under ca/with-seed
+;; and unseeded behaviour is byte-preserved.
+
+(defn positional-sigma->neighbourhood-sigma
+  "Convert a legacy position-vector σ (e.g. [2 3 4 5 6 7 0 1] = 'rotate +2') into a
+   neighbourhood map, THROUGH the truth table of the engine it was measured in.
+
+   `source-table` is that engine's neighbourhood order. For results measured in the
+   vendored 2014 elisp this is
+     [\"000\" \"001\" \"010\" \"100\" \"011\" \"101\" \"110\" \"111\"]
+   which is NOT ca/truth-table-3. Passing ca/truth-table-3 here for an elisp-derived
+   σ is the silent-port bug this function exists to prevent."
+  [sigma source-table]
+  (into {} (map-indexed (fn [k nbhd] [nbhd (nth source-table (nth sigma k))])
+                        source-table)))
+
+(defn- rule-permute
+  "One application: copy ¬(response to a random neighbourhood) into the response of
+   the neighbourhood σ maps it to. `sigma` maps neighbourhood -> neighbourhood."
+  [rule-bits sigma]
+  (let [k (ca/rnd-int 8)
+        src (nth ca/truth-table-3 k)
+        dst (get sigma src src)
+        di (.indexOf ^java.util.List (vec ca/truth-table-3) dst)
+        v (if (= \0 (nth rule-bits k)) \1 \0)]
+    (if (neg? di)
+      rule-bits
+      (str (subs rule-bits 0 di) v (subs rule-bits (inc di))))))
+
+(def propagator-registry
+  {:rule-permute
+   (fn [{:keys [rule]} params _]
+     (let [sigma (:sigma params)
+           n (long (or (:applications params) 1))]
+       {:result (ca/sigil-for
+                 (reduce (fn [bits _] (rule-permute bits sigma))
+                         (sigil-bits rule)
+                         (range n)))}))})
+
 (def metaca-registry
   {:multiply-cell
    (fn [{:keys [pred self succ]} _ _]
@@ -714,4 +795,5 @@
          context-registry
          kernel-registry
          metaca-registry
+         propagator-registry
          output-registry))

@@ -455,6 +455,40 @@
          this node DECLARES in the diagram what the runtime does regardless."}
 
   ;;; ============================================================
+  ;;; THE PROPAGATOR (M-propagators, 2026-07-15)
+  ;;; ============================================================
+  ;;
+  ;; Occupant of the `mutate` hole in DarkTower/MetaCAExample.lean's cellUpdate
+  ;; comb, which nb01 records as "leaves mutate empty". Reconstructed from the
+  ;; 2014 Emacs off-by-one that produced Figure 8 of arXiv:1502.00130.
+  ;;
+  ;; Mutation as a CONSTRAINT PROPAGATOR rather than noise: copy the INVERSE of
+  ;; one neighbourhood's response into another's. Ordinary mutation flips bits
+  ;; independently (a random walk, no attractor); a propagator couples the rule's
+  ;; responses and has a fixed point, which selects the rule the field lands on.
+  ;;
+  ;; :sigma IS A NEIGHBOURHOOD MAP, NOT A POSITION VECTOR. Forced by two facts:
+  ;; (1) the live and dead 4-cycle twins are EXACTLY CONJUGATE as isolated systems
+  ;;     (proved exhaustively, commit dbb8453), so position indices provably carry
+  ;;     no information about the outcome — the mechanism is which NEIGHBOURHOODS
+  ;;     couple; (2) this repo hosts two neighbourhood conventions (ca/core is
+  ;;     Wolfram-standard since 2026-07-15; the vendored 2014 elisp is not), and
+  ;;     only 2 of 8 positions agree — so a position vector is a different
+  ;;     operator in each engine and would port silently and wrongly.
+
+  :rule-permute
+  {:inputs [[:rule :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "Propagator. Pick a neighbourhood at random; write the INVERSE of its
+         response into the response of the neighbourhood :sigma maps it to.
+         :sigma is {neighbourhood -> neighbourhood}, e.g. {\"000\" \"010\", ...};
+         :applications (default 1) is how many draws per cell-step. Identity sigma
+         = ordinary mutation = a random walk with no attractor. Draws route through
+         ca/rnd-int, so runs are reproducible under ca/with-seed.
+         Use generator/positional-sigma->neighbourhood-sigma to convert a legacy
+         position-vector, passing the truth table of the engine it was MEASURED in."}
+
+  ;;; ============================================================
   ;;; KERNEL STEPS: Legacy vs Local Physics
   ;;; ============================================================
 

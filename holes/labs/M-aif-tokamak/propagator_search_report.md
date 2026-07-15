@@ -4,7 +4,7 @@
 
 ## Design
 
-The first stage samples up to 4 deterministic hash-selected permutations from each of all 22 cycle types: 85 stratified configurations (every member when a stratum has fewer than four), plus 5 forced anchors, for 90 initial configurations total. The second stage takes the strongest 4 live candidates under a lexicographic `(survived seeds, in-band seeds, mean survival, distance from the band centre, activity)` ordering and exhausts each candidate's 28 one-transposition output neighbourhood. The three measurements remain visible; the ordering is not asserted as a scalar complexity score.
+The first stage samples 4 deterministic hash-selected permutations from each of all 22 cycle types (90 configurations including forced anchors). The second stage takes the strongest 4 live candidates under a lexicographic `(survived seeds, in-band seeds, mean survival, distance from the band centre, activity)` ordering and exhausts each candidate's 28 one-transposition output neighbourhood. The three measurements remain visible; the ordering is not asserted as a scalar complexity score.
 
 Runs use width 60, 120 steps, inversion enabled, and seeds 0–2. The top contact-sheet candidates additionally use seeds 3–4. Each run is an atomic EDN artefact whose path and contents carry fingerprint `853eb8cc6c4e4d3c`; that fingerprint covers this driver, the Elisp worker, harness, all vendored MetaCA files, and the protocol.
 
@@ -58,7 +58,7 @@ The panels show the first 80 generations, before late collapse can hide the surv
 
 ## Structural answer
 
-**No tested single structural property characterises the live set.** Cycle type is already falsified by the two 4-cycle anchors, and the deterministic cycle-stratified stage contains mixed live/dead buckets for the tested properties shown below. These are descriptive counterexamples, not a fitted classifier; the refinement cohort is excluded because it is deliberately selected around live points.
+**No tested single structural property characterises the live set.** Cycle type is already falsified by the two 4-cycle anchors, and the unbiased stratified stage contains mixed live/dead buckets for the tested properties shown below. These are descriptive counterexamples, not a fitted classifier; the refinement cohort is excluded because it is deliberately selected around live points.
 
 | property | has mixed bucket? | live / sampled by value |
 |---|---|---|
