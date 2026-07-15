@@ -1,0 +1,31 @@
+{:status :complete
+ :protocol {:width 24
+            :steps 24
+            :seeds [0 1 2 3]
+            :sigmas [[2 3 4 5 6 7 0 1]
+                     [1 2 3 0 5 6 7 4]
+                     [1 2 0 4 5 6 7 3]
+                     [5 1 2 7 6 0 4 3]
+                     [6 7 4 0 5 1 2 3]
+                     [3 1 2 5 7 0 6 4]]
+            :matched-initial-conditions true
+            :matched-transformed-mutation-choices true}
+ :actions {:mirror [0 3 2 1 6 5 4 7]
+           :complement [7 6 5 4 3 2 1 0]}
+ :mirror {:pathwise true
+          :checks 24
+          :genotype-rows-exact 24
+          :phenotype-rows-exact 24
+          :first-mismatches []}
+ :complement {:pathwise false
+              :checks 24
+              :genotype-rows-exact 0
+              :phenotype-rows-exact 0
+              :first-genotype-mismatch {1 24}
+              :first-phenotype-mismatch {1 18, 2 5, 3 1}
+              :cause :fixed-zero-boundaries-are-not-complement-invariant}
+ :decision {:index-by :mirror-conjugacy-orbit
+            :full-space 40320
+            :fixed-under-mirror 192
+            :orbits 20256
+            :complement-reduction-rejected true}}
