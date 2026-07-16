@@ -295,8 +295,13 @@ SUM OVER BITS, so W₁ nearly decomposes into per-bit marginal differences:
 
     W1(p,q)  >=  Σ_b | E_p[bit b] − E_q[bit b] |          (certified LOWER BOUND)
 
-Measured against exact LP on random pairs: **valid on every pair, mean lb/exact 0.957–0.965,
-worst case 0.830** — within ~4% of exact, sometimes exact. So the 8 numbers
+Measured against exact LP on random pairs: **valid on every pair, mean lb/exact 0.965,
+worst case 0.830** (`wasserstein.json`: `tightness_mean` .9647, `tightness_min` .8297, 24
+pairs, `valid` true).
+> *Corrected 2026-07-16 (caught by Fable re-grounding the paper draft).* This previously
+> read "0.957–0.965", which was **not a range**: .957 was the mean of an early 8-pair
+> ad-hoc run and .965 the mean of the committed 24-pair run. Stitching two means into an
+> interval implied a floor of .957 and hid the true worst case of **.830**. So the 8 numbers
 `M = P @ BITS` are a near-W₁ embedding that is **dense** (no sparsity saturation, unlike
 FR), **interpretable** — it is the **mean field**: for each of the 8 neighbourhoods, the
 fraction of the rule population responding 1 — and it is *exactly the object the
