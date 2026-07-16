@@ -95,13 +95,37 @@ blends as **crossover operators at the meta/controller level** (Joe, 2026-07-13)
      variant with stochastic 1/3 gating and context-count-dependent mutation
      count (`256ca.el:677-685`); not used for the headline figures.
 
-  **Figure-8 "first-bit-only" skewed variant:** The paper prose (Fig 8 caption:
-  "erroneously-programmed mutation... only ever flips the first bit") has **NO
-  code implementation** in `256ca.el`. No function restricts the flipped allele
-  to position 0. This is a prose-only construct. The Clojure engine implements
-  it as a named variant (`evolve-with-first-bit-mutation`, `:first-bit` stream
-  mode) so the notebook can measure its effect, but it is not cross-checked
-  against elisp ground truth because no such ground truth exists.
+  **Figure-8 "first-bit-only" skewed variant — CORRECTED 2026-07-15. The claim
+  below was wrong; it is kept, struck, so the error is auditable.**
+
+  > ~~The paper prose (Fig 8 caption: "erroneously-programmed mutation... only
+  > ever flips the first bit") has **NO code implementation** in `256ca.el`. No
+  > function restricts the flipped allele to position 0. This is a prose-only
+  > construct... not cross-checked against elisp ground truth because no such
+  > ground truth exists.~~
+
+  **The ground truth exists.** That reading was taken from `256ca.el` — the
+  *fixed 2015* file. The bug is in the **2014 Figure-8 commit**, now vendored as
+  `vendor/metaca/256ca-2014-12-29-BUGGY.el`: in `mutate-genotype-n`, `(random 8)`
+  yields a **0-based** position but `goto-char` consumes a **1-based** buffer
+  position, and Emacs silently clamps 0 to `point-min`. It was fixed 10 days later
+  in `4a1e37e` (2015-01-08), which is why the later file shows no trace of it.
+
+  **Measured, not inferred** (H-baldwin-repro, `36db2df`, 15 seeds of unedited
+  legacy elisp, instrumented at the `goto-char` call *after* Emacs clamps — so
+  these are observed writes, not a source-level reading). 2014 Baldwin, 87,632
+  writes: bit 0 **24.946%**, bits 1–6 ~12.5% each, bit 7 **0.000%**. The
+  blending-mutation arm independently reproduces the shape over 216,000 writes
+  (bit 0 24.912%, bit 7 zero). The fixed 2015 control is uniform across all eight
+  positions — the control that proves this is the bug and not the instrument.
+
+  **But the paper's gloss is still imprecise**, in the other direction: "only ever
+  flips the first bit" is not literal. The bug *doubles* bit 0's share (2/8, since
+  `pos=0` and `pos=1` both land there) and *never* writes bit 7; it does not
+  confine writes to position 0. So the Clojure `:first-bit` variant
+  (`evolve-with-first-bit-mutation`) remains a model of the **caption's literal
+  claim**, not of the historical bug — the distinction the original entry was
+  reaching for, and worth keeping.
 
   **Paper-vs-code discrepancies (S4.1):**
   - Paper S4.1 says "random mutations" without specifying the rate or mechanism.
