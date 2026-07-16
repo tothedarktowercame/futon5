@@ -326,7 +326,61 @@ blob control, so part of its 0.44 may be what 18 correlated features score on
 unstructured data. The other two geometries are controlled and agree, so the conclusion
 stands — but that control is owed.
 
-### 2b.4 What this licenses
+### 2b.4 Ollivier-Ricci curvature — how to navigate a continuum
+
+Built 2026-07-16 (`scripts/propagator_curvature.py`). Since there are no joints, "moving
+around in that space" cannot mean hopping between kinds — there are none. It has to mean
+**local geometry**: `κ(x,y) = 1 − W₁(mₓ,m_y)/d(x,y)`, with mₓ the lazy random walk
+(α=0.5) on a k-NN graph (k=10) in the mean-field space.
+
+**Two levels of W₁, and conflating them would be a real error.** *Level 1*: W₁ between
+two propagators' **rule distributions**, ground metric Hamming → defines `d(σ,τ)`; we use
+the certified mean-field bound (within ~4% of exact). *Level 2*: W₁ between
+**neighbourhood measures on the propagator graph**, ground metric `d` from level 1 → this
+is what enters κ, exact by LP over the small local supports. That is the architecture
+`M-substrate-metric`/E1 used for substrate-2, and it is what makes this affordable: κ is
+needed only on **edges** (O(n·k)), never on the 205M pairs.
+
+**Result (2,000 sampled nodes, 9,157 edges):**
+
+| | |
+|---|---|
+| mean κ | **+0.0845** (median +0.0799, sd 0.1785) |
+| range | [−2.05, +0.55] |
+| **negative — branching / frontier** | **30.3%** |
+| positive — locally redundant | 69.7% |
+
+So the continuum is **mostly mildly positively curved** (locally redundant: your
+neighbours' neighbourhoods overlap — more of the same) **with a substantial 30% negative
+minority** where the space genuinely branches. That negative 30% is the frontier, and in
+M-aif2's terms it is the **"propose here"** polarity.
+
+**The finding: minimal σ-edits sit at the branch points.** Of the 20 most-negatively-
+curved edges, **80% connect σ that differ by a single TRANSPOSITION** (exactly two
+positions swapped; mean positions differing 2.45).
+
+**And it survives its artifact test.** κ divides by d, and transpositions produce
+near-identical mean fields (small d), so the pattern *could* be pure 1/d amplification.
+Re-checked with the near-duplicate regime excluded (d ≥ 0.2): **83% single transpositions
+— SURVIVES**. Only 3/20 extremes are near-duplicates. The test is now in the script, and
+it prints SURVIVES/ARTIFACT rather than leaving it to a reader's charity.
+
+**Why this matters for the xeno step.** It says where to mutate: *the evolutionary
+operator on σ should be transpositions*, because that is where curvature is negative =
+where the space branches = where structure is not yet decided. That is an actionable
+"propose here" for §2c's open problem (the exotype triples were hand-picked; the annealer
+proved the space has emergent points; this says where to look). It also rhymes with the
+conjugacy theorem (§1.4/L2): no σ-only property separates live from dead, and now —
+minimal σ-edits are exactly where the geometry is most undecided.
+
+**Caveat, measured not glossed.** Two different statements are both true and were twice
+mis-captioned before the data settled it: the *average* trend is that κ<0 edges are
+slightly **longer** (corr(d,κ) = −0.26; mean d 0.428 for κ<0 vs 0.388 for κ≥0), while the
+*extreme* negatives sit at tiny d and are **1/d amplification, not structure**.
+
+Artefacts: `propagator-clusters/curvature.{json,png}`.
+
+### 2b.5 What this licenses
 
 - **Neither geometry is right, in *opposite* ways.** The 18 features encode
   CONCENTRATION (entropy, top1) but weight it arbitrarily → crude. FR sees LOCATION
