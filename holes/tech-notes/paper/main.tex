@@ -299,6 +299,69 @@ reproduces, but not under the function the file defaults to.
   \label{fig:x15}
 \end{figure}
 
+\subsection{Baldwin is a composition of propagators}
+\label{sec:baldwin-composition}
+
+The control of Section~\ref{sec:propagator} treated the 2014 Baldwin default as
+an obstacle: a misleading alias that had to be ruled out before the
+reconstruction could stand. Read a second time it is the more interesting
+object, because it is not a primitive at all.
+
+Stripped of Elisp, \texttt{evolve-sigil-with-blending-baldwin} counts how many of
+the three old context values equal the new state and then mutates
+\texttt{(1- mutations)} times. Zero matches requests $-1$ steps, and
+\texttt{(dotimes (j -1) ...)} runs zero times. So the rule is
+\begin{quote}
+  \emph{context already matches what just happened} $\rightarrow$ mutate;\quad
+  \emph{context differs} $\rightarrow$ hold.
+\end{quote}
+That is $\mathrm{switch}(\textit{local-condition}, \textit{propagator},
+\textit{no-op})$: a composition whose constituents are a propagator and the
+identity, selected by a locally-readable sign. The 2014 file wrote an
+\emph{endogenous} objective --- it needs no edge-of-chaos oracle because it never
+asks the question. It reads its own boredom.
+
+\subsubsection{What the composition buys}
+
+Not a new attractor. Baldwin reaches the diagnostic $\{42,170\}$ attractor in
+$0/15$ seeds (Section~\ref{sec:propagator}); its constituents do not compose to a
+new fixed point. What it buys is a \emph{rate}. Instrumented over 15 seeds of
+unedited vendored Elisp (104{,}400 interior calls), the requested-mutation
+histogram is $-1$: 1{,}869 ($1.79\%$); $0$: 22{,}539 ($21.59\%$); $1$: 72{,}352
+($69.30\%$); $2$: 7{,}640 ($7.32\%$). So $76.62\%$ of interior calls request a
+positive mutation, at $0.8114$ steps per cell. The contrast is the point:
+\texttt{blending-mutation} requests mutation on $100\%$ of cells at a fixed two
+steps, with no state-dependence whatever.
+
+The rate is not merely variable; it \emph{tracks structure}. Under a matched
+apparatus (width 80, 120 steps) the three policies separate cleanly:
+firing the propagator unconditionally collapses diversity ($65 \rightarrow 4$);
+never firing preserves it ($68 \rightarrow 68$); firing only where bored lands
+between ($68 \rightarrow 50$) with a mutation rate that falls from $0.055$ in the
+first third to $0.002$ in the last. \textbf{The composition anneals itself.}
+Nobody scheduled that. It is what the switch does when its condition stops
+firing, and the condition stops firing as structure emerges.
+
+\subsubsection{Why this matters for the geometry}
+
+Section~\ref{sec:geometry} reports that the 20{,}256 propagator orbits form a
+continuum with no natural joints. Taken alone that is a dead end: the objects do
+not cluster under any metric we could justify. Baldwin suggests the negative is
+better read as a level error. \emph{A single propagator has no interesting
+joints; a composition of two has a rate that tracks state.} If named physics ---
+``baldwin'', ``blend'' --- are themselves compositions of propagators, then the
+structure worth measuring was never in the orbit space. It is in the
+compositions, and the search is for compositions that land on names that already
+exist.
+
+We flag one limit honestly. The rate measurements above use
+\texttt{rotate+2} as the propagator, which is a permutation; by
+Section~\ref{sec:propagator} every permutation has $\textsc{free} = \emptyset$
+and therefore no scaffold. The Baldwin reconstruction and the Figure-8
+propagator are thus demonstrated on \emph{different shape maps}, and we do not
+claim the rate finding transfers to the non-injective family without being
+re-run there.
+
 \subsection{The bug generalises to a family}
 \label{sec:family}
 
