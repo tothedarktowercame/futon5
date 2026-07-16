@@ -86,10 +86,26 @@
 (defn representative [sigma]
   (let [k (orbit-key sigma)] (get preferred-representatives k k)))
 
-(defn representatives []
+(defn representatives
+  "Orbit representatives, anchors first, then DETERMINISTICALLY SHUFFLED.
+
+  The shuffle matters and is not cosmetic. Sorted order made any partial build a
+  lexicographic prefix of sigma-space -- a biased sample, so clustering or any
+  population claim computed over an unfinished build would be biased too, silently.
+  Shuffled, EVERY PREFIX IS A UNIFORM RANDOM SAMPLE of the 20,256 orbits, so a build
+  that dies at 60% still supports honest population statistics over the whole space.
+
+  Seeded (42) so the order is reproducible across JVMs and resumes: the same build
+  visits the same representatives in the same sequence. Per-representative manifests
+  key off sigma, not position, so re-ordering never invalidates cached work -- the 352
+  already complete stay complete."
+  []
   (let [reps (->> @all-sigmas (map representative) distinct sort vec)
         priority (mapv :sigma anchors)
-        ordered (vec (distinct (concat priority reps)))]
+        shuffled (let [al (java.util.ArrayList. ^java.util.Collection reps)]
+                   (java.util.Collections/shuffle al (java.util.Random. 42))
+                   (vec al))
+        ordered (vec (distinct (concat priority shuffled)))]
     (when-not (= 20256 (count ordered))
       (throw (ex-info "Mirror orbit count mismatch" {:got (count ordered)})))
     ordered))

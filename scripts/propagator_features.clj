@@ -141,16 +141,38 @@
                                           [java.nio.file.StandardCopyOption/REPLACE_EXISTING
                                            java.nio.file.StandardCopyOption/ATOMIC_MOVE]))))
 
-(defn extract-rows! [files checkpoint]
-  (loop [remaining files rows []]
-    (if-let [file (first remaining)]
-      (let [rows' (conj rows (artifact-row file))]
-        (when (zero? (mod (count rows') 25))
-          (atomic-edn! checkpoint {:status :extracting :coverage (count rows') :rows rows'})
-          (println "features" (count rows') "/" (count files))
-          (flush))
-        (recur (next remaining) rows'))
-      rows)))
+(defn extract-rows!
+  "Parse every artifact into a feature row.
+
+  SCALED 2026-07-16 (claude-3). The original was correct at 580 orbits and does not
+  survive 20,256 -- two faults, both invisible at small N:
+
+  (1) QUADRATIC CHECKPOINT. It re-serialised the ENTIRE accumulated rows vector to EDN
+      every 25 rows. At 20k rows that is ~800 dumps of a growing vector: the run does not
+      just take long, it DECELERATES. Measured 375/20,256 in ~5 min and worsening,
+      extrapolating to ~4.5 h. The checkpoint was also never read back on startup (see
+      the main form -- it only ever gets .delete'd on success), so the cost bought
+      nothing. Now: progress is a counter, and the checkpoint is written a bounded number
+      of times so a killed run still leaves a usable partial.
+  (2) SEQUENTIAL PARSE. Each artifact is ~188 KB of gzipped EDN holding a 3x121x256
+      census (~31k numbers); 20,256 of them is ~628M numbers. That is CPU-bound and
+      embarrassingly parallel. pmap across cores.
+
+  Row ORDER is preserved (pmap is ordered), which matters: the main form zips rows
+  against `assignments` and `coordinates` by index, so reordering would silently
+  mislabel every cluster assignment."
+  [files checkpoint]
+  (let [n (count files)
+        done (java.util.concurrent.atomic.AtomicInteger. 0)
+        rows (vec (pmap (fn [file]
+                          (let [row (artifact-row file)
+                                k (.incrementAndGet done)]
+                            (when (zero? (mod k 500))
+                              (println "features" k "/" n) (flush))
+                            row))
+                        files))]
+    (atomic-edn! checkpoint {:status :extracting :coverage (count rows) :rows rows})
+    rows))
 
 (defn standardize [rows]
   (let [matrix (mapv #(mapv (fn [k] (double (get-in % [:features k]))) feature-names) rows)
