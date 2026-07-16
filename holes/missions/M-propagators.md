@@ -282,14 +282,59 @@ Six rules absorb 1,468 of the 1,479:
 — measured over the whole space, not intuited. And **class-4 targets (106, 120) are hit
 4 times in 1,479 = 0.27%**: EoC is rare, quantified.
 
-### 2b.3 What this licenses
+### 2b.3 Wasserstein-1 under a Hamming ground metric — the negative TRIANGULATES
+
+Built 2026-07-16 (`scripts/propagator_wasserstein.py`). The ground metric is forced, not
+chosen: `rule-permute` writes exactly ONE bit, so a propagator step *is* a Hamming step
+and rule space *is* the 8-bit cube; W₁ under Hamming measures transport along the
+operator's own moves. And `legacy-to-standard` is a bit *permutation*, which preserves
+Hamming — so unlike σ, this metric is convention-independent by construction.
+
+**The useful surprise: the expensive machinery was mostly unnecessary.** Hamming is a
+SUM OVER BITS, so W₁ nearly decomposes into per-bit marginal differences:
+
+    W1(p,q)  >=  Σ_b | E_p[bit b] − E_q[bit b] |          (certified LOWER BOUND)
+
+Measured against exact LP on random pairs: **valid on every pair, mean lb/exact 0.957–0.965,
+worst case 0.830** — within ~4% of exact, sometimes exact. So the 8 numbers
+`M = P @ BITS` are a near-W₁ embedding that is **dense** (no sparsity saturation, unlike
+FR), **interpretable** — it is the **mean field**: for each of the 8 neighbourhoods, the
+fraction of the rule population responding 1 — and it is *exactly the object the
+propagator acts on*. **205M pairs become instant.**
+- Exact W₁: support-restricted LP is identical to the full 256×256 LP (verified) because
+  terminal distributions are sparse; 11–31 ms/pair. Kept only to validate the bound.
+- Sinkhorn was tried and **dropped**: 43 ms/pair, *slower* than exact.
+
+**Result — no joints here either.** Controls on the same instrument, same restarts, same
+8-dim space:
+
+| | silhouette | shape |
+|---|---|---|
+| blob (no structure exists) | 0.088 | flat |
+| **real propagator space** | **0.176 (k=3)** | **flat: .141 .176 .157 .162 .168 .167 .173 .156 .158** |
+| 3 real clusters (sd .10) | 0.690 | strong |
+| 3 obvious joints (sd .03) | 0.915 | peaks at true k=3 |
+
+Real is **2.0× the blob and 0.26× genuine structure**, and its "peak at k=3" is a 0.02
+wiggle — noise. So the negative now holds under the crude feature geometry, the
+principled information metric, AND the operator's own transport metric. **The propagator
+space is a continuum with a slight non-uniformity, not a set of kinds.** As
+triangulated as a negative gets.
+
+**Remaining control gap (honest):** the Euclidean-18-feature sweep (§2b.1) never got a
+blob control, so part of its 0.44 may be what 18 correlated features score on
+unstructured data. The other two geometries are controlled and agree, so the conclusion
+stands — but that control is owed.
+
+### 2b.4 What this licenses
 
 - **Neither geometry is right, in *opposite* ways.** The 18 features encode
   CONCENTRATION (entropy, top1) but weight it arbitrarily → crude. FR sees LOCATION
   exactly but is blind to rule adjacency → saturates. Do not read §2b.1 as "the features
   were an artifact" (an earlier claude-3 overstatement, corrected here): they capture
   something FR cannot.
-- **Wasserstein-1 with a HAMMING ground metric is what both failures point at**, and it
+- **Wasserstein-1 with a HAMMING ground metric** (now BUILT — see §2b.3, and it agrees:
+  no joints). It
   is not a preference: `rule-permute` writes exactly one bit, so a propagator step *is*
   a Hamming step, and rule space *is* the 8-bit cube. W₁ measures transport along the
   operator's own moves, and would see the 12 targets as one basin rather than 12
