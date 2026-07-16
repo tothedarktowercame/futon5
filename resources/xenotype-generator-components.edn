@@ -488,6 +488,17 @@
          Use generator/positional-sigma->neighbourhood-sigma to convert a legacy
          position-vector, passing the truth table of the engine it was MEASURED in."}
 
+  :rule-permute-switch
+  {:inputs [[:rule :sigil]]
+   :outputs [[:result :sigil]]
+   :doc "COMPOSITIONAL exotype. Apply propagator :sigma-a when a local :condition
+         holds for this cell, else :sigma-b. Conditions (over the per-cell context):
+         :boredom = phenotype neighbourhood [prev self next] is uniform (baldwin's
+         gate, spatial form); :active = its negation; :dense = self rule has >4 ones.
+         With :sigma-b = identity and :condition :boredom this is baldwin's control
+         structure in the propagator basis. Sigmas are neighbourhood maps, same as
+         :rule-permute. A switch can settle where NEITHER branch settles alone."}
+
   ;;; ============================================================
   ;;; KERNEL STEPS: Legacy vs Local Physics
   ;;; ============================================================

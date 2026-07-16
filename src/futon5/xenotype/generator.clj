@@ -742,10 +742,51 @@
       rule-bits
       (str (subs rule-bits 0 di) v (subs rule-bits (inc di))))))
 
+(defn- local-condition
+  "Evaluate a named local predicate over the per-cell context. This is what a
+   COMPOSITIONAL exotype conditions on -- the same information a single propagator
+   ignores. Returns true/false.
+
+   :boredom   phenotype neighbourhood [prev self next] is uniform -- nothing is
+              happening locally. This is the futon5 reconstruction of baldwin's
+              gate: baldwin counts how many old-context values equal the new state
+              and mutates that many times, i.e. bored -> act, interesting -> hold.
+              (Baldwin's is temporal, over the prior context; this is the spatial
+              proxy available in a single cell update. Same SHAPE, not bit-identical.)
+   :active    the negation -- the local phenotype is varied (something happening).
+   :dense     the self genotype's rule has > 4 one-bits (a 'busy' local rule)."
+  [cond-kw ctx]
+  (let [phe (:phe ctx)
+        uniform? (or (nil? phe) (apply = phe))]
+    (case cond-kw
+      :boredom uniform?
+      :active  (not uniform?)
+      :dense   (> (count (filter #{\1} (sigil-bits (or (:self ctx) ca/default-sigil)))) 4)
+      uniform?)))
+
 (def propagator-registry
   {:rule-permute
    (fn [{:keys [rule]} params _]
      (let [sigma (:sigma params)
+           n (long (or (:applications params) 1))]
+       {:result (ca/sigil-for
+                 (reduce (fn [bits _] (rule-permute bits sigma))
+                         (sigil-bits rule)
+                         (range n)))}))
+
+   ;; A COMPOSITIONAL exotype: two propagators under one local condition.
+   ;; Added 2026-07-16 (M-propagators, "by example"). Joe's conjecture: baldwin and
+   ;; blend are not primitives, they are COMPOSED from propagators -- baldwin is
+   ;; literally switch(local-condition, mutate, hold). This is the general form.
+   ;;   apply sigma-a when (local-condition ctx) holds, else sigma-b.
+   ;; With sigma-b = identity and condition = :boredom, this IS baldwin's control
+   ;; structure in the propagator basis. With (builder, collapser) it is a
+   ;; homeostat; with (chaos, collapser) an annealer. The point of the demo is that
+   ;; a switch can settle where NEITHER branch settles alone.
+   :rule-permute-switch
+   (fn [{:keys [rule ctx]} params _]
+     (let [pred? (local-condition (:condition params :boredom) ctx)
+           sigma (if pred? (:sigma-a params) (:sigma-b params))
            n (long (or (:applications params) 1))]
        {:result (ca/sigil-for
                  (reduce (fn [bits _] (rule-permute bits sigma))

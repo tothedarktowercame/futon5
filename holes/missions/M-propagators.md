@@ -217,6 +217,63 @@ genotype/phenotype panels, and reproducer:
 
 ---
 
+## 2c. Exotypes — compositional physics, by example (2026-07-16)
+
+Joe's frame: in futon5's **pheno → geno → EXO → xeno** hierarchy, an **exotype** is
+the *global physics* of a MetaCA, and if propagators are a basis then named physics
+(baldwin, blend) should themselves be **compositions of propagators**. A **xenotype**
+is where exotypes get evolved under outside selection (e.g. ants).
+
+**Built:** `:rule-permute-switch` (generator.clj) — the general compositional form,
+`switch(local-condition, σ_A, σ_B)`: apply propagator A where a per-cell condition
+holds, B otherwise. Conditions read the same per-cell context a single propagator
+ignores (`:boredom` = phenotype neighbourhood uniform; `:active`; `:dense`). It is a
+first-class wiring component, so its branches and condition are **data** — i.e.
+evolvable, which is what the xeno layer needs.
+
+**Finding 1 — baldwin IS a composition, and what it buys is a state-dependent RATE.**
+Baldwin's live rule (H-baldwin-repro) is *bored → mutate, interesting → hold* =
+`switch(:boredom, propagator, no-op)`. Reconstructed and measured
+(`scripts/exotype_by_example.clj`): the exotype's per-step mutation rate **falls
+0.055 → 0.002 as structure emerges**, tracking local state where neither constant
+policy can (explore pinned near 1, hold at 0). Its genotype diversity *interpolates*
+between its branches (53.6, between explore 14.2 and hold 68) — so baldwin's value is
+not a new attractor but a **self-regulating churn rate**. NB this reconstructs
+baldwin's *structure*, not the 2014 fn bit-for-bit (baldwin mutates `(1- matches)`
+times, a graded count, not a binary switch).
+
+**Finding 2 — other compositions reach attractors NEITHER branch can (emergence).**
+`scripts/exotype_demo.clj` runs three exotypes, each against BOTH its branches solo
+(the branches are the nulls). Terminal distinct-rule counts, width 60, seeds 0–2:
+
+| exotype | branch-A | branch-B | switch | verdict |
+|---|---|---|---|---|
+| baldwin-reconstructed (builder / identity, :boredom) | 45.3 | 46.7 | 48.0 | within noise — interpolates (cf. Finding 1: the signal is the rate, not diversity) |
+| thermostat (collapser / builder, :active) | 1.0 | 45.3 | 1.0 | **honest negative** — tracks the collapser; collapse is the stronger attractor, no set-point |
+| **annealer (chaos / collapser, :active)** | 14.3 | 1.0 | **31.7** | **EMERGENT** — settles at 2× either branch, at near-chaos activity 0.51 |
+
+So conditional composition buys *either* a state-tracking rate (baldwin) *or* a new
+attractor (annealer) — the exo layer is real physics, not a relabelled geno knob.
+
+**Vocabulary was mined from the 20,256-orbit census** (each σ chosen for a measured
+solo role: builder ~48 rules; quiet collapser → 1 rule, dies; chaos, activity .57).
+The census also surfaced two facts worth keeping: a *loud collapser* exists (1 rule,
+survives, activity .48 — monoculture chaos), and **peak class-4 population is a
+MONOCULTURE** (every c4peak=1.0 propagator has 1–2 terminal rules — one class-4 rule
+taking over, which is Rule 110's own situation).
+
+**Open (the xeno step):** the (σ_A, σ_B, condition) triples here were hand-picked. The
+annealer proves the composition space has emergent points; finding them is the job of
+the evolutionary method (niche construction / the ant selection pressure), not of
+guessing. Artefacts: `exotype-{annealer,thermostat,baldwin-reconstructed}.png`.
+
+**Provenance note (claude-3):** `exotype_by_example.clj` and `exotype_demo.clj` were
+written either side of a context compaction; the second re-derived the idea without
+recall of the first. They are kept because they measure *different* things (rate vs
+attractor); the duplication of framing is the cost of the memory gap, logged honestly.
+
+---
+
 ## 3. What this is for
 
 futon5's purpose is **patterns of improvisation**. Joe's claim: it is not the
