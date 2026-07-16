@@ -247,9 +247,17 @@
 (defn select-clusters [points]
   (let [max-k (min 10 (dec (count points)))
         curve (mapv (fn [k]
-                      (let [fits (mapv #(kmeans points k (+ 4100 (* 97 k) %)) (range 5))
+                      ;; Progress per k. Without this the whole sweep is SILENT, and a
+                      ;; 50-minute run is indistinguishable from a hang -- which is
+                      ;; exactly what happened on 2026-07-16 and cost an hour of not
+                      ;; knowing whether to wait or kill.
+                      (let [t0 (System/nanoTime)
+                            fits (mapv #(kmeans points k (+ 4100 (* 97 k) %)) (range 5))
                             best (apply min-key :inertia fits)
                             sampled (silhouette-sample points (:assignments best) k)]
+                        (println (format "  k=%d silhouette %.4f (%.0fs)" k (double (:value sampled))
+                                         (/ (- (System/nanoTime) t0) 1e9)))
+                        (flush)
                         {:k k :silhouette (:value sampled)
                          :silhouette-sample-size (:sample-size sampled)
                          :inertia (:inertia best)
@@ -275,8 +283,38 @@
     {:eigenvalues (mapv #(.getRealEigenvalue eig %) order)
      :coordinates (mapv (fn [p] (mapv #(reduce + (map * p %)) axes)) points)}))
 
-(defn cluster-medoid [points indexes]
-  (apply min-key (fn [i] (reduce + (map #(euclidean (nth points i) (nth points %)) indexes))) indexes))
+(def ^:private medoid-cap
+  "Max points used per cluster when locating a medoid. See cluster-medoid."
+  1000)
+
+(defn cluster-medoid
+  "The cluster's most central actual point.
+
+  SCALED 2026-07-16 (claude-3). The exact medoid is O(m^2): for every point it sums
+  the distance to every other point in the cluster. Correct at 580 orbits, and the
+  DOMINANT cost at 20,256 -- MEASURED, after two wrong guesses (it is not the
+  convergence test, and not the k-means sweep, which is only ~6 min for all 45 runs):
+
+      m=  500      1.0 s
+      m= 2000     13.2 s
+      m= 4000     42.9 s        -> the k=2 big cluster (~15,600) extrapolates to 11-17 MIN
+
+  Now the candidate set and the distances are both taken over a deterministic
+  even-stride sample of at most `medoid-cap` points, so the cost is bounded at
+  ~1e6 pairs per cluster (~3 s) regardless of coverage. This makes it an APPROXIMATE
+  medoid over a uniform sample of the cluster, not the exact one -- an honest
+  bounded approximation, and appropriate because the medoid is only used to pick a
+  representative PICTURE, not to make a measurement. Stride sampling (not random) so
+  the exemplar choice is reproducible across runs."
+  [points indexes]
+  (let [m (count indexes)
+        sample (if (<= m medoid-cap)
+                 (vec indexes)
+                 (mapv #(nth indexes (long (Math/floor (* % (/ m (double medoid-cap))))))
+                       (range medoid-cap)))]
+    (apply min-key
+           (fn [i] (reduce + (map #(euclidean (nth points i) (nth points %)) sample)))
+           sample)))
 
 (defn exemplars [points coords assignments k]
   (let [base (mapcat (fn [cluster]

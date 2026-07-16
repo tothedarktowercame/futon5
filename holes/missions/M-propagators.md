@@ -217,6 +217,104 @@ genotype/phenotype panels, and reproducer:
 
 ---
 
+## 2b. The geometry of the propagator space — BANKED 2026-07-16
+
+**The question.** Joe: *cluster the ~20k into reasonable clusters, find a way to move
+around in that space.* Answer: **the space has no natural joints under either geometry
+tried — but the second failure is a METRIC failure, and it points at the fix.**
+
+### 2b.1 Euclidean on 18 hand-made features — no joints, and it is CRUDE not wrong
+
+Full 20,256 orbits. Silhouette **declines monotonically**: k=2 0.4409, k=3 0.4134,
+k=4 0.3671, k=5 0.3275, k=6 0.3148, k=7 0.2890, k=8 0.2978, k=9 0.2830, k=10 0.2672.
+No elbow, no local max: the best k is simply the smallest, and it scores "weak". The
+split it finds (15,479 / 4,777, one body + one tail) is highly *stable* (0.998 across
+restarts) — so the tail is real, it is just **not a joint**. The space is a continuum
+with a skew, not a set of kinds.
+
+**Validated at 2.9% coverage.** The overnight 580-orbit shuffled prefix predicted this:
+k=2, silhouette **0.4441** vs the full **0.4409** — 0.7% apart. The seeded shuffle made
+a partial build a trustworthy population estimate, exactly as intended.
+
+### 2b.2 Fisher–Rao on the actual distributions — the metric SATURATES
+
+The census *is* distributions: each propagator's terminal state is a point in the
+256-simplex (rule counts / 180), so §2b.1 clustered lossy scalar summaries of those
+distributions under a geometry I chose. Fisher–Rao is the principled alternative — by
+Čencov's theorem the unique metric (up to scale) invariant under sufficient statistics,
+`d(p,q) = 2·arccos(Σ√(pᵢqᵢ))`, no features, no free parameters. √p has unit norm, so the
+simplex under FR *is* the unit sphere and k-means under the information metric is
+literally spherical k-means on √p.
+
+**Result: flat 0.0716–0.0837 across every k=2..10.** No peak. "Chosen k=10" is the
+argmax of noise (spread 0.012). Read against controls run under *identical* conditions
+(same restarts, same silhouette sample):
+
+| | FR silhouette |
+|---|---|
+| structureless blob (negative control) | 0.0041 |
+| **real propagator space** | **0.084, flat** |
+| 3 real clusters, overlapping (positive control) | 0.2465 (peaks at true k=3) |
+| 3 obvious joints, disjoint supports (ceiling) | 0.6956 (peaks at true k=3) |
+
+**But this is a metric failure, not a fact about the space.** Width 60 puts **60 samples
+into 256 bins**, so any two terminal distributions overlap barely by chance: mean
+pairwise FR distance is 2.1–2.5 out of a maximum of π. Nearly every pair is
+near-orthogonal and the metric flatlines. FR treats the 256 rules as **unordered
+labels** — it cannot know rule 106 and 108 are two bit-flips apart.
+
+**Proof that FR is blind to real structure — the 12 collapse targets.** The 1,479
+collapsers (≤2 terminal rules) land on just **12 rules**, and those 12 are
+**Hamming-tight**: mean pairwise Hamming 2.82, **max 4 of 8**, 39 of 66 pairs within 2
+flips. FR calls every one of those pairs *maximally distant* (orthogonal point masses).
+Six rules absorb 1,468 of the 1,479:
+
+| rule | binary | n | |
+|---|---|---:|---|
+| 232 | 11101000 | 271 | **the majority rule** |
+| 204 | 11001100 | 262 | **the identity rule** |
+| 201 | 11001001 | 246 | |
+| 108 | 01101100 | 244 | |
+| 77 | 01001101 | 223 | |
+| 105 | 01101001 | 222 | additive / XOR-like |
+
+**Death lands on majority and identity** — the two canonical self-stabilising ECA rules
+— measured over the whole space, not intuited. And **class-4 targets (106, 120) are hit
+4 times in 1,479 = 0.27%**: EoC is rare, quantified.
+
+### 2b.3 What this licenses
+
+- **Neither geometry is right, in *opposite* ways.** The 18 features encode
+  CONCENTRATION (entropy, top1) but weight it arbitrarily → crude. FR sees LOCATION
+  exactly but is blind to rule adjacency → saturates. Do not read §2b.1 as "the features
+  were an artifact" (an earlier claude-3 overstatement, corrected here): they capture
+  something FR cannot.
+- **Wasserstein-1 with a HAMMING ground metric is what both failures point at**, and it
+  is not a preference: `rule-permute` writes exactly one bit, so a propagator step *is*
+  a Hamming step, and rule space *is* the 8-bit cube. W₁ measures transport along the
+  operator's own moves, and would see the 12 targets as one basin rather than 12
+  orthogonal spikes. Bonus: `legacy-to-standard` is a bit *permutation*, and bit
+  permutations **preserve Hamming distance** — so this ground metric is
+  convention-independent, immune to the silent-port bug that forced σ to be a
+  neighbourhood map.
+- **Cost governs the design.** 205M pairs × LP is impossible. OR curvature needs W₁ only
+  between *neighbours* on a k-NN graph (O(edges)) — the architecture `M-substrate-metric`
+  already used; reuse `futon3c/scripts/substrate_metric_e1_or_sample.py`'s exact-W₁-by-
+  `scipy.optimize.linprog`.
+
+Reproduce: `scripts/propagator_terminal_dists.clj` then `scripts/propagator_fisher_rao.py`.
+Artefacts: `propagator-clusters/{fisher-rao.json,fisher_rao_vs_euclidean.png}`.
+
+**Two process notes, logged because both nearly shipped.** (1) The first version of the
+figure plotted the FR curve against *Euclidean* strong/weak thresholds, implying "FR
+found even less structure" — false; FR's scale is compressed and needs its own controls,
+which now live in the script rather than in an agent's head. (2) The controls initially
+ran with ONE restart against the real curve's FIVE, and `spherical_kmeans` closed over
+the global `n` so controls only ran *by luck* (a constant seed whose first draw happened
+to land inside the smaller array). A control that passes by luck is not a control.
+
+---
+
 ## 2c. Exotypes — compositional physics, by example (2026-07-16)
 
 Joe's frame: in futon5's **pheno → geno → EXO → xeno** hierarchy, an **exotype** is

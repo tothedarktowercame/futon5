@@ -1,6 +1,6 @@
 {:metadata
  {:fingerprint "ac2ff1681eae5b85",
-  :coverage 580,
+  :coverage 20256,
   :expected 20256,
   :feature-names
   [:death-mean
@@ -23,133 +23,133 @@
    :entropy-delta],
   :standardization
   {:means
-   [116.83448275862067
-    2.786206896551724
-    21.831609195402315
-    0.25677147190293714
-    0.5700271799233498
-    0.4646935747736445
-    0.4463752540717732
-    0.43834852419853654
-    0.3008812260536398
-    0.5639463601532576
-    21.831609195402315
-    0.2617624521072797
-    0.06536805555555553
-    0.08801197318007671
-    0.089029296327446
-    0.08662835249042151
-    0.21362068965517245
-    -0.12365192585157642],
+   [116.33553844128508
+    2.5964652448657186
+    21.680983412322266
+    0.2557529707704363
+    0.5686662136580134
+    0.460488161216321
+    0.44260906854983406
+    0.43531677012590864
+    0.3069927154642772
+    0.5704060251009309
+    21.680983412322266
+    0.2595129563805495
+    0.06529864265183427
+    0.08899275386168125
+    0.09265336618117197
+    0.0914966210286078
+    0.21408882964718423
+    -0.12605714510818197],
    :sds
-   [13.81157403132901
-    11.88460969831705
-    10.952098632695867
-    0.10866917654785559
-    0.06766505046566597
-    0.1496162232001863
-    0.16278498015684506
-    0.1688016624105227
-    0.23772520264358213
-    0.2323786501696159
-    10.952098632695867
-    0.133096458567524
-    0.049759129380683526
-    0.1062694481251958
-    0.1167524247570163
-    0.12134831520159882
-    0.15389709237783242
-    0.11282120605736287]},
+   [15.286530915651575
+    11.111992517584234
+    11.026972928347876
+    0.11236759249327333
+    0.07062728194491337
+    0.1512017457952799
+    0.16368724286306377
+    0.16921072230241754
+    0.23778825939279602
+    0.23220137477017255
+    11.026972928347876
+    0.1336896374618299
+    0.051894770507841616
+    0.11050416617155923
+    0.12842830502743288
+    0.13546208625891432
+    0.1614540706995781
+    0.1113415083636539]},
   :cluster-selection
   {:chosen-k 2,
    :strength :weak,
    :curve
    [{:k 2,
-     :silhouette 0.4440627444787465,
-     :silhouette-sample-size 580,
-     :inertia 6557.807869555386,
-     :stability 1.0}
+     :silhouette 0.44087043126856,
+     :silhouette-sample-size 1000,
+     :inertia 230292.8702707947,
+     :stability 0.99833126569299}
     {:k 3,
-     :silhouette 0.3948693730769457,
-     :silhouette-sample-size 580,
-     :inertia 4861.588711762809,
-     :stability 0.9904504961962448}
+     :silhouette 0.4133781824676919,
+     :silhouette-sample-size 1000,
+     :inertia 164095.18119601381,
+     :stability 0.9981503583855502}
     {:k 4,
-     :silhouette 0.32947643597951665,
-     :silhouette-sample-size 580,
-     :inertia 3843.418544278994,
-     :stability 0.8929155306864759}
+     :silhouette 0.36710035934709784,
+     :silhouette-sample-size 1000,
+     :inertia 124962.70344986326,
+     :stability 0.9999043928704513}
     {:k 5,
-     :silhouette 0.2879109308338393,
-     :silhouette-sample-size 580,
-     :inertia 3302.5928546799064,
-     :stability 0.6279271159256923}
+     :silhouette 0.3274955310468463,
+     :silhouette-sample-size 1000,
+     :inertia 108604.94022043169,
+     :stability 0.7126387363218256}
     {:k 6,
-     :silhouette 0.2953870678476335,
-     :silhouette-sample-size 580,
-     :inertia 2847.2079122461473,
-     :stability 0.8692693665614868}
+     :silhouette 0.31479259069867793,
+     :silhouette-sample-size 1000,
+     :inertia 93641.16387483597,
+     :stability 0.8773452927783957}
     {:k 7,
-     :silhouette 0.3058997617579648,
-     :silhouette-sample-size 580,
-     :inertia 2614.6251623282146,
-     :stability 0.7839908903524917}
+     :silhouette 0.2889888560904747,
+     :silhouette-sample-size 1000,
+     :inertia 84097.2833766909,
+     :stability 0.8966853885352297}
     {:k 8,
-     :silhouette 0.3074935061536975,
-     :silhouette-sample-size 580,
-     :inertia 2369.3385725466687,
-     :stability 0.6855365103055691}
+     :silhouette 0.29779658975099743,
+     :silhouette-sample-size 1000,
+     :inertia 77141.16744462465,
+     :stability 0.713333143312637}
     {:k 9,
-     :silhouette 0.29522206870206147,
-     :silhouette-sample-size 580,
-     :inertia 2210.9030661699553,
-     :stability 0.6791998319504462}
+     :silhouette 0.2830343384685766,
+     :silhouette-sample-size 1000,
+     :inertia 73013.22590270876,
+     :stability 0.9002124737318262}
     {:k 10,
-     :silhouette 0.25794904448960043,
-     :silhouette-sample-size 580,
-     :inertia 2036.121890685594,
-     :stability 0.6599950526507183}]},
-  :pca-eigenvalues [9.773922930941858 4.706057545929712]},
- :cluster-sizes {0 133, 1 447},
+     :silhouette 0.2672083127207992,
+     :silhouette-sample-size 1000,
+     :inertia 65303.16762532088,
+     :stability 0.8099430383626235}]},
+  :pca-eigenvalues [9.805733229028467 4.819797966231907]},
+ :cluster-sizes {0 15479, 1 4777},
  :render-selection
- [{:sigma [5 2 6 4 3 0 7 1],
+ [{:sigma [0 1 6 7 2 5 3 4],
    :cluster 0,
-   :cluster-size 133,
+   :cluster-size 15479,
    :role :medoid}
-  {:sigma [1 0 4 7 2 3 5 6],
+  {:sigma [4 1 0 3 2 5 6 7],
    :cluster 0,
-   :cluster-size 133,
+   :cluster-size 15479,
    :role :pc-extreme}
-  {:sigma [1 7 4 6 2 0 5 3],
+  {:sigma [1 6 2 5 0 3 7 4],
    :cluster 0,
-   :cluster-size 133,
+   :cluster-size 15479,
    :role :pc-extreme}
-  {:sigma [4 2 6 7 3 5 1 0],
+  {:sigma [1 2 3 7 0 4 5 6],
    :cluster 0,
-   :cluster-size 133,
+   :cluster-size 15479,
    :role :pc-extreme}
-  {:sigma [5 2 4 1 0 7 3 6],
+  {:sigma [4 6 5 0 7 3 2 1],
    :cluster 0,
-   :cluster-size 133,
+   :cluster-size 15479,
    :role :pc-extreme}
-  {:sigma [0 2 7 5 6 4 3 1],
+  {:sigma [0 5 3 4 7 1 6 2],
    :cluster 1,
-   :cluster-size 447,
+   :cluster-size 4777,
    :role :medoid}
-  {:sigma [4 1 2 3 7 5 6 0],
+  {:sigma [1 0 2 7 5 3 6 4],
    :cluster 1,
-   :cluster-size 447,
+   :cluster-size 4777,
    :role :pc-extreme}
-  {:sigma [2 0 1 4 7 5 3 6],
+  {:sigma [2 4 7 5 3 1 0 6],
    :cluster 1,
-   :cluster-size 447,
+   :cluster-size 4777,
    :role :pc-extreme}
-  {:sigma [7 1 4 3 0 5 6 2],
+  {:sigma [7 6 5 4 3 2 1 0],
    :cluster 1,
-   :cluster-size 447,
+   :cluster-size 4777,
    :role :pc-extreme}
-  {:sigma [2 0 6 7 1 5 3 4],
+  {:sigma [4 6 5 0 7 1 2 3],
    :cluster 1,
-   :cluster-size 447,
+   :cluster-size 4777,
    :role :pc-extreme}],
  :render-status :blocked-no-spatial-histories}
