@@ -1,0 +1,12 @@
+# latex build artifacts — rebuild with `latexmk -pdf main.tex` (see README.md)
+main.pdf
+*.aux
+*.log
+*.out
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.fdb_latexmk
+*.fls
+*.synctex.gz
