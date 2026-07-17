@@ -306,6 +306,7 @@ reproduces, but not under the function the file defaults to.
 \end{figure}
 
 \subsection{Baldwin is a composition of propagators}
+\label{sec:baldwin}
 \label{sec:baldwin-composition}
 
 The control of Section~\ref{sec:propagator} treated the 2014 Baldwin default as
@@ -328,6 +329,7 @@ identity, selected by a locally-readable sign. The 2014 file wrote an
 asks the question. It reads its own boredom.
 
 \subsubsection{What the composition buys}
+\label{sec:compositions}
 
 Not a new attractor. Baldwin reaches the diagnostic $\{42,170\}$ attractor in
 $0/15$ seeds (Section~\ref{sec:propagator}); its constituents do not compose to a
@@ -468,11 +470,27 @@ On an isolated byte the propagator \emph{is} a $256 \times 256$ Markov
 chain, so its fixed points can be computed rather than sampled. We do this
 for all 40{,}320 operators.
 
-\textbf{No operator has a single-byte attractor.} Support $\le 1$ occurs
-for 0.0\% of $\sig$; the observed minimum support is 4. (Support $\le 4$:
-11.5\%; $\le 32$: 54.1\%; $\le 64$: 88.0\%.) The reason is immediate once
-stated: a fixed byte would require $\bit{\sig(k)} = \lnot\,\bit{k}$ for all
-$k$ simultaneously, which an always-invert operator forbids.
+\textbf{No operator has a single-byte attractor as an invariant \emph{set}.}
+Support $\le 1$ occurs for 0.0\% of $\sig$; the observed minimum support is 4.
+(Support $\le 4$: 11.5\%; $\le 32$: 54.1\%; $\le 64$: 88.0\%.)
+
+\paragraph{A correction, since an earlier version of this subsection gave the
+wrong reason.} We previously wrote that a fixed byte ``would require
+$\bit{\sig(k)} = \lnot\,\bit{k}$ for all $k$ simultaneously, which an
+always-invert operator forbids.'' An always-invert operator forbids that only on
+\emph{odd} cycles; around an even cycle the alternating assignment closes
+consistently. Section~\ref{sec:parity}'s theorem is exact here --- a Boolean
+fixed point exists iff every cycle of $\sig$ is even --- so $27.34\%$ of
+operators \emph{do} have fixed bytes, and the count is exactly $2^{k}$ for an
+all-even $\sig$ with $k$ cycles. Enumerating all 256 bytes against
+\texttt{gen/rule\-permute} itself confirms it: $\mathrm{rotate}{+}1$ (cycle type
+$[8]$) has \textbf{2} fixed bytes, \texttt{01010101} and \texttt{10101010} --- the
+alternating colourings, 85 and 170; $\mathrm{rotate}{+}2$ ($[4,4]$) has
+\textbf{4}; $\mathrm{three{+}five}$ ($[5,3]$) and $\mathrm{id}$ ($[1^8]$), both
+any-odd, have \textbf{0}. The two statements are not in conflict once separated:
+fixed \emph{bytes} exist for all-even operators, while no operator's invariant
+\emph{set} has support $\le 1$ --- because, as the next paragraph shows, the
+propagator never runs long enough alone to reach one.
 
 This corrects a one-liner of our own. \textbf{The ``fixed point'' is never
 a fixed byte --- it is an invariant \emph{set}.} The port test reproduces
@@ -489,6 +507,222 @@ alone --- as the conjugacy theorem already warned --- is reasoning about a
 different system than the one that produces the figures.
 
 % =====================================================================
+\section{Propagators Acting on Policies}
+\label{sec:policies}
+
+Everything above treats the propagator as an operator on a byte. This section
+makes a claim we have not previously stated: \textbf{the propagator's carrier is
+a policy, and it has been one all along}. The consequence is a second level at
+which the whole apparatus applies --- and a negative result when we run it there.
+
+\subsection{A policy is a colouring; so is the carrier}
+
+The propagator is $g[\sig(k)] := \nu(g[k])$ over a colouring $g : N \to P$ with a
+shape map $\sig : N \to N$ and a value map $\nu : P \to P$. A \emph{policy} is a
+function from conditions to actions. These are the same type. Not by analogy:
+$N$ is the condition set, $P$ is the action set, and $g$ is the prescription.
+
+This is not a new construction. \textbf{The MetaCA rule is already a policy.} A
+rule is a map $\mathrm{NBHD} \to \{0,1\}$ --- ``when you see neighbourhood $k$,
+respond $\bit{k}$'' --- which is a prescription indexed by a condition. And
+\texttt{rule-permute} (generator.clj:732) reads, literally,
+\[
+  \bit{\sig(k)} \;:=\; \lnot\,\bit{k}, \qquad k \sim \mathrm{Uniform}\{0..7\}.
+\]
+That is $g[\sig(k)] := \nu(g[k])$ with $g$ the rule's truth table, $\sig$ the
+operator, and $\nu = \mathrm{Bool.not}$. \textbf{The genotype's truth table is an
+eight-cell system whose topology is $\sig$: a CA inside the CA.} This is why the
+Lean development is about \texttt{Bool.not} specifically --- it is not a
+convenient toy, it is the operator this paper runs.
+
+Three objects in this stack are policies, and we had not noticed they were the
+same object:
+\begin{enumerate}
+  \item \textbf{The rule}, $\mathrm{NBHD} \to \{0,1\}$. Level 0.
+  \item \textbf{The switch}, $\{\textsf{bored}, \textsf{active}\} \to \{\sig,
+        \textsc{no-op}\}$ (Section~\ref{sec:baldwin}). A two-condition policy over
+        propagators.
+  \item \textbf{A pattern cascade}, $\mathrm{BINS} \to \mathrm{ACTS}$, where
+        $\mathrm{ACTS}$ are themselves propagators. Level 1.
+\end{enumerate}
+The third is the interesting one, because there $P$ is the very thing this paper
+studies: a propagator rewriting a policy whose values are propagators is the
+theory applied to its own controller.
+
+\subsection{The multiplication rule}
+
+Given a cascade $g : \mathrm{BINS} \to \mathrm{ACTS}$ and an arm $a$, what is
+$g \cdot a$? Not $\nu = a$: an arm is an \emph{element} of $\mathrm{ACTS}$, not a
+map on it. But arms are permutations of the eight neighbourhoods, so they compose,
+and each arm induces $\nu_a(\sig) = a \circ \sig$ --- left multiplication, the
+regular representation of $S_8$ on itself. Cayley then gives, before any run:
+\[
+  \nu_a \text{ has a fixed point} \iff a = \mathrm{id}.
+\]
+So every $g \cdot a$ is fixed-point-free except $g \cdot \mathrm{id}$. Two readings
+follow, and they fail in opposite ways:
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+reading & rule & $\mathrm{FREE}$ & outcome \\
+\midrule
+pointwise  & $g' = a \circ g$              & $\emptyset$ & always exists; \emph{no scaffold} \\
+propagator & $g'[\sig(k)] = a \circ g(k)$  & $\{\textsf{rich}\}$ & \emph{no solution} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{The propagator reading is unsatisfiable.}
+With the clamped shift $\sig(k) = \max(k-1,0)$ transported to the regime scale,
+$\sig(\textsf{dead}) = \textsf{dead}$ is a self-loop, whose constraint reads
+$g[\textsf{dead}] = \nu(g[\textsf{dead}])$ --- a fixed point of $\nu$, which Cayley
+has just forbidden. Confirmed by exhaustive search over all 40{,}320 candidate
+roots: \textsc{unsat} for every $a \neq \mathrm{id}$. The unique satisfiable case
+is $a = \mathrm{id}$, whose witness is the \emph{constant colouring} --- this
+paper's own death configuration, arriving as the only solution.
+
+\paragraph{The scaffold is what kills it.}
+Run with proper parallel-update semantics (simultaneous update, merged writes,
+contradiction reported rather than resolved), the rewrite \textbf{settles to
+period 1 in three steps for every $a$, including every fixed-point-free one}.
+$\textsf{rich}$ is \textsc{free} --- no writer --- hence a \emph{constant source},
+and $\sig$ is a shift register fed by it, so the settled policy is
+$g_\infty[k] = a^{\mathrm{depth}(k)} \circ \sig_{\textsf{rich}}$.
+
+\textbf{Settling here is caused by the shape, not by $\nu$.} This is the converse
+side of the fixed-point theorem: a fixed point of $\nu$ is \emph{sufficient} for
+settling, but fixed-point-\emph{freeness} is \emph{not sufficient to prevent} it.
+And it inverts the intended reading of $\mathrm{FREE}$: the surjective shape
+($\mathrm{FREE} = \emptyset$, no scaffold) cycles forever with period
+$\mathrm{ord}(a)$, while the shape \emph{with} a scaffold settles every time. A
+free cell is a cell with no input; a cell with no input is a constant; a constant
+floods the chain. Life needs feedback, and this $\sig$'s functional graph has
+exactly one cycle: the self-loop, of length one, which is the one demanding a
+$\nu$ fixed point.
+
+\subsection{We ran it. It does not work, and the reason is instructive}
+
+We ran the pointwise products as controllers on the tokamak (12 seeds, identical
+across arms). Nothing died. That is not a result: an identity controller also
+dies 0/12 while doing nothing. The informative row is worse than a null.
+
+\textbf{$g \cdot \sig_{5127}$ is vacuous.} $\sig_{5127}$ has order 2, so at depth 0
+the product is $\sig \circ \sig = \mathrm{id}$: the policy plays the identity in
+$\textsf{rich}$, never leaves $\textsf{rich}$, and therefore never consults its
+other four boxes. Its spacetime diagram is \emph{pixel-identical} to the
+do-nothing control (\texttt{compare -metric AE} $= 0$ over 243{,}936 pixels). A
+five-condition policy in which one condition fires and that condition does nothing.
+
+Every test we had passed it. The $\nu$ fixed-point test passed; the satisfiability
+check passed; it died 0/12. \textbf{Nothing in the apparatus detects vacuity},
+because vacuity is not death --- it is a controller with nothing to control. This
+is the mirror of Section~\ref{sec:census}'s class-4 finding, where diversity 1
+reads as maximally dead and is maximally selected. There the metric says dead and
+the system computes; here the metric says alive and the system idles. Neither
+diversity nor death rate measures what is happening.
+
+\subsection{Why level 0 works and level 1 does not}
+
+The two levels run the same operator and behave oppositely. The difference is not
+in the propagator. It is that \textbf{at level 0 the propagator is interrupted,
+and at level 1 it is not}.
+
+Two independent results in this paper already say so, and we had not connected
+them:
+\begin{itemize}
+  \item \textbf{Blending is not a detail} (Section~\ref{sec:fixedpoints}): the
+        isolated attractors are low-weight bytes; the census's collapse targets are
+        majority and identity. Blending overwrites the propagator's input before it
+        can converge.
+  \item \textbf{The no-op is the mechanism} (Section~\ref{sec:compositions}):
+        either propagator alone collapses; inside
+        $\mathrm{switch}(\textsf{bored}, \cdot, \textsc{no-op})$ it sustains
+        diversity 43--63; \emph{two live branches give noise}. Holding is what lets
+        structure persist.
+\end{itemize}
+Both are the same statement. \textbf{A propagator alone is not a generative
+mechanism; it is half of one.} The other half is an interrupter --- something that
+prevents it reaching the fixed point it is otherwise guaranteed to reach. Whether
+the interrupter overwrites the input (blending) or skips the step (\textsc{no-op})
+is secondary.
+
+The level-1 cascade has \emph{no} interrupter. It settles in three steps. That is
+the whole negative result, and it was predictable from the level-0 findings the
+paper already contains.
+
+\paragraph{A design flaw this exposes.}
+The cascade has no hold branch: every one of its five conditions fires a live
+propagator. Worse, the arm \emph{named} $\mathrm{identity}$ is not a no-op ---
+$\sig = \mathrm{id}$ means $\bit{k} := \lnot\,\bit{k}$, a flip at every draw, which
+is \emph{maximal} churn. \textbf{The quietest-sounding arm in the set is the
+noisiest.} By Section~\ref{sec:compositions}'s finding, a policy all of whose
+branches fire should give noise --- which is exactly what
+$g \cdot \sig_{5127}$ became. The testable repair is to give the policy a genuine
+\textsc{no-op} branch, which no cascade we have written has.
+
+\paragraph{What blending would be at the policy level.}
+Level 0's interrupter mixes a cell's rule with its neighbours'. The analogue at
+level 1 is to mix a policy with its neighbours' policies --- that is, a
+\emph{population} of cascades that blend, rather than one cascade rewritten in
+isolation. We have not run this. It yields a sharp prediction: a single cascade
+under a propagator settles to period 1 in three steps (measured, every arm),
+whereas a population of cascades under a propagator \emph{and} a blend should not.
+That is the experiment this section owes.
+
+\subsection{A correction to \texorpdfstring{Section~\ref{sec:fixedpoints}}{Exact fixed points}}
+
+\textbf{Flagged for the authors; not yet reconciled.} Section~\ref{sec:fixedpoints}
+states that no operator has a single-byte attractor, that support $\le 1$ occurs
+for 0.0\% of $\sig$ with an observed minimum support of 4, and gives as the reason
+that a fixed byte ``would require $\bit{\sig(k)} = \lnot\,\bit{k}$ for all $k$
+simultaneously, which an always-invert operator forbids.''
+
+That reason is not right, and the paper's own newer theorem says so: a Boolean
+fixed point exists \emph{iff every cycle of $\sig$ is even}. An always-invert
+operator forbids a fixed byte only on \emph{odd} cycles. Since 27.34\% of $S_8$ is
+all-even, 27.34\% of operators \emph{do} have fixed bytes.
+
+Enumerating all 256 bytes against \texttt{gen/rule-permute} itself:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+$\sig$ & cycle type & fixed bytes \\
+\midrule
+$\mathrm{rotate}{+}1$ & $[8]$          & \textbf{2} \quad \texttt{01001101}, \texttt{10110010} \\
+$\mathrm{rotate}{+}2$ & $[4,4]$        & \textbf{4} \quad \texttt{00101011}, \texttt{01100110}, \texttt{10011001}, \texttt{11010100} \\
+$\mathrm{three{+}five}$ & $[3,5]$      & 0 \\
+$\sig_{5127}$ & $[1,1,2,2,2]$          & 0 \\
+$\mathrm{id}$ & $[1^8]$                & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+Exactly $2^{k}$ for all-even $\sig$ with $k$ cycles, and $0$ for any-odd. The new
+theorem predicts these counts precisely; Section~\ref{sec:fixedpoints} contradicts
+them. We believe the subsection predates the theorem and is stale rather than
+wrong-in-substance --- but as written the two cannot both stand, and the
+``minimum support is 4'' figure needs re-deriving.
+
+This also sharpens the ``blending is not a detail'' paragraph in the authors'
+favour. \textbf{Isolated attainment is certain, not merely possible}: solving the
+propagator exactly as a $256 \times 256$ chain over uniform draws gives
+$P(\text{absorbed}) = 1.000$ for both $\mathrm{rotate}{+}1$ and
+$\mathrm{rotate}{+}2$. So the gap between the theorem and the census is not
+``exists but is not reached''. It is that \emph{the propagator never runs to
+absorption}, because the wiring is
+$\mathrm{rule} := \texttt{rule-permute}(\mathrm{blend}(\cdot))$ --- one step per
+generation on a freshly blended input. \textbf{The propagator is a bias, not an
+absorber.} The theorem describes a system MetaCA never runs in isolation, which is
+precisely what Section~\ref{sec:fixedpoints} was reaching for.
+
+\subsection{Disposition}
+
+The claim is a type identity: policies are the propagator's carrier, and MetaCA's
+rule was always one. The claim is cheap and we believe it. The \emph{application}
+is not banked: run at level 1, the propagator settles, and the one product that
+survived is vacuous. What the negative result buys is a mechanism --- a propagator
+needs an interrupter, and the level-1 object has none --- and a named next
+experiment: a population of policies that blend.
+
 \section{The Fail Bank}
 \label{sec:failbank}
 % =====================================================================
