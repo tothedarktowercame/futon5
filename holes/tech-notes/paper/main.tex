@@ -712,6 +712,97 @@ it came from a different row subset or an earlier normalisation. See
 So the metric was saturating \emph{and} the space has no joints. Those are
 two independent facts, and we had conflated them.
 
+\subsection{An algebraic joint the metrics cannot see}
+\label{sec:parity}
+
+Every instrument above measures \emph{distance}. Each returns the same verdict:
+no joints. We now report a partition of the same 20{,}256 orbits that is not a
+distance at all, is computed from the operator alone with no simulation, and
+predicts the census.
+
+\subsubsection{The partition}
+
+A propagator's shape map $\sigma$ is a permutation of the eight neighbourhoods.
+Our Lean development proves
+\texttt{bool\_fixed\_exists\_iff\_hasAlternatingColouring}: a Boolean fixed
+point of $\sigma$ exists \emph{iff every cycle of $\sigma$ is even}. A fixed
+point is a configuration the propagator cannot leave --- so an all-even $\sigma$
+\emph{can} settle, and settling is death; an $\sigma$ with any odd cycle has no
+fixed point to fall into.
+
+The count is closed-form. Permutations of $2n$ with all cycles even number
+$((2n-1)!!)^2$, so for $S_8$
+\[
+  \#\{\sigma : \text{all cycles even}\} = (7!!)^2 = 105^2 = 11{,}025
+  \quad\text{of}\quad 8! = 40{,}320,
+\]
+i.e.\ $27.34\%$, with the remaining $29{,}295$ possessing an odd cycle. The
+census, indexed by mirror orbits, contains $5{,}535$ all-even orbits of
+$20{,}256$ --- $27.32\%$, matching the closed form. \emph{The composition of the
+family is derivable without running anything.}
+
+\subsubsection{It predicts the census}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Cycle parity against the full census (20{,}256 orbits, 3 seeds each).
+  Parity is computed from $\sigma$; nothing in the simulation knows about it.}
+  \label{tab:parity}
+  \begin{tabular}{lrrrr}
+    \toprule
+    class & $n$ & died before horizon & mean death & mean terminal rules \\
+    \midrule
+    all-even (fixed point exists) & 5{,}535 & 1{,}445 ($26.1\%$) & 108.76 & 15.26 \\
+    any-odd (no fixed point)      & 14{,}721 & 766 ($5.2\%$)     & 119.18 & 24.10 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+All-even orbits die \textbf{five times} as often and retain \textbf{a third
+fewer} terminal rules. They are $27.3\%$ of the family and $65.4\%$ of the
+deaths.
+
+A prospective test, run after the prediction was registered and on operators not
+previously built. \texttt{rot2} ($k \mapsto k+2$) has cycle type $(4,4)$ ---
+all-even --- and collapses to a terminal diversity of $4$. \emph{Reduce} it, i.e.\
+rotate a sub-orbit and hold the remaining registers fixed: every held register
+becomes a $1$-cycle, $1$ is odd, the all-even condition breaks, and the fixed
+point ceases to exist. The same rotation then sustains diversity $64$.
+
+\begin{center}
+\begin{tabular}{llr}
+  \toprule
+  $\sigma$ & cycle type & terminal diversity \\
+  \midrule
+  \texttt{rot2}, $k \mapsto k+2$        & $(4,4)$             & 4 \\
+  \texttt{rot1}, $k \mapsto k+1$        & $(8)$               & 10--14 \\
+  reduced \texttt{rot2} on $\{0,2,4,6\}$ & $(4,1,1,1,1)$       & 28--30 \\
+  reduced \texttt{rot2} on $\{0,2,4\}$   & $(3,1,1,1,1,1)$     & 64--67 \\
+  reduced \texttt{rot2} on $\{0,2\}$     & $(2,1,1,1,1,1,1)$   & 56--66 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Both all-even operators collapse; all three any-odd operators do not. The only
+difference between the first and third rows is \emph{which registers are held}.
+
+\subsubsection{What is and is not claimed}
+
+Parity is \textbf{not} a clean partition of outcomes: $73.9\%$ of all-even
+orbits survive to the horizon. This is expected --- the theorem gives
+\emph{existence} of a fixed point, not \emph{attainment}. An all-even operator
+can settle; whether it does depends on the initial condition. Parity is a strong
+statistical joint, not a law about individual runs, and the $5.2\%$ of any-odd
+orbits that die are unexplained by it.
+
+The point stands nonetheless, and it revises this paper's own headline. The
+family has \emph{no geometric structure and complete combinatorial structure at
+the same time}, and these are not in tension. Cycle parity is not a metric
+property: two permutations one transposition apart can fall on opposite sides,
+so Euclidean, Fisher--Rao and Wasserstein-1 are constitutionally unable to see
+it. Our fail bank is a fail bank of \emph{distances}. The joint was always
+there, in the algebra, and it is four lines of Lean and a double factorial away.
+
 \subsection{Conclusion}
 
 A continuum with a slight non-uniformity, not a set of kinds
