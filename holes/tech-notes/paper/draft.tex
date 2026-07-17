@@ -416,7 +416,24 @@ the interrupter (Figure~\ref{fig:lambda}) it is held off them and sustains
 tens of rules. Bias and absorption are two regimes of one operator, and the
 interrupter selects between them.
 
-One composition is worth exhibiting. Taking the offset-$+2$
+Propagators do not compose usefully with one another, and this negative
+result shapes what composition can do here. Each operator of
+Equation~\eqref{eq:prop} negates every bit---$P_\sig(g)[j] = \lnot\,
+g[\sig^{-1}(j)]$, a permutation of the eight coordinates followed by a global
+flip---so under composition the flips cancel in pairs. The product
+$P_\sig \circ P_\tau$ is a \emph{pure} coordinate permutation, with no
+negation left in it: an absorber with $2^{c}$ fixed points for $c$ cycles
+and none of the forced $\lambda = 1/2$ structure that made the single
+operator interesting. An even number of propagators composes to such a bare
+permutation, an odd number back to a single propagator $P_{\sig\tau\cdots}$;
+either way the composite contains nothing the individual operators did not.
+The family is flat under its own composition. We searched composites of two
+and three operators for emergent structure and found none---the negation
+that gives one operator its edge-of-chaos fixed point is exactly what a
+second operator cancels---so the compositions that \emph{do} yield something
+new must pair a propagator with a step of a different kind.
+
+One such composition is worth exhibiting. Taking the offset-$+2$
 propagator---the $\gcd 2$ operator of Figure~\ref{fig:eoc}---and composing
 it with a construction step that reads the phenotype, matches it against
 local templates, and falls back to the all-zero rule produces a
