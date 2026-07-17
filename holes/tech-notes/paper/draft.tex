@@ -307,10 +307,17 @@ theorem picks out is the class the dynamics single out.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{../../labs/M-aif-tokamak/compositions/parity-dichotomy.png}
-\caption{The parity dichotomy across the census. Operators split by
-cycle-parity class; the all-even class (which alone possesses fixed points,
-Theorem~\ref{thm:parity}) is the one whose orbits preferentially die, and
-the effect is monotone in the cycle count $k$.}
+\caption{The parity dichotomy, by example (the full census of $20{,}256$
+orbits is summarised in the text). Five operators as genotype (top) and
+phenotype (bottom) over time. \emph{Left:} the all-even operators
+rotate$+2$ and rotate$+1$ possess fixed points (Theorem~\ref{thm:parity})
+and, left to settle, are \emph{absorbed} onto them---rotate$+2$ collapses to
+four rules, its $2^k = 2^2$ count. \emph{Right:} the any-odd operators
+(reduced rotate$+2$, acting on a subset so the remaining positions are odd
+one-cycles) possess no fixed point, cannot settle, and stay diverse. This
+absorption is the operator left to itself; a neighbour-blend interrupter
+reverses it for the $\gcd 2$ case (Figure~\ref{fig:lambda},
+\S\ref{sec:interrupter}), and that reversal is the dynamical point.}
 \label{fig:parity}
 \end{figure}
 
@@ -389,7 +396,9 @@ $\approx 70$; only the two $\gcd 2$ operators, offset $\pm 2$ (green),
 sustain a large diverse population, while the six others collapse to one or
 two rules. This is the sustained-versus-transient edge-of-chaos distinction
 of Figure~\ref{fig:eoc}, made quantitative through the $\lambda$-analogue of
-\S\ref{sec:lambda}.}
+\S\ref{sec:lambda}. The interrupter is essential: left to settle without it,
+these same all-even operators are absorbed onto their $2^k$ fixed points
+instead (rotate$+2$ onto four; Figure~\ref{fig:parity}).}
 \label{fig:lambda}
 \end{figure}
 
@@ -399,7 +408,13 @@ neighbour-blend that copies where neighbours agree, or a hold-when-active
 gate), the operator's bias becomes a living regime: a diverse population of
 rules held near $\lambda = 1/2$ rather than a single frozen byte or a
 runaway orbit. The interrupter is what converts the fixed-point \emph{bias}
-of the algebra into a sustained dynamical object.
+of the algebra into a sustained dynamical object. This resolves the apparent
+tension between the census and the $\lambda$-analogue: they show the same
+operator in its two regimes. In the census (Figure~\ref{fig:parity}), left
+to settle, rotate$+2$ is \emph{absorbed} onto its four fixed points; with
+the interrupter (Figure~\ref{fig:lambda}) it is held off them and sustains
+tens of rules. Bias and absorption are two regimes of one operator, and the
+interrupter selects between them.
 
 One composition is worth exhibiting. Taking the offset-$+2$
 propagator---the $\gcd 2$ operator of Figure~\ref{fig:eoc}---and composing
