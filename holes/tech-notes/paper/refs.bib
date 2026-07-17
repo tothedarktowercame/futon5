@@ -224,10 +224,12 @@
 }
 
 % ---------------------------------------------------------------------
-% Added 2026-07-17 (draft.tex citation frame). Details for the arXiv /
-% preprint entries marked % VERIFY came from a deep-research pass whose
-% CONTENT was vote-checked but whose EXISTENCE was not all independently
-% confirmed; check each before submission.
+% Added 2026-07-17 (draft.tex citation frame); metadata verified 2026-07-18
+% against arXiv abstract pages and Crossref. Two corrections from the
+% original deep-research pass: Sakai-Kanno (nlin/0204045) is about rule-table
+% structure and phase diagrams, NOT sampling variance; and the Physica D
+% rule-changing-CA paper is Mori et al. 1998, not "Nandi". Pavlic et al.
+% (1405.4070) is "Self-referencing cellular automata", not "PICARD".
 % ---------------------------------------------------------------------
 
 @article{aracena2008maximum,
@@ -246,7 +248,8 @@
                   number of permutations of $S_{2n}$ in which all cycles
                   have even length},
   howpublished = {The On-Line Encyclopedia of Integer Sequences},
-  note         = {\url{https://oeis.org/A001818}},
+  year         = {2011},
+  note         = {\url{https://oeis.org/A001818}; even-cycle interpretation dated 2011},
 }
 
 @book{stanley1999enumerative,
@@ -276,41 +279,45 @@
   year    = {1999},
 }
 
-@misc{sakai2002edge, % VERIFY authors/title
-  author = {Sakai, S. and Kanno, K.},
-  title  = {On the Edge-of-Chaos and Sampling Variance of the {L}angton
-            Parameter},
+@misc{sakai2002edge,
+  author = {Sakai, Sunao and Kanno, Megumi},
+  title  = {Structure of Rule Table and Phase Diagram of One Dimensional
+            Cellular Automata},
   year   = {2002},
   note   = {arXiv:nlin/0204045},
 }
 
-@misc{svozil2025symmetries, % VERIFY authors/title
-  author = {Svozil, Karl and Schaller, ...},
-  title  = {Symmetries of Elementary Cellular Automata},
+@misc{svozil2025symmetries,
+  author = {Schaller, Martin and Svozil, Karl},
+  title  = {Irreducible Rules and Equivalence Classes of One-dimensional
+            Cellular Automata},
   year   = {2025},
   note   = {arXiv:2512.08117},
 }
 
-@misc{pavlic2014picard, % VERIFY author list
-  author = {Pavlic, Theodore P. and others},
-  title  = {{PICARD}: Programmable Illustration of Cellular Automata Rule
-            Dynamics},
+@misc{pavlic2014selfref,
+  author = {Pavlic, Theodore P. and Adams, Alyssa M. and Davies,
+            Paul C. W. and Walker, Sara Imari},
+  title  = {Self-referencing cellular automata: A model of the evolution of
+            information control in biological systems},
   year   = {2014},
   note   = {arXiv:1405.4070},
 }
 
-@misc{dennunzio2012nonuniform, % VERIFY
+@misc{dennunzio2011nonuniform,
   author = {Dennunzio, Alberto and Formenti, Enrico and Provillard, Julien},
-  title  = {Non-uniform Cellular Automata: Classes, Dynamics, and Decidability},
-  year   = {2012},
+  title  = {Non-Uniform Cellular Automata: Classes, Dynamics, and Decidability},
+  year   = {2011},
   note   = {arXiv:1107.5228},
 }
 
-@article{nandi1994rulechanging, % VERIFY year/venue (1994 vs 1998 Physica D)
-  author  = {Nandi, S. and others},
+@article{mori1998rulechanging,
+  author  = {Mori, Takashi and Kudo, Kiyoshi and Namagawa, Yoichi and
+             Nakamura, Ryoku and Yamakawa, Osamu and Suzuki, Hidetoshi and
+             Uesugi, Tadayuki},
   title   = {Edge of Chaos in Rule-Changing Cellular Automata},
-  journal = {Physica D},
+  journal = {Physica D: Nonlinear Phenomena},
   volume  = {116},
-  pages   = {275},
+  pages   = {275--282},
   year    = {1998},
 }

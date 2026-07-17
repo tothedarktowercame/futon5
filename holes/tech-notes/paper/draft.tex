@@ -106,16 +106,18 @@ characterisation. The canonical symmetry group of ECA
 rule space has order four (reflection $\times$ complement, collapsing $256$
 rules to $88$ classes) \parencite{svozil2025symmetries}; it is not $S_8$,
 and the negation-carrying, $\sig$-parameterised family of
-Equation~\eqref{eq:prop} does not appear in it. Rule-space permutation has
-surfaced only as a one-off illustration --- \textcite{pavlic2014picard}
-swap two bits in a single figure --- never as an enumerated family with a
-derived fixed-point structure. Two established genres are adjacent but
-distinct: per-cell rules (non-uniform or $\nu$-CA
-\parencite{dennunzio2012nonuniform}) and rules that change during evolution
-(rule-changing or programmable CA \parencite{nandi1994rulechanging}). A
+Equation~\eqref{eq:prop} does not appear in it. Rule-space permutation as a
+parameterised, enumerated family with a derived fixed-point structure does
+not appear in the literature we have surveyed; the nearest neighbours
+augment cellular automata with state-dependent feedback
+\parencite{pavlic2014selfref} rather than permuting the rule itself. Two
+established genres are adjacent but distinct: per-cell rules (non-uniform or
+$\nu$-CA \parencite{dennunzio2011nonuniform}) and rules that change during
+evolution (rule-changing or programmable CA
+\parencite{mori1998rulechanging}). A
 referee should note the trap in the first: a $\nu$-CA drawing rules from a
 finite set is equivalent to a uniform CA on the product alphabet
-\parencite{dennunzio2012nonuniform}, so the substrate is not where novelty
+\parencite{dennunzio2011nonuniform}, so the substrate is not where novelty
 lives. It lives in the fixed-point structure of the operator, which is what
 the rest of this paper is about.
 
@@ -218,9 +220,11 @@ was contested: \textcite{mitchell1993revisiting} refuted
 \textcite{packard1988adaptation}'s specific genetic-algorithm clustering
 claim, not the definition of $\lambda$, which survived as one axis among
 others such as Wuensche's $Z$ \parencite{wuensche1999classifying} and
-Voorhees's $\Theta$. There is a standard non-algebraic account of why $1/2$
+Voorhees's $\Theta$. There is a folklore intuition for why $1/2$
 is special --- binomial sampling variance $\lambda(1-\lambda)$ is maximal
-there \parencite{sakai2002edge} --- and it is not ours. What
+there --- and it is not ours; and it has been noted that $\lambda$ alone
+does not fix a rule's dynamical class, distinct classes coexisting at a
+single value \parencite{sakai2002edge}. What
 Theorem~\ref{thm:lambda} adds is that under the complementation
 in~\eqref{eq:prop} the value $1/2$ is \emph{forced}: any
 alternation-under-complement construction lands there by parity. We present
