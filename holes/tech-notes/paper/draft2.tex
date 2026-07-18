@@ -145,10 +145,10 @@ the rest of this paper is about.
 \caption{Two operators from the family, each shown over time as genotype
 (256-colour, left) and phenotype (black and white, right). Under
 $\sig = 16250374$ the genotype field comes to be dominated by ECA
-Rule~110---the red cells, $34\%$ of the genotype---and the phenotype
-accordingly displays Rule~110's characteristic gliders; under
-$\sig = 10275364$ a different regime of rule-domains forms (green and blue,
-under $2\%$ Rule~110). The operator does not merely stir rule space: it
+Rule~110---the red cells, $30\%$ of the genotype at the representative seed
+($31\%$ over six seeds)---and the phenotype accordingly displays Rule~110's
+characteristic gliders; under $\sig = 10275364$ a different regime of
+rule-domains forms (green and blue, under $2\%$ Rule~110). The operator does not merely stir rule space: it
 drives it toward particular, computationally distinguished rules. Genotype
 colours are the legacy engine's own.}
 \label{fig:regimes}
@@ -527,7 +527,11 @@ narrower and empirical. The census and the sustained-diversity behaviour are
 reported for a single spatial coupling ($S_8$, radius one, one value map) at
 limited seed counts, and invite a fuller treatment; we use ``edge of chaos''
 descriptively, not as a measured critical point, and report no
-perturbation-spreading, entropy-rate, or correlation-length statistics. The
+perturbation-spreading, entropy-rate, or correlation-length statistics.
+Because the dynamics is stochastic, every such figure is given both as a
+fixed \emph{representative} seed and, where a scalar is quoted, as a fixed
+\emph{six-seed sample} (mean and range); both are reproducible from the
+pinned seeds through the accompanying package. The
 substrate the object sits in is not itself new (\secref{sec:object}); $\lambda$
 is one heuristic among several \parencite{wuensche1999classifying}, and we
 make no claim that balance implies edge-of-chaos dynamics---only that here
@@ -548,14 +552,18 @@ difference between an operator whose field stays diverse and one whose field
 collapses; the distinct-rule count is not, and in our
 runs it separates the two across the rotation family by more than an order of
 magnitude (Figure~\ref{fig:lambda}). The same observable offers a suggestive
-reading of the search that produced the family. The operator of
-Figure~\ref{fig:regimes} that comes to be dominated by Rule~110---a universal
-rule, the naive prize of a search for computational intelligence---does so by
-concentrating about a third of the field onto it, and in that run holds fewer
-distinct rules ($\approx 18$) than a foil that stays under $2\%$ Rule~110 yet
-keeps a more diverse population ($\approx 23$). On this one pair, recovering a
-universal rule and sustaining a diverse population pull against each
-other---a suggestion worth testing at scale, not a law we have established.
+reading of the search that produced the family, reported both as a
+representative run and as a fixed six-seed sample (\secref{sec:limits}). The
+operator of Figure~\ref{fig:regimes} that comes to be dominated by
+Rule~110---a universal rule, the naive prize of a search for computational
+intelligence---concentrates the field onto it and pays for it in diversity.
+At the representative seed, $30\%$ of its genotype cells are Rule~110 and it
+sustains $14$ distinct rules, against a foil that holds Rule~110 below $2\%$
+and sustains $17$; over the six-seed sample the ordering is unchanged---Rule
+110 $31\%$ (range $26$--$41\%$) versus $2\%$ ($1$--$3\%$), sustained diversity
+$18$ versus $22$. On this pair, recovering a universal rule and sustaining a
+diverse population pull against each other---a suggestion worth testing at
+scale, not a law we have established.
 
 \printbibliography
 \end{document}
