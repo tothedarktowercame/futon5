@@ -295,15 +295,17 @@ coexist; the metric measures we tried do not separate the two
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/fig8.png}
-\caption{Figure~8 of the 2015 paper, reproduced---the family's accidental
-first sighting, from the original erroneous mutation (one bit frozen). A
-triptych on a shared time axis: genotype (left, coloured as in
-Figures~\ref{fig:regimes}--\ref{fig:river}, well-known ECAs visible early),
-phenotype (centre), and the population dynamics (right): the count of
-\emph{distinct} rules (grey) collapses from tens to two, while the two
-survivors---rules $170$ (red) and $42$ (dark)---rise and fluctuate as they
-partition the field between them. The alternating population is what the
-frozen bit preserves; this is the $k=1$ case of the $2^k$ count.}
+\caption{The family's accidental first sighting, separated from its later
+idealisation (seed 0, width 80). Top: a direct replay of the historical
+Figure~8 source. Its neighbour blend is followed by two independent calls to
+the erroneous mutation, equivalently two writes by
+$\sigma=[0,0,1,2,3,4,5,6]$. The distinct-rule count (grey) falls from tens to
+two; rules $170$ (red) and $42$ (dark) partition the field. Bottom: the later
+one-write propagator idealisation, which applies the same $\sigma$ only once
+after blending. Its terminal genotypes are plotted rather than assuming the
+historical pair. This lower panel isolates the propagator cleanly, but is not a
+one-for-one reproduction of the 2015 figure. Genotype, phenotype, and
+population share the time axis within each row.}
 \label{fig:figure8}
 \end{figure}
 
