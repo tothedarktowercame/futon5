@@ -574,6 +574,101 @@ because the classifying property lives on the operator, not on the states.
 The classification is a theorem \emph{because} it is not a per-trajectory
 statistic.
 
+\section{The Edge of Chaos, Locally}
+\label{sec:discussion}
+
+The survey of Figure~\ref{fig:eoc} exposes a sharp behavioural split within a
+family of provably fixed-point-bearing operators: only offset $\pm 2$ sustains a
+high-diversity, visually complex phase, while the rest collapse to near-uniform
+fields. That surviving phase carries the visual signature long associated with
+the \emph{edge of chaos} \parencite{langton1990computation}, and a reader is
+entitled to ask whether the resemblance is more than skin deep. It is, but only
+in a specific and measurable sense, and naming that sense is the purpose of this
+section.
+
+Two notions travel under the one phrase. The first is \emph{global}: a system
+tuned by a control parameter to a critical point between an ordered and a
+disordered phase---Langton's $\lambda$, which Section~\ref{sec:lambda} shows is
+silent here, every fixed point sitting at $\lambda = 1/2$ by
+Theorem~\ref{thm:lambda}. The second is \emph{local}: within a single
+realisation, ordered and disordered regions coexist in space, and the edge of
+chaos is the \emph{interface} between them---the domain walls of computational
+mechanics \parencite{crutchfield1989inferring,shalizi2001computational}, where
+structure propagates and interacts. It is the second that this object supports.
+
+To expose the local structure we colour the genotype field not by rule identity
+but by each rule's \emph{intrinsic dynamical character}: a scalar chaos score
+obtained by running that rule alone as an elementary CA and measuring its
+asymptotic activity (ordered rules score $0$, chaotic rules approach $1/2$, and
+the complex rules---including Rule~$110$---fall between). Under this tint
+(Figure~\ref{fig:tint}) the offset $+2$ field resolves into coexisting ordered
+and chaotic domains separated by a definite boundary rather than a uniform
+turbulence. Thinning that boundary to a filament skeleton recovers the
+``separating curve'' directly from the data.
+
+The interface is not a clean line but a \emph{fractal}. Box-counting yields a
+scale-free dimension (clean power laws, $R^2 > 0.99$) of $D \approx 1.5$ for
+offset $+2$ and $D \approx 1.7$ for the phenotype-reading river of
+Figure~\ref{fig:river}. Two features lift this above curiosity
+(Figure~\ref{fig:interface}). First, across system sizes $L = 128$ to $768$ the
+dimension \emph{stabilises} rather than drifting, and the coexistence fraction
+is \emph{size-independent} ($\approx 0.4$ at every $L$): the operator neither
+orders-out nor chaos-out as it grows, but holds a scale-invariant mixture.
+Second, the behaviour cleanly separates sustaining from collapsing operators:
+offset $+4$, superficially similar in isolation, loses its chaotic phase
+\emph{entirely} at $L \ge 256$---the interface does not simplify, it disappears.
+The edge of chaos, locally understood, is thus a persistent, scale-invariant
+geometric feature of the sustaining operators and demonstrably absent from the
+collapsing ones.
+
+We deliberately stop short of two stronger claims. We do not assert a global
+critical transition; consistent with Section~\ref{sec:limits}, the honest
+reading remains a stable coexistence rather than a demonstrated critical point,
+and the interface analysis here is exploratory---a handful of seeds, on the
+fixed-boundary (line) variant rather than the wrapped lattice of
+Figure~\ref{fig:eoc}; a boundary-matched, more heavily seeded finite-size
+collapse is the natural next step. Nor do we claim computation: direct
+injection--decode probes recover information storage and short-range
+transmission on these fields, but no nonlinear modification under the conditions
+tested. The edge of chaos we defend is the structural one---a scale-invariant
+order/chaos interface---not the computational one.
+
+The local picture also ties back to what makes these operators new. The
+genotype--phenotype coupling is not incidental to the interface: the
+phenotype-reading river sustains a \emph{denser} fractal boundary
+($D \approx 1.7$) than the feedforward offset $+2$ ($D \approx 1.5$), the
+interface being where the coupling becomes visible. And it points at a sequel.
+If the filaments are domain walls, they are candidate \emph{wires}: the natural
+computational question is not which rules compose them---in our data the complex
+rules are not enriched on the interface---but whether information is
+\emph{transported along} them and \emph{combined where they collide}
+\parencite{mitchell1993revisiting}. Whether computation flows down the
+edge-of-chaos lines of these diagrams is, we think, a paper of its own.
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.68\linewidth]{figures/eoc_tint.png}
+\caption{\textbf{The genotype as an order/chaos map.} The offset $+2$ genotype
+field (two representative seeds, fixed-boundary variant) tinted by each rule's
+intrinsic chaos score---its asymptotic activity as an isolated elementary CA
+(blue $=$ ordered, red $=$ chaotic, pale $=$ complex, including Rule~110).
+Ordered and chaotic domains coexist, separated by a definite interface.}
+\label{fig:tint}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=\linewidth]{figures/eoc_interface.png}
+\caption{\textbf{The order/chaos interface is fractal and size-stable for the
+sustaining operators.} Top: the interface (black) extracted from the tinted
+field at $L = 256$. offset $+2$ carries a coherent fractal boundary
+($D \approx 1.53$); offset $+4$ has collapsed (no interface); the
+phenotype-reading river carries a denser one ($D \approx 1.69$). Bottom:
+box-counting dimension against system size $L$; the estimate stabilises rather
+than drifting. Exploratory: a handful of seeds, fixed-boundary variant.}
+\label{fig:interface}
+\end{figure}
+
 \section{Limits}
 \label{sec:limits}
 
@@ -581,8 +676,11 @@ The theorems are the Boolean case and are exact; the dynamical claims are
 narrower and empirical. The census and the sustained-diversity behaviour are
 reported for a single spatial coupling ($S_8$, radius one, one value map) at
 limited seed counts, and invite a fuller treatment; we use ``edge of chaos''
-descriptively, not as a measured critical point, and report no
-perturbation-spreading, entropy-rate, or correlation-length statistics.
+descriptively, not as a measured critical point. Section~\ref{sec:discussion}
+takes up the local, structural reading and reports an exploratory
+interface-dimension statistic under its own stated caveats (few seeds,
+fixed-boundary variant); beyond it we report no perturbation-spreading or
+entropy-rate statistics.
 Because the dynamics is stochastic, every such figure is given both as a
 fixed \emph{representative} seed and, where a scalar is quoted, as a fixed
 \emph{six-seed sample} (mean and range); both are reproducible from the
