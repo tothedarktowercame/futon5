@@ -307,6 +307,55 @@ frozen bit preserves; this is the $k=1$ case of the $2^k$ count.}
 \label{fig:figure8}
 \end{figure}
 
+\subsection{A dead genotype can carry a live phenotype}
+\label{sec:shell}
+
+The balanced shell is a definite object: exactly $\binom{8}{4} = 70$ rules
+carry four active outputs, and by Theorem~\ref{thm:lambda} the absorbing set of
+every operator in the family lies wholly inside it. Collapse is therefore not
+merely a loss of diversity but a fall onto this particular $70$-rule shell---the
+field dies \emph{onto the edge}, at $\lambda = 1/2$, always.
+
+Balance is necessary for a genotype to freeze and silent about what the frozen
+rule then does. Run each of the $70$ as an ordinary elementary CA and they
+split: $32$ are phenotypically live---sustained change under iteration, the
+additive rules $90$, $105$, $150$ and the class-IV rule $54$ among them---while
+the rest fall quiescent. The two halves share a single $\lambda$; this is,
+inside our family and by construction rather than by survey, the coexistence of
+dynamical classes at one activity value that has long been urged against
+$\lambda$ as an order parameter \parencite{sakai2002edge}. A field can thus die
+in its genotype while the surviving rule keeps its phenotype in motion.
+
+Figure~\ref{fig:shell} is such a field, built to specification. To seat a
+collapse on a chosen live rule $R$ it suffices to pair $R$'s four active
+positions with its four inactive ones as an involution: four transpositions, an
+all-even operator that must collapse (Theorem~\ref{thm:parity}) and that holds
+$R$ among its fixed points. Carried out for Rule~$54$ this yields
+$\sig = [2\,3\,0\,1\,5\,4\,7\,6]$; run from a random field it drives the
+genotype to near-uniformity---two rules survive---while the phenotype never
+settles. The field has died onto Rule~$105$, another live tenant of the same
+shell, whose additive dynamics keep the black-and-white panel full of
+structure. Genotypic death and phenotypic death are not the same event.
+
+One caveat marks the open edge of this. An involution fixes not its target
+alone but the whole shell compatible with its pairing, and which tenant a
+random field actually reaches is set by the basins, not by the construction: we
+aimed at $54$ and the dynamics preferred $105$. Existence is settled---live
+survivors are constructible---but \emph{steering} a field onto a named rule is
+not, and is the natural next question.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/critical_shell.png}
+\caption{A genotypically dead, phenotypically live field. The all-even operator
+$\sig = [2\,3\,0\,1\,5\,4\,7\,6]$, built to fix the balanced shell containing
+Rule~$105$, collapses the genotype (left, 256-colour) to near-uniformity within
+a few dozen rows---two rules survive---yet the phenotype (right) never settles:
+the field has died onto Rule~$105$, an additive $\lambda = 1/2$ rule whose
+dynamics keep it complex. Seed~$1$, $W = 80$, $T = 120$.}
+\label{fig:shell}
+\end{figure}
+
 \section{The Census}
 \label{sec:census}
 
