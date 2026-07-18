@@ -700,8 +700,10 @@ structure propagates and interacts. It is the second that this object supports.
 To expose the local structure we colour the genotype field not by rule identity
 but by each rule's \emph{intrinsic dynamical character}: a scalar chaos score
 obtained by running that rule alone as an elementary CA and measuring its
-asymptotic activity (ordered rules score $0$, chaotic rules approach $1/2$, and
-the complex rules---including Rule~$110$---fall between). Under this tint
+\emph{dynamical} activity---how much its field keeps changing over time, a
+run-time quantity distinct from the static truth-table balance $\lambda$ of
+Section~\ref{sec:lambda}. Ordered rules score near $0$; complex rules such as
+Rule~$110$ near $0.4$; chaotic rules $0.5$ and above. Under this tint
 (Figure~\ref{fig:tint}) the field resolves into coexisting domains of distinct
 dynamical character---ordered, complex, and chaotic---separated by definite
 boundaries rather than a uniform turbulence. Which regimes coexist depends on
@@ -741,8 +743,9 @@ order/chaos interface---not the computational one.
 The local picture also ties back to what makes these operators new. The
 genotype--phenotype coupling is not incidental to the interface: the
 phenotype-reading river sustains a \emph{denser} fractal boundary
-($D \approx 1.7$) than the feedforward offset $+2$ ($D \approx 1.5$), the
-interface being where the coupling becomes visible. And it points at a sequel.
+($D \approx 1.7$) than the feedforward offset $+2$ ($D \approx 1.5$)---a
+difference visible at the interface, though whether the coupling \emph{drives}
+it we do not settle here. And it points at a sequel.
 If the filaments are domain walls, they are candidate \emph{wires}: the natural
 computational question is not which rules compose them---in our data the complex
 rules are not enriched on the interface---but whether information is
