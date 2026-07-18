@@ -34,6 +34,8 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{subcaption}
+\usepackage[most]{tcolorbox}
+\usepackage{needspace}
 \usepackage[style=apa,backend=biber]{biblatex}
 \addbibresource{refs.bib}
 \usepackage{nameref}
@@ -45,6 +47,20 @@
 \newcommand{\secref}[1]{\emph{\nameref{#1}}}
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}[theorem]{Corollary}
+\newtcolorbox[auto counter]{workedexample}[2][]{%
+  enhanced,
+  breakable,
+  colback=green!6,
+  colframe=green!45!black,
+  boxrule=0.7pt,
+  arc=1.5mm,
+  left=2.5mm,
+  right=2.5mm,
+  top=1.5mm,
+  bottom=1.5mm,
+  fonttitle=\bfseries,
+  title={Worked example~\thetcbcounter: #2},
+  #1}
 
 \title{A New Family of Operators on Cellular Automata}
 \shorttitle{A New Family of Operators on Cellular Automata}
@@ -112,7 +128,68 @@ complement. The truth table is thereby itself an eight-cell automaton whose
 wiring is $\sig$ and whose update is Boolean negation --- an automaton inside
 the automaton. Equation~\eqref{eq:prop} defines a family of $8! = 40{,}320$
 operators that is finite, exhaustively enumerable, and, as we show below,
-exactly classified.
+exactly classified. Box~\ref{box:propagator} works through one member of the
+family bit by bit.
+
+\begin{workedexample}[label={box:propagator}]{A propagator by hand}
+\small
+Write an ECA rule in Wolfram's standard neighbourhood order:
+\begin{center}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{c@{\quad}*{8}{c}}
+neighbourhood & $111$ & $110$ & $101$ & $100$ & $011$ & $010$ & $001$ & $000$ \\
+\midrule
+Rule 110 & $0$ & $1$ & $1$ & $0$ & $1$ & $1$ & $1$ & $0$ \\
+\end{tabular}
+\end{center}
+Thus Rule~110 is the byte $01101110$. Let $\sig(k)=k+2\pmod 8$:
+each source bit is complemented and written two positions further along.
+Carrying out the eight writes gives
+\[
+P_{+2}(01101110)=01100100,
+\]
+which is Rule~100. This changes what the cell does to its black-and-white
+phenotype. For example, neighbourhood $011$ maps to $1$ under Rule~110 but
+to $0$ under Rule~100. The propagator has not directly flipped a phenotype
+cell; it has changed the truth table that the cell will use.
+\end{workedexample}
+
+The bare operator acts on one eight-bit rule. In the spatial experiments it
+is placed inside a two-layer cellular automaton: a field of rules (the
+\emph{genotype}) governs a field of black-and-white states (the
+\emph{phenotype}), while neighbouring rules also interact. Box~\ref{box:metaca-step}
+spells out one complete local update; this is the computation behind the
+space--time diagrams in Figure~\ref{fig:regimes}.
+
+\Needspace{0.72\textheight}
+\begin{workedexample}[label={box:metaca-step}]{One site, one complete MetaCA step}
+\small
+At time $t$, site $x$ holds an eight-bit rule $g_x(t)$ and a phenotype bit
+$X_x(t)$. One ordinary propagator step has three parts.
+\begin{enumerate}
+\item \textbf{Express the current rule.} The phenotype neighbourhood is
+evaluated by the rule at its centre:
+\[
+X_x(t+1)=g_x(t)\bigl(X_{x-1}(t),X_x(t),X_{x+1}(t)\bigr).
+\]
+\item \textbf{Blend neighbouring rules.} For each truth-table position $j$,
+inspect the three genotype bits
+$\bigl(g_{x-1}(j),g_x(j),g_{x+1}(j)\bigr)$. If the two outer bits agree, copy
+their value. Thus $(0,1,0)$ blends to $0$. If they disagree, the centre rule
+decides by treating the triple as one of its ECA neighbourhoods. The eight
+coordinate-wise decisions form an intermediate rule
+\[
+h_x=B\bigl(g_{x-1}(t),g_x(t),g_{x+1}(t)\bigr).
+\]
+\item \textbf{Propagate the blended rule.} Apply the selected wiring to that
+intermediate byte:
+\[
+g_x(t+1)=P_\sig(h_x).
+\]
+\end{enumerate}
+The ordinary runs apply $P_\sig$ once. The historical Figure~8 accident,
+replayed in Figure~\ref{fig:figure8}, applied its off-by-one propagator twice.
+\end{workedexample}
 
 The substrate---a cellular automaton whose cells hold rules rather than
 states---is not itself new \parencite{corneli2015search}; what we study
@@ -172,6 +249,29 @@ $g(k) = (\lnot)^{L} g(k)$, and $(\lnot)^{L}$ is the identity exactly when
 $L$ is even; conversely, colour each orbit by the parity of its distance
 from a chosen representative. A one-cycle of $\sig$ ($L=1$) is odd and so
 admits no such colouring, which is why even cycles are required throughout.
+
+Box~\ref{box:even-cycle} shows the theorem on the offset-$+2$ operator. The
+same small calculation also makes the later $2^k$ count and forced
+$\lambda=1/2$ balance visible before we state them generally.
+
+\begin{workedexample}[label={box:even-cycle}]{Why even cycles work}
+\small
+For offset $+2$ on eight truth-table positions,
+\[
+\sig=(0\;2\;4\;6)(1\;3\;5\;7).
+\]
+A fixed rule must change colour at every arrow because
+$g(\sig k)=\lnot g(k)$. Around either four-cycle it can therefore read
+$0101$ or $1010$: after four negations it returns consistently to its
+starting bit. The two cycles can be chosen independently, giving
+\[
+2^2=4\quad\text{fixed rules:}\quad
+51,\ 102,\ 153,\ 204.
+\]
+Each contains four zero-bits and four one-bits. An odd cycle fails for the
+same elementary reason: after an odd number of negations it returns to the
+starting position demanding the opposite of the bit with which it began.
+\end{workedexample}
 
 This is the signed-cycle fixed-point theorem of Boolean-network theory
 \parencite{aracena2008maximum} specialised to~\eqref{eq:prop}: our operator
@@ -497,7 +597,8 @@ declines to propagate. Composed with such a step (a neighbour-blend that
 copies where neighbours agree, or a hold-when-active gate), the coupled
 dynamics no longer settles: instead of a single frozen byte or a runaway
 cycle, the field holds a diverse population of rules, many of them at
-$\lambda = 1/2$. This is what resolves the apparent tension between the census
+$\lambda = 1/2$. The coordinate-wise blend in Box~\ref{box:metaca-step} is the
+interrupter used in the ordinary spatial runs. This is what resolves the apparent tension between the census
 and Figure~\ref{fig:lambda}: they are the same operator under two
 \emph{couplings}. In the census runs, left to settle, the field under
 rotate$+2$ collapses onto a few of its fixed points; with the interrupter it
