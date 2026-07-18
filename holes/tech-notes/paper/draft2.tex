@@ -601,10 +601,14 @@ but by each rule's \emph{intrinsic dynamical character}: a scalar chaos score
 obtained by running that rule alone as an elementary CA and measuring its
 asymptotic activity (ordered rules score $0$, chaotic rules approach $1/2$, and
 the complex rules---including Rule~$110$---fall between). Under this tint
-(Figure~\ref{fig:tint}) the offset $+2$ field resolves into coexisting ordered
-and chaotic domains separated by a definite boundary rather than a uniform
-turbulence. Thinning that boundary to a filament skeleton recovers the
-``separating curve'' directly from the data.
+(Figure~\ref{fig:tint}) the field resolves into coexisting domains of distinct
+dynamical character---ordered, complex, and chaotic---separated by definite
+boundaries rather than a uniform turbulence. Which regimes coexist depends on
+the operator: offset $+2$ pairs ordered with chaotic, whereas
+$\sigma = 16250374$ pairs ordered with the complex Rule~110 that comes to
+dominate its field (\secref{sec:conclusion}). Thinning the boundary between
+ordered and active regions to a filament skeleton recovers the ``separating
+curve'' directly from the data.
 
 The interface is not a clean line but a \emph{fractal}. Box-counting yields a
 scale-free dimension (clean power laws, $R^2 > 0.99$) of $D \approx 1.5$ for
@@ -648,11 +652,17 @@ edge-of-chaos lines of these diagrams is, we think, a paper of its own.
 \begin{figure}[tb]
 \centering
 \includegraphics[width=0.68\linewidth]{figures/eoc_tint.png}
-\caption{\textbf{The genotype as an order/chaos map.} The offset $+2$ genotype
-field (two representative seeds, fixed-boundary variant) tinted by each rule's
-intrinsic chaos score---its asymptotic activity as an isolated elementary CA
-(blue $=$ ordered, red $=$ chaotic, pale $=$ complex, including Rule~110).
-Ordered and chaotic domains coexist, separated by a definite interface.}
+\caption{\textbf{The genotype as a map of dynamical regimes.} Genotype fields
+(fixed-boundary variant) tinted by each rule's intrinsic chaos score---its
+asymptotic activity as an isolated elementary CA (blue $=$ ordered near $0$,
+pale $\approx$ complex near $0.4$, red $=$ chaotic near $0.5$ and above). The
+field resolves into coexisting regimes, and which active regime pairs with the
+ordered background depends on the operator: offset $+2$ mixes ordered and
+genuinely \emph{chaotic} rules ($\approx 40\%$ chaotic at this seed), whereas
+$\sigma = 16250374$ is dominated by the \emph{complex} Rule~110
+($\approx 48\%$; Figure~\ref{fig:regimes}) and pairs ordered with complex. The
+activity score orders the regimes but does not by itself separate complex from
+chaotic, a known-hard distinction.}
 \label{fig:tint}
 \end{figure}
 
