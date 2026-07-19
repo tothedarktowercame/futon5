@@ -8,9 +8,13 @@ Run from the paper dir: python3 figures/gen_phase_diagram.py
 """
 import os, re
 import numpy as np
+from scipy.optimize import curve_fit
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+def logistic(q, a0, A, q0, w):
+    return a0 + (A - a0) / (1 + np.exp(-(q - q0) / w))
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "phase_data")
@@ -38,15 +42,25 @@ def load(p):
 fig = plt.figure(figsize=(13, 8))
 gs = fig.add_gridspec(2, 4, height_ratios=[1.15, 1], hspace=0.34, wspace=0.28)
 axA, axB, axC, axD = (fig.add_subplot(gs[0, i]) for i in range(4))
+qq = np.linspace(0, 1, 200); ws = []
 for L in Ls:
     s = d[d[:, 0] == L]; c = cmap[L]
-    axA.plot(s[:, 1], s[:, 2], "o-", color=c, ms=3, label=f"L={int(L)}")
+    # smooth-crossover fit: logistic a_G(q); width w is the crossover sharpness
+    p, _ = curve_fit(logistic, s[:, 1], s[:, 2], p0=[0.06, 0.7, 0.18, 0.18],
+                     bounds=([0, 0.4, 0, 0.02], [0.12, 1.0, 1, 1]), maxfev=20000)
+    res = s[:, 2] - logistic(s[:, 1], *p)
+    r2 = 1 - np.sum(res**2) / np.sum((s[:, 2] - s[:, 2].mean())**2)
+    ws.append(p[3])
+    axA.plot(s[:, 1], s[:, 2], "o", color=c, ms=3.5, label=f"L={int(L)} ($w$={p[3]:.2f}, $R^2$={r2:.3f})")
+    axA.plot(qq, logistic(qq, *p), "-", color=c, lw=1.1, alpha=0.7)
     axB.plot(s[:, 1], s[:, 5], "o-", color=c, ms=3)
     axC.plot(s[:, 1], s[:, 7], "o-", color=c, ms=3)
     axD.plot(s[:, 1], s[:, 6], "o-", color=c, ms=3)
-axA.axvspan(0.10, 0.50, color="0.85", zorder=0)                 # the operational crossover band
-axA.set_title(r"(a) genotype activity $a_G$", fontsize=9); axA.legend(fontsize=7)
-axA.annotate("intermediate-activity\nband (operational)", (0.30, 0.12), fontsize=6.5, ha="center", color="0.35")
+axA.axvspan(0.10, 0.50, color="0.88", zorder=0)                 # the operational crossover band
+axA.set_title(r"(a) activity $a_G$: smooth logistic crossover", fontsize=9)
+axA.legend(fontsize=5.6, loc="upper left")
+axA.annotate("$w$ size-independent ($\\sim L^{-0.04}$):\nno sharpening $\\Rightarrow$ no transition",
+             (0.52, 0.10), fontsize=6.2, ha="left", color="0.25")
 axB.set_title(r"(b) susceptibility $L\,\mathrm{Var}(a_G)$", fontsize=9)
 axB.annotate("no convergent interior maximum;\nlarge-L maxima at the sampled boundary", (0.02, 2.5),
              fontsize=6.5, color="#a50026", ha="left")
