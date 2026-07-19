@@ -777,15 +777,16 @@ The activity field resolves into ordered and chaotic domains separated by
 fractal-like walls (Figure~\ref{fig:interface}; box-counting dimension
 $D \approx 1.5$--$1.7$ over $L = 128$--$768$, a handful of seeds). Those walls are
 more than a morphological feature: they are the locus of maximal \emph{genotypic}
-change. Measuring the row-to-row rewrite rate of the rule field by region, the wall
-churns more than either domain interior---for offset $+2$, $0.86$ at the wall
-against $0.80$ in the ordered interior and $0.63$ in the chaotic one, an ordering
-(wall $>$ ordered $>$ chaotic interior) that holds for every seed we ran and for
-the river and $\sigma = 16250374$ alike. The inversion is the content: the chaotic
-domain, active in \emph{phenotype}, is the most \emph{genotype}-stable, while the
-wall---where an ordered domain abuts a chaotic one---is where the propagator does
-its most rewriting. The walls are not compositionally special: no rule class is
-enriched there, and the universal Rule~110 is if anything depleted, so the
+change. Measuring the row-to-row rewrite rate of the rule field by region
+(Figure~\ref{fig:churn}), the wall churns more than either domain interior---for
+offset $+2$ at $L = 256$, $0.83$ at the wall against $0.77$ in the ordered interior
+and $0.58$ in the chaotic one---and the wall exceeds \emph{both} interiors in every
+one of the $32$ committed operator/width/seed fields (offset $+2$, the river, and
+$\sigma = 16250374$). The chaotic domain, active in \emph{phenotype}, is in
+aggregate the most \emph{genotype}-stable (a few of the smallest fields aside), so
+the wall---where an ordered domain abuts a chaotic one---is where the propagator
+does its most rewriting. The walls are not compositionally special: no rule class
+is enriched there, and the universal Rule~110 is if anything depleted, so the
 distinction is dynamical, not chemical. Whether that rewriting transports or
 combines information \emph{along} the walls we do not test; that is the natural
 question for a sequel.
@@ -856,6 +857,20 @@ $2$--$64$); roughly stable, with a modest downward drift. These walls are also
 where the rule field is rewritten fastest (Discussion). Exploratory: a handful of
 seeds, fixed-boundary variant.}
 \label{fig:interface}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/eoc_churn.png}
+\caption{\textbf{The genotype is rewritten fastest at the activity-domain walls.}
+Row-to-row rewrite rate of the rule field (fraction of cells whose ECA rule
+changes from the row above), by region, at $L = 256$ (mean $\pm$ sample SD over
+the committed seeds). For every operator the wall exceeds \emph{both} the ordered
+and the chaotic domain interior; the chaotic interior---most active in
+phenotype---is the most genotype-stable. Wall extraction is the threshold-and-smooth
+procedure of Figure~\ref{fig:interface}; reproducible from the committed fields
+(\texttt{plot\_eoc\_churn.py}).}
+\label{fig:churn}
 \end{figure}
 
 \section{Limits}
