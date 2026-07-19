@@ -532,23 +532,12 @@ diversity, not literal aperiodicity.
 \centering
 \includegraphics[height=0.92\textheight]{figures/survey_a.png}
 \caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
-offset. Each row is one operator $\bit{\sig(k)} := \lnot\,\bit{k}$ with
-$\sig$ a wrap rotation, shown for two seeds as genotype (256-colour) and
-phenotype (black and white) over the first hundred generations.
-\discuss{These fields evolve under the \emph{spatially coupled} dynamics of
-\secref{sec:interrupter}---the per-cell operator together with the coupling
-between cells---not $P_\sig$ applied cell-by-cell. Under the bare operator every
-all-even rotation here, offset $\pm 2$ included, freezes onto its fixed rules
-(Figure~\ref{fig:parity}, left); it is the coupling that reverses this for the
-$\gcd 2$ case, and that reversal is what the figure shows.} Every
-non-trivial rotation is all-even and so possesses fixed points
-(Theorem~\ref{thm:parity}); yet among these rotations only
-$\gcd(\text{offset},8)=2$---offset $\pm 2$, two $4$-cycles, highlighted
-green---sustains a high-diversity, visually complex phase. The remaining
-rotations collapse to near-uniform fields within a few dozen generations.
-(This is a statement \emph{within} the all-even rotation family; operators with
-an odd cycle, which possess no fixed rule, stay diverse for a different reason,
-\S\ref{sec:interrupter}.) Continued in panel~(b).}
+offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$, two
+seeds, genotype (256-colour) and phenotype (black and white) over the first
+hundred generations. Among these (all-even) rotations only
+$\gcd(\text{offset},8)=2$---offset $\pm 2$, highlighted green---sustains a
+high-diversity phase; the rest collapse. Details in Worked
+Example~\ref{box:survey}. Continued in panel~(b).}
 \label{fig:eoc}
 \end{figure}
 
@@ -562,6 +551,26 @@ high-diversity phase, the rest collapse. Possessing a fixed point and having
 the field stay near it are different properties, and this pair of pages is
 the whole paper in one figure.}
 \end{figure}
+
+\begin{workedexample}[label={box:survey}]{Reading the rotation survey}
+\small
+The fields of Figure~\ref{fig:eoc} evolve under the \emph{spatially coupled}
+dynamics of \secref{sec:interrupter}---the per-cell operator together with the
+coupling between cells---not $P_\sig$ applied cell-by-cell. This is what the
+survey turns on: under the bare operator every all-even rotation shown, offset
+$\pm 2$ included, freezes onto its fixed rules (Figure~\ref{fig:parity}, left).
+It is the coupling that reverses this for the $\gcd 2$ case, and that
+reversal---a fixed-point-bearing operator that nonetheless sustains a
+high-diversity field---is what the survey displays.
+
+Every non-trivial rotation is all-even and so possesses fixed points
+(Theorem~\ref{thm:parity}); yet among them only offset $\pm 2$ (two $4$-cycles)
+sustains, while the remaining rotations ($\gcd 1$ and $\gcd 4$) collapse to
+near-uniform fields within a few dozen generations. This is a statement
+\emph{within} the all-even rotation family: an operator carrying an odd cycle has
+no fixed rule to settle onto and stays diverse for a different reason
+(Figure~\ref{fig:parity}, right).
+\end{workedexample}
 
 Possessing a fixed point (Theorem~\ref{thm:parity}) is not the same as
 reaching one, and $P_\sig$ does not by itself move a rule toward
