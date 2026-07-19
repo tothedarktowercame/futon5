@@ -715,11 +715,11 @@ statistic.
 The survey of Figure~\ref{fig:eoc} exposes a sharp behavioural split within a
 family of provably fixed-point-bearing operators: only offset $\pm 2$ sustains a
 high-diversity, visually complex phase, while the rest collapse to near-uniform
-fields. That surviving phase carries the visual signature associated with the
-\emph{edge of chaos} \parencite{langton1990computation}, and a reader is entitled
-to ask whether it realises that idea in the usual sense---a critical point, tuned
-by a control parameter, between an ordered and a disordered phase. We tested this
-directly with a finite-size scan and find no such point. We therefore ask a
+fields. That surviving phase is visually complex, and a reader is entitled to ask whether
+it sits at a \emph{critical point}---tuned by a control parameter, between an
+ordered and a disordered phase, as the complexity of cellular automata is often
+supposed to \parencite{langton1990computation}. We tested this directly with a
+finite-size scan and find no such point. We therefore ask a
 different and answerable question: whether the sustained diversity is spatially
 organised into coexisting dynamical regimes.
 
@@ -747,9 +747,8 @@ $0.15 \le a_G \le 0.60$. Across the tested widths its \emph{lower} edge is
 robustly $q \approx 0.1$---stable under both system size and the choice of
 threshold---while its upper edge is threshold-dependent, because $a_G$ saturates
 gradually rather than jumping (the band spans $q \approx 0.1$ to $0.4$--$0.5$).
-We use ``edge of chaos'' for this finite-width crossover deliberately, as an
-interpretive metaphor: a \emph{littoral edge}, a shore of finite width rather
-than a thermodynamic phase boundary. Where the bare rotations collapse or cycle
+This finite-width crossover is best read as a \emph{littoral edge}: a shore of
+finite width rather than a thermodynamic phase boundary. Where the bare rotations collapse or cycle
 (Figure~\ref{fig:eoc}), offset $+2$ holds this crossover for the length of the
 run.
 
@@ -778,7 +777,7 @@ fractal-like walls (Figure~\ref{fig:interface}; box-counting dimension
 $D \approx 1.5$--$1.7$ over $L = 128$--$768$, a handful of seeds). Those walls are
 more than a morphological feature: they are the locus of maximal \emph{genotypic}
 change. Measuring the row-to-row rewrite rate of the rule field by region
-(Figure~\ref{fig:churn}), the wall churns more than either domain interior---for
+(Table~\ref{tab:churn}), the wall churns more than either domain interior---for
 offset $+2$ at $L = 256$, $0.83$ at the wall against $0.77$ in the ordered interior
 and $0.58$ in the chaotic one---and the wall exceeds \emph{both} interiors in every
 one of the $32$ committed operator/width/seed fields (offset $+2$, the river, and
@@ -859,19 +858,26 @@ seeds, fixed-boundary variant.}
 \label{fig:interface}
 \end{figure}
 
-\begin{figure}[tb]
+\begin{table}[tb]
 \centering
-\includegraphics[width=0.82\linewidth]{figures/eoc_churn.png}
-\caption{\textbf{The genotype is rewritten fastest at the activity-domain walls.}
-Row-to-row rewrite rate of the rule field (fraction of cells whose ECA rule
-changes from the row above), by region, at $L = 256$ (mean $\pm$ sample SD over
-the committed seeds). For every operator the wall exceeds \emph{both} the ordered
-and the chaotic domain interior; the chaotic interior---most active in
-phenotype---is the most genotype-stable. Wall extraction is the threshold-and-smooth
-procedure of Figure~\ref{fig:interface}; reproducible from the committed fields
-(\texttt{plot\_eoc\_churn.py}).}
-\label{fig:churn}
-\end{figure}
+\caption{\textbf{Genotype churn by region}---row-to-row rewrite rate of the rule
+field (fraction of cells whose ECA rule changes from the row above), at
+$L = 256$, mean over the committed seeds. For every operator the wall exceeds
+\emph{both} domain interiors; the chaotic interior---most active in
+phenotype---is the most genotype-stable. Wall extraction is the
+threshold-and-smooth procedure of Figure~\ref{fig:interface}; reproducible from
+the committed fields (\texttt{plot\_eoc\_churn.py}).}
+\label{tab:churn}
+\begin{tabular}{lccc}
+\toprule
+Operator & Wall & Ordered interior & Chaotic interior \\
+\midrule
+offset $+2$          & $0.83$ & $0.77$ & $0.58$ \\
+$\sigma = 16250374$  & $0.71$ & $0.68$ & $0.57$ \\
+river                & $0.98$ & $0.97$ & $0.88$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Limits}
 \label{sec:limits}
@@ -879,8 +885,7 @@ procedure of Figure~\ref{fig:interface}; reproducible from the committed fields
 The theorems are the Boolean case and are exact; the dynamical claims are
 narrower and empirical. The census and the sustained-diversity behaviour are
 reported for a single spatial coupling ($S_8$, radius one, one value map) at
-limited seed counts, and invite a fuller treatment; we use ``edge of chaos''
-descriptively, not as a measured critical point. \secref{sec:discussion}
+limited seed counts, and invite a fuller treatment. \secref{sec:discussion}
 takes up the local, structural reading and reports an exploratory
 interface-dimension statistic under its own stated caveats (few seeds,
 fixed-boundary variant); beyond it we report no perturbation-spreading or
