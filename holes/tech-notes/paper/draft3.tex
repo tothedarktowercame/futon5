@@ -45,6 +45,9 @@
 % Sections are unnumbered in apa7 `man' mode, so \ref{sec:..} is empty;
 % cross-reference sections by name instead.
 \newcommand{\secref}[1]{\emph{\nameref{#1}}}
+% --- editorial highlighting for review (remove before submission) ---
+\newcommand{\discuss}[1]{{\color{blue!65!black}#1}}
+\newcommand{\discussnote}[1]{\textcolor{red}{\textbf{[\,DISCUSS: #1\,]}}}
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}[theorem]{Corollary}
 \newtcolorbox[auto counter]{workedexample}[2][]{%
@@ -738,20 +741,28 @@ boundaries trace filamentary sets through $1{+}1$-dimensional spacetime---object
 \parencite{crutchfield1989inferring,shalizi2001computational}, though here
 obtained by thresholding a scalar tint rather than by predictive equivalence.
 
-\paragraph{Interfaces, and what discriminates the interesting case.}
+\paragraph{Interfaces, and what the dimension does not capture.}
 Across the tested widths, box-counting estimates for these spacetime boundaries
 (box sizes $2$--$64$; a handful of seeds; the fixed-boundary variant) stabilise
 near $D \approx 1.5$ for offset $+2$ and $D \approx 1.7$ for the phenotype-reading
 river of Figure~\ref{fig:river}: evidence for a \emph{fractal-like, size-stable}
 morphology over the scales measured, not a claim of exact scale invariance
-(Figure~\ref{fig:interface}). The boundary dimension is not, however, what
-distinguishes the visually interesting case. offset $+2$ and $\sigma = 16250374$
-carry boundaries of \emph{similar} dimension, yet differ sharply in regime
-balance: the three-way activity mixture has entropy $1.45$ bits for offset $+2$
-(a genuine coexistence) against $0.92$ bits for $\sigma = 16250374$, whose field
-is dominated by the single complex Rule~110 (\secref{sec:conclusion}). It is the
-\emph{balance} of regimes, not the fractal dimension of their boundary, that
-separates a structured crossover from single-regime dominance.
+(Figure~\ref{fig:interface}). \discussnote{how strongly to state the
+offset$+2$-versus-$\sigma$ contrast: under the reproducible activity score the
+regime-entropy gap is a \emph{modest} $1.46$ vs $1.23$ bits, not the sharp $1.45$
+vs $0.92$ of an earlier ad-hoc score; keep the softened wording below, or drop the
+entropy number and rest on the visual plus the diversity result?} The boundary
+dimension is a shared morphological descriptor rather than a discriminator between
+operators: offset $+2$ and $\sigma = 16250374$ carry boundaries of \emph{similar}
+dimension ($D \approx 1.55$ for both). \discuss{What visibly separates them is the
+organisation of the field the boundary bounds (Figure~\ref{fig:tint}): offset $+2$
+resolves into large coexisting domains of distinct activity, whereas
+$\sigma = 16250374$---which concentrates on the universal Rule~110 and pays for it
+in sustained diversity (\secref{sec:conclusion})---is more uniformly mixed at fine
+scale. A coarse three-way regime entropy registers this only modestly ($1.46$
+versus $1.23$ bits), not as a sharp separation: the difference is one of domain
+organisation, more legible to the eye than to any single scalar we have measured
+for it.}
 
 \paragraph{What we do not claim.}
 Two stronger claims are deliberately withheld. We do not assert a critical
@@ -799,7 +810,7 @@ red $=$ high near $0.5$ and above). The field resolves into coexisting regimes,
 and which active regime pairs with the low-activity background depends on the
 operator: offset $+2$ mixes low activity with genuinely high-activity (chaotic)
 rules ($\approx 40\%$ high at this seed), whereas $\sigma = 16250374$ is
-dominated by the intermediate complex Rule~110 ($\approx 48\%$;
+dominated by the intermediate complex Rule~110 ($\approx 44\%$;
 Figure~\ref{fig:regimes}). The score orders the regimes but does not by itself
 separate complex from chaotic, a known-hard distinction.}
 \label{fig:tint}
@@ -812,8 +823,8 @@ separate complex from chaotic, a known-hard distinction.}
 for the sustaining operators.} Top: the boundary (black) between low- and
 high-activity regions traced through the $1{+}1$-dimensional spacetime diagram at
 $L = 256$. offset $+2$ carries a coherent boundary (box-counting
-$D \approx 1.53$); offset $+4$ has collapsed (no boundary); the phenotype-reading
-river carries a denser one ($D \approx 1.69$). Bottom: box-counting dimension
+$D \approx 1.54$); offset $+4$ has collapsed (no boundary); the phenotype-reading
+river carries a denser one ($D \approx 1.71$). Bottom: box-counting dimension
 (box sizes $2$--$64$) against width $L$; over the tested range the estimate is
 stable rather than drifting. Exploratory: a handful of seeds, fixed-boundary
 variant.}
