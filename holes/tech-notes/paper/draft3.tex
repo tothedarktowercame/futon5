@@ -923,10 +923,17 @@ $15$ versus $24$. On this pair, recovering a universal rule and sustaining a
 diverse population pull against each other---a suggestion worth testing at
 scale, not a law we have established.
 
-\paragraph{Code availability.} All code needed to reproduce the figures in this
-paper is available at \texttt{https://github.com/tothedarktowercame/mmca-clj}---a
-standalone, dependency-light Clojure port of the MetaCA dynamics whose
-\texttt{README} gives the exact command for each figure.
+\paragraph{Code and formal proofs.} All code needed to reproduce the figures is
+available at \texttt{https://github.com/tothedarktowercame/mmca-clj} (commit
+\texttt{0163108ef96e180d79d921d6e90012a752b7830c})---a standalone,
+dependency-light Clojure port of the MetaCA dynamics whose \texttt{README} gives
+the exact command for each figure. The classification and balance theorems are
+formally verified in Lean~4 with Mathlib at
+\texttt{https://github.com/tothedarktowercame/mathlib4}, branch \texttt{darktower}
+(commit \texttt{bc34d8cec27216aae1d3cd511a9950ab1bce3575}), in
+\texttt{DarkTower/Patterns/Propagator.lean}: the cycle-parity criterion as
+\texttt{hasAlternatingColouring\_iff\_cycleType\_even} and the $\lambda = 1/2$
+balance as \texttt{alternatingColouring\_true\_card\_eq\_four}.
 
 \printbibliography
 \end{document}
