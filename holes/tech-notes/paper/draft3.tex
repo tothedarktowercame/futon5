@@ -71,45 +71,31 @@
 \affiliation{}
 
 \abstract{%
-We describe a cellular automaton whose cells do not hold states but
-\emph{rules}, and an operator that rewrites those rules by acting on the
-rule's own truth table: $\bit{\sig(k)} := \lnot\,\bit{k}$ for $\sig$ a
-permutation of the eight neighbourhoods. The rule's truth table is itself
-an eight-cell automaton whose topology is $\sig$ --- an automaton inside
-the automaton --- giving a family of $8! = 40{,}320$ operators that is
-finite, exhaustively enumerable, and exactly classified.
+We describe a cellular automaton whose cells hold not states but \emph{rules},
+and an operator that rewrites each rule by acting on its own truth table:
+$\bit{\sig(k)} := \lnot\,\bit{k}$ for $\sig$ a permutation of the eight
+neighbourhoods. The truth table is itself an eight-cell automaton with topology
+$\sig$---an automaton inside the automaton---giving a family of $8! = 40{,}320$
+operators that is finite, exhaustively enumerable, and exactly classified.
 
-The classification is by cycle parity. A fixed point of $P_\sig$
-exists if and only if every cycle of $\sig$ is even; the number of such
-$\sig$ is $((2n-1)!!)^2$, which for $S_8$ gives $105^2 = 11{,}025$ of
-$40{,}320$, or $27.34\%$. In a census of the $20{,}256$ mirror orbits, run
-under a spatial rule-field dynamics, the all-even class is observed to go
-extinct several times more often than the rest.
+The classification is by cycle parity: $P_\sig$ has a fixed point if and only if
+every cycle of $\sig$ is even, which holds for $((2n-1)!!)^2 = 105^2 = 11{,}025$
+of the $40{,}320$ ($27.34\%$). Run under a spatial rule-field dynamics, this
+all-even class goes extinct several times more often than the rest.
 
-The main result concerns where those fixed points \emph{are}. Without
-exception, across all $40{,}320$ operators, every fixed point that exists has
-exactly four one-bits: a \emph{balanced} truth table, equivalently Langton's
-activity $\lambda = 1/2$. This is forced by parity---an alternating colouring
-assigns each even cycle of length $2m$ exactly $m$ ones, so the total is
-$8/2 = 4$ necessarily. A balance long associated \emph{empirically} with
-Langton's edge of chaos is here an exact and elementary consequence of the
-fixed-point condition. Whether that balance \emph{behaves} as an edge of chaos
-in these operators is a separate, empirical question---and the family answers it
-only \emph{sometimes}: the value $\lambda = 1/2$ is shared by operators that
-collapse and by the offset $\pm 2$ that do not (Figure~\ref{fig:eoc}), and the
-balanced fixed rules are themselves simple (\secref{sec:discussion}).
-Operators with all-even cycle structure possess these
-fixed points; operators with any odd cycle possess none.
-
-Possessing a fixed point at $\lambda = 1/2$ is not, however, the same as
-sustaining complex behaviour: $P_\sig$ is a bijection, so a fixed point is
-not by itself an attractor. In the spatial dynamics we run, the all-even
-class is observed to settle onto its fixed points more readily---and because
-every fixed point shares the one value, $\lambda$ cannot distinguish an
-operator whose field stays diverse from one whose field collapses. For that
-we use a simple population observable, the count of distinct rules present
-over time, which in the runs we report separates the rotations that sustain a
-diverse field from those that do not.}
+Our main result concerns where those fixed points \emph{are}: without exception,
+every fixed point that exists has exactly four one-bits---a \emph{balanced} truth
+table, equivalently Langton's activity $\lambda = 1/2$---forced by parity. A
+balance long tied \emph{empirically} to the edge of chaos is here an exact and
+elementary consequence of the fixed-point condition; whether it \emph{behaves} as
+an edge of chaos, though, the family answers only \emph{sometimes}, since
+$\lambda = 1/2$ is shared by operators that collapse and by the offset $\pm 2$
+that do not. Because every fixed point shares the one value, $\lambda$ cannot by
+itself separate a field that stays diverse from one that collapses; for that we
+use a simple population observable, the count of distinct rules present over time.
+Spatially, the operators that survive sustain coexisting activity domains
+separated by fractal-like walls---and it is at those walls that the rule field is
+rewritten fastest.}
 
 \begin{document}
 \maketitle
