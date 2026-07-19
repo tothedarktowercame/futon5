@@ -534,7 +534,13 @@ diversity, not literal aperiodicity.
 \caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
 offset. Each row is one operator $\bit{\sig(k)} := \lnot\,\bit{k}$ with
 $\sig$ a wrap rotation, shown for two seeds as genotype (256-colour) and
-phenotype (black and white) over the first hundred generations. Every
+phenotype (black and white) over the first hundred generations.
+\discuss{These fields evolve under the \emph{spatially coupled} dynamics of
+\secref{sec:interrupter}---the per-cell operator together with the coupling
+between cells---not $P_\sig$ applied cell-by-cell. Under the bare operator every
+all-even rotation here, offset $\pm 2$ included, freezes onto its fixed rules
+(Figure~\ref{fig:parity}, left); it is the coupling that reverses this for the
+$\gcd 2$ case, and that reversal is what the figure shows.} Every
 non-trivial rotation is all-even and so possesses fixed points
 (Theorem~\ref{thm:parity}); yet among these rotations only
 $\gcd(\text{offset},8)=2$---offset $\pm 2$, two $4$-cycles, highlighted
