@@ -545,11 +545,15 @@ Example~\ref{box:survey}. Continued in panel~(b).}
 \ContinuedFloat
 \centering
 \includegraphics[height=0.92\textheight]{figures/survey_b.png}
-\caption{\textbf{(b)~Positive offsets.} Continued from panel~(a). The pattern
-is symmetric: offset $+2$ ($\gcd 2$, two $4$-cycles) sustains the
-high-diversity phase, the rest collapse. Possessing a fixed point and having
-the field stay near it are different properties, and this pair of pages is
-the whole paper in one figure.}
+\caption{\textbf{(b)~Positive offsets.} Continued from panel~(a). The
+\emph{classification} is symmetric under $d \to -d$---sustain versus collapse
+follows $\gcd(d,8)$---so offset $+2$ ($\gcd 2$, two $4$-cycles) sustains, as
+offset $-2$ does. The panels themselves coincide only when offset$+d$ and
+offset$-d$ are the same permutation ($2d \equiv 0 \bmod 8$, i.e.\ $d = 4$);
+offset $\pm 2$ are distinct inverse rotations, sharing fixed points and verdict
+but not their transients (Worked Example~\ref{box:survey}). Possessing a fixed
+point and having the field stay near it are different properties, and this pair
+of pages is the whole paper in one figure.}
 \end{figure}
 
 \begin{workedexample}[label={box:survey}]{Reading the rotation survey}
@@ -562,6 +566,14 @@ $\pm 2$ included, freezes onto its fixed rules (Figure~\ref{fig:parity}, left).
 The coupling reverses this for offset $\pm 2$ alone---a fixed-point-bearing
 operator that nonetheless sustains a high-diversity field---while the other
 rotations collapse regardless; that single exception is what the survey shows.
+
+The two panels are \emph{almost} mirror images, and where they differ is
+instructive. Offset $+d$ and offset $-d$ are the same permutation exactly when
+$2d \equiv 0 \pmod 8$---so offset $\pm 4$ (and the identity) are one operator with
+bit-identical panels, whereas offset $\pm 2$ are distinct \emph{inverse}
+rotations. Inverses share cycle structure, fixed rules, and the
+sustain-or-collapse verdict, but not their transient dynamics: offset $+2$ and
+offset $-2$ realise the same sustaining regime through visibly different fields.
 \end{workedexample}
 
 Possessing a fixed point (Theorem~\ref{thm:parity}) is not the same as
