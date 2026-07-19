@@ -521,30 +521,26 @@ diversity, not literal aperiodicity.
 
 \begin{figure}[p]
 \centering
-\includegraphics[height=0.92\textheight]{figures/survey_a.png}
+\includegraphics[height=0.90\textheight]{figures/survey_a.png}
 \caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
-offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$, two
-seeds, genotype (256-colour) and phenotype (black and white) over the first
-hundred generations. Among these (all-even) rotations only
-$\gcd(\text{offset},8)=2$---offset $\pm 2$, highlighted green---sustains a
-high-diversity phase; the rest collapse. Details in Worked
-Example~\ref{box:survey}. Continued in panel~(b).}
+offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$ (two
+seeds; genotype in 256 colours, phenotype black and white, first hundred
+generations). Of these all-even rotations only $\gcd(\text{offset},8) = 2$---offset
+$\pm 2$, highlighted---sustains a high-diversity phase; the rest collapse. See
+Worked Example~\ref{box:survey}; continued in~(b).}
 \label{fig:eoc}
 \end{figure}
 
 \begin{figure}[p]
 \ContinuedFloat
 \centering
-\includegraphics[height=0.92\textheight]{figures/survey_b.png}
-\caption{\textbf{(b)~Positive offsets.} Continued from panel~(a). The
-\emph{classification} is symmetric under $d \to -d$---sustain versus collapse
-follows $\gcd(d,8)$---so offset $+2$ ($\gcd 2$, two $4$-cycles) sustains, as
-offset $-2$ does. The panels themselves coincide only when offset$+d$ and
-offset$-d$ are the same permutation ($2d \equiv 0 \bmod 8$, i.e.\ $d = 4$);
-offset $\pm 2$ are distinct inverse rotations, sharing fixed points and verdict
+\includegraphics[height=0.90\textheight]{figures/survey_b.png}
+\caption{\textbf{(b)~Positive offsets.} Continued from~(a). The classification is
+symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+2$ sustains
+as offset $-2$ does---distinct inverse rotations sharing fixed points and verdict
 but not their transients (Worked Example~\ref{box:survey}). Possessing a fixed
-point and having the field stay near it are different properties, and this pair
-of pages is the whole paper in one figure.}
+point and staying near it are different properties: this pair of pages is the
+whole paper in one figure.}
 \end{figure}
 
 \begin{workedexample}[label={box:survey},breakable=false]{Reading the rotation survey}
