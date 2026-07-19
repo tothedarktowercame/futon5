@@ -728,23 +728,29 @@ finite-size scan and find no such point. We therefore ask a
 different and answerable question: whether the sustained diversity is spatially
 organised into coexisting dynamical regimes.
 
-\paragraph{No sharp critical point.}
+\paragraph{No critical point in the band; fluctuations at the propagator limit.}
 In the feedforward base the natural control parameter is the \emph{propagator
-duty cycle} $q$: the probability that a cell applies the propagator write, with
-$1-q$ holding the neighbour-agreement blend ($q=0$ blend-dominated, $q=1$
-propagator everywhere). Across widths $L = 30$ to $240$ (32 seeds each), the
-genotype activity $a_G(q)$---the late-time changed-cell fraction---rises
-\emph{smoothly} with $q$ and is well described by a logistic crossover,
-$R^2 > 0.99$ at every width (Figure~\ref{fig:phase}a). Crucially, the fitted
-crossover width does not shrink with system size ($w \approx 0.18$,
-$w \sim L^{-0.04}$): the curve does not sharpen towards a step, as the order
-parameter of a genuine critical transition would ($w \sim L^{-1/\nu} \to 0$). The
-susceptibility $L\,\mathrm{Var}(a_G)$ has no convergent interior maximum---its
-peak wanders and the largest systems attain their maxima at the sampled
-boundary---and the Binder cumulant shows no crossing
-(Figure~\ref{fig:phase}b,d). We therefore find \emph{no evidence for a sharp
-critical point} in this parameterisation; the honest reading is a broad,
-size-stable crossover.
+fraction} $q$: the probability that a cell applies the propagator write, with
+$1-q$ holding the neighbour-agreement blend ($q = 0$ all blend, $q = 1$ all
+propagator). Across widths $L = 30$ to $240$ (32 seeds each) the genotype activity
+$a_G(q)$---the late-time changed-cell fraction---rises \emph{smoothly} with $q$,
+well described by a logistic crossover ($R^2 > 0.99$ at every width,
+Figure~\ref{fig:phase}a). Crucially its width does not shrink with system size
+($w \approx 0.13$, $w \sim L^{-0.04}$): the curve never steepens into a step, as
+the order parameter of a genuine critical transition would
+($w \sim L^{-1/\nu} \to 0$). A second, independent test looks at the run-to-run
+\emph{spread} in activity---how much $a_G$ varies from seed to seed, scaled by
+size ($L\,\mathrm{Var}(a_G)$, Figure~\ref{fig:phase}b). At an ordinary point that
+spread averages away as the system grows (larger systems self-average), so the
+scaled spread stays flat; through the crossover band it does exactly that. At
+$q = 1$, though---the pure-propagator limit at which offset $+2$ actually runs---it
+does \emph{not}: the spread grows with size, the signature of activity organised
+into \emph{system-spanning domains} rather than independent local fluctuations
+(the domains of Figure~\ref{fig:tint}). There is thus no critical point
+\emph{within} the crossover band; what fluctuations exist concentrate at the
+pure-propagator limit, exactly where the coexisting domains, walls, and genotype
+churn live. As $q = 1$ is the boundary of the scan we claim no confirmed critical
+point there---only growing, non-self-averaging fluctuations.
 
 \paragraph{A finite-width crossover---the littoral edge.}
 For descriptive purposes we define an intermediate-activity band operationally by
@@ -817,17 +823,17 @@ littoral filaments of these diagrams is a question for another paper.
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/eoc_phase.png}
-\caption{\textbf{No sharp critical point; a finite-width crossover.} offset $+2$
-feedforward finite-size scan ($L = 30$--$240$, 32 seeds), against the propagator
-duty cycle $q$. \textbf{(a)}~genotype activity $a_G$ with logistic fits
+\caption{\textbf{No critical point in the crossover band; fluctuations grow at the
+pure-propagator limit.} offset $+2$ feedforward finite-size scan ($L = 30$--$240$,
+32 seeds) against the propagator fraction $q$ ($0$: all blend, $1$: all
+propagator). \textbf{(a)}~genotype activity $a_G$ with logistic fits
 ($R^2 > 0.99$); the crossover width is size-independent ($w \sim L^{-0.04}$), so
-the curve does not sharpen towards a transition. \textbf{(b)}~susceptibility
-$L\,\mathrm{Var}(a_G)$: no convergent interior maximum, the large-$L$ maxima
-falling at the sampled boundary. \textbf{(c)}~finite-horizon collapse probability
-(eight consecutive inactive steps within $300$), which vanishes with size.
-\textbf{(d)}~Binder cumulant: no crossing. Bottom: a paired illustrative
-realisation (single seed, shared initial condition, width $240$) tinted by
-isolated-rule activity, from blend-dominated to propagator-dominated.}
+the curve never sharpens into a transition. \textbf{(b)}~the run-to-run spread in
+activity, scaled by size ($L\,\mathrm{Var}(a_G)$): flat across sizes through the
+band (it averages out---no critical point), but growing with size at $q = 1$,
+where the field organises into system-spanning domains. Bottom: one realisation
+across $q$ (single seed, width $240$) tinted by isolated-rule activity, from
+all-blend to propagator-dominated.}
 \label{fig:phase}
 \end{figure}
 
