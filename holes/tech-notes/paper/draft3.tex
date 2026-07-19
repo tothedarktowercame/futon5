@@ -257,7 +257,7 @@ Box~\ref{box:even-cycle} shows the theorem on the offset-$+2$ operator. The
 same small calculation also makes the later $2^k$ count and forced
 $\lambda=1/2$ balance visible before we state them generally.
 
-\begin{workedexample}[label={box:even-cycle}]{Why even cycles work}
+\begin{workedexample}[label={box:even-cycle}]{Even and odd cycles}
 \small
 For offset $+2$ on eight truth-table positions,
 \[
@@ -266,14 +266,23 @@ For offset $+2$ on eight truth-table positions,
 A fixed rule must change colour at every arrow because
 $g(\sig k)=\lnot g(k)$. Around either four-cycle it can therefore read
 $0101$ or $1010$: after four negations it returns consistently to its
-starting bit. The two cycles can be chosen independently, giving
+starting bit. The two four-cycles are coloured independently, so two binary
+choices fix all eight truth-table entries $\bit{0},\dots,\bit{7}$. Read back as
+an ECA rule number---those eight bits in Wolfram neighbourhood order (the table
+of \secref{sec:object}) taken as an integer in $0$--$255$---the four colourings
+are the fixed rules
 \[
-2^2=4\quad\text{fixed rules:}\quad
-51,\ 102,\ 153,\ 204.
+2^2=4:\quad
+51,\ 102,\ 153,\ 204,
 \]
-Each contains four zero-bits and four one-bits. An odd cycle fails for the
-same elementary reason: after an odd number of negations it returns to the
-starting position demanding the opposite of the bit with which it began.
+each with four zero-bits and four one-bits. An odd cycle admits no such
+colouring: after an odd number of negations the bit returns to its starting
+position demanding its own opposite, so no fixed rule exists. Admitting a fixed
+rule and settling onto one are distinct. An operator carrying an odd cycle has no
+fixed rule for its field to collapse onto, and its field correspondingly stays
+diverse (the any-odd reduced rotate$+2$, Figure~\ref{fig:parity}, right); whether
+a fixed-point-bearing operator collapses onto one of its fixed rules is a
+separate, dynamical question (\secref{sec:interrupter}).
 \end{workedexample}
 
 This is the signed-cycle fixed-point theorem of Boolean-network theory
@@ -527,10 +536,13 @@ offset. Each row is one operator $\bit{\sig(k)} := \lnot\,\bit{k}$ with
 $\sig$ a wrap rotation, shown for two seeds as genotype (256-colour) and
 phenotype (black and white) over the first hundred generations. Every
 non-trivial rotation is all-even and so possesses fixed points
-(Theorem~\ref{thm:parity}); yet only $\gcd(\text{offset},8)=2$---offset
-$\pm 2$, two $4$-cycles, highlighted green---sustains a high-diversity,
-visually complex phase. The remaining rotations collapse to near-uniform
-fields within a few dozen generations. Continued in panel~(b).}
+(Theorem~\ref{thm:parity}); yet among these rotations only
+$\gcd(\text{offset},8)=2$---offset $\pm 2$, two $4$-cycles, highlighted
+green---sustains a high-diversity, visually complex phase. The remaining
+rotations collapse to near-uniform fields within a few dozen generations.
+(This is a statement \emph{within} the all-even rotation family; operators with
+an odd cycle, which possess no fixed rule, stay diverse for a different reason,
+\S\ref{sec:interrupter}.) Continued in panel~(b).}
 \label{fig:eoc}
 \end{figure}
 
@@ -810,9 +822,11 @@ red $=$ high near $0.5$ and above). The field resolves into coexisting regimes,
 and which active regime pairs with the low-activity background depends on the
 operator: offset $+2$ mixes low activity with genuinely high-activity (chaotic)
 rules ($\approx 40\%$ high at this seed), whereas $\sigma = 16250374$ is
-dominated by the intermediate complex Rule~110 ($\approx 44\%$;
-Figure~\ref{fig:regimes}). The score orders the regimes but does not by itself
-separate complex from chaotic, a known-hard distinction.}
+dominated by the intermediate complex Rule~110 (\discuss{$\approx 45\%$ of the
+late-time genotype here; the share is seed- and engine-dependent, and
+Figure~\ref{fig:regimes} reports a lower $29$--$35\%$ measured over the whole
+field with the legacy engine}). The score orders the regimes but does not by
+itself separate complex from chaotic, a known-hard distinction.}
 \label{fig:tint}
 \end{figure}
 
