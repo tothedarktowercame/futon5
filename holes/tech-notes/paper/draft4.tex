@@ -182,46 +182,47 @@ standard-order forms.
 
 \begin{figure}[t]
 \centering
-\begin{tikzpicture}[
-  font=\footnotesize, node distance=6mm and 10mm,
-  bx/.style={draw, rounded corners=1.5pt, align=center, inner sep=3pt,
-             text width=31mm, minimum height=9mm},
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=1.6mm]},
+  bx/.style={draw, rounded corners=1.5pt, align=center, inner sep=2.5pt,
+             text width=28mm, minimum height=7.5mm},
   defn/.style={bx, fill=violet!10, draw=violet!55!black},
   thm/.style={bx, fill=blue!8, draw=blue!55!black},
   obs/.style={bx, fill=teal!10, draw=teal!55!black},
-  we/.style={bx, fill=green!10, draw=green!45!black, text width=27mm},
   ef/.style={bx, fill=orange!12, draw=orange!65!black},
   cen/.style={bx, fill=gray!12, draw=gray!55!black},
-  supp/.style={-{Stealth[length=1.7mm]}, draw=black!65, semithick},
-  illu/.style={-{Stealth[length=1.5mm]}, draw=gray!55, dashed},
-]
-\node[defn] (def) {\textbf{Def.\,1}\\Writing \& permutation};
-\node[thm, below=11mm of def] (t1) {\textbf{Thm\,1}\\Fixed point $\iff$ every cycle even};
-\node[thm, below=of t1] (t2) {\textbf{Thm\,2}\\Every fixed point balanced, $\lambda=\tfrac12$};
-\node[obs, right=of def] (obs) {\textbf{Obs.\,1}\\Permutations are $0.24\%$ of all writings};
-\node[ef, right=of t1] (ef) {\textbf{Emp.\,find.\,1}\\Survey: 8-cycles sustain, offset\,$\pm2,\pm4$ collapse};
-\node[cen, right=of t2] (cen) {\textbf{Census}\\Collapse rate by cycle type (Table\,\ref{tab:census})};
-\node[we, left=of def] (we12) {\textbf{WE\,1--2}\\A propagator, one MetaCA step, by hand};
-\node[we, left=of t1] (we3) {\textbf{WE\,3}\\Even \& odd cycles};
-\node[we, right=of ef] (we4) {\textbf{WE\,4}\\Reading the survey};
-\draw[supp] (def) -- node[right,font=\scriptsize,pos=0.4]{restrict} (t1);
-\draw[supp] (t1) -- (t2);
-\draw[supp] (def) -- (obs);
-\draw[supp] (t1) -- node[above,font=\scriptsize]{dynamics} (ef);
-\draw[supp] (t1.south east) to[out=-20,in=180] node[below,font=\scriptsize,pos=0.7]{frequency} (cen.west);
-\draw[supp] (ef) -- (cen);
-\draw[illu] (we12) -- (def);
-\draw[illu] (we3) -- (t1);
-\draw[illu] (we4) -- (ef);
+  s/.style={->, draw=black!60, semithick}]
+\node[defn] (d1)  at (0,0)     {\textbf{Def 1} Writing \& permutation};
+\node[defn] (dgp) at (0,-1.55) {\textbf{Def 2} Genotype \& phenotype};
+\node[defn] (dlam)at (0,-3.1)  {\textbf{Def 3} Activity $\lambda$};
+\node[defn] (dint)at (0,-4.65) {\textbf{Def 4} Interrupter};
+\node[defn] (dal) at (0,-6.2)  {\textbf{Def 5} Aliveness};
+\node[obs]  (obs) at (4.6,0)     {\textbf{Obs 1} Permutations $=0.24\%$};
+\node[thm]  (t1)  at (4.6,-2.3)  {\textbf{Thm 1} Fixed pt $\Leftrightarrow$ all cycles even};
+\node[thm]  (t2)  at (4.6,-4.4)  {\textbf{Thm 2} Fixed pts balanced, $\lambda=\tfrac12$};
+\node[defn] (driv)at (4.6,-6.2)  {\textbf{Def 6} River};
+\node[ef]   (ef)  at (9.2,-2.3)  {\textbf{Emp.\ find.\ 1} 8-cycles sustain};
+\node[cen]  (cen) at (9.2,-4.4)  {\textbf{Census} collapse by cycle type};
+\draw[s] (d1)--(obs);
+\draw[s] (d1)-- node[midway,above,font=\scriptsize]{restrict} (t1);
+\draw[s] (dgp)--(t1);
+\draw[s] (dlam)--(t2);
+\draw[s] (t1)--(t2);
+\draw[s] (t1)-- node[midway,above,font=\scriptsize]{dynamics} (ef);
+\draw[s] (t1)-- node[midway,above,font=\scriptsize,pos=0.75]{frequency} (cen);
+\draw[s] (dal.east) to[out=0,in=205] (cen.west);
+\draw[s] (dint)--(driv);
+\draw[s] (ef)--(cen);
 \end{tikzpicture}
-\caption{\textbf{Map of the paper by box.} Solid arrows carry logical support;
-dashed arrows mark a worked example illustrating a box. Colour encodes type:
-definition (violet), theorem (blue), observation (teal), empirical finding
-(amber), worked example (green), census (grey). The permutation definition
-restricts to the classified core; Theorem~\ref{thm:parity} (fixed-point
-existence) grounds both the empirical survey and the census that measures how
-often collapse occurs; Theorem~\ref{thm:lambda} pins where the fixed points sit.
-Everything load-bearing is a box; the connecting prose is scaffolding.}
+\caption{\textbf{Map of the paper by box.} Every load-bearing claim is a box;
+arrows carry logical support and colour encodes type---definition (violet),
+theorem (blue), observation (teal), empirical finding (amber), census (grey).
+The object and its measurements (Definitions~1--5) support the two theorems, the
+empirical survey, and the census: Theorem~\ref{thm:parity} (fixed-point
+existence) grounds both the survey and the census that measures how often
+collapse occurs, while Theorem~\ref{thm:lambda} pins where the fixed points sit;
+the interrupter (Def.~4) yields the river (Def.~6). Worked examples~1--4
+illustrate the boxed claims. The connecting prose is scaffolding: anything not
+boxed is expository.}
 \label{fig:map}
 \end{figure}
 
@@ -251,12 +252,16 @@ to $0$ under Rule~100. The propagator has not directly flipped a phenotype
 cell; it has changed the truth table that the cell will use.
 \end{workedexample}
 
-The bare operator acts on one eight-bit rule. In the spatial experiments it
-is placed inside a two-layer cellular automaton: a field of rules (the
-\emph{genotype}) governs a field of black-and-white states (the
-\emph{phenotype}), while neighbouring rules also interact. Box~\ref{box:metaca-step}
-spells out one complete local update; this is the computation behind the
-space--time diagrams in Figure~\ref{fig:regimes}.
+The bare operator acts on one eight-bit rule; in the spatial experiments it is
+placed inside a two-layer automaton.
+
+\begin{definition}[Genotype and phenotype]\label{def:genopheno}
+Each cell carries an eight-bit rule. The field of rules---the
+\emph{genotype}---governs a field of black-and-white states---the
+\emph{phenotype}---and neighbouring rules also interact. One complete local
+update (Box~\ref{box:metaca-step}) evolves both layers; this is the computation
+behind the space--time diagrams in Figure~\ref{fig:regimes}.
+\end{definition}
 
 \Needspace{0.72\textheight}
 \begin{workedexample}[label={box:metaca-step}]{One site, one complete MetaCA step}
@@ -415,20 +420,24 @@ number of fixed bytes across the family.
 \section{Every Fixed Point Is Balanced}
 \label{sec:lambda}
 
-Langton's $\lambda$ measures a rule's \emph{activity}: the fraction of its
-neighbourhood entries that map to the non-quiescent
-state~\parencite{langton1990computation}. For an eight-bit ECA table it is
-the Hamming weight over eight, $\lambda = \lVert r \rVert_1 / 8$, running
-from $0$ (every neighbourhood dies) through $1/2$ to $1$. Langton's thesis
-was that complex, computation-supporting behaviour concentrates near a
-critical value of $\lambda$. That transition was demonstrated most clearly
-for larger rule tables (notably $K=4$, $N=5$); for the two-symbol,
-three-neighbour case of the ECAs, Langton is explicit that $\lambda$ is only
-roughly correlated with dynamical behaviour, and later work is cautious about
-the correlation \parencite{mitchell1993revisiting}. Our theorem below is
-about the value $\lambda = 1/2$ itself---\emph{balance}, a property of the
-truth table---which we keep separate from any empirical claim about what that
-value predicts dynamically.
+\begin{definition}[Langton's activity $\lambda$]\label{def:lambda}
+$\lambda$ measures a rule's \emph{activity}: the fraction of its neighbourhood
+entries that map to the non-quiescent
+state~\parencite{langton1990computation}---for an eight-bit ECA table, the
+Hamming weight over eight, $\lambda = \lVert r \rVert_1 / 8$, from $0$ (every
+neighbourhood dies) through $1/2$ to $1$. A rule with $\lambda = 1/2$ is
+\emph{balanced}.
+\end{definition}
+
+\begin{observation}[label={obs:lambda}]{Balance is a truth-table property}
+Langton's thesis was that complex behaviour concentrates near a critical
+$\lambda$, shown most clearly for larger tables ($K=4$, $N=5$); for the
+two-symbol, three-neighbour ECAs Langton is explicit that $\lambda$ only roughly
+correlates with dynamics, and later work is
+cautious~\parencite{mitchell1993revisiting}. Theorem~\ref{thm:lambda} below
+concerns the \emph{value} $\lambda = 1/2$ itself---balance---which we keep
+separate from any empirical claim about what it predicts dynamically.
+\end{observation}
 
 \subsection{Every fixed point has $\lambda = 1/2$}
 
@@ -618,10 +627,17 @@ diversity, not literal aperiodicity.
 \subsection{The full census, tabulated by class}
 \label{sec:full-census}
 
+\begin{definition}[Aliveness]\label{def:aliveness}
+A layer is \emph{alive} on a run if its late-window \emph{change rate}---the mean
+fraction of cells that differ between consecutive generations, over the last $40$
+of the $100$ generations---is at least $0.10$; otherwise it is \emph{dead}.
+Genotype and phenotype are scored separately (three seeds), giving four regimes:
+live/live, live/dead, dead/live, dead/dead.
+\end{definition}
+
 The trend becomes a measured law once every operator is tabulated. We ran all
-$40{,}320$ permutation-propagators---three seeds each, scoring genotype and
-phenotype aliveness by the late-window change rate ($\ge 0.10$)---and grouped
-them by cycle type (Table~\ref{tab:census}).
+$40{,}320$ permutation-propagators and grouped them by cycle type
+(Table~\ref{tab:census}).
 
 \begin{expositionbox}{What the census shows}
 \begin{pointbox}{Cycle parity draws the line, exactly}
@@ -808,19 +824,23 @@ but \emph{tunable}: a super-propagator that controls its own complexity.}
 \label{fig:knob}
 \end{figure}
 
-Sustained structure requires an \emph{interrupter}---a step that occasionally
-declines to propagate. Composed with such a step (a neighbour-blend that
-copies where neighbours agree, or a hold-when-active gate), the coupled
-dynamics no longer settles: instead of a single frozen byte or a runaway
-cycle, the field holds a diverse population of rules, many of them at
-$\lambda = 1/2$. The coordinate-wise blend in Box~\ref{box:metaca-step} is the
-interrupter used in the ordinary spatial runs. This is what resolves the apparent tension between the census
-and Figure~\ref{fig:lambda}: they are the same operator under two
-\emph{couplings}. In the census runs, left to settle, the field under
-rotate$+2$ collapses onto a few of its fixed points; with the interrupter it
-is held off them and keeps tens of rules. Settling and sustained diversity
-are two behaviours of one operator, selected not by the bare algebra but by
-the coupling.
+\begin{definition}[Interrupter]\label{def:interrupter}
+An \emph{interrupter} is a step that occasionally declines to propagate---a
+neighbour-blend that copies where neighbours agree, or a hold-when-active gate.
+Composed with the operator, the coupled dynamics no longer settles: instead of a
+frozen byte or a runaway cycle, the field holds a diverse population of rules,
+many at $\lambda = 1/2$. The coordinate-wise blend of Box~\ref{box:metaca-step}
+is the interrupter used in the ordinary spatial runs.
+\end{definition}
+
+\begin{observation}[label={obs:couplings}]{Two couplings of one operator}
+This resolves the apparent tension between the census and
+Figure~\ref{fig:lambda}: they are the same operator under two \emph{couplings}.
+Left to settle, the field under rotate$+2$ collapses onto a few of its fixed
+points; with the interrupter it is held off them and keeps tens of rules.
+Settling and sustained diversity are two behaviours of one operator, selected
+not by the bare algebra but by the coupling.
+\end{observation}
 
 Propagators do not compose usefully with one another, and this negative
 result shapes what composition can do here. Each operator of
@@ -840,14 +860,18 @@ that gives one operator its balanced ($\lambda = 1/2$) fixed point is exactly
 what a second operator cancels---so the compositions that \emph{do} yield something
 new must pair a propagator with a step of a different kind.
 
-One such composition is worth exhibiting. Taking the offset-$+2$
-propagator---the $\gcd 2$ operator of Figure~\ref{fig:eoc}---and composing
-it with a construction step that reads the phenotype, matches it against
-four local template candidates, and falls back to the all-zero rule when none
-matches produces a
-\emph{river}: a coherent band of alternating phenotype that drifts through a
-disordered background and reappears in all six seeds we tried
-(Figure~\ref{fig:river}). Where the bare rotation collapses or cycles, this
+One such composition is worth exhibiting.
+
+\begin{definition}[River]\label{def:river}
+A \emph{river} is the composed operator obtained by following the collapsing
+offset-$+2$ propagator ($\gcd 2$) with a phenotype-reading construction
+step---match the local phenotype against four template candidates, first match
+wins, falling back to the all-zero rule---yielding a coherent band of
+alternating phenotype that drifts through a disordered background and reappears
+in all six seeds we tried (Figure~\ref{fig:river}).
+\end{definition}
+
+Where the bare rotation collapses or cycles, this
 composition holds an off-critical structure for the length of every
 run---its trajectory varying with the seed, its presence not. We report these
 two mechanisms here; a fuller catalogue of composed operators is future work.
