@@ -75,11 +75,12 @@
 \tcolorboxenvironment{definition}{%
   enhanced, breakable, colback=violet!6, colframe=violet!55!black,
   boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm}
-% Titled exposition box; break a long one into one-point sub-boxes (\pointbox).
+% Exposition box (blue): non-claim prose that aids comprehension. Its title is a
+% headline stating what the passage adds. Break a long one into \pointbox points.
 \newtcolorbox{expositionbox}[2][]{%
-  enhanced, breakable, colback=gray!4, colframe=gray!55!black,
-  boxrule=0.6pt, arc=1.2mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm,
-  fonttitle=\bfseries, title={#2}, #1}
+  enhanced, breakable, colback=blue!3, colframe=blue!45!black,
+  boxrule=0.5pt, arc=1.2mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm,
+  fonttitle=\bfseries, coltitle=white, title={#2}, #1}
 \newtcolorbox{pointbox}[1]{%
   enhanced, colback=white, colframe=gray!45,
   boxrule=0.4pt, arc=0.8mm, left=2mm, right=2mm, top=0.8mm, bottom=0.8mm,
@@ -117,16 +118,17 @@ every cycle of $\sig$ is even, which holds for $((2n-1)!!)^2 = 105^2 = 11{,}025$
 of the $40{,}320$ ($27.34\%$). Run under a spatial rule-field dynamics, this
 all-even class goes extinct several times more often than the rest.
 
+\begin{expositionbox}{Balance is exact; edge-of-chaos is a separate question}
 Our main result concerns where those fixed points \emph{are}: without exception,
-every fixed point that exists has exactly four one-bits---a \emph{balanced} truth
-table, equivalently Langton's activity $\lambda = 1/2$---forced by parity. A
-balance long tied \emph{empirically} to the edge of chaos is here an exact and
-elementary consequence of the fixed-point condition; whether it \emph{behaves} as
-an edge of chaos, though, the family answers only \emph{sometimes}, since
-$\lambda = 1/2$ is shared by operators that collapse and by the 8-cycles
-that do not. Because every fixed point shares the one value, $\lambda$ cannot by
-itself separate a field that stays diverse from one that collapses; for that we
-use a simple population observable, the count of distinct rules present over time.
+every fixed point has exactly four one-bits---a \emph{balanced} table, Langton's
+$\lambda = 1/2$---forced by parity. A balance long tied \emph{empirically} to the
+edge of chaos is here an exact, elementary consequence of the fixed-point
+condition. Whether it \emph{behaves} as an edge of chaos the family answers only
+\emph{sometimes}: $\lambda = 1/2$ is shared by operators that collapse and by the
+8-cycles that do not, so $\lambda$ alone cannot separate a diverse field from a
+collapsed one. For that we use a simple population observable---the count of
+distinct rules over time.
+\end{expositionbox}
 Spatially, the operators that survive sustain coexisting activity domains
 separated by fractal-like walls---and it is at those walls that the rule field is
 rewritten fastest.}
