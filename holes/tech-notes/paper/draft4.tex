@@ -50,7 +50,7 @@
 \newcommand{\discuss}[1]{{\color{blue!65!black}#1}}
 \newcommand{\discussnote}[1]{\textcolor{red}{\textbf{[\,DISCUSS: #1\,]}}}
 \newtheorem{theorem}{Theorem}
-\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{corollary}{Corollary}
 \newtheorem{definition}{Definition}
 \newtcolorbox[auto counter]{workedexample}[2][]{%
   enhanced,
@@ -410,10 +410,13 @@ our operator family, not as a new identity.
 
 \subsection{Fixed bytes number $2^k$}
 
-An all-even $\sig$ with $k$ cycles has exactly $2^k$ fixed bytes; any
-$\sig$ with an odd cycle has none. Each even cycle admits exactly two
-alternating colourings, chosen independently across cycles, whence $2^k$;
-the zero case is Theorem~\ref{thm:parity}. This too is machine-checked.%
+\begin{corollary}\label{cor:count}
+An all-even $\sig$ with $k$ cycles has exactly $2^k$ fixed bytes; any $\sig$ with
+an odd cycle has none.
+\end{corollary}
+Each even cycle admits exactly two alternating colourings, chosen independently
+across cycles, whence $2^k$; the zero case is Theorem~\ref{thm:parity}. This too
+is machine-checked.%
 \footnote{\texttt{alternatingColouring\_card\_eq\_two\_pow\_cycleType\_card}.}
 Summed against these weights the family is consistent:
 $\sum 2^{k}$ over all-even $\sig$ equals $(2n)! = 8! = 40{,}320$, the total
@@ -575,25 +578,15 @@ dynamics keep it complex. Seed~$1$, $W = 80$, $T = 120$.}
 \section{The Census}
 \label{sec:census}
 
-\subsection{Parity predicts death across all 20{,}256 orbits}
+\subsection{The parity dichotomy in the spatial dynamics}
 
-Theorems~\ref{thm:parity}--\ref{thm:lambda} are statements about fixed
-points; we also ran the family as a spatial dynamics to ask whether the
-parity dichotomy is reflected in observed behaviour. Reducing the family by
-the mirror symmetry gives $20{,}256$ orbits. In our runs---a field of rules
-on a one-dimensional lattice, evolved from random initial rules and scored
-for extinction of phenotype activity---the all-even class goes extinct
-several times more often than the rest, with the tendency increasing in the
-number of cycles $k$. We first report this as an observed trend: the present
-spatial runs fix a single lattice size, boundary condition, initial
-distribution, and horizon. The full permutation census
-(\secref{sec:full-census}) then supplies the by-class tabulation for genotype
-collapse over all $40{,}320$ operators, seed-averaged---turning the trend into
-the measured law of Table~\ref{tab:census}. Note also that classifying the enumerated
-permutations by cycle parity merely recovers the combinatorial $27.34\%$; the
-dynamical content is the \emph{death-rate difference} between the classes, not
-the class sizes. Figure~\ref{fig:parity} illustrates the dichotomy with five
-representative operators rather than summarising all $20{,}256$.
+Theorems~\ref{thm:parity}--\ref{thm:lambda} concern fixed points; run as a
+spatial dynamics, the parity dichotomy also shows in behaviour. Left to settle,
+all-even operators collapse onto their fixed rules while any-odd operators stay
+diverse (Figure~\ref{fig:parity}). The full census below
+(\secref{sec:full-census}) makes this quantitative over all $40{,}320$ operators
+(Table~\ref{tab:census}); the dynamical content is the \emph{death-rate
+difference} between the classes, not the class sizes.
 
 \begin{figure}[t]
 \centering
