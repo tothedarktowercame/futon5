@@ -581,27 +581,30 @@ dynamics keep it complex. Seed~$1$, $W = 80$, $T = 120$.}
 \subsection{The parity dichotomy in the spatial dynamics}
 
 Theorems~\ref{thm:parity}--\ref{thm:lambda} concern fixed points; run as a
-spatial dynamics, the parity dichotomy also shows in behaviour. Left to settle,
-all-even operators collapse onto their fixed rules while any-odd operators stay
-diverse (Figure~\ref{fig:parity}). The full census below
-(\secref{sec:full-census}) makes this quantitative over all $40{,}320$ operators
-(Table~\ref{tab:census}); the dynamical content is the \emph{death-rate
-difference} between the classes, not the class sizes.
+spatial dynamics, the parity dichotomy also shows in behaviour---but as a
+tendency, not a law. Only the all-even operators \emph{can} settle onto a fixed
+rule, and some do (rotate$+2$), while others stay diverse though all-even
+(rotate$+1$); the any-odd operators, having no fixed rule, never settle
+(Figure~\ref{fig:parity}). The full census below (\secref{sec:full-census}) makes
+this quantitative over all $40{,}320$ operators (Table~\ref{tab:census}): the
+dynamical content is the \emph{death-rate difference} between the classes, not a
+clean collapse of the all-even class.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{../../labs/M-aif-tokamak/compositions/parity-dichotomy.png}
-\caption{The parity dichotomy, by example (the full census of $20{,}256$
-orbits is summarised in the text). Five operators as genotype (top) and
-phenotype (bottom) over time. \emph{Left:} the all-even operators
-rotate$+2$ and rotate$+1$ possess fixed points (Theorem~\ref{thm:parity})
-and, left to settle, the field collapses onto them---rotate$+2$ onto
-four rules, its $2^k = 2^2$ count. \emph{Right:} the any-odd operators
-(reduced rotate$+2$, acting on a subset so the remaining positions are odd
-one-cycles) possess no fixed point, cannot settle, and stay diverse. This
-settling is the operator left to itself; a neighbour-blend interrupter
-reverses it for the $\gcd 2$ case (Figure~\ref{fig:lambda},
-\secref{sec:interrupter}), and that reversal is the dynamical point.}
+\caption{The parity dichotomy by example, illustrating Theorem~\ref{thm:parity}
+(a fixed rule exists iff every cycle is even). Five operators run alone, as
+genotype (top) and phenotype (bottom). Both \emph{all-even} operators possess
+fixed rules---but existence is not attraction: rotate$+2$ (cycles $4\,4$)
+\emph{settles} onto its $2^2 = 4$ fixed rules (diversity $4$, a regular
+phenotype), whereas rotate$+1$ (a single $8$-cycle) does \emph{not} settle---it
+stays diverse (diversity $12$, an active phenotype), all-even yet alive. The
+three \emph{any-odd} reduced operators possess no fixed rule at all, cannot
+settle, and stay richly diverse (diversity $27$--$56$). That rotate$+1$ and
+rotate$+2$ share their parity but not their fate is the census in miniature
+(Table~\ref{tab:census}): all-even makes collapse \emph{possible}, not
+inevitable.}
 \label{fig:parity}
 \end{figure}
 
