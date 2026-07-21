@@ -613,6 +613,21 @@ four; Figure~\ref{fig:parity}).}
 \label{fig:lambda}
 \end{figure}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/two4cycle.png}
+\caption{\textbf{Cycle structure does not determine aliveness.} Two operators of
+identical cycle type---both two 4-cycles---with opposite fate. Left,
+$[6\,7\,0\,2\,1\,4\,3\,5]$ sustains a live genotype and phenotype; it is the
+standard-Wolfram-order form of the operator draft3 called offset$+2$ (its
+conjugate). Right, the Wolfram-order rotation offset$+2=[2\,3\,4\,5\,6\,7\,0\,1]$
+has the same two-4-cycle structure yet collapses to a dead genotype and a frozen
+phenotype. Same cycle type, opposite outcome: the specific permutation, not its
+cycle type alone, decides. A full census of the 40320 operators confirms the
+two-4-cycle class splits between sustaining and collapsing.}
+\label{fig:two4cycle}
+\end{figure}
+
 Sustained structure requires an \emph{interrupter}---a step that occasionally
 declines to propagate. Composed with such a step (a neighbour-blend that
 copies where neighbours agree, or a hold-when-active gate), the coupled
