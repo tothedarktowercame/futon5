@@ -920,21 +920,23 @@ answerable question: whether the sustained diversity is spatially organised into
 coexisting dynamical regimes.
 \end{expositionbox}
 
-\begin{empiricalfinding}[label={find:crossover}]{No critical point in the crossover; growing fluctuations at the pure-propagator limit}
+\begin{empiricalfinding}[label={find:crossover}]{No critical point: a drifting susceptibility peak, read as metastability}
 The natural control parameter is the \emph{propagator fraction} $q$ ($q = 0$ all
-blend, $q = 1$ all propagator). Across widths $L = 30$--$240$ (32 seeds each) the
-genotype activity $a_G(q)$ rises \emph{smoothly}, well described by a logistic
-crossover ($R^2 > 0.99$, Figure~\ref{fig:phase}a); crucially its width does not
-shrink with size ($w \approx 0.13$, $w \sim L^{-0.04}$), so the curve never
-steepens into the step a genuine critical transition would ($w \sim L^{-1/\nu}
-\to 0$). A second test---the size-scaled run-to-run spread $L\,\mathrm{Var}(a_G)$
-(Figure~\ref{fig:phase}b)---stays flat through the band (self-averaging) but
-\emph{grows} at $q = 1$, the pure-propagator limit at which offset $+2$ runs: the
-signature of activity organised into \emph{system-spanning domains}
-(Figure~\ref{fig:tint}). There is thus no critical point within the band; the
-fluctuations concentrate at $q = 1$, where the coexisting domains, walls, and
-genotype churn live. As $q = 1$ is the scan's boundary we claim no confirmed
-critical point there---only growing, non-self-averaging fluctuations.
+blend, $q = 1$ all propagator, offset $+1$). Across widths $L = 30$--$240$ (32
+seeds each) the genotype activity $a_G(q)$ rises \emph{smoothly}, well described
+by a logistic crossover ($R^2 > 0.99$, Figure~\ref{fig:phase}a); its width does
+not shrink with size ($w \approx 0.13$, $w \sim L^{-0.04}$), so the curve never
+steepens into the step a genuine transition would. The size-scaled run-to-run
+spread $L\,\mathrm{Var}(a_G)$ (Figure~\ref{fig:phase}b) is a susceptibility: it
+\emph{peaks} inside the crossover band, but the peak drifts in location
+($q \approx 0.15$--$0.5$ across $L$) and grows only ${\sim}1.1\times$ from the
+smallest width to the largest---failing the convergence-and-growth test a
+critical point requires. At $q = 1$, the pure-propagator limit at which offset
+$+1$ runs, the spread is instead \emph{low}: the field reliably organises into
+\emph{system-spanning domains} (Figure~\ref{fig:tint}), reproducibly rather than
+through a fluctuating transition. The honest reading is \emph{metastability}, not
+criticality---seed-dependent residence times dominate this horizon, and we claim
+no confirmed critical point.
 \end{empiricalfinding}
 
 \begin{empiricalfinding}[label={find:littoral}]{A finite-width littoral edge, not a phase boundary}
@@ -1006,20 +1008,21 @@ question for another paper.
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/eoc_phase.png}
-\caption{\textbf{No critical point in the crossover band; fluctuations grow at the
-pure-propagator limit.} offset $+2$ feedforward finite-size scan against the
+\caption{\textbf{No critical point: the susceptibility peaks in the band but
+drifts and barely grows.} offset $+1$ feedforward finite-size scan against the
 propagator fraction $q$ ($0$: all blend, $1$: all propagator). $L$ is the
 \emph{system size}---the lattice width in cells; the scan spans $L = 30$--$240$
 (32 seeds each), because a genuine transition sharpens as $L$ grows while a
 crossover does not. \textbf{(a)}~genotype activity $a_G$ with logistic fits
 ($R^2 > 0.99$); the crossover width is size-independent ($w \sim L^{-0.04}$), so
-the curve never sharpens into a transition. \textbf{(b)}~the run-to-run spread in
-activity, scaled by size ($L\,\mathrm{Var}(a_G)$): flat across sizes through the
-band (it averages out---no critical point), but growing with $L$ at $q = 1$,
-where the field organises into system-spanning domains. Bottom: one realisation
-($L = 240$, single seed) tinted by isolated-rule activity, from all-blend ($q=0$)
-to the pure-propagator limit ($q=1$)---whose system-spanning domains are exactly
-the structure that (b) detects.}
+the curve never sharpens into a transition. \textbf{(b)}~the size-scaled
+run-to-run spread $L\,\mathrm{Var}(a_G)$ is a susceptibility: it peaks inside the
+band, but the peak drifts ($q \approx 0.15$--$0.5$ across $L$) and grows only
+${\sim}1.1\times$, failing the convergence-and-growth test a critical point
+requires; at $q = 1$ the spread is low, the field forming system-spanning domains
+reproducibly. The honest reading is metastability, not criticality. Bottom: one
+realisation ($L = 240$, single seed) tinted by isolated-rule activity, from
+all-blend ($q=0$) to the pure-propagator limit ($q=1$).}
 \label{fig:phase}
 \end{figure}
 
