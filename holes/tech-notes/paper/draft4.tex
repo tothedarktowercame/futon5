@@ -50,6 +50,7 @@
 \newcommand{\discussnote}[1]{\textcolor{red}{\textbf{[\,DISCUSS: #1\,]}}}
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}
 \newtcolorbox[auto counter]{workedexample}[2][]{%
   enhanced,
   breakable,
@@ -122,7 +123,30 @@ complement. The truth table is thereby itself an eight-cell automaton whose
 wiring is $\sig$ and whose update is Boolean negation --- an automaton inside
 the automaton. Equation~\eqref{eq:prop} defines a family of $8! = 40{,}320$
 operators that is finite, exhaustively enumerable, and, as we show below,
-exactly classified. Box~\ref{box:propagator} works through one member of the
+exactly classified.
+
+\begin{definition}[Writings, propagators, and permutations]\label{def:writing}
+More generally, a \emph{writing} is any function
+$w\colon\{0,\dots,7\}\to\{0,\dots,7\}$ on the truth-table positions, and its
+\emph{propagator} complements each source bit and writes it to the target
+$w(k)$, namely $\bit{w(k)} := \lnot\,\bit{k}$. When $w$ is a bijection---a
+permutation $\sig\in S_8$---each target is written exactly once, $\sig^{-1}$
+exists, and the propagator takes the closed deterministic form~\eqref{eq:prop};
+these \emph{permutation-propagators} are the object studied throughout. A general
+writing need not be injective: two sources may share a target (a
+\emph{collision}, which makes the simultaneous rewrite order-dependent) and some
+position may be written by none (a \emph{gap}). Permutations are only the
+bijective core of a far larger class---there are $8!=40{,}320$ permutations but
+$8^{8}=16{,}777{,}216$ writings, so the permutations are $0.24\%$ of the whole.
+The cycle-structure algebra of \secref{sec:classification} is available only on
+this core; the historical operator of Figure~\ref{fig:figure8},
+$[0\,0\,1\,2\,3\,4\,5\,6]$, is itself a non-bijective writing (bits $0$ and $1$
+both write to position $0$, and position $7$ is never written), and
+Figure~\ref{fig:fig2pair} shows how far its behaviour ranges between its two
+standard-order forms.
+\end{definition}
+
+Box~\ref{box:propagator} works through one member of the
 family bit by bit.
 
 \begin{workedexample}[label={box:propagator}]{A propagator by hand}
