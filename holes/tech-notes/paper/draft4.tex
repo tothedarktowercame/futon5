@@ -83,6 +83,15 @@
   enhanced, colback=white, colframe=gray!45,
   boxrule=0.4pt, arc=0.8mm, left=2mm, right=2mm, top=0.8mm, bottom=0.8mm,
   fonttitle=\bfseries\small, coltitle=black, title={#1}}
+% Corollaries auto-boxed like theorems (blue). Empirical findings are amber:
+% observed (not proved) claims live here, the validated home for rewritten results.
+\tcolorboxenvironment{corollary}{%
+  enhanced, breakable, colback=blue!5, colframe=blue!55!black,
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm}
+\newtcolorbox[auto counter]{empiricalfinding}[2][]{%
+  enhanced, breakable, colback=orange!7, colframe=orange!65!black,
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm,
+  fonttitle=\bfseries, title={Empirical finding~\thetcbcounter: #2}, #1}
 
 \title{A New Family of Operators on Cellular Automata}
 \shorttitle{A New Family of Operators on Cellular Automata}
@@ -108,7 +117,7 @@ table, equivalently Langton's activity $\lambda = 1/2$---forced by parity. A
 balance long tied \emph{empirically} to the edge of chaos is here an exact and
 elementary consequence of the fixed-point condition; whether it \emph{behaves} as
 an edge of chaos, though, the family answers only \emph{sometimes}, since
-$\lambda = 1/2$ is shared by operators that collapse and by the offset $\pm 2$
+$\lambda = 1/2$ is shared by operators that collapse and by the 8-cycles
 that do not. Because every fixed point shares the one value, $\lambda$ cannot by
 itself separate a field that stays diverse from one that collapses; for that we
 use a simple population observable, the count of distinct rules present over time.
@@ -632,9 +641,10 @@ $[2\,2\,2\,2]$ & $105$   & $25.7\%$ \\
 \caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
 offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$ (two
 seeds; genotype in 256 colours, phenotype black and white, first hundred
-generations). Of these all-even rotations only $\gcd(\text{offset},8) = 2$---offset
-$\pm 2$, highlighted---sustains a high-diversity phase; the rest collapse. See
-Worked Example~\ref{box:survey}; continued in~(b).}
+generations). Of these all-even rotations only the single 8-cycles,
+$\gcd(\text{offset},8) = 1$---offset $\pm 1$ and $\pm 3$, highlighted---sustain a
+high-diversity phase; offset $\pm 2$ ($\gcd 2$) and $\pm 4$ ($\gcd 4$) collapse.
+See Worked Example~\ref{box:survey}; continued in~(b).}
 \label{fig:eoc}
 \end{figure}
 
@@ -643,11 +653,11 @@ Worked Example~\ref{box:survey}; continued in~(b).}
 \centering
 \includegraphics[height=0.90\textheight]{figures/survey_b.png}
 \caption{\textbf{(b)~Positive offsets.} Continued from~(a). The classification is
-symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+2$ sustains
-as offset $-2$ does---distinct inverse rotations sharing fixed points and verdict
-but not their transients (Worked Example~\ref{box:survey}). Possessing a fixed
-point and staying near it are different properties: this pair of pages is the
-whole paper in one figure.}
+symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+1$ sustains
+as offset $-1$ does, and offset $+2$ collapses as offset $-2$ does---inverse
+rotations sharing verdict but not their transients (Worked
+Example~\ref{box:survey}). Possessing a fixed point and staying near it are
+different properties: this pair of pages is the whole paper in one figure.}
 \end{figure}
 
 \begin{workedexample}[label={box:survey},breakable=false]{Reading the rotation survey}
@@ -655,19 +665,20 @@ whole paper in one figure.}
 The fields of Figure~\ref{fig:eoc} evolve under the \emph{spatially coupled}
 dynamics of \secref{sec:interrupter}---the per-cell operator together with the
 coupling between cells---not $P_\sig$ applied cell-by-cell. This is what the
-survey turns on: under the bare operator every all-even rotation shown, offset
-$\pm 2$ included, freezes onto its fixed rules (Figure~\ref{fig:parity}, left).
-The coupling reverses this for offset $\pm 2$ alone---a fixed-point-bearing
-operator that nonetheless sustains a high-diversity field---while the other
-rotations collapse regardless; that single exception is what the survey shows.
+survey turns on: under the bare operator every all-even rotation shown freezes
+onto its fixed rules (Figure~\ref{fig:parity}, left). The coupling reverses this
+for the single 8-cycles alone---$\gcd(\text{offset},8)=1$, offset $\pm 1$ and
+$\pm 3$, fixed-point-bearing operators that nonetheless sustain a high-diversity
+field---while offset $\pm 2$ ($\gcd 2$) and $\pm 4$ ($\gcd 4$) collapse
+regardless; that split is what the survey shows.
 
 The two panels are \emph{almost} mirror images, and where they differ is
 instructive. Offset $+d$ and offset $-d$ are the same permutation exactly when
 $2d \equiv 0 \pmod 8$---so offset $\pm 4$ (and the identity) are one operator with
-bit-identical panels, whereas offset $\pm 2$ are distinct \emph{inverse}
-rotations. Inverses share cycle structure, fixed rules, and the
-sustain-or-collapse verdict, but not their transient dynamics: offset $+2$ and
-offset $-2$ realise the same sustaining regime through visibly different fields.
+bit-identical panels, whereas offset $\pm 1$ and $\pm 3$ are distinct
+\emph{inverse} rotations. Inverses share cycle structure, fixed rules, and the
+sustain-or-collapse verdict, but not their transient dynamics: offset $+1$ and
+offset $-1$ realise the same sustaining regime through visibly different fields.
 \end{workedexample}
 
 Possessing a fixed point (Theorem~\ref{thm:parity}) is not the same as
@@ -683,40 +694,39 @@ pull toward balance the \emph{spatial} field exhibits must therefore come
 from the coupling between cells and from the interrupter below, not from the
 bare map.
 
-The rotation family makes this concrete. Every non-trivial wrap rotation is
-all-even and so possesses fixed points (Theorem~\ref{thm:parity}), yet in the
-spatial dynamics only offset $\pm 2$---$\gcd(2,8)=2$, two $4$-cycles---sustains
-a visually complex, high-diversity field (Figure~\ref{fig:eoc}), persisting to
-roughly a hundred generations; the remaining rotations ($\gcd 1$ and
-$\gcd 4$) collapse to near-uniform fields within a few dozen. Possessing a
-fixed point and having the field stay near it are different properties, and
-only the second is visible in a drawing.
-
-This last distinction can be \emph{measured}, with the distinct-rule
-population curve as a simple instrument. Every rotation begins at peak
-diversity---some seventy distinct rules in a random field---but the
-distinct-rule count then diverges sharply by cycle structure
-(Figure~\ref{fig:lambda}): offset $\pm 2$ hold around thirty distinct rules
-through the longest runs we made ($400$ generations), while every $\gcd 1$
-and $\gcd 4$ rotation collapses to one or two within sixty. The persistent
-diversity of the $\gcd 2$ operators and the quick collapse of the
-rest---visible by eye in Figure~\ref{fig:eoc}---are thus separated by more
-than an order of magnitude in this one scalar. We do not claim the count is
-an order parameter in the statistical-mechanics sense; it is a useful summary
-of what the drawings show, on the two seeds per operator that we ran.
+\begin{empiricalfinding}[label={find:survey}]{The rotation survey}
+Every non-trivial wrap rotation is all-even and so possesses fixed rules
+(Theorem~\ref{thm:parity}), yet in the spatially coupled dynamics they split by
+cycle structure (Figures~\ref{fig:eoc},~\ref{fig:lambda}):
+\begin{itemize}\setlength{\itemsep}{1pt}
+\item the single 8-cycles---$\gcd(\text{offset},8)=1$, offset $\pm 1$ and
+$\pm 3$---\emph{sustain} a high-diversity field, holding $\sim$30--40 distinct
+rules through the longest runs we made ($400$ generations);
+\item offset $\pm 2$ ($\gcd 2$, two $4$-cycles) and offset $\pm 4$ ($\gcd 4$,
+four $2$-cycles) \emph{collapse} to one or two rules within a few dozen
+generations.
+\end{itemize}
+The distinct-rule population curve (Figure~\ref{fig:lambda}) separates the two by
+more than an order of magnitude in a single scalar. Possessing a fixed rule and
+having the field stay near it are different properties; only the second is
+visible in a drawing, and the interrupter (\secref{sec:interrupter}) is what
+holds the 8-cycles off their fixed rules. We do not claim the count is an order
+parameter in the statistical-mechanics sense; it is a summary of what the
+drawings show, on the two seeds per operator that we ran.
+\end{empiricalfinding}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/lambda_analogue.png}
 \caption{A population observable: distinct rules in the field over time, for
-the eight wrap rotations (two seeds each). All begin at $\approx 70$; only
-the two $\gcd 2$ operators, offset $\pm 2$ (green), keep a large diverse
-population, while the six others collapse to one or two rules. This makes
-quantitative, on the runs shown, the difference visible by eye in
-Figure~\ref{fig:eoc}. The interrupting neighbour-blend is essential to the
-sustained case: without it these same operators, in the census runs, instead
-settle onto a handful of rules matching their $2^k$ count (rotate$+2$ onto
-four; Figure~\ref{fig:parity}).}
+the wrap rotations (two seeds each). All begin at $\approx 70$; the four
+8-cycles, $\gcd(\text{offset},8)=1$ (offset $\pm 1$ and $\pm 3$, green), keep a
+large diverse population, while offset $\pm 2$ and $\pm 4$ (grey) collapse to one
+or two rules. This makes quantitative, on the runs shown, the difference visible
+by eye in Figure~\ref{fig:eoc}. The interrupting neighbour-blend is essential to
+the sustained case: without it these same operators, in the census runs, instead
+settle onto a handful of rules matching their $2^k$ count (the 8-cycles onto two,
+offset$+2$ onto four; Figure~\ref{fig:parity}).}
 \label{fig:lambda}
 \end{figure}
 
@@ -852,9 +862,9 @@ statistic.
 \label{sec:discussion}
 
 The survey of Figure~\ref{fig:eoc} exposes a sharp behavioural split within a
-family of provably fixed-point-bearing operators: only offset $\pm 2$ sustains a
-high-diversity, visually complex phase, while the rest collapse to near-uniform
-fields. That surviving phase is visually complex, and a reader is entitled to ask whether
+family of provably fixed-point-bearing operators: only the single 8-cycles
+(offset $\pm 1$, $\pm 3$) sustain a high-diversity, visually complex phase, while
+offset $\pm 2$ and $\pm 4$ collapse to near-uniform fields. That surviving phase is visually complex, and a reader is entitled to ask whether
 it sits at a \emph{critical point}---tuned by a control parameter, between an
 ordered and a disordered phase, as the complexity of cellular automata is often
 supposed to \parencite{langton1990computation}. We tested this directly with a
