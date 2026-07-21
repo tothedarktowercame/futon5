@@ -932,79 +932,68 @@ different and answerable question: whether the sustained diversity is spatially
 organised into coexisting dynamical regimes.
 
 \paragraph{No critical point in the band; fluctuations at the propagator limit.}
-In the feedforward base the natural control parameter is the \emph{propagator
-fraction} $q$: the probability that a cell applies the propagator write, with
-$1-q$ holding the neighbour-agreement blend ($q = 0$ all blend, $q = 1$ all
-propagator). Across widths $L = 30$ to $240$ (32 seeds each) the genotype activity
-$a_G(q)$---the late-time changed-cell fraction---rises \emph{smoothly} with $q$,
-well described by a logistic crossover ($R^2 > 0.99$ at every width,
-Figure~\ref{fig:phase}a). Crucially its width does not shrink with system size
-($w \approx 0.13$, $w \sim L^{-0.04}$): the curve never steepens into a step, as
-the order parameter of a genuine critical transition would
-($w \sim L^{-1/\nu} \to 0$). A second, independent test looks at the run-to-run
-\emph{spread} in activity---how much $a_G$ varies from seed to seed, scaled by
-size ($L\,\mathrm{Var}(a_G)$, Figure~\ref{fig:phase}b). At an ordinary point that
-spread averages away as the system grows (larger systems self-average), so the
-scaled spread stays flat; through the crossover band it does exactly that. At
-$q = 1$, though---the pure-propagator limit at which offset $+2$ actually runs---it
-does \emph{not}: the spread grows with size, the signature of activity organised
-into \emph{system-spanning domains} rather than independent local fluctuations
-(the domains of Figure~\ref{fig:tint}). There is thus no critical point
-\emph{within} the crossover band; what fluctuations exist concentrate at the
-pure-propagator limit, exactly where the coexisting domains, walls, and genotype
-churn live. As $q = 1$ is the boundary of the scan we claim no confirmed critical
-point there---only growing, non-self-averaging fluctuations.
+\begin{empiricalfinding}[label={find:crossover}]{No critical point in the crossover; growing fluctuations at the pure-propagator limit}
+The natural control parameter is the \emph{propagator fraction} $q$ ($q = 0$ all
+blend, $q = 1$ all propagator). Across widths $L = 30$--$240$ (32 seeds each) the
+genotype activity $a_G(q)$ rises \emph{smoothly}, well described by a logistic
+crossover ($R^2 > 0.99$, Figure~\ref{fig:phase}a); crucially its width does not
+shrink with size ($w \approx 0.13$, $w \sim L^{-0.04}$), so the curve never
+steepens into the step a genuine critical transition would ($w \sim L^{-1/\nu}
+\to 0$). A second test---the size-scaled run-to-run spread $L\,\mathrm{Var}(a_G)$
+(Figure~\ref{fig:phase}b)---stays flat through the band (self-averaging) but
+\emph{grows} at $q = 1$, the pure-propagator limit at which offset $+2$ runs: the
+signature of activity organised into \emph{system-spanning domains}
+(Figure~\ref{fig:tint}). There is thus no critical point within the band; the
+fluctuations concentrate at $q = 1$, where the coexisting domains, walls, and
+genotype churn live. As $q = 1$ is the scan's boundary we claim no confirmed
+critical point there---only growing, non-self-averaging fluctuations.
+\end{empiricalfinding}
 
-\paragraph{A finite-width crossover---the littoral edge.}
-For descriptive purposes we define an intermediate-activity band operationally by
-$0.15 \le a_G \le 0.60$. Across the tested widths its \emph{lower} edge is
-robustly $q \approx 0.1$---stable under both system size and the choice of
-threshold---while its upper edge is threshold-dependent, because $a_G$ saturates
-gradually rather than jumping (the band spans $q \approx 0.1$ to $0.4$--$0.5$).
-This finite-width crossover is best read as a \emph{littoral edge}: a shore of
-finite width rather than a thermodynamic phase boundary. Where the bare rotations collapse or cycle
-(Figure~\ref{fig:eoc}), offset $+2$ holds this crossover for the length of the
-run.
+\begin{empiricalfinding}[label={find:littoral}]{A finite-width littoral edge, not a phase boundary}
+An intermediate-activity band ($0.15 \le a_G \le 0.60$) has a \emph{lower} edge
+robustly at $q \approx 0.1$---stable under both system size and threshold---while
+its upper edge is threshold-dependent, because $a_G$ saturates gradually rather
+than jumping (the band spans $q \approx 0.1$ to $0.4$--$0.5$). This finite-width
+crossover is best read as a \emph{littoral edge}: a shore of finite width rather
+than a thermodynamic phase boundary. Where the bare rotations collapse or cycle
+(Figure~\ref{fig:eoc}), offset $+2$ holds it for the length of the run.
+\end{empiricalfinding}
 
-\paragraph{The morphology of the crossover.}
-Within the band the field is neither frozen nor turbulent (Figure~\ref{fig:phase},
-bottom, a paired illustrative realisation across $q$: blend-dominated low
-activity, sparse channels, coexisting domains, propagator-dominated high
-activity). To expose its structure we colour the genotype not by rule identity
-but by an \emph{isolated-rule activity score}: each rule run alone as an
-elementary CA from a random initial condition, scored by its asymptotic per-step
-cell-change rate---a run-time measure, distinct from the static truth-table
-balance $\lambda$ of \secref{sec:lambda}, with parameters fixed in the
-accompanying generator. Ordered rules score near $0$, and activity rises through
-the complex rules (Rule~$110 \approx 0.4$) to the chaotic ones ($\gtrsim 0.5$);
-the score \emph{orders} the regimes but does not by itself separate complex from
-chaotic, a known-hard distinction. Under this tint (Figure~\ref{fig:tint}) the
-intermediate field resolves into coexisting low- and high-activity domains whose
+\begin{definition}[Isolated-rule activity score]\label{def:activity}
+The \emph{activity score} of a rule is its asymptotic per-step cell-change rate
+when run alone as an elementary CA from a random initial condition---a run-time
+measure, distinct from the static truth-table balance $\lambda$
+(\secref{sec:lambda}). Ordered rules score near $0$; activity rises through the
+complex rules (Rule~$110 \approx 0.4$) to the chaotic ones ($\gtrsim 0.5$). The
+score \emph{orders} the regimes but does not by itself separate complex from
+chaotic.
+\end{definition}
+
+Tinting the genotype by this score (Figure~\ref{fig:tint}) resolves the
+intermediate field into coexisting low- and high-activity domains whose
 boundaries trace filamentary sets through $1{+}1$-dimensional spacetime---objects
-\emph{analogous to} the domain boundaries studied in computational mechanics
-\parencite{crutchfield1989inferring,shalizi2001computational}, though here
-obtained by thresholding a scalar tint rather than by predictive equivalence.
+\emph{analogous to} the domain boundaries of computational mechanics
+\parencite{crutchfield1989inferring,shalizi2001computational}, here obtained by
+thresholding a scalar tint rather than by predictive equivalence.
 
-\paragraph{The domain walls are where the genotype is most actively rewritten.}
+\begin{empiricalfinding}[label={find:walls}]{The fractal domain walls are where the genotype is rewritten fastest}
 The activity field resolves into ordered and chaotic domains separated by
-fractal-like walls (Figure~\ref{fig:interface}; box-counting dimension
+\emph{fractal-like walls} (Figure~\ref{fig:interface}; box-counting dimension
 $D \approx 1.5$--$1.7$ over $L = 128$--$768$, a handful of seeds). Those walls are
-more than a morphological feature: they are the locus of maximal \emph{genotypic}
-change. Measuring the row-to-row rewrite rate of the rule field by region
-(Table~\ref{tab:churn}), the wall churns more than either domain interior---for
-offset $+2$ at $L = 256$, $0.83$ at the wall against $0.77$ in the ordered interior
-and $0.58$ in the chaotic one---and the wall exceeds \emph{both} interiors in every
-one of the $32$ committed operator/width/seed fields (offset $+2$, the river, and
-$\sigma = 16250374$). The chaotic domain, active in \emph{phenotype}, is in
-aggregate the most \emph{genotype}-stable (a few of the smallest fields aside), so
-the wall---where an ordered domain abuts a chaotic one---is where the propagator
-does its most rewriting. The walls are not compositionally special: no rule class
-is enriched there, and the universal Rule~110 is if anything depleted, so the
-distinction is dynamical, not chemical. Whether that rewriting transports or
-combines information \emph{along} the walls we do not test; that is the natural
-question for a sequel.
+the locus of maximal \emph{genotypic} change: measuring the row-to-row rewrite
+rate by region (Table~\ref{tab:churn}), the wall churns more than either
+interior---for offset $+2$ at $L = 256$, $0.83$ at the wall against $0.77$
+(ordered) and $0.58$ (chaotic)---and exceeds \emph{both} interiors in every one of
+the $32$ committed operator/width/seed fields (offset $+2$, the river, $\sigma =
+16250374$). The chaotic domain is in aggregate the most \emph{genotype}-stable, so
+the wall---where ordered abuts chaotic---is where the propagator does its most
+rewriting. The walls are not compositionally special (no rule class enriched;
+Rule~110 if anything depleted), so the distinction is dynamical, not chemical.
+Whether that rewriting transports or combines information \emph{along} the walls
+we do not test---the natural question for a sequel.
+\end{empiricalfinding}
 
-\paragraph{What we do not claim.}
+\begin{expositionbox}{What we do not claim}
 Two stronger claims are deliberately withheld. We do not assert a critical
 transition---the scan is a null result, and the interface analysis is exploratory
 (few seeds; the fixed-boundary line variant rather than the wrapped lattice of
@@ -1015,6 +1004,7 @@ capacity under these probes and no detectable XOR-like modification---and failur
 of these probes is not itself evidence of no computation. The denser river
 boundary ($D \approx 1.7$ versus $1.5$) is an \emph{unmatched} comparison and does
 not establish that the genotype--phenotype coupling causes the difference.
+\end{expositionbox}
 
 Still, the picture suggests a sequel. If the filaments are domain boundaries they
 are candidate \emph{wires}; the natural question is not which rules compose
