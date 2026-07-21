@@ -898,40 +898,36 @@ composition holds an off-critical structure for the length of the run.}
 \section{Why Distance Geometry Cannot See This}
 \label{sec:metrics}
 
-The classification is a conjugacy invariant of the operator $\sig$---its
-cycle type---while the complexity and compression measures we tried are
-computed from a single rule's bits or from a single space--time trajectory. A
-quantity read off one field's history does not have access to $\sig$'s cycle
-type, so we should not expect it to recover the parity classification, and in
-our tests it did not. The smallest surviving cast is small but not
-degenerate---an all-even $\sig$ with a single $8$-cycle ($k=1$) has
-$2^1 = 2$ fixed points, since a permutation of eight elements has at least one
-cycle---yet a population-diversity count reads such a collapsed field as
-nearly dead though it is maximally selected; a frozen periodic genotype scores
-a lower statistical complexity $C_\mu$ \parencite{crutchfield1989inferring}
-than Rule~110; gzip codelength rates a self-similar rule as noise. These
-observables are not all metrics in the same sense, and we do not claim a
-general impossibility theorem---only that the standard per-trajectory measures
-we tried do not separate the parity classes, and that this is unsurprising
-because the classifying property lives on the operator, not on the states.
-The classification is a theorem \emph{because} it is not a per-trajectory
-statistic.
+\begin{observation}[label={obs:metrics}]{Why per-trajectory metrics cannot see the classification}
+The classification is a conjugacy invariant of $\sig$---its cycle type---while
+the complexity and compression measures we tried read a single rule's bits or one
+space--time trajectory. A quantity read off one field's history has no access to
+$\sig$'s cycle type, so it cannot recover the parity classification, and in our
+tests it did not: a population count reads a collapsed-but-maximally-selected
+field as nearly dead; a frozen periodic genotype scores a lower statistical
+complexity $C_\mu$ \parencite{crutchfield1989inferring} than Rule~110; gzip rates
+a self-similar rule as noise. We claim no general impossibility theorem---only
+that the standard per-trajectory measures we tried do not separate the parity
+classes, unsurprisingly, because the classifying property lives on the operator,
+not on the states. The classification is a theorem \emph{because} it is not a
+per-trajectory statistic.
+\end{observation}
 
 \section{Discussion}
 \label{sec:discussion}
 
-The survey of Figure~\ref{fig:eoc} exposes a sharp behavioural split within a
+\begin{expositionbox}{Is the surviving phase a critical point? We test and ask a sharper question}
+The survey (Figure~\ref{fig:eoc}) exposes a sharp behavioural split within a
 family of provably fixed-point-bearing operators: only the single 8-cycles
-(offset $\pm 1$, $\pm 3$) sustain a high-diversity, visually complex phase, while
-offset $\pm 2$ and $\pm 4$ collapse to near-uniform fields. That surviving phase is visually complex, and a reader is entitled to ask whether
-it sits at a \emph{critical point}---tuned by a control parameter, between an
-ordered and a disordered phase, as the complexity of cellular automata is often
-supposed to \parencite{langton1990computation}. We tested this directly with a
-finite-size scan and find no such point. We therefore ask a
-different and answerable question: whether the sustained diversity is spatially
-organised into coexisting dynamical regimes.
+(offset $\pm 1$, $\pm 3$) sustain a high-diversity phase, while offset $\pm 2$ and
+$\pm 4$ collapse. A reader is entitled to ask whether that phase sits at a
+\emph{critical point}---tuned between an ordered and a disordered phase, as CA
+complexity is often supposed to \parencite{langton1990computation}. We test this
+directly with a finite-size scan and find no such point, so we ask a different,
+answerable question: whether the sustained diversity is spatially organised into
+coexisting dynamical regimes.
+\end{expositionbox}
 
-\paragraph{No critical point in the band; fluctuations at the propagator limit.}
 \begin{empiricalfinding}[label={find:crossover}]{No critical point in the crossover; growing fluctuations at the pure-propagator limit}
 The natural control parameter is the \emph{propagator fraction} $q$ ($q = 0$ all
 blend, $q = 1$ all propagator). Across widths $L = 30$--$240$ (32 seeds each) the
@@ -1006,12 +1002,14 @@ boundary ($D \approx 1.7$ versus $1.5$) is an \emph{unmatched} comparison and do
 not establish that the genotype--phenotype coupling causes the difference.
 \end{expositionbox}
 
-Still, the picture suggests a sequel. If the filaments are domain boundaries they
-are candidate \emph{wires}; the natural question is not which rules compose
-them---in our data the complex rules are not enriched there---but whether
-information is \emph{transported along} them and \emph{combined where they
-collide} \parencite{mitchell1993revisiting}. Whether computation flows down the
-littoral filaments of these diagrams is a question for another paper.
+\begin{expositionbox}{The sequel: do the filaments carry computation?}
+If the filaments are domain boundaries they are candidate \emph{wires}. The
+natural question is not which rules compose them---in our data the complex rules
+are not enriched there---but whether information is \emph{transported along} them
+and \emph{combined where they collide} \parencite{mitchell1993revisiting}.
+Whether computation flows down the littoral filaments of these diagrams is a
+question for another paper.
+\end{expositionbox}
 
 \begin{figure}[tb]
 \centering
