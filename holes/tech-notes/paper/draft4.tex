@@ -107,31 +107,30 @@
 
 \abstract{%
 We describe a cellular automaton whose cells hold not states but \emph{rules},
-and an operator that rewrites each rule by acting on its own truth table:
+and an operator $P_\sig$ that rewrites each rule by acting on its own truth table,
 $\bit{\sig(k)} := \lnot\,\bit{k}$ for $\sig$ a permutation of the eight
-neighbourhoods. The truth table is itself an eight-cell automaton with topology
-$\sig$---an automaton inside the automaton---giving a family of $8! = 40{,}320$
-operators that is finite, exhaustively enumerable, and exactly classified.
+neighbourhoods (Def.~\ref{def:writing}). This gives a finite, exhaustively
+classifiable family of $8! = 40{,}320$ operators---a vanishing $0.24\%$ of the
+general \emph{writings} (Obs.~\ref{obs:core}).
 
-The classification is by cycle parity: $P_\sig$ has a fixed point if and only if
-every cycle of $\sig$ is even, which holds for $((2n-1)!!)^2 = 105^2 = 11{,}025$
-of the $40{,}320$ ($27.34\%$). Run under a spatial rule-field dynamics, this
-all-even class goes extinct several times more often than the rest.
+The classification is exact and machine-checked: $P_\sig$ has a fixed rule if and
+only if every cycle of $\sig$ is even (Thm.~\ref{thm:parity}), and every fixed
+rule is \emph{balanced}, at Langton's $\lambda = 1/2$ (Thm.~\ref{thm:lambda}). A
+census of all $40{,}320$ makes this a measured law: any odd cycle forbids
+collapse, the all-even class splits, and every genotype/phenotype regime is
+reachable by a bijection (Table~\ref{tab:census}).
 
-\begin{expositionbox}{Balance is exact; edge-of-chaos is a separate question}
-Our main result concerns where those fixed points \emph{are}: without exception,
-every fixed point has exactly four one-bits---a \emph{balanced} table, Langton's
-$\lambda = 1/2$---forced by parity. A balance long tied \emph{empirically} to the
-edge of chaos is here an exact, elementary consequence of the fixed-point
-condition. Whether it \emph{behaves} as an edge of chaos the family answers only
-\emph{sometimes}: $\lambda = 1/2$ is shared by operators that collapse and by the
-8-cycles that do not, so $\lambda$ alone cannot separate a diverse field from a
-collapsed one. For that we use a simple population observable---the count of
-distinct rules over time.
-\end{expositionbox}
-Spatially, the operators that survive sustain coexisting activity domains
-separated by fractal-like walls---and it is at those walls that the rule field is
-rewritten fastest.}
+Balance is exact, but edge-of-chaos \emph{behaviour} is a separate question: only
+the coprime 8-cycles sustain a high-diversity phase (Emp.~find.~\ref{find:survey},
+Fig.~\ref{fig:eoc}). That phase has no critical point but a finite-width
+\emph{littoral edge} (Emp.~find.~\ref{find:crossover},~\ref{find:littoral};
+Fig.~\ref{fig:phase}), whose
+ordered and chaotic domains meet at fractal walls where the genotype is rewritten
+fastest (Emp.~find.~\ref{find:walls}, Fig.~\ref{fig:interface}). The family is
+flat under its own composition (Obs.~\ref{obs:flat}); yet pairing a propagator
+with a construction step---a \emph{river}---or braiding complementary operators
+nonetheless manufactures sustained structure (Figs.~\ref{fig:braid},
+\ref{fig:river}).}
 
 \begin{document}
 \maketitle
@@ -182,49 +181,50 @@ position $7$ is never written---and its behaviour ranges widely between its two
 standard-order forms.
 \end{observation}
 
-\begin{figure}[t]
+\begin{figure}[!tp]
 \centering
-\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=1.6mm]},
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=1.5mm]},
   bx/.style={draw, rounded corners=1.5pt, align=center, inner sep=2.5pt,
-             text width=28mm, minimum height=7.5mm},
+             text width=27mm, minimum height=7mm},
   defn/.style={bx, fill=violet!10, draw=violet!55!black},
   thm/.style={bx, fill=blue!8, draw=blue!55!black},
   obs/.style={bx, fill=teal!10, draw=teal!55!black},
   ef/.style={bx, fill=orange!12, draw=orange!65!black},
   cen/.style={bx, fill=gray!12, draw=gray!55!black},
-  s/.style={->, draw=black!60, semithick}]
-\node[defn] (d1)  at (0,0)     {\textbf{Def 1} Writing \& permutation};
-\node[defn] (dgp) at (0,-1.55) {\textbf{Def 2} Genotype \& phenotype};
-\node[defn] (dlam)at (0,-3.1)  {\textbf{Def 3} Activity $\lambda$};
-\node[defn] (dint)at (0,-4.65) {\textbf{Def 4} Interrupter};
-\node[defn] (dal) at (0,-6.2)  {\textbf{Def 5} Aliveness};
-\node[obs]  (obs) at (4.6,0)     {\textbf{Obs 1} Permutations $=0.24\%$};
-\node[thm]  (t1)  at (4.6,-2.3)  {\textbf{Thm 1} Fixed pt $\Leftrightarrow$ all cycles even};
-\node[thm]  (t2)  at (4.6,-4.4)  {\textbf{Thm 2} Fixed pts balanced, $\lambda=\tfrac12$};
-\node[defn] (driv)at (4.6,-6.2)  {\textbf{Def 6} River};
-\node[ef]   (ef)  at (9.2,-2.3)  {\textbf{Emp.\ find.\ 1} 8-cycles sustain};
-\node[cen]  (cen) at (9.2,-4.4)  {\textbf{Census} collapse by cycle type};
-\draw[s] (d1)--(obs);
-\draw[s] (d1)-- node[midway,above,font=\scriptsize]{restrict} (t1);
-\draw[s] (dgp)--(t1);
-\draw[s] (dlam)--(t2);
-\draw[s] (t1)--(t2);
-\draw[s] (t1)-- node[midway,above,font=\scriptsize]{dynamics} (ef);
-\draw[s] (t1)-- node[midway,above,font=\scriptsize,pos=0.75]{frequency} (cen);
-\draw[s] (dal.east) to[out=0,in=205] (cen.west);
-\draw[s] (dint)--(driv);
-\draw[s] (ef)--(cen);
+  fig/.style={bx, fill=yellow!16, draw=yellow!60!black, text width=25mm},
+  s/.style={->, draw=black!60, semithick},
+  v/.style={->, draw=yellow!45!black, semithick, densely dashed}]
+% proved core (left)
+\node[defn] (d1) at (0,0)    {\textbf{Def 1} Writing \& permutation};
+\node[thm]  (t1) at (0,-2.0) {\textbf{Thm 1} Fixed pt $\Leftrightarrow$ all cycles even};
+\node[thm]  (t2) at (0,-3.9) {\textbf{Thm 2} Fixed pts balanced $\lambda=\tfrac12$};
+% object + measured + constructive (center)
+\node[obs] (obs1) at (3.9,0)    {\textbf{Obs~\ref{obs:core}} Permutations $=0.24\%$};
+\node[cen] (cen)  at (3.9,-2.0) {\textbf{Census} collapse by cycle type};
+\node[ef]  (efs)  at (3.9,-3.9) {\textbf{Emp.\,f.~\ref{find:survey}} 8-cycles sustain};
+\node[ef]  (efl)  at (3.9,-5.8) {\textbf{Emp.\,f.~\ref{find:crossover}--\ref{find:littoral}} no critical pt; littoral edge};
+\node[ef]  (efw)  at (3.9,-7.7) {\textbf{Emp.\,f.~\ref{find:walls}} fractal walls churn most};
+\node[obs] (obsf) at (3.9,-9.6) {\textbf{Obs~\ref{obs:flat}} flat composition $\to$ \textbf{Def~\ref{def:river}} river};
+% figures (right): what each claim rests on
+\node[fig] (ff2) at (7.9,-0.7) {\textbf{Fig~\ref{fig:fig2pair}} two solutions};
+\node[fig] (feoc)at (7.9,-3.9) {\textbf{Fig~\ref{fig:eoc}} rotation survey};
+\node[fig] (fph) at (7.9,-5.8) {\textbf{Fig~\ref{fig:phase}} finite-size scan};
+\node[fig] (fint)at (7.9,-7.7) {\textbf{Fig~\ref{fig:interface}} fractal walls};
+\node[fig] (fbr) at (7.9,-9.6) {\textbf{Figs~\ref{fig:braid}--\ref{fig:knob}} braid, knob};
+% support (solid) + visual-evidence (dashed) edges
+\draw[s] (d1)--(t1); \draw[s] (t1)--(t2); \draw[s] (d1)--(obs1);
+\draw[s] (t1)--(cen); \draw[s] (t1)--(efs);
+\draw[s] (efs)--(efl); \draw[s] (efl)--(efw);
+\draw[v] (d1)--(ff2); \draw[v] (efs)--(feoc); \draw[v] (efl)--(fph);
+\draw[v] (efw)--(fint); \draw[v] (obsf)--(fbr);
 \end{tikzpicture}
-\caption{\textbf{Map of the paper by box.} Every load-bearing claim is a box;
-arrows carry logical support and colour encodes type---definition (violet),
-theorem (blue), observation (teal), empirical finding (amber), census (grey).
-The object and its measurements (Definitions~1--5) support the two theorems, the
-empirical survey, and the census: Theorem~\ref{thm:parity} (fixed-point
-existence) grounds both the survey and the census that measures how often
-collapse occurs, while Theorem~\ref{thm:lambda} pins where the fixed points sit;
-the interrupter (Def.~4) yields the river (Def.~6). Worked examples~1--4
-illustrate the boxed claims. The connecting prose is scaffolding: anything not
-boxed is expository.}
+\caption{\textbf{Map of the paper by box.} Solid arrows carry logical support;
+\emph{dashed} arrows link each claim to the \textbf{figure} that visualises it
+(yellow)---the argument rests on what can be seen. Colour encodes type:
+definition (violet), theorem (blue), observation (teal), empirical finding
+(amber), census (grey), figure (yellow). Only the principal boxes are drawn; the
+paper carries some two dozen typed boxes in all, plus exposition boxes for the
+connecting prose. Anything not in a box is droppable scaffolding.}
 \label{fig:map}
 \end{figure}
 
