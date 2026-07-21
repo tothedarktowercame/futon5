@@ -1,0 +1,32 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{graphicx}
+\graphicspath{{figures/}{../../labs/M-aif-tokamak/compositions/}}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+% one figure per page: filename (monospace) + short descriptor + the image
+\newcommand{\fig}[2]{%
+  \begin{center}
+  {\ttfamily\detokenize{#1}}\\[1mm]
+  {\small #2}\\[2.5mm]
+  \includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{#1}
+  \end{center}\clearpage}
+\begin{document}
+\begin{center}
+{\Large\bfseries draft4 --- figures-only contact sheet}\\[2mm]
+{Standard Wolfram-order rebuild; every figure reproduced from \texttt{mmca-clj} alone.}\\[1mm]
+{\small \today}
+\end{center}
+\vspace{4mm}
+\fig{rule110_spread.png}{Fig 1 --- Rule 110 predominates ($\sigma$=16250374, Wolfram conjugate $\approx35\%$) vs a diverse regime (10275364)}
+\fig{fig8.png}{Fig 2 --- the ``Figure 8'' triptych: genotype / phenotype / population}
+\fig{parity-dichotomy.png}{Fig 3 --- cycle-parity dichotomy: all-even collapses, any-odd survives (run alone)}
+\fig{survey_a.png}{Fig 4a --- rotation survey, negative offsets: the 8-cycles ($\pm1,\pm3$) sustain}
+\fig{survey_b.png}{Fig 4b --- rotation survey, positive offsets}
+\fig{lambda_analogue.png}{Fig 5 --- population curve as $\lambda$-analogue: only $\gcd=1$ (8-cycles) sustain}
+\fig{river.png}{Fig 6 --- the river}
+\fig{critical_shell.png}{Fig 7 --- a dead genotype (collapses to Rule 105) carrying a live phenotype}
+\fig{eoc_tint.png}{EoC tint --- activity tint of offset$+1$ vs $\sigma$=16250374}
+\fig{eoc_interface.png}{EoC interface --- fractal activity-domain boundaries ($D\approx1.6$--$1.8$)}
+\fig{eoc_phase.png}{EoC phase --- offset$+1$ finite-size interrupter-$q$ scan (smooth crossover, metastable band)}
+\end{document}
