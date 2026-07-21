@@ -844,23 +844,22 @@ Settling and sustained diversity are two behaviours of one operator, selected
 not by the bare algebra but by the coupling.
 \end{observation}
 
-Propagators do not compose usefully with one another, and this negative
-result shapes what composition can do here. Each operator of
-Equation~\eqref{eq:prop} negates every bit---$P_\sig(g)[j] = \lnot\,
-g[\sig^{-1}(j)]$, a permutation of the eight coordinates followed by a global
-flip---so under composition the flips cancel in pairs. The product
-$P_\sig \circ P_\tau$ is a \emph{pure} coordinate permutation, with no
-negation left in it---itself a bijection, hence (like every map in the
-family) not an absorber: it fixes $2^{c}$ bytes for $c$ cycles but sends a
-generic byte around a cycle, and it carries none of the forced
-$\lambda = 1/2$ structure that made the single operator interesting. An even number of propagators composes to such a bare
-permutation, an odd number back to a single propagator $P_{\sig\tau\cdots}$;
-either way the composite contains nothing the individual operators did not.
-The family is flat under its own composition. We searched composites of two
-and three operators for emergent structure and found none---the negation
-that gives one operator its balanced ($\lambda = 1/2$) fixed point is exactly
-what a second operator cancels---so the compositions that \emph{do} yield something
-new must pair a propagator with a step of a different kind.
+\begin{observation}[label={obs:flat}]{The family is flat under its own composition}
+Each operator of Equation~\eqref{eq:prop} negates every bit
+($P_\sig(g)[j] = \lnot\,g[\sig^{-1}(j)]$, a coordinate permutation followed by a
+global flip), so under composition the flips cancel in pairs: $P_\sig \circ
+P_\tau$ is a \emph{pure} coordinate permutation with no negation left---a
+bijection that fixes $2^{c}$ bytes for $c$ cycles but carries none of the forced
+$\lambda = 1/2$ structure. An even number of propagators composes to such a bare
+permutation, an odd number back to a single propagator; either way the composite
+contains nothing the individual operators did not. We searched composites of two
+and three operators for emergent structure and found none---the negation that
+gives one operator its balanced fixed point is exactly what a second cancels.
+\end{observation}
+
+Propagators thus do not compose usefully with one another; the compositions that
+\emph{do} yield something new must pair a propagator with a step of a different
+kind.
 
 One such composition is worth exhibiting.
 
