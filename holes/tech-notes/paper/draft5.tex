@@ -35,7 +35,7 @@
 \usepackage{xcolor}
 \usepackage{subcaption}
 \usepackage[most]{tcolorbox}
-\usetikzlibrary{positioning, arrows.meta, fit}
+\usetikzlibrary{positioning, arrows.meta, fit, decorations.pathreplacing}
 \usepackage{needspace}
 \usepackage[style=apa,backend=biber]{biblatex}
 \addbibresource{refs.bib}
@@ -102,8 +102,8 @@
 \abstract{%
 We study a two-layer cellular automaton in which each cell carries both a
 phenotype state and an eight-bit rule. A permutation $\sig$ of the eight
-neighbourhoods defines an operator $P_\sig$ on those rules by
-$\bit{\sig(k)} := \lnot\,\bit{k}$. The resulting family contains
+displayed truth-table positions defines an operator $P_\sig$ on those rules by
+$\bit{\sig(p)} := \lnot\,\bit{p}$. The resulting family contains
 $8! = 40{,}320$ permutation-propagators and is exhaustively classifiable.
 
 The exact, machine-checked classification is that $P_\sig$ has a fixed rule if
@@ -132,15 +132,24 @@ provide two reproducible ways to sustain structure beyond the bare operator.}
 
 A cellular automaton normally evolves a field of \emph{states} under one
 fixed rule. Here each cell also carries a \emph{rule}, and local writes evolve
-that rule field alongside the phenotype. An elementary cellular automaton
-(ECA) rule is an eight-bit truth table $\bit{k}$, with $k$ ranging over the
-eight three-cell neighbourhoods. We study the operator $P_\sig$, parameterised by a
-permutation $\sig \in S_8$ that acts on the rule's own table. Writing a rule
-as a map $g\colon \{0,\dots,7\} \to \{0,1\}$, the operator sends $g$ to
-$P_\sig g$ defined by
+that rule field alongside the phenotype. We display an elementary cellular
+automaton (ECA) rule in Wolfram order,
+\[
+111,110,101,100,011,010,001,000,
+\]
+and index these displayed positions from left to right by $p=0,\ldots,7$.
+Thus position $0$ is the $111$ output and most significant bit, while position
+$7$ is the $000$ output and least significant bit. Throughout, the indices of
+$\sig$, $w$, $g$, and $\bit{p}$ are these \emph{displayed positions}, not the
+binary values of the neighbourhoods. If $n\in\{0,\ldots,7\}$ is a numerical
+neighbourhood value, its rule output is therefore $g(7-n)$.
+
+We study the operator $P_\sig$, parameterised by a permutation
+$\sig\in S_8$ of the displayed positions. Writing the displayed byte as a map
+$g\colon\{0,\dots,7\}\to\{0,1\}$, the operator sends $g$ to $P_\sig g$ defined by
 \begin{equation}
-(P_\sig\, g)(j) \;=\; \lnot\, g\bigl(\sig^{-1}(j)\bigr),
-\qquad\text{equivalently}\qquad \bit{\sig(k)} := \lnot\,\bit{k}.
+(P_\sig\, g)(q) \;=\; \lnot\, g\bigl(\sig^{-1}(q)\bigr),
+\qquad\text{equivalently}\qquad \bit{\sig(p)} := \lnot\,\bit{p}.
 \label{eq:prop}
 \end{equation}
 Each output bit is one input bit, at the position $\sig$ moves it to, negated;
@@ -151,22 +160,27 @@ the automaton. Equation~\eqref{eq:prop} defines a family of $8! = 40{,}320$
 operators that is finite, exhaustively enumerable, and, as we show below,
 exactly classified.
 
+The legacy engine stored its table in the order
+$000,001,010,100,011,101,110,111$. Whenever a legacy writing is imported, the
+reproduction code conjugates it into the displayed Wolfram order above before
+we quote its permutation or apply names such as offset $+2$.
+
 \begin{definition}[Writings, elementary writes, and propagators]\label{def:writing}
 A \emph{writing} is any function $w\colon\{0,\dots,7\}\to\{0,\dots,7\}$ on the
-truth-table positions. Its elementary update at source $k$ is
+truth-table positions. Its elementary update at source position $p$ is
 \[
-(U_{w,k}g)(j)=
+(U_{w,p}g)(q)=
 \begin{cases}
-\lnot g(k),&j=w(k),\\
-g(j),&j\ne w(k).
+\lnot g(p),&q=w(p),\\
+g(q),&q\ne w(p).
 \end{cases}
 \]
-Thus one update complements source bit $k$ and writes it to target $w(k)$. If
+Thus one update complements source bit $p$ and writes it to target $w(p)$. If
 $w$ is a bijection---a permutation $\sig\in S_8$---all eight writes can be
 performed simultaneously without collisions, giving the
 \emph{permutation-propagator} $P_\sig$ in Equation~\eqref{eq:prop}. Its fixed
-bytes are exactly the bytes fixed by every $U_{\sig,k}$. For a non-injective
-writing, individual updates $U_{w,k}$ remain well defined, but a simultaneous
+bytes are exactly the bytes fixed by every $U_{\sig,p}$. For a non-injective
+writing, individual updates $U_{w,p}$ remain well defined, but a simultaneous
 $P_w$ requires a collision-resolution convention; such a writing also has
 \emph{gaps}, or positions targeted by no source.
 \end{definition}
@@ -234,13 +248,15 @@ Write an ECA rule in Wolfram's standard neighbourhood order:
 \begin{center}
 \setlength{\tabcolsep}{3.2pt}
 \begin{tabular}{c@{\quad}*{8}{c}}
+position & $0$ & $1$ & $2$ & $3$ & $4$ & $5$ & $6$ & $7$ \\
 neighbourhood & $111$ & $110$ & $101$ & $100$ & $011$ & $010$ & $001$ & $000$ \\
 \midrule
 Rule 110 & $0$ & $1$ & $1$ & $0$ & $1$ & $1$ & $1$ & $0$ \\
 \end{tabular}
 \end{center}
-Thus Rule~110 is the byte $01101110$. Let $\sig(k)=k+2\pmod 8$:
-each source bit is complemented and written two positions further along.
+Thus Rule~110 is the byte $01101110$. Let $\sig(p)=p+2\pmod 8$ on the
+displayed position indices: each source bit is complemented and written two
+positions further to the right, wrapping at the end.
 Carrying out the eight writes gives
 \[
 P_{+2}(01101110)=01100100,
@@ -269,20 +285,22 @@ At time $t$, site $x$ holds an eight-bit rule $g_x(t)$ and a phenotype bit
 $X_x(t)$. One ordinary coupled step has three parts.
 \begin{enumerate}
 \item \textbf{Express the current rule.} The phenotype neighbourhood is
-evaluated by the rule at its centre:
+evaluated by the rule at its centre. With numerical neighbourhood value
+$n_x(t)=4X_{x-1}(t)+2X_x(t)+X_{x+1}(t)$, its displayed position is $7-n_x(t)$:
 \[
-X_x(t+1)=g_x(t)\bigl(X_{x-1}(t),X_x(t),X_{x+1}(t)\bigr).
+X_x(t+1)=g_x(t)\bigl(7-n_x(t)\bigr).
 \]
 \item \textbf{Blend neighbouring rules.} For each truth-table position $j$,
 inspect the three genotype bits
 $\bigl(g_{x-1}(j),g_x(j),g_{x+1}(j)\bigr)$. If the two outer bits agree, copy
 their value. Thus $(0,1,0)$ blends to $0$. If they disagree, the centre rule
-decides by treating the triple as one of its ECA neighbourhoods. The eight
+decides by treating the triple as one of its ECA neighbourhoods, converting
+its numerical value $n$ to displayed position $7-n$ as above. The eight
 coordinate-wise decisions form an intermediate rule
 \[
 h_x=B\bigl(g_{x-1}(t),g_x(t),g_{x+1}(t)\bigr).
 \]
-\item \textbf{Write one propagated bit.} Draw a source
+\item \textbf{Write one propagated bit.} Draw a source position
 $K_x(t)\in\{0,\ldots,7\}$ uniformly and apply its elementary write to the
 intermediate byte:
 \[
@@ -794,34 +812,66 @@ two-4-cycle class splits between sustaining and collapsing.}
 \label{fig:two4cycle}
 \end{figure}
 
+\subsection{Constructive control by temporal schedules}
+\label{sec:braiding}
+
+\begin{definition}[Temporal braid]\label{def:braid}
+A \emph{temporal braid} alternates two writings between complete coupled spatial
+updates: writing $w_A$ is used at even times and $w_B$ at odd times. More
+generally, a periodic \emph{schedule} selects one writing at each time step.
+This preserves the intermediate spatial states and neighbour blends; it is not
+the algebraic composition $P_{\sigma_A}\circ P_{\sigma_B}$ of two simultaneous
+maps.
+\end{definition}
+
+\begin{empiricalfinding}[label={find:braid}]{A braid of two collapsing operators can sustain the field}
+At width $80$, horizon $120$, and seed $0$, offset $+2$ and offset $+4$ each
+have genotype change rate $0$ when held alone, while their alternating braid
+has change rate $0.76$ (Figure~\ref{fig:braid}, top). The matched schedule
+control offset $+2$/offset $-2$ remains dead (Figure~\ref{fig:braid}, bottom).
+This establishes that two collapsing components can construct a sustaining
+schedule. It does not establish the previously suggested block-system
+criterion: all three even offsets preserve the evens/odds partition, and both
+pairs generate the same translation subgroup $\langle {+2}\rangle$. The cause
+of the contrasting braid outcomes remains to be identified.
+\end{empiricalfinding}
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/braid.png}
 \caption{\textbf{Temporal braiding can sustain aliveness.} Two operators that each collapse
-alone are \emph{braided} by alternating their elementary spatial updates. In the
-tested contrast, the braid sustains when the operators preserve \emph{different}
-block systems. Top: offset$+2$ (two
+alone are braided by alternating their elementary spatial updates. Top:
+offset$+2$ (two
 4-cycles) and offset$+4$ (four 2-cycles) are each genotypically dead, yet their
 braid is alive (genotype change-rate $0.76$, vs.\ $0$ for either alone). Bottom:
-offset$+2$ braided with offset$-2$ stays dead---both preserve the same evens/odds
-partition, so the alternation never leaves it. The result concerns the
-time-dependent coupled dynamics, not composition of the simultaneous maps
-$P_\sigma$.}
+offset$+2$ braided with offset$-2$ stays dead. Both tested pairs preserve parity,
+so the contrast is not explained by the existence of that common invariant
+partition. The result concerns time-dependent coupled dynamics, not composition
+of the simultaneous maps $P_\sigma$.}
 \label{fig:braid}
 \end{figure}
+
+\begin{empiricalfinding}[label={find:knob}]{The mixing fraction is a reproducible diversity control}
+Let $\sigma$ be displayed-position offset $+1$. We ran periodic 12-step
+schedules mixing the sustaining 8-cycle $\sigma^1$ with the collapsing
+two-4-cycle operator $\sigma^2$, at width $80$ for $120$ generations and five
+seeds per mixture. Mean late-window diversity rises from $1.0$ rule when the
+$\sigma^1$ fraction is zero, through $16.8$ at fraction $0.25$, to $36.9$ at
+fraction $5/12$; above that it remains in the range $34$--$41$ rather than
+increasing monotonically (Figure~\ref{fig:knob}). The schedule fraction is thus
+a tunable control for entry into a sustained high-diversity regime, with
+saturation rather than a continuously linear response.
+\end{empiricalfinding}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/knob.png}
-\caption{\textbf{A diversity-control schedule.} The powers of an 8-cycle
-$\sigma$ form a lattice of block systems---$\sigma^1$ (no invariant partition,
-maximal mixing), $\sigma^2$ (two 4-cycles), $\sigma^4$ (four 2-cycles)---with the
-\emph{intermediate} powers dead and the ends alive. Braiding the dead $\sigma^2$
-with the mixing $\sigma^1$, the sustained diversity is set by the fraction of steps
-spent in $\sigma^1$: it climbs from dead ($\sigma^1$ fraction $0$) to saturation
-(fraction ${\gtrsim}0.4$). The three panels show the field thickening from sparse
-(low) to a high-diversity field as the schedule changes---the same two operators
-throughout, with only their relative frequency varied.}
+\caption{\textbf{A diversity-control schedule.} Periodic 12-step schedules mix
+the sustaining offset-$+1$ operator $\sigma^1$ with the collapsing offset-$+2$
+operator $\sigma^2$. Mean late-window distinct-rule diversity (five seeds) rises
+from $1.0$ with no $\sigma^1$ steps to a high-diversity plateau once its fraction
+reaches roughly $0.4$. The three fields show fractions $0.25$, $0.50$, and $1.0$
+at the same representative seed.}
 \label{fig:knob}
 \end{figure}
 
@@ -861,11 +911,12 @@ found no additional structural regime. Temporal braiding is a different
 operation: it alternates stochastic elementary writes inside the spatially
 coupled dynamics rather than replacing them by one composed map.
 
-Propagators thus do not compose usefully with one another; the compositions that
-\emph{do} yield something new must pair a propagator with a step of a different
+Algebraic composition is therefore closed in the sense of
+Proposition~\ref{obs:flat}. Temporal scheduling is different: it retains each
+intermediate coupled state, which is why the braids of
+\secref{sec:braiding} can produce dynamics absent from either held operator. A
+second constructive mechanism pairs a propagator with a step of a different
 kind.
-
-One such composition is worth exhibiting.
 
 \begin{definition}[River]\label{def:river}
 A \emph{river} is the composed operator obtained by following the collapsing
@@ -991,13 +1042,6 @@ establish an effect of genotype--phenotype coupling. Whether rewriting transport
 or combines information \emph{along} the walls is not tested here.
 \end{empiricalfinding}
 
-If the filaments are domain boundaries they are candidate \emph{wires}. The
-natural question is not which rules compose them---in our data the complex rules
-are not enriched there---but whether information is \emph{transported along} them
-and \emph{combined where they collide} \parencite{mitchell1993revisiting}.
-Whether computation flows down the littoral filaments of these diagrams is a
-question for another paper.
-
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/eoc_phase.png}
@@ -1075,6 +1119,128 @@ river                & $0.98$ & $0.97$ & $0.88$ \\
 \end{tabular}
 \end{table}
 
+\section{A Sampled Edge of Chaos}
+\label{sec:eoc-compute}
+
+If the filaments are domain boundaries they are candidate \emph{wires}. The
+natural question is not which rules compose them---in our data the complex rules
+are not enriched there---but whether information is \emph{transported along} them
+and \emph{combined where they collide} \parencite{mitchell1993revisiting}. Rather
+than defer this entirely, we take a few samples.
+
+We read both notions off the binary activity field as local transfer entropy
+\parencite{lizier2008local}: the apparent transfer entropy from a spatial
+neighbour into a cell, conditioned on the cell's own past, scores directed
+\emph{transport}; the \emph{synergy} of the two neighbours---their joint
+predictive contribution beyond the sum of their separate ones---scores
+\emph{combining} (Figure~\ref{fig:eoc-schema}). On the offset$+1$ field the directed transfer entropy
+concentrates on the filaments (about five-fold over the domain interiors) and
+collapses to near zero under a source time-shuffle that preserves marginals, so
+the transport is genuine and not a by-product of where the field happens to
+change; Rule~$110$, as a positive control, shows the same signature.
+
+\begin{figure}[tb]
+\centering
+\begin{tikzpicture}
+\node[inner sep=0.4pt, draw=black!25] (p) {\includegraphics[width=56mm]{figures/eoc_patch.png}};
+\node[font=\footnotesize, anchor=south] at (p.north)
+  {\textbf{(a)} a real patch (offset$+1$): activity domains and their walls};
+\end{tikzpicture}
+\\[3mm]
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=1.6mm]},
+  cell/.style={draw=black!35, minimum size=7mm, inner sep=0},
+  ord/.style={cell, fill=blue!8},
+  cha/.style={cell, fill=orange!13},
+  wall/.style={cell, fill=teal!20, draw=teal!55!black, thick},
+  tgt/.style={cell, fill=teal!45, draw=teal!72!black, very thick},
+  te/.style={-{Stealth[length=1.7mm]}, teal!55!black, semithick},
+  own/.style={-{Stealth[length=1.7mm]}, black!45, semithick, densely dashed},
+  rowlab/.style={font=\scriptsize\itshape, black!55},
+  blurb/.style={align=center, font=\footnotesize}]
+% Panel (a): transport
+\node[blurb] at (0.75,1.75) {\textbf{(b) transport} \\ along a wall};
+\node[ord]  (aP0) at (0,0)        {};
+\node[wall] (aP1) at (0.75,0)     {};
+\node[cha]  (aP2) at (1.5,0)      {};
+\node[tgt]  (aC)  at (0.75,-1.05) {$c$};
+\node[rowlab] at (-0.62,0)     {$t{-}1$};
+\node[rowlab] at (-0.62,-1.05) {$t$};
+\draw[own] (aP1) -- (aC);
+\draw[te]  (aP0.south) .. controls +(0,-0.5) and +(-0.4,0.2) .. (aC.west);
+\node[blurb, text width=36mm, anchor=north] at (0.75,-2.35)
+  {\emph{transfer entropy}:\\ a neighbour's past beyond $c$'s own};
+% Panel (b): combining
+\begin{scope}[xshift=55mm]
+\node[blurb] at (0.75,1.75) {\textbf{(c) combining} \\ where walls collide};
+\node[wall] (bP0) at (0,0)        {};
+\node[ord]  (bP1) at (0.75,0)     {};
+\node[wall] (bP2) at (1.5,0)      {};
+\node[tgt]  (bC)  at (0.75,-1.05) {$c$};
+\draw[decorate, decoration={brace, amplitude=4pt, mirror}, teal!55!black]
+  (bP0.north west) -- node[above=2.5pt, font=\scriptsize, teal!55!black] {two walls} (bP2.north east);
+\draw[own] (bP1) -- (bC);
+\draw[te]  (bP0.south) .. controls +(0,-0.5) and +(-0.4,0.2) .. (bC.west);
+\draw[te]  (bP2.south) .. controls +(0,-0.5) and +(0.4,0.2)  .. (bC.east);
+\node[blurb, text width=38mm, anchor=north] at (0.75,-2.55)
+  {\emph{synergy}:\\ the two walls jointly, beyond their separate effects};
+\end{scope}
+\end{tikzpicture}
+\caption{\textbf{How the two measures read a filament.} \textbf{(a)}~A real
+space--time patch from the synthetic family (offset$+1$): low- and high-activity
+domains (white/grey) meet along thin walls (teal), with one wall and one collision
+marked. In the schematics each cell $c$ is predicted from its own past (dashed)
+and its two spatial neighbours' pasts (teal); tints mark the low- (blue) and
+high-activity (orange) domains a wall separates. \textbf{(b)}~\emph{Transport} is
+the directed transfer entropy from a neighbour into $c$ beyond $c$'s own past,
+elevated on the walls. \textbf{(c)}~\emph{Combining} is the \emph{synergy} of the
+two neighbours---their joint contribution beyond the sum of their separate
+ones---probed where two walls collide. History length one; conditioning on the
+own past removes what the wall merely carries forward in time.}
+\label{fig:eoc-schema}
+\end{figure}
+
+To ask whether combining is a property of the \emph{edge} rather than of the
+operator alone, we sample a synthetic order--chaos family. The neighbour-blend
+interrupter (\secref{sec:interrupter}, fraction $q$) tunes toward order; an
+independent, seeded stochastic rule-flip applied to the genotype each step
+(rate $p$) tunes toward chaos; the bare propagator sits between them at
+$q=1,\,p=0$. Figure~\ref{fig:eoc-compute} reports filament combining across this
+family.
+
+\begin{observation}[label={obs:eoc-compute}]{Combining peaks at a literal edge of chaos}
+Averaged over eight seeds, filament synergy rises out of the ordered regime,
+reaches a maximum at an intermediate blend fraction ($q\approx0.4$), and decays
+monotonically through the bare propagator into the noise-driven regime.
+Combining is thus largest at a transitional regime---a literal edge of chaos in
+the sense of \textcite{langton1990computation}---and is suppressed by both
+over-ordering and disorder. The bare offset$+1$ operator sits near this maximum,
+on its mildly descending side. This is a first sample and not a map: it rests on
+one synthetic family, one information measure (the co-located transport score is
+confounded on the chaotic flank, where noise manufactures transitions), eight
+seeds, and a rise at the ordered extreme that is partly a sparsity effect.
+\end{observation}
+
+Whether computation genuinely flows down the littoral filaments of these
+diagrams---beyond these few samples---remains a question for another paper.
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/edge_of_chaos_curve.png}
+\caption{\textbf{A sampled edge of chaos.} Filament \emph{combining} (synergy of
+the two spatial neighbours' contributions to a cell's genotype rewrite, in bits)
+across a synthetic order--chaos family: the blend interrupter tunes toward order
+(fraction $q$), a seeded stochastic rule-flip tunes toward chaos (rate $p$), with
+the bare offset$+1$ propagator between them. Points are means over $N=8$ seeds;
+bars are $\pm$SEM. Combining peaks at an intermediate regime ($q\approx0.4$) and
+decays into both order and chaos; the bare operator sits near, but below, the
+peak. Within this family the peak exceeds both the ordered ($p<0.01$) and chaotic
+($p<10^{-8}$) extremes and the bare operator itself ($q=1$; $p<10^{-5}$, Welch
+$t$-tests), and the chaotic flank decays monotonically (Spearman $\rho=-0.98$,
+$n=72$). These significances are within a single family and a single measure;
+generality across operators is untested.}
+\label{fig:eoc-compute}
+\end{figure}
+
 \section{Limits}
 \label{sec:limits}
 
@@ -1135,7 +1301,9 @@ formally verified in Lean~4 with Mathlib at
 (commit \texttt{bc34d8cec27216aae1d3cd511a9950ab1bce3575}), in
 \texttt{DarkTower/Patterns/Propagator.lean}: the cycle-parity criterion as
 \texttt{hasAlternatingColouring\_iff\_cycleType\_even} and the $\lambda = 1/2$
-balance as \texttt{alternatingColouring\_true\_card\_eq\_four}.
+balance as \texttt{alternatingColouring\_true\_card\_eq\_four}. The same file
+also contains executable regressions for both hand calculations, including the
+displayed-position versus numerical-neighbourhood indexing contrast.
 
 \printbibliography
 \end{document}
