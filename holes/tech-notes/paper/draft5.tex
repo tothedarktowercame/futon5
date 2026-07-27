@@ -1,30 +1,4 @@
-% =====================================================================
-% draft.tex — "A New Class of Cellular Automata"
-%
-% A RESULTS paper, refactored from main.tex (which is an exploration note).
-% Joe, 2026-07-17: "I bet we could write a straightforward five-to-ten-page
-% paper, including pictures. Rather than 'What Undecidability Feels Like From
-% the Inside' I might call it 'A new class of cellular automata'."
-%
-% WHAT CHANGED, and why. main.tex is 1,197 lines built around a fail bank —
-% Joe: "even the fail bank sounds like exploratory data analysis". This keeps
-% only what survives as a RESULT and demotes the negatives to the one paragraph
-% that explains them.
-%
-% IN:   the object; the parity theorem; the closed form; fixed-byte counts = 2^k;
-%       the census (5x death, monotone in k); the prospective test (reduced
-%       rotate+2); bias-not-absorber; the interrupter; and the headline —
-%       EVERY FIXED POINT SITS AT LANGTON'S lambda = 1/2, exactly, all 40,320,
-%       zero violations, with a two-line proof.
-% OUT:  transfer (never shown); the tokamak (cascade 0/12 = identity 0/12, not a
-%       win, per lon-claude-6's own control); the duet (MI null); the policy
-%       population (blend fired 0.2% of calls); C_mu (a frozen barcode beats
-%       Rule 110); the heads (dose 1/80).
-% DEMOTED: the three-metric fail bank -> one paragraph. Parity is not a metric
-%       property, so distance-geometry cannot see it. That is an explanation,
-%       not twenty pages.
-% =====================================================================
-\documentclass[man,12pt,floatsintext]{apa7}
+\documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
 
 \usepackage[american]{babel}
 \usepackage{csquotes}
@@ -40,15 +14,20 @@
 \usepackage[style=apa,backend=biber]{biblatex}
 \addbibresource{refs.bib}
 \usepackage{nameref}
+\hypersetup{
+  hidelinks,
+  pdftitle={A New Family of Operators on Cellular Automata},
+  pdfauthor={Joseph Corneli},
+  pdfsubject={Permutation-propagators in cellular automata},
+  pdfkeywords={cellular automata, rule evolution, Langton's lambda,
+    self-modifying systems, edge of chaos, artificial life}
+}
 
 \newcommand{\sig}{\sigma}
 \newcommand{\bit}[1]{\mathrm{bit}[#1]}
 % Sections are unnumbered in apa7 `man' mode, so \ref{sec:..} is empty;
 % cross-reference sections by name instead.
 \newcommand{\secref}[1]{\emph{\nameref{#1}}}
-% --- editorial highlighting for review (remove before submission) ---
-\newcommand{\discuss}[1]{{\color{blue!65!black}#1}}
-\newcommand{\discussnote}[1]{\textcolor{red}{\textbf{[\,DISCUSS: #1\,]}}}
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}{Corollary}
 \newtheorem{proposition}{Proposition}
@@ -96,8 +75,11 @@
 
 \title{A New Family of Operators on Cellular Automata}
 \shorttitle{A New Family of Operators on Cellular Automata}
-\author{Joseph Corneli}
-\affiliation{}
+\authorsnames{Joseph Corneli}
+\authorsaffiliations{{Oxford Brookes University, Oxford OX3 0BP, United Kingdom},
+  {Hyperreal Enterprises Ltd, United Kingdom}}
+\note{Corresponding author: Joseph Corneli,
+  \href{mailto:jcorneli@brookes.ac.uk}{jcorneli@brookes.ac.uk}.}
 
 \abstract{%
 We study a two-layer cellular automaton in which each cell carries both a
@@ -106,23 +88,34 @@ displayed truth-table positions defines an operator $P_\sig$ on those rules by
 $\bit{\sig(p)} := \lnot\,\bit{p}$. The resulting family contains
 $8! = 40{,}320$ permutation-propagators and is exhaustively classifiable.
 
-The exact, machine-checked classification is that $P_\sig$ has a fixed rule if
-and only if every cycle of $\sig$ is even; an all-even permutation with $k$
+The exact, machine-checked classification is that $P_\sig$ has a fixed rule
+exactly when every cycle of $\sig$ is even; an all-even permutation with $k$
 cycles has $2^k$ fixed rules; and every fixed rule is balanced, with Langton
-activity $\lambda=1/2$. A census of the spatially coupled dynamics finds that
-every odd-cycle operator is genotype-alive under the stated finite-run
-protocol, whereas every all-even cycle type contains both sustaining and
-collapsing operators. All four genotype/phenotype activity regimes occur among
-the bijective operators.
+activity $\lambda=1/2$. In a census of the spatially coupled dynamics, every
+odd-cycle operator is genotype-alive under the stated finite-run protocol,
+whereas every all-even cycle type contains both sustaining and collapsing
+operators.
 
-Within the wrap-rotation subfamily under neighbour-blend coupling, the
-coprime rotations sustain a high-diversity field while the other nontrivial
-rotations collapse in the runs tested. A finite-size scan finds no evidence of
-a sharpening critical point over the sizes studied, but instead a broad,
-drifting crossover---a finite-width \emph{littoral edge}. Activity-tinted fields
-contain filamentary boundaries on which genotype rewriting is elevated. Finally,
-time-dependent braids of propagators and a phenotype-reading construction step
-provide two reproducible ways to sustain structure beyond the bare operator.}
+Within the wrap-rotation subfamily, coprime rotations sustain high diversity
+while the other nontrivial rotations collapse in the runs tested. A finite-size
+scan finds a broad, drifting crossover rather than evidence of a sharpening
+critical point. Activity-tinted fields contain filamentary boundaries with
+elevated genotype rewriting. Temporal braids and a phenotype-reading
+construction provide two reproducible ways to sustain structure beyond the
+bare operator.}
+\keywords{cellular automata, rule evolution, Langton's lambda,
+self-modifying systems, edge of chaos, artificial life}
+
+% Artificial Life asks for the abstract and keywords on the cover page and the
+% main text on page 2. In apa7 manuscript mode, suppress the page break that
+% normally separates the title page from the abstract; retain the following
+% page break before the main text.
+\makeatletter
+\patchcmd{\maketitle}{\vspace*{4\baselineskip}}{\vspace*{\baselineskip}}%
+  {}{\PackageError{draft5}{Could not compact title-page spacing}{}}
+\patchcmd{\maketitle}{\newpage}{\vspace{0pt}}%
+  {}{\PackageError{draft5}{Could not place abstract on title page}{}}
+\makeatother
 
 \begin{document}
 \maketitle
@@ -221,6 +214,8 @@ standard-order forms.
 % Constructive branch (right).
 \node[con] (braid) at (10.1,0) {\textbf{Time-dependent braids}\\alternation sustains diversity};
 \node[con,below=8mm of braid] (river) {\textbf{River construction}\\phenotype feedback sustains a band};
+\node[con] (compute) at (10.1,-6.4)
+  {\textbf{Edge-of-chaos experiment}\\combining peaks at transition};
 % Arrows show dependence, not merely reading order.
 \draw[s] (operator)--(parity); \draw[s] (parity)--(count); \draw[s] (parity)--(balance);
 \draw[e] (protocol)--(census); \draw[e] (census)--(survey);
@@ -228,14 +223,16 @@ standard-order forms.
 \draw[s] (operator)--(protocol);
 \draw[e] (protocol.east)--(braid.west);
 \draw[e] (protocol.south east)--(7.55,-1.35)|-(river.west);
+\draw[e] (walls.east)--(compute.west);
 \end{tikzpicture}
 \caption{\textbf{Argument map.} The exact branch (blue) derives fixed-point
 existence, number, and balance from the operator definition. The empirical
 branch (amber) uses the coupled-update protocol to move from the full census to
-the rotation survey, finite-size scan, and interface analysis. The constructive
-branch (green) tests two ways of sustaining structure. Arrows mark logical or
-methodological dependence; figures visualise the corresponding measurements but
-are not themselves premises.}
+the rotation survey, finite-size scan, and interface analysis. The forward
+branch (green) tests two ways of sustaining structure and a sampled
+edge-of-chaos computation experiment. Arrows mark logical or methodological
+dependence; figures visualise the corresponding measurements but are not
+themselves premises.}
 \label{fig:map}
 \end{figure}
 
@@ -341,7 +338,7 @@ fixed-point structure.
 
 \begin{figure}[tp]
 \centering
-\includegraphics[width=\linewidth]{figures/rule110_spread.png}
+\includegraphics[width=\linewidth]{figures/rule110_spread.pdf}
 \caption{Two operators from the family, each shown over time as genotype
 (256-colour, left) and phenotype (black and white, right). Under
 $\sig = 16250374$ the genotype field comes to be dominated by ECA
@@ -533,14 +530,14 @@ coexist; the metric measures we tried do not separate the two
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.82\linewidth]{figures/fig2pair.png}
+\includegraphics[width=0.82\linewidth]{figures/fig2pair.pdf}
 \caption{\textbf{Two terminal-diversity solutions of one historical operator.} The
 historical write $[0\,0\,1\,2\,3\,4\,5\,6]$ has two forms under the standard
 Wolfram order. Its \emph{conjugate} $[1\,2\,4\,5\,3\,6\,7\,7]$ (top) reproduces the
-draft3 behaviour: the genotype collapses to exactly two terminal rules---76 and 77,
+two-rule behaviour: the genotype collapses to exactly two terminal rules---76 and 77,
 adjacent, differing in a single bit---regardless of seed, while the phenotype stays
 regular. Applied \emph{directly} (bottom), the same operator keeps a diverse
-genotype (${\sim}30$ terminal rules)---the draft4 solution. Two ends of genotypic
+genotype (${\sim}30$ terminal rules). Two ends of genotypic
 aliveness from one historical write.}
 \label{fig:fig2pair}
 \end{figure}
@@ -586,7 +583,7 @@ not, and is the natural next question.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.82\linewidth]{figures/critical_shell.png}
+\includegraphics[width=0.82\linewidth]{figures/critical_shell.pdf}
 \caption{A genotypically dead, phenotypically live field. The all-even operator
 $\sig = [2\,3\,0\,1\,5\,4\,7\,6]$, built to fix the balanced shell containing
 Rule~$105$, collapses the genotype (left, 256-colour) to near-uniformity within
@@ -613,7 +610,7 @@ difference} between the classes, not the class sizes.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{../../labs/M-aif-tokamak/compositions/parity-dichotomy.png}
+\includegraphics[width=\linewidth]{figures/parity-dichotomy.pdf}
 \caption{The parity dichotomy, by example (the census of all $40{,}320$
 permutations is summarised in the text). Five operators as genotype (top) and
 phenotype (bottom) over time. \emph{Left:} both all-even operators possess fixed
@@ -703,7 +700,7 @@ $[2\,2\,2\,2]$ & $105$   & $25.7\%$ \\
 
 \begin{figure}[p]
 \centering
-\includegraphics[height=0.73\textheight]{figures/survey_a.png}
+\includegraphics[height=0.73\textheight]{figures/survey_a.pdf}
 \caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
 offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$ (two
 seeds; genotype in 256 colours, phenotype black and white, first hundred
@@ -717,7 +714,7 @@ See Worked Example~\ref{box:survey}; continued in~(b).}
 \begin{figure}[p]
 \ContinuedFloat
 \centering
-\includegraphics[height=0.73\textheight]{figures/survey_b.png}
+\includegraphics[height=0.73\textheight]{figures/survey_b.pdf}
 \caption{\textbf{(b)~Positive offsets.} Continued from~(a). The classification is
 symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+1$ sustains
 as offset $-1$ does, and offset $+2$ collapses as offset $-2$ does---inverse
@@ -784,7 +781,7 @@ sense.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/lambda_analogue.png}
+\includegraphics[width=\linewidth]{figures/lambda_analogue.pdf}
 \caption{A population observable: distinct rules in the field over time, for
 the wrap rotations (two seeds each). All begin at $\approx 70$; the four
 8-cycles, $\gcd(\text{offset},8)=1$ (offset $\pm 1$ and $\pm 3$, green), keep a
@@ -799,11 +796,11 @@ rules.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/two4cycle.png}
+\includegraphics[width=\linewidth]{figures/two4cycle.pdf}
 \caption{\textbf{Cycle structure does not determine aliveness.} Two operators of
 identical cycle type---both two 4-cycles---with opposite fate. Left,
 $[6\,7\,0\,2\,1\,4\,3\,5]$ sustains a live genotype and phenotype; it is the
-standard-Wolfram-order form of the operator draft3 called offset$+2$ (its
+standard-Wolfram-order form of the historical offset$+2$ operator (its
 conjugate). Right, the Wolfram-order rotation offset$+2=[2\,3\,4\,5\,6\,7\,0\,1]$
 has the same two-4-cycle structure yet collapses to a dead genotype and a frozen
 phenotype. Same cycle type, opposite outcome: the specific permutation, not its
@@ -838,7 +835,7 @@ of the contrasting braid outcomes remains to be identified.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/braid.png}
+\includegraphics[width=\linewidth]{figures/braid.pdf}
 \caption{\textbf{Temporal braiding can sustain aliveness.} Two operators that each collapse
 alone are braided by alternating their elementary spatial updates. Top:
 offset$+2$ (two
@@ -865,7 +862,7 @@ saturation rather than a continuously linear response.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/knob.png}
+\includegraphics[width=\linewidth]{figures/knob.pdf}
 \caption{\textbf{A diversity-control schedule.} Periodic 12-step schedules mix
 the sustaining offset-$+1$ operator $\sigma^1$ with the collapsing offset-$+2$
 operator $\sigma^2$. Mean late-window distinct-rule diversity (five seeds) rises
@@ -935,7 +932,7 @@ that the structure is an attractor or survives arbitrarily long.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/river.png}
+\includegraphics[width=\linewidth]{figures/river.pdf}
 \caption{A \emph{river}: a composed operator sustains a reproducible
 structure. The offset-$+2$ propagator, composed with a phenotype-reading,
 four-candidate, first-match template construction (fallback: the all-zero
@@ -1026,27 +1023,30 @@ thresholding a scalar tint rather than by predictive equivalence.
 The activity field resolves into ordered and chaotic domains separated by
 \emph{fractal-like walls} (Figure~\ref{fig:interface}; box-counting dimension
 $D \approx 1.5$--$1.7$ over $L = 128$--$768$, a handful of seeds). Those walls are
-the locus of maximal \emph{genotypic} change: measuring the row-to-row rewrite
-rate by region (Table~\ref{tab:churn}), the wall churns more than either
-interior---for offset $+2$ at $L = 256$, $0.83$ at the wall against $0.77$
-(ordered) and $0.58$ (chaotic)---and exceeds \emph{both} interiors in every one of
-the $32$ committed operator/width/seed fields (offset $+2$, the river, $\sigma =
-16250374$). The chaotic domain is in aggregate the most \emph{genotype}-stable, so
-the wall---where ordered abuts chaotic---is where the propagator does its most
-rewriting. The walls are not compositionally special (no rule class enriched;
-Rule~110 is, if anything, depleted), so the distinction is dynamical rather than
-a difference in rule composition. The interface analysis is exploratory: it
-uses a handful of seeds and a fixed-boundary variant, and the denser river
-boundary ($D\approx1.7$ versus $1.5$) is an unmatched comparison that does not
-establish an effect of genotype--phenotype coupling. Whether rewriting transports
-or combines information \emph{along} the walls is not tested here.
+the locus of elevated \emph{genotypic} change: measuring the row-to-row rewrite
+rate by region (Table~\ref{tab:churn}), the wall churn exceeds the chaotic
+interior in all $32$ committed operator/width/seed fields and exceeds
+\emph{both} interiors in $24$. At $L = 256$, offset $+1$ gives $0.80$ at the
+wall against $0.81$ (ordered) and $0.73$ (chaotic); the corresponding wall is
+the maximum region for $\sigma=16250374$ and the river. The chaotic domain has
+the lowest aggregate churn for every operator and width (and in $29$ of the
+$32$ individual fields), so the wall---where ordered abuts chaotic---is
+consistently more rewritten than the chaotic interior, though not universally
+more than the ordered one. The walls are not compositionally special (no rule
+class enriched; Rule~110 is, if anything, depleted), so the distinction is
+dynamical rather than a difference in rule composition. The interface analysis
+is exploratory: it uses a handful of seeds and a fixed-boundary variant, and
+the denser river boundary ($D\approx1.8$ versus $1.5$--$1.7$) is an unmatched
+comparison that does not establish an effect of genotype--phenotype coupling.
+Whether rewriting transports or combines information \emph{along} the walls is
+not tested here.
 \end{empiricalfinding}
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=\linewidth]{figures/eoc_phase.png}
+\includegraphics[width=\linewidth]{figures/eoc_phase.pdf}
 \caption{\textbf{No finite-size evidence of a critical point over the tested
-range.} Offset $+2$ feedforward finite-size scan against the
+range.} Offset $+1$ feedforward finite-size scan against the
 propagator fraction $q$ ($0$: all blend, $1$: all propagator). $L$ is the
 \emph{system size}---the lattice width in cells; the scan spans $L = 30$--$240$
 (32 seeds each), because a genuine transition sharpens as $L$ grows while a
@@ -1066,7 +1066,7 @@ activity at $q=0$, $0.05$, $0.25$, and $0.75$.}
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=\linewidth]{figures/eoc_tint.png}
+\includegraphics[width=\linewidth]{figures/eoc_tint.pdf}
 \caption{\textbf{The genotype as a map of activity regimes.} Genotype spacetime
 fields (fixed-boundary variant) tinted by each rule's \emph{isolated-rule
 activity score} (Definition~\ref{def:activity}; blue $=$ low near $0$, pale $=$
@@ -1074,8 +1074,9 @@ intermediate near $0.4$, red $=$ high near $0.5$ and above). Which active regime
 pairs with the low-activity background depends on the operator, and the three-way
 balance differs sharply (entropy in bits, in title): offset $+1$ (the 8-cycle
 survivor) mixes low with high-activity chaotic rules in a \emph{fine} texture;
-the two-4-cycle $[6\,7\,0\,2\,1\,4\,3\,5]$---the standard-order form of draft3's
-offset$+2$ exemplar---forms \emph{large coherent} intermediate-activity domains
+the two-4-cycle $[6\,7\,0\,2\,1\,4\,3\,5]$---the standard-order form of the
+historical offset$+2$ exemplar---forms \emph{large coherent}
+intermediate-activity domains
 with sharp walls, the most balanced regime mix (entropy $1.51$); and
 $\sigma = 16250374$ is dominated by the intermediate complex Rule~110. The score
 orders the regimes but does not by itself separate complex from chaotic.}
@@ -1084,17 +1085,18 @@ orders the regimes but does not by itself separate complex from chaotic.}
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=\linewidth]{figures/eoc_interface.png}
+\includegraphics[width=\linewidth]{figures/eoc_interface.pdf}
 \caption{\textbf{Activity-domain walls.} The boundary (black) between low- and
 high-activity regions, traced through the $1{+}1$-dimensional spacetime diagram at
-$L = 256$. offset $+2$ and $\sigma = 16250374$ carry fractal-like boundaries of
-comparable interface fraction and dimension ($D \approx 1.5$--$1.6$); the
-phenotype-coupled river carries a denser one ($D \approx 1.71$, an unmatched
-comparison as it couples phenotype). The dimension is stable across
-$L = 128$--$768$ (offset $+2$ and $\sigma \approx 1.5$, river $\approx 1.7$; box
-sizes $2$--$64$). Collapsed operators (e.g.\ offset $+4$) carry none. These walls
-are also where the rule field is rewritten fastest (Discussion). Exploratory: a
-handful of seeds, fixed-boundary variant.}
+$L = 256$. Offset $+1$, the two-4-cycle
+$[6\,7\,0\,2\,1\,4\,3\,5]$, and $\sigma = 16250374$ carry fractal-like
+boundaries ($D \approx 1.5$--$1.6$); the phenotype-coupled river carries a
+denser one ($D \approx 1.80$, an unmatched comparison as it couples phenotype).
+The dimension is stable across $L = 128$--$768$ (offset $+1\approx1.67$, the
+two-4-cycle $\approx1.50$, $\sigma\approx1.54$, and river $\approx1.79$; box
+sizes $2$--$64$). Collapsed operators (e.g.\ offset $+4$) carry none. These
+walls are also consistently more rewritten than the chaotic-domain interior
+(Discussion). Exploratory: a handful of seeds, fixed-boundary variant.}
 \label{fig:interface}
 \end{figure}
 
@@ -1102,19 +1104,19 @@ handful of seeds, fixed-boundary variant.}
 \centering
 \caption{\textbf{Genotype churn by region}---row-to-row rewrite rate of the rule
 field (fraction of cells whose ECA rule changes from the row above), at
-$L = 256$, mean over the committed seeds. For every operator the wall exceeds
-\emph{both} domain interiors; the chaotic interior---most active in
-phenotype---is the most genotype-stable. Wall extraction is the
-threshold-and-smooth procedure of Figure~\ref{fig:interface}; reproducible from
-the committed fields (\texttt{plot\_eoc\_churn.py}).}
+$L = 256$, mean over the committed seeds. The wall exceeds the chaotic
+interior for every operator; for offset $+1$, the ordered interior is slightly
+higher. Wall extraction is the threshold-and-smooth procedure of
+Figure~\ref{fig:interface}; reproducible from the committed fields
+(\texttt{plot\_eoc\_churn.py}).}
 \label{tab:churn}
 \begin{tabular}{lccc}
 \toprule
 Operator & Wall & Ordered interior & Chaotic interior \\
 \midrule
-offset $+2$          & $0.83$ & $0.77$ & $0.58$ \\
+offset $+1$          & $0.80$ & $0.81$ & $0.73$ \\
 $\sigma = 16250374$  & $0.71$ & $0.68$ & $0.57$ \\
-river                & $0.98$ & $0.97$ & $0.88$ \\
+river                & $0.99$ & $0.97$ & $0.96$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1142,7 +1144,7 @@ change; Rule~$110$, as a positive control, shows the same signature.
 \begin{figure}[tb]
 \centering
 \begin{tikzpicture}
-\node[inner sep=0.4pt, draw=black!25] (p) {\includegraphics[width=56mm]{figures/eoc_patch.png}};
+\node[inner sep=0.4pt, draw=black!25] (p) {\includegraphics[width=56mm]{figures/eoc_patch.pdf}};
 \node[font=\footnotesize, anchor=south] at (p.north)
   {\textbf{(a)} a real patch (offset$+1$): activity domains and their walls};
 \end{tikzpicture}
@@ -1225,7 +1227,7 @@ diagrams---beyond these few samples---remains a question for another paper.
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.85\linewidth]{figures/edge_of_chaos_curve.png}
+\includegraphics[width=0.85\linewidth]{figures/edge_of_chaos_curve.pdf}
 \caption{\textbf{A sampled edge of chaos.} Filament \emph{combining} (synergy of
 the two spatial neighbours' contributions to a cell's genotype rewrite, in bits)
 across a synthetic order--chaos family: the blend interrupter tunes toward order
@@ -1291,11 +1293,14 @@ $15$ versus $23$. On this pair, recovering a universal rule and sustaining a
 diverse population pull against each other---a suggestion worth testing at
 scale, not a law we have established.
 
-\paragraph{Code and formal proofs.} All code needed to reproduce the figures is
-available at \texttt{https://github.com/tothedarktowercame/mmca-clj} (commit
-\texttt{0163108ef96e180d79d921d6e90012a752b7830c})---a standalone,
+\paragraph{Data and code availability.} The generated numerical data underlying
+the tables, figures, and reported summary statistics, together with the code and
+documented commands needed to regenerate them, are publicly available at
+\texttt{https://github.com/tothedarktowercame/mmca-clj} (commit
+\texttt{9f68611ca6d512006a610e9712b7ccc3bf1dfd7b})---a standalone,
 dependency-light Clojure port of the MetaCA dynamics whose \texttt{README} gives
-the exact command for each figure. The classification and balance theorems are
+the complete reproduction command and commands for individual figure groups.
+The classification and balance theorems are
 formally verified in Lean~4 with Mathlib at
 \texttt{https://github.com/tothedarktowercame/mathlib4}, branch \texttt{darktower}
 (commit \texttt{bc34d8cec27216aae1d3cd511a9950ab1bce3575}), in
@@ -1304,6 +1309,14 @@ formally verified in Lean~4 with Mathlib at
 balance as \texttt{alternatingColouring\_true\_card\_eq\_four}. The same file
 also contains executable regressions for both hand calculations, including the
 displayed-position versus numerical-neighbourhood indexing contrast.
+
+\paragraph{Generative-AI disclosure.} Anthropic Claude Opus~4.8 and OpenAI
+Codex coding agents \parencite{anthropic_claude,openai_codex} assisted in an
+iterative, human-supervised workflow with manuscript editing, software
+implementation, test construction, and adversarial checks. The author reviewed
+the resulting prose and code, reran the reported computations and formal
+checks, and accepts full responsibility for the manuscript. Product information
+was accessed on July~25, 2026.
 
 \printbibliography
 \end{document}
