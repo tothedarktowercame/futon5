@@ -922,28 +922,31 @@ step---match the local phenotype against four template candidates, first match
 wins, and fall back to the all-zero rule when none matches.
 \end{definition}
 
-\begin{empiricalfinding}[label={find:river}]{The river sustains a coherent band}
-In all six tested seeds, the river produces a coherent band of alternating
-phenotype that drifts through a disordered background
-(Figure~\ref{fig:river}). Its trajectory varies with the seed, while its
-presence persists for the full run. This is a six-seed observation, not a claim
-that the structure is an attractor or survives arbitrarily long.
+\begin{empiricalfinding}[label={find:river}]{The river sustains structured phenotype}
+In all six tested seeds at $L=80$, $T=120$, the river produces coherent bands
+of alternating phenotype that drift through a disordered background. In the
+larger pinned run at $L=240$, $T=360$ (Figure~\ref{fig:river}), those structures
+persist while branching, merging, and reorganising across the full spacetime
+field. This is a bounded six-seed observation plus one larger representative
+run, not a claim that the structure is an attractor or survives arbitrarily
+long.
 \end{empiricalfinding}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/river.pdf}
-\caption{A \emph{river}: a composed operator sustains a reproducible
-structure. The offset-$+2$ propagator, composed with a phenotype-reading,
+\caption{\textbf{A larger river spacetime plate.} One pinned representative
+run (seed 1) at $L=240$, $T=360$---three times the spatial extent and duration
+of each six-seed replication run---with genotype at left and phenotype at
+right. The offset-$+2$ propagator is composed with a phenotype-reading,
 four-candidate, first-match template construction (fallback: the all-zero
-rule), produces in
-each of six seeds a coherent band of alternating phenotype (bottom row)
-drifting through a disordered background (genotype top, six seeds; genotype
-coloured by rule as in Figures~\ref{fig:regimes}--\ref{fig:eoc}---greyscale by
-byte value, with well-known ECAs highlighted, red~$=$~Rule~110). The band's
-trajectory varies with the seed; its presence does not.
-Where the bare rotations collapse or cycle (Figure~\ref{fig:eoc}), this
-composition holds an off-critical structure for the length of the run.}
+rule). Alternating phenotype domains branch, merge, and reorganise throughout
+the run rather than resolving to a homogeneous or short-period field.
+Genotype is coloured by rule as in
+Figures~\ref{fig:regimes}--\ref{fig:eoc}: greyscale by byte value, with
+well-known ECAs highlighted and red denoting Rule~110. Where the bare rotations
+collapse or cycle (Figure~\ref{fig:eoc}), this composition sustains structured
+phenotype for the length of the observed run.}
 \label{fig:river}
 \end{figure}
 
@@ -1297,7 +1300,7 @@ scale, not a law we have established.
 the tables, figures, and reported summary statistics, together with the code and
 documented commands needed to regenerate them, are publicly available at
 \texttt{https://github.com/tothedarktowercame/mmca-clj} (commit
-\texttt{9f68611ca6d512006a610e9712b7ccc3bf1dfd7b})---a standalone,
+\texttt{e3e7bc59a02a229ef87bc7b7f296be0f5dc4b0c6})---a standalone,
 dependency-light Clojure port of the MetaCA dynamics whose \texttt{README} gives
 the complete reproduction command and commands for individual figure groups.
 The classification and balance theorems are
