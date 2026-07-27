@@ -9,7 +9,7 @@
 \usepackage{xcolor}
 \usepackage{subcaption}
 \usepackage[most]{tcolorbox}
-\usetikzlibrary{positioning, arrows.meta, fit, decorations.pathreplacing}
+\usetikzlibrary{positioning, arrows.meta, fit, calc, decorations.pathreplacing}
 \usepackage{needspace}
 \usepackage[style=apa,backend=biber]{biblatex}
 \addbibresource{refs.bib}
@@ -214,7 +214,7 @@ standard-order forms.
 % Constructive branch (right).
 \node[con] (braid) at (10.1,0) {\textbf{Time-dependent braids}\\alternation sustains diversity};
 \node[con,below=8mm of braid] (river) {\textbf{River construction}\\phenotype feedback sustains a band};
-\node[con,right=16mm of walls] (compute)
+\node[con] (compute) at (river |- walls)
   {\textbf{Edge-of-chaos experiment}\\combining peaks at transition};
 % Arrows show dependence, not merely reading order.
 \draw[s] (operator)--(parity); \draw[s] (parity)--(count); \draw[s] (parity)--(balance);
