@@ -108,10 +108,14 @@ damage-spreading scale calibrated against rules of undisputed regime. Sustained
 rule diversity looked like the order parameter the classical account wants; a
 conservative control that holds the rule histogram exactly invariant while
 varying transport shows that it is not, reach being flat in diversity and moving
-by an order of magnitude with transport. Placed on that same scale, however, the
-constructions separate by coupling rather than by parameter: where the genotype
-update never reads the phenotype nothing clears the bottom of the complex band,
-whatever the dial, while every construction that does read it lands inside. Adding the
+by an order of magnitude with transport. Placed on that same scale the constructions
+separate instead by \emph{coupling}: where the genotype update never reads the
+phenotype nothing clears the bottom of the complex band, whatever the dial,
+while everything that reads it lands inside. Treating that coupling as a
+quantity rather than a property recovers an order parameter---reach is graded
+and monotone in the gain of the phenotype-to-genotype loop, crossing into the
+complex band at a locatable value---while a control matched in rule mobility but
+blind to the phenotype stays ordered throughout. Adding the
 single phenotype-to-genotype edge carries the construction into the complex
 band; cutting it carries the construction back. In this family the edge of chaos
 is crossed by adding an edge, not by tuning a parameter, which is why no
@@ -194,18 +198,18 @@ exchange rate, not diversity alone, controls reach
 (\secref{sec:diversity-axis}).
 
 Placing every one of those coordinates on the calibrated scale then shows why
-the search failed. The constructions separate by \emph{coupling}, not by
-parameter. Where the genotype update never reads the phenotype---the bare
-operators, braids, niches, refuges, mutation, and blend strength across its
-whole range---nothing clears the bottom of the complex band (Empirical
-finding~\ref{find:architecture}). Where it does read the phenotype, everything
-lands inside: the river construction, and a conservative transport whose swaps
-are gated on the local phenotype interface, which reaches past rules $110$ and
-$54$. The reason is structural. A phenotype perturbation that cannot reach the
-rule field propagates only through a layer indifferent to it. Adding one
-edge---letting the phenotype be read back into the genotype---carries the same
-construction into the complex band, and cutting it carries the construction back
-out.
+the search failed, and where the order parameter had been hiding. The
+constructions separate by \emph{coupling}: where the genotype update never reads
+the phenotype---the bare operators, braids, niches, refuges, mutation, and blend
+strength across its whole range---nothing clears the bottom of the complex band,
+while everything that reads it lands inside (Empirical
+finding~\ref{find:architecture}). The coupling is moreover a dial rather than a
+switch. Tuning the gain of that loop carries reach smoothly from the frozen
+identity past rules $90$, $110$ and $54$, with a locatable crossing; an ungated
+control matched in mobility, differing only in that its rewriting is blind to
+the phenotype, never leaves the ordered band. The classical picture is therefore
+recovered, in a coordinate it does not use: not a parameter of the update, but
+the gain of the loop from the phenotype back to the genotype.
 
 This is the paper's edge-of-chaos claim, and it is singular. The edge is real,
 it is measured rather than assumed, and it separates ordered from complex
@@ -1241,59 +1245,68 @@ propagates, and the construction propagates at a magnitude comparable to the
 elementary rules that do.
 \end{empiricalfinding}
 
-\begin{empiricalfinding}[label={find:architecture}]{Causal reach tracks the presence of the feedback edge, not the value of any parameter}
+\begin{empiricalfinding}[label={find:architecture}]{The order parameter is the strength of the phenotype-to-genotype coupling}
 Run under the protocol above---$L=80$, $t^{*}=60$, one phenotype flip, damaged
-phenotype cells at $dt=59$---the constructions divide by \emph{coupling}, not by
-which parameter they vary. Where the genotype update never reads the phenotype,
-no construction clears the bottom of the complex band. That covers the bare
-operators ($P_a$ $0.03$, rot$+1$ $2.05$), braided writings ($0.12$ and $5.20$),
-spatial niches ($0.50$, $0.72$), asynchronous refuges ($0.47$, $0.75$),
-replacement mutation ($0.23$, $0.85$), the preserving limit ($1.10$), and blend
-strength across its whole range---$1.00$ giving $0.03$, $0.70$ giving $0.55$,
-$0.35$ giving $3.38$, and $0.00$, the most propagating feedforward
-configuration we found, giving $8.15$, level with rule $90$. Most sit below rule
-$204$ ($1.00$), the frozen identity, whose flip persists as exactly one cell and
-never spreads; the bare operator's usually vanishes outright.
+phenotype cells at $dt=59$---the constructions separate by \emph{coupling}, not
+by which parameter they vary. Where the genotype update never reads the
+phenotype, nothing clears the bottom of the complex band: the bare operators
+($P_a$ $0.03$, rot$+1$ $2.05$), braided writings ($0.12$, $5.20$), spatial
+niches ($0.50$, $0.72$), asynchronous refuges ($0.47$, $0.75$), replacement
+mutation ($0.23$, $0.85$), the preserving limit ($1.10$), and blend strength
+across its whole range---$1.00$ giving $0.03$, $0.70$ giving $0.55$, $0.35$
+giving $3.38$, and $0.00$, the most propagating feedforward configuration we
+found, giving $8.15$, level with rule $90$. Most sit below rule $204$ ($1.00$),
+the frozen identity.
 
-Where the genotype update \emph{does} read the phenotype, every construction
-lands inside the complex band. The river reaches $12.97$, between rules $90$ and
-$54$. The conservative transport of \secref{sec:diversity-axis}, whose swap
-probability is gated on the local phenotype interface, reaches $19.27$ at rate
-$0.50$ and $25.38$ at rate $1.00$---past rules $110$ and $54$, and approaching
-the chaotic rule $30$ ($36.45$). Cutting the river's single edge returns it to
-$5.51$, back among the feedforward constructions
+The coupling is not merely present or absent; it is a dial, and reach is graded
+and monotone along it. Conservative transport whose swap probability is gated on
+the local phenotype interface rises from $1.10$ at rate $0$ through $4.25$ at
+$0.10$, $9.43$ at $0.20$, $14.45$ at $0.35$, $19.27$ at $0.50$ and $26.05$ at
+$0.75$, crossing rule $90$ between rates $0.10$ and $0.20$ and passing rules
+$110$ and $54$ before saturating. The river construction sits at $12.97$ on the
+same scale, and cutting its single edge returns it to $5.51$, back among the
+feedforward constructions.
+
+That this is the \emph{coupling} and not merely rule mobility is established by
+an ungated control. Replacing the phenotype-gated swap probability with a
+constant one leaves the mean number of swaps unchanged---for a balanced field
+the gated mean is exactly the rate---and leaves the dynamics bijective and the
+rule histogram invariant, so the two differ only in whether the genotype can see
+the phenotype. The ungated control never leaves the ordered band: $1.65$, $1.68$,
+$1.77$, $2.77$ and $4.05$ at rates $0.20$ through $1.00$, against $9.43$ to
+$25.38$ for the gated version, a factor of $5.7$ to $10.9$ at matched mobility
 (Figure~\ref{fig:regime-placement}).
 
-The separation is clean: no feedforward construction we tested exceeds $8.15$,
-and no construction that reads the phenotype falls below $12.97$. This is not a
-statement about the permutation-propagator family in particular---blend
-strength, refuges, niches and conservative transport are modifications of the
-update rule, not members of it---but about coupling. A phenotype perturbation
-that cannot reach the rule field propagates only through a layer that is
-indifferent to it. What separates ordered from complex behaviour here is
-therefore not the value of any coordinate we swept---$\lambda$, propagator
-fraction, sustained diversity, blend strength, mutation rate, refuge
-probability, niche width, transport rate---but whether that single edge is
-present.
+An order parameter therefore exists, and the classical picture is recovered in
+it: reach is a graded, monotone function of coupling strength with a locatable
+crossing into the complex band. What is unusual is only \emph{which} coordinate
+it is. Every parameter internal to the update---$\lambda$, propagator fraction,
+sustained diversity, blend strength, mutation rate, refuge probability, niche
+width, and rule mobility itself---is silent or nearly so. The coordinate that
+governs is the gain of the loop from the phenotype back to the genotype, which
+conventional scans do not sweep because architecture is usually treated as a
+property a model has or lacks rather than as a quantity.
 \end{empiricalfinding}
 
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/regime_placement.pdf}
-\caption{\textbf{Causal reach tracks the feedback edge.} Every point is run
-under one protocol ($L=80$, $t^{*}=60$, a single phenotype flip, damaged
-phenotype cells at $dt=59$), so all constructions share an axis with the
-elementary rules, from which the bands are drawn; the calibration reproduces
-rules $0$, $204$ and $90$ exactly against
-Empirical finding~\ref{find:ladder}. Rows separate constructions by
-\emph{coupling} rather than by provenance. No construction whose genotype update
-never reads the phenotype clears the bottom of the complex band, the most
-propagating being blend strength $0.00$ at $8.15$; every construction that does
-read it lands inside, including phenotype-gated conservative transport at
-$19.27$ and $25.38$. The river appears in both rows---at $12.97$ with its edge
-intact and at $5.51$ with the edge cut---so the arrow between the rows is the
-same construction, moved by adding one edge rather than by changing a
-parameter.}
+\caption{\textbf{The order parameter is the coupling.} All points share one
+protocol ($L=80$, $t^{*}=60$, a single phenotype flip, damaged phenotype cells
+at $dt=59$); bands are drawn from the elementary rules, and the calibration
+reproduces rules $0$, $204$ and $90$ exactly against
+Empirical finding~\ref{find:ladder}. \textbf{(a)} Constructions split by
+coupling rather than provenance. Nothing whose genotype update is blind to the
+phenotype clears the bottom of the complex band---including the ungated
+transport controls (squares), which are fully mobile---while everything that
+reads it lands inside. The river appears in both rows, at $12.97$ with its edge
+and $5.51$ without, so the arrow is one construction moved by adding an edge.
+\textbf{(b)} The same coupling as a dial. Gated and ungated transport are both
+bijective, both leave the rule histogram invariant, and are matched in mean swap
+probability; they differ only in whether the swap reads the local phenotype.
+Error bars are standard errors over four seeds and ten sites. The gated curve
+crosses rule $90$ between rates $0.10$ and $0.20$ and saturates past rule $54$;
+the blind control stays near the frozen identity throughout.}
 \label{fig:regime-placement}
 \end{figure}
 
