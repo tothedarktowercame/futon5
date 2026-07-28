@@ -1,0 +1,278 @@
+\begin{empiricalfinding}[label={find:census}]{The full permutation census}
+Every permutation containing an odd cycle lacks a fixed byte
+(Theorem~\ref{thm:parity}); under the census protocol, all $29{,}295$ such
+operators were classified genotype-alive. The theorem excludes a common fixed
+byte for all elementary writes; the observed $100\%$ alive rate is an additional
+dynamical result. Every all-even cycle type splits between live and dead
+operators. Among those types, the alive fraction falls as the number of cycles
+$k$ increases: $[8]$ ($k{=}1$) is $83\%$ alive, $[2\,6]$ and $[4\,4]$ ($k{=}2$)
+$70$/$67\%$, $[2\,2\,4]$ ($k{=}3$) $49\%$, and $[2\,2\,2\,2]$ ($k{=}4$) $26\%$.
+Overall, $92.5\%$ have a live genotype. The regime split is $82.7\%$ live/live,
+$9.8\%$ live/dead, $6.0\%$ dead/dead, and $1.4\%$ dead/live, so all four regimes
+occur among bijective operators.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:survey}]{The rotation survey}
+Within the wrap-rotation subfamily, every non-trivial rotation is all-even and
+so possesses fixed rules (Theorem~\ref{thm:parity}), yet under the
+neighbour-blend coupling the tested rotations split by cycle structure
+(Figures~\ref{fig:eoc},~\ref{fig:lambda}):
+\begin{itemize}\setlength{\itemsep}{1pt}
+\item the single 8-cycles---$\gcd(\text{offset},8)=1$, offset $\pm 1$ and
+$\pm 3$---\emph{sustain} a high-diversity field, holding $\sim$30--40 distinct
+rules through the longest runs we made ($400$ generations);
+\item offset $\pm 2$ ($\gcd 2$, two $4$-cycles) and offset $\pm 4$ ($\gcd 4$,
+four $2$-cycles) \emph{collapse} to one or two rules within a few dozen
+generations.
+\end{itemize}
+The distinct-rule population curve (Figure~\ref{fig:lambda}) separates the two by
+more than an order of magnitude in a single scalar. Possessing a fixed rule and
+having the coupled field stay near it are different properties. The present
+claim is limited to two seeds per rotation and treats population size as a
+descriptive observable, not as an order parameter in the statistical-mechanics
+sense.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:braid}]{A braid of two collapsing operators can sustain the field}
+At width $80$, horizon $120$, and seed $0$, offset $+2$ and offset $+4$ each
+have genotype change rate $0$ when held alone, while their alternating braid
+has change rate $0.76$ (Figure~\ref{fig:braid}, top). The matched schedule
+control offset $+2$/offset $-2$ remains dead (Figure~\ref{fig:braid}, bottom).
+This establishes that two collapsing components can construct a sustaining
+schedule. It does not establish the previously suggested block-system
+criterion: all three even offsets preserve the evens/odds partition, and both
+pairs generate the same translation subgroup $\langle {+2}\rangle$. The cause
+of the contrasting braid outcomes remains to be identified.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:knob}]{The mixing fraction is a reproducible diversity control}
+Let $\sigma$ be displayed-position offset $+1$. We ran periodic 12-step
+schedules mixing the sustaining 8-cycle $\sigma^1$ with the collapsing
+two-4-cycle operator $\sigma^2$, at width $80$ for $120$ generations and five
+seeds per mixture. Mean late-window diversity rises from $1.0$ rule when the
+$\sigma^1$ fraction is zero, through $16.8$ at fraction $0.25$, to $36.9$ at
+fraction $5/12$; above that it remains in the range $34$--$41$ rather than
+increasing monotonically (Figure~\ref{fig:knob}). The schedule fraction is thus
+a tunable control for entry into a sustained high-diversity regime, with
+saturation rather than a continuously linear response.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={obs:couplings}]{The rotation split occurs with and without neighbour blending}
+Figure~\ref{fig:parity} uses stochastic elementary writes without neighbour
+blending; Figures~\ref{fig:eoc} and~\ref{fig:lambda} include the blend. Over the
+displayed horizons, offset $+1$ remains active and offset $+2$ settles under
+both protocols, although their diversity levels and transients differ. These
+runs therefore do not identify neighbour blending as the cause of the split;
+they show that fixed-byte existence alone does not determine finite-horizon
+settling under either protocol.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={obs:metrics}]{The tested per-trajectory metrics do not separate the parity classes}
+The classification is a conjugacy invariant of $\sig$---its cycle type---while
+the complexity and compression measures we tried read a single rule's bits or one
+space--time trajectory without explicitly encoding $\sig$. In our tests these
+measures did not recover the parity classification: a population count reads a collapsed-but-maximally-selected
+field as nearly dead; a frozen periodic genotype scores a lower statistical
+complexity $C_\mu$ \parencite{crutchfield1989inferring} than Rule~110; gzip rates
+a self-similar rule as noise. This is a negative result about the tested
+summaries, not an impossibility theorem for trajectory-based inference.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:crossover}]{No finite-size evidence of a critical point over the tested range}
+The natural control parameter is the \emph{propagator fraction} $q$ ($q = 0$ all
+blend, $q = 1$ all propagator, offset $+2$). If the sustained phase sat at a
+critical point in $q$, a finite-size scan would show three things as the lattice
+grows: the transition in genotype activity $a_G(q)$ \emph{sharpening}, its width
+shrinking toward zero; a susceptibility proxy peaking at a \emph{fixed} interior
+value of $q$, the peak growing without bound; and Binder cumulants for different
+$L$ crossing at that same value. Across widths $L = 30$--$240$ (32 seeds each)
+we observe none of the three.
+
+First, $a_G(q)$ rises \emph{smoothly}, well described by a logistic crossover
+($R^2 > 0.99$, Figure~\ref{fig:phase}a), and its width does not shrink over the
+tested sizes ($w \approx 0.13$, $w \sim L^{-0.04}$)---the transition is not
+sharpening. Second, the size-scaled run-to-run spread $L\,\mathrm{Var}(a_G)$
+(Figure~\ref{fig:phase}b), used as a finite-size susceptibility proxy, does
+\emph{peak} inside the crossover band and does grow (${\sim}5.7\times$ from the
+smallest width to the largest), but its location drifts rather than converging
+($q=0.75,0.50,1.00,1.00$ as $L$ increases), and for the two largest sizes the
+maximum lies at the sampled boundary $q=1$, so no interior peak is resolved at
+all. Third, there is no Binder-cumulant crossing. The scan therefore provides no
+finite-size evidence for a sharpening transition over $L=30$--$240$. These results support a broad crossover, plausibly
+influenced by seed-dependent residence times, rather than a confirmed critical
+point; they do not exclude different scaling outside the tested range.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:river}]{The river sustains structured phenotype}
+In all six tested seeds at $L=80$, $T=120$, the river produces coherent bands
+of alternating phenotype that drift through a disordered background. In the
+larger pinned run at $L=240$, $T=360$ (Figure~\ref{fig:river}), those structures
+persist while branching, merging, and reorganising across the full spacetime
+field. This is a bounded six-seed observation plus one larger representative
+run, not a claim that the structure is an attractor or survives arbitrarily
+long.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:causal}]{Phenotype-to-genotype feedback roughly doubles causal reach}
+All runs use $L = 80$, $T = 120$, $t^{*} = 60$, with damage measured on the
+\emph{phenotype} layer as the number of cells differing between branches and
+distance as the shorter circular displacement. At $dt \le 10$ the two branches
+are empirically indistinguishable. By $dt = 59$, in a single-seed sweep over all
+$80$ sites, the live construction has damaged $12.97$ cells against the
+control's $5.51$ and spread $16.95$ against $7.46$
+(Figure~\ref{fig:river-perturbation} plots that sweep). Replication uses a
+separate design---six seeds, $20$ evenly spaced sites each, aggregated to one
+mean per seed so that the \emph{seed} is the unit of replication. The live
+construction exceeds its control in $6/6$ seeds, per-seed differences
+$+1.90$, $+7.95$, $+6.65$, $+6.60$, $+6.05$, $+0.85$ cells, mean $+5.00$
+(sd $2.90$). Because $n = 6$ makes a $t$-statistic fragile we quote the exact
+sign-flip permutation test over all $2^{6}$ assignments: the observed mean is
+the extremum, one-sided $p = 1/64 \approx 0.016$ (paired $t(5) = 4.23$ for
+comparison). Perturbations do not spread uniformly: in the single-seed sweep
+$22$ of $80$ sites are dead ends, and they form a contiguous region.
+
+One qualification on what the control cuts. \texttt{run-river-ablated-from}
+reads a phenotype frozen at the start of each run segment, so it cuts the
+\emph{dynamic} edge but still presents the genotype with a static field that,
+in the perturbed branch, already contains the flip. The $5.51$ is therefore
+feedback-frozen, not feedback-absent; with the frozen reference supplied
+externally and identical in both branches, reach falls further, to $1.28$
+(\findref{find:gain}). The doubling quoted here is the effect of making the
+read \emph{current}, which is the smaller half of the total coupling effect.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:ladder}]{Causal reach on a scale calibrated against elementary rules}
+On a third design---four seeds, ten sites each, damage recorded at every
+$dt$---width grows as $dt^{0.64}$ for the live construction against $dt^{0.43}$
+for its control, with centroid displacement scaling as $dt^{0.56}$ against
+$dt^{0.43}$. Exponents are least-squares fits over $dt \in [5,59]$ on
+site-averaged curves, conditional on damage existing---a run whose perturbation
+has died contributes no width and is excluded rather than entered as zero---and
+we quote no interval on them
+(Figure~\ref{fig:river-centroid}); these are reported descriptively and we draw
+no inference from them about gliders or particles, for a reason given below.
+Placed on one scale against elementary rules run under an identical protocol
+(mean damaged cells at $dt=59$): rule $0$ $0.00$; rule $204$ $1.00$; rule $90$
+$8.00$; \textbf{the construction $12.97$}; rule $54$ $15.05$; rule $110$
+$20.23$; rule $30$ $37.50$. The instrument returns exactly zero where nothing
+propagates, and the construction propagates at a magnitude comparable to the
+elementary rules that do.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:architecture}]{The order parameter is the strength of the phenotype-to-genotype coupling}
+Run under the protocol above---$L=80$, $t^{*}=60$, one phenotype flip, damaged
+phenotype cells at $dt=59$---the constructions separate by \emph{coupling}, not
+by which parameter they vary. Where the genotype update never reads the
+phenotype, nothing clears the bottom of the complex band: the bare operators
+($P_a$ $0.03$, rot$+1$ $2.05$), braided writings ($0.12$, $5.20$), spatial
+niches ($0.50$, $0.72$), asynchronous refuges ($0.47$, $0.75$), replacement
+mutation ($0.23$, $0.85$), the preserving limit ($1.10$), and blend strength
+across its whole range---$1.00$ giving $0.03$, $0.70$ giving $0.55$, $0.35$
+giving $3.38$, and $0.00$, the most propagating feedforward configuration we
+found, giving $8.15$, level with rule $90$. Most sit below rule $204$ ($1.00$),
+the frozen identity.
+
+The coupling is not merely present or absent; it is a dial, and reach is graded
+and monotone along it. Conservative transport whose swap probability is gated on
+the local phenotype interface rises from $1.10$ at rate $0$ through $4.25$ at
+$0.10$, $9.43$ at $0.20$, $14.45$ at $0.35$, $19.27$ at $0.50$ and $26.05$ at
+$0.75$, crossing rule $90$ between rates $0.10$ and $0.20$ and passing rules
+$110$ and $54$ before saturating. The river construction sits at $12.97$ on the
+same scale, and cutting its single edge returns it to $5.51$, back among the
+feedforward constructions.
+
+That this is the \emph{coupling} and not merely rule mobility is established by
+an ungated control. Replacing the phenotype-gated swap probability with a
+constant one leaves the mean number of swaps unchanged---for a balanced field
+the gated mean is exactly the rate---and leaves the dynamics bijective and the
+rule histogram invariant, so the two differ only in whether the genotype can see
+the phenotype. The ungated control never leaves the ordered band: $1.65$, $1.68$,
+$1.77$, $2.77$ and $4.05$ at rates $0.20$ through $1.00$, against $9.43$ to
+$25.38$ for the gated version, a factor of $5.7$ to $10.9$ at matched mobility
+(Figure~\ref{fig:regime-placement}).
+
+An order parameter therefore exists, and the classical picture is recovered in
+it: reach is a graded, monotone function of coupling strength with a locatable
+crossing into the complex band. What is unusual is only \emph{which} coordinate
+it is. Every parameter internal to the update---$\lambda$, propagator fraction,
+sustained diversity, blend strength, mutation rate, refuge probability, niche
+width, and rule mobility itself---is silent or nearly so. The coordinate that
+governs is the gain of the loop from the phenotype back to the genotype, which
+conventional scans do not sweep because architecture is usually treated as a
+property a model has or lacks rather than as a quantity.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:gain}]{Coupling is a dial, not a switch, and reach is monotone along it}
+Both constructions that read the phenotype admit a gain parameter, and in both
+causal reach is graded and monotone in it under the protocol of
+\findref{find:ladder}.
+
+For conservative transport the gain is the phenotype-gated swap rate. Reach
+rises $1.10$, $2.17$, $4.25$, $9.43$, $14.45$, $19.27$, $26.05$, $25.38$ at
+rates $0$, $0.05$, $0.10$, $0.20$, $0.35$, $0.50$, $0.75$, $1.00$: it crosses
+rule $90$ between rates $0.10$ and $0.20$, passes rules $110$ and $54$, and
+saturates past $0.75$.
+
+For the river the gain is the \emph{currency} of the four context bits the
+genotype step reads. Each cell at each step reads the live phenotype with
+probability $\gamma$ and a frozen reference otherwise, so $\gamma$ is the
+fraction of the genotype's view of the phenotype that is causally current. Over
+three seeds and eighty sites, reach rises $1.28$, $3.00$, $3.85$, $3.43$,
+$4.63$, $5.00$, $5.77$, $7.38$, $12.39$ across $\gamma = 0$ to $1$ in eighths,
+monotone within one standard error, with standard errors $0.19$ to $0.57$.
+
+Three properties make the river dial an instrument rather than a knob. It is
+anchored at both ends: $\gamma = 1$ reproduces the live river at $12.97$
+exactly. The random tape is preserved---the propagator draw is consumed once per
+cell at every $\gamma$, with gate coins from a separate stream re-seeded
+identically in both branches, so the gate injects no divergence of its own. And
+because the frozen field is a real phenotype, marginals and spatial structure
+are matched at every $\gamma$; only causal currency varies.
+
+The two curves have opposite curvature. Transport is concave, buying most of its
+reach in the first fifth of the dial. The river is convex: $45$\% of its span
+arrives in the last eighth, and only $\gamma = 1$ clears rule $90$, so one stale
+read in eight costs $40$\% of the reach. A plausible reading is that the river's
+first-match fires on a four-bit conjunction, so a stale context does not degrade
+the match but breaks it; we have not tested this, and gating the four bits
+independently rather than together would separate it.
+
+A one-seed pilot showed a non-monotonic dip near $\gamma = 0.5$ that did not
+survive three seeds. We record it because we nearly believed it.
+\end{empiricalfinding}
+
+\begin{empiricalfinding}[label={find:diversity-axis}]{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
+The original $76$ configurations produce an apparent rise and fall: binned
+medians rise from $0.10$ cells below $40$ sustained rules to $2.34$ at
+$125$--$135$, then fall to zero above $135$. That descent is completely
+confounded. Every original configuration above $135$ obtains its diversity
+either by replacement mutation or by holding the genotype fixed. The observed
+failures are real---mutation erases the lesion and holding prevents its
+spread---but they do not show that high diversity suppresses propagation.
+
+We therefore add a conservative eighth mechanism. Each run begins from a
+balanced empirical rule measure with support
+$32,64,96,128,160,192,224,$ or $256$. Alternating layers of disjoint local
+pairs exchange their rules with a probability controlled by a transport rate
+and the local phenotype interface. These exchanges are bijections: no rule is
+created or destroyed, and the complete genotype histogram and its Shannon
+diversity remain invariant at every checked step. A local transposition supplies
+the perturbation while preserving that same measure in both branches. We run
+five transport rates, six seeds, and eight perturbation sites for $40$ response
+steps, giving $1{,}920$ paired responses.
+
+Figure~\ref{fig:diversity-axis} reports causal amplification---final genotype
+damage divided by the two initially exchanged sites---so the conservative
+responses share a scale with the original single-site survey. With transport
+zero, amplification is exactly $1.00$ at every diversity. At transport rates
+$0.25$, $0.50$, $0.75$, and $1.00$, the ranges across the full diversity axis
+are respectively $6.63$--$8.26$, $14.11$--$15.31$, $18.75$--$21.26$, and
+$20.78$--$22.08$. There is no descending limb: within each transport rate the
+dependence on diversity is approximately flat or slightly positive, while
+changing transport changes reach by more than an order of magnitude.
+
+Sustained rule diversity is therefore not an order parameter for causal reach.
+Mutation and holding are distinct suppression mechanisms, but they are not
+flanks of a common diversity optimum. Structured genotype transport is the
+control exposed by this experiment.
+\end{empiricalfinding}

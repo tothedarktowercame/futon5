@@ -1,0 +1,72 @@
+\documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
+
+\usepackage[american]{babel}
+\usepackage{csquotes}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[style=apa,backend=biber]{biblatex}
+\usepackage{xr}
+\externaldocument{draft6}
+\addbibresource{refs.bib}
+\hypersetup{
+  hidelinks,
+  pdftitle={Supplement 1: Empirical Findings Notebook},
+  pdfauthor={Joseph Corneli},
+  pdfsubject={Empirical findings accompanying Rule-Rewriting Cellular Automata
+    and the Edge of Chaos}
+}
+
+\newcommand{\sig}{\sigma}
+\newcommand{\bit}[1]{\mathrm{bit}[#1]}
+% Cross-reference a finding box by its label (tcolorbox auto counter supplies the number).
+\newcommand{\findref}[1]{Box~\ref{#1}}
+
+\newtcolorbox[auto counter]{empiricalfinding}[2][]{%
+  enhanced,
+  breakable,
+  colback=orange!7,
+  colframe=orange!65!black,
+  boxrule=0.7pt,
+  arc=1.5mm,
+  left=2.5mm,
+  right=2.5mm,
+  top=1.5mm,
+  bottom=1.5mm,
+  fonttitle=\bfseries,
+  title={Box~\thetcbcounter: #2},
+  #1}
+
+\title{Supplement 1: Empirical Findings Notebook}
+\shorttitle{Empirical Findings Notebook}
+\authorsnames{Joseph Corneli}
+\authorsaffiliations{{Oxford Brookes University, Oxford OX3 0BP, United Kingdom},
+  {Hyperreal Enterprises Ltd, United Kingdom}}
+\note{Supplement to \emph{Rule-Rewriting Cellular Automata and the Edge of
+Chaos}. Correspondence: \href{mailto:jcorneli@brookes.ac.uk}
+{jcorneli@brookes.ac.uk}.}
+
+\abstract{%
+This notebook collects the twelve empirical findings referenced from the main
+paper. The numbering is stable: ``Supplement 1, Box \(n\)'' in the paper points
+to Box \(n\) here. Mathematical definitions, protocols, figures, and
+interpretation remain in the main paper; this supplement isolates the compact
+claims that those materials support. A parallel Clay rendering provides a
+public-facing literate-notebook view from the same canonical source.}
+
+\begin{document}
+\maketitle
+
+\section{How to read this supplement}
+
+The boxes below occur in the same order as the corresponding results in the
+main paper. References to figures, tables, theorems, and sections without a
+``Supplement'' prefix refer to the main paper. The source file
+\texttt{supplement1-findings.tex} is canonical for both this PDF and the Clay
+rendering; the main paper contains pointers, not duplicate finding text.
+
+\input{supplement1-findings}
+
+\printbibliography
+\end{document}

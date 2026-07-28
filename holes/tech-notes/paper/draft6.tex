@@ -29,11 +29,16 @@
 % Sections are unnumbered in apa7 `man' mode, so \ref{sec:..} is empty;
 % cross-reference sections by name instead.
 \newcommand{\secref}[1]{\emph{\nameref{#1}}}
-\newtheorem{theorem}{Theorem}
-\newtheorem{corollary}{Corollary}
-\newtheorem{proposition}{Proposition}
-\newtheorem{definition}{Definition}
-\newtcolorbox[auto counter]{workedexample}[2][]{%
+\newif\ifpaperboxfold
+\tcbset{%
+  fold/.code={%
+    \paperboxfoldtrue
+    \pgfkeysalso{top=0pt,bottom=0pt,boxsep=0pt}},
+  unfold/.code={\paperboxfoldfalse}}
+\newcommand{\foldmark}{%
+  \ifpaperboxfold\space{\normalfont\scriptsize[folded]}\fi}
+
+\newtcolorbox[auto counter]{workedexampleframe}[2][]{%
   enhanced,
   breakable,
   colback=green!6,
@@ -45,34 +50,90 @@
   top=1.5mm,
   bottom=1.5mm,
   fonttitle=\bfseries,
-  title={Worked example~\thetcbcounter: #2},
+  title={Worked example~\thetcbcounter: #2\foldmark},
   #1}
+\NewDocumentEnvironment{workedexample}{O{} m +b}{%
+  \paperboxfoldfalse
+  \begin{workedexampleframe}[#1]{#2}%
+    \ifpaperboxfold\else#3\fi
+  \end{workedexampleframe}}{}
 
 % --- typed boxes for compression -------------------------------------------
-% Auto-box existing amsthm theorems/definitions (no source change; keeps refs).
-\tcolorboxenvironment{theorem}{%
+% Each typed box accepts `fold` in its option list. Folding preserves its
+% counter, title, label, and cross-references while suppressing only the body.
+\newtcolorbox[auto counter]{theoremframe}[1][]{%
   enhanced, breakable, colback=blue!5, colframe=blue!55!black,
-  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm}
-\tcolorboxenvironment{definition}{%
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, fonttitle=\bfseries,
+  title={Theorem~\thetcbcounter\foldmark}, #1}
+\NewDocumentEnvironment{theorem}{O{} +b}{%
+  \paperboxfoldfalse
+  \begin{theoremframe}[#1]%
+    \ifpaperboxfold\else#2\fi
+  \end{theoremframe}}{}
+
+\newtcolorbox[auto counter]{definitionframe}[2][]{%
   enhanced, breakable, colback=violet!6, colframe=violet!55!black,
-  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm}
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, fonttitle=\bfseries,
+  title={Definition~\thetcbcounter: #2\foldmark}, #1}
+\NewDocumentEnvironment{definition}{O{} m +b}{%
+  \paperboxfoldfalse
+  \begin{definitionframe}[#1]{#2}%
+    \ifpaperboxfold\else#3\fi
+  \end{definitionframe}}{}
+
 % Corollaries auto-boxed like theorems (blue). Empirical findings are amber:
 % observed (not proved) claims live here, the validated home for rewritten results.
-\tcolorboxenvironment{corollary}{%
+\newtcolorbox[auto counter]{corollaryframe}[1][]{%
   enhanced, breakable, colback=blue!5, colframe=blue!55!black,
-  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm}
-\tcolorboxenvironment{proposition}{%
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, fonttitle=\bfseries,
+  title={Corollary~\thetcbcounter\foldmark}, #1}
+\NewDocumentEnvironment{corollary}{O{} +b}{%
+  \paperboxfoldfalse
+  \begin{corollaryframe}[#1]%
+    \ifpaperboxfold\else#2\fi
+  \end{corollaryframe}}{}
+
+\newtcolorbox[auto counter]{propositionframe}[2][]{%
   enhanced, breakable, colback=blue!5, colframe=blue!55!black,
-  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm}
-\newtcolorbox[auto counter]{empiricalfinding}[2][]{%
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, fonttitle=\bfseries,
+  title={Proposition~\thetcbcounter: #2\foldmark}, #1}
+\NewDocumentEnvironment{proposition}{O{} m +b}{%
+  \paperboxfoldfalse
+  \begin{propositionframe}[#1]{#2}%
+    \ifpaperboxfold\else#3\fi
+  \end{propositionframe}}{}
+
+\newtcolorbox[auto counter]{empiricalfindingframe}[2][]{%
   enhanced, breakable, colback=orange!7, colframe=orange!65!black,
   boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm,
-  fonttitle=\bfseries, title={Empirical finding~\thetcbcounter: #2}, #1}
+  fonttitle=\bfseries,
+  title={Empirical finding~\thetcbcounter: #2\foldmark}, #1}
+\NewDocumentEnvironment{empiricalfinding}{O{} m +b}{%
+  \paperboxfoldfalse
+  \begin{empiricalfindingframe}[#1]{#2}%
+    \ifpaperboxfold\else#3\fi
+  \end{empiricalfindingframe}}{}
+
+% Empirical findings live canonically in the literate notebook submitted as
+% Supplement 1. Keep only stable, compact pointers in the narrative.
+\newcommand{\suppfindingref}[1]{Supplement~1, Box~#1}
+\newcommand{\suppfinding}[2]{%
+  \par\smallskip\noindent\emph{\suppfindingref{#1}: #2.}\par\smallskip}
+
 % Observations (teal): consequences/remarks pulled out of definitions and prose.
-\newtcolorbox[auto counter]{observation}[2][]{%
+\newtcolorbox[auto counter]{observationframe}[2][]{%
   enhanced, breakable, colback=teal!7, colframe=teal!55!black,
   boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm,
-  fonttitle=\bfseries, title={Observation~\thetcbcounter: #2}, #1}
+  fonttitle=\bfseries, title={Observation~\thetcbcounter: #2\foldmark}, #1}
+\NewDocumentEnvironment{observation}{O{} m +b}{%
+  \paperboxfoldfalse
+  \begin{observationframe}[#1]{#2}%
+    \ifpaperboxfold\else#3\fi
+  \end{observationframe}}{}
 
 \title{Rule-Rewriting Cellular Automata and the Edge of Chaos}
 \shorttitle{Rule-Rewriting Cellular Automata}
@@ -101,25 +162,23 @@ where $\lambda$ cannot, and a finite-size scan over $L = 30$--$240$ finds a
 broad, drifting crossover rather than a sharpening critical point. The classical
 search, conducted in parameter space, returns nothing.
 
-The edge of chaos is nonetheless present---but not as a coordinate. Flipping one
-cell and tracking divergence against an otherwise identical run places a
-phenotype-reading construction between elementary rules $90$ and $54$ on a
-damage-spreading scale calibrated against rules of undisputed regime. Sustained
-rule diversity looked like the order parameter the classical account wants; a
-conservative control that holds the rule histogram exactly invariant while
-varying transport shows that it is not, reach being flat in diversity and moving
-by an order of magnitude with transport. Placed on that same scale the constructions
-separate instead by \emph{coupling}: where the genotype update never reads the
-phenotype nothing clears the bottom of the complex band, whatever the dial,
-while everything that reads it lands inside. Treating that coupling as a
-quantity rather than a property recovers an order parameter---reach is graded
-and monotone in the gain of the phenotype-to-genotype loop, crossing into the
-complex band at a locatable value---while a control matched in rule mobility but
-blind to the phenotype stays ordered throughout. Adding the
-single phenotype-to-genotype edge carries the construction into the complex
-band; cutting it carries the construction back. In this family the edge of chaos
-is crossed by adding an edge, not by tuning a parameter, which is why no
-parameter scan located it.}
+We then leave the permutation core while retaining the same two-layer
+genotype--phenotype substrate. The objects are now update
+\emph{architectures}---temporal schedules, phenotype-reading constructions,
+mutation, holding, and conservative transport---rather than individual members
+of either the $8!$ or $8^8$ writing families. Flipping one cell and tracking
+divergence against an otherwise identical run places one phenotype-reading
+construction between elementary rules $90$ and $54$ on a damage-spreading scale
+calibrated against rules of undisputed regime. Sustained rule diversity looked
+like the order parameter the classical account wants; a conservative control
+that holds the rule histogram exactly invariant while varying transport shows
+that it is not, reach being nearly flat in diversity and moving by an order of
+magnitude with transport. Within the tested architectures, causal reach
+separates instead by \emph{coupling}: treating the phenotype-to-genotype edge as
+a graded quantity moves reach monotonically across the calibrated scale, while
+a mobility-matched control blind to the phenotype remains in the low-reach
+band. The exact classification therefore describes the permutation core; the
+causal result describes a feedback-coupled extension of it.}
 \keywords{cellular automata, rule evolution, Langton's lambda,
 self-modifying systems, edge of chaos, artificial life, permutation operators,
 exhaustive classification, damage spreading, perturbation analysis}
@@ -148,16 +207,16 @@ example generated spacetime diagrams reminiscent of the edge of chaos
 behaviour observed in classical CAs.  The question of how that example
 recovered the distinctive visual behaviour remained open.
 
-Recent computational experiments have shown that that accidentally
-discovered operator is related to a family of operators that can be
-given a concrete description, and whose emergent behaviour has
-interesting properties.  A permutation $\sig$ of the eight truth-table
-positions of an elementary rule defines an operator $P_\sig$ that
-rewrites a rule by negating the bits $\sig$ names; there are $8! =
-40{,}320$ such operators, and they admit exact classification rather
-than sampling.  Asking this question at the level of this class of
-operators rather than all possible ($8^8$) operators gives a more
-manageable problem.
+Recent computational experiments have located that accidentally discovered
+operator within a larger landscape. A permutation $\sig$ of the eight
+truth-table positions of an elementary rule defines an operator $P_\sig$ that
+rewrites a rule by negating the bits $\sig$ names; there are $8! = 40{,}320$
+such operators, and they admit exact classification rather than sampling. They
+form the bijective core of the $8^8$ possible writings. The original example
+recreated in Figure~\ref{fig:fig2pair} is a non-bijective writing outside that
+core. We therefore separate two objects that share a substrate but not a scope:
+the finite permutation core studied in Part~I, and the wider class of
+state-dependent update architectures studied in Part~II.
 
 The classical literature offers two readings of ``the edge of chaos'', and they
 are different kinds of object. The first is a location in \emph{parameter
@@ -168,7 +227,7 @@ classification lands on it from an unexpected direction---every fixed rule of
 every operator in the family is balanced, with Langton activity
 $\lambda = 1/2$, exactly the value the classical picture associates with the
 transition. Yet searching the Meta Cellular Automaton (MetaCA) for a critical
-transition does not produce one (Empirical finding~\ref{find:crossover}). The
+transition does not produce one (\suppfindingref{7}). The
 algebra places the fixed points precisely at the classical critical value; the
 dynamics show a broad, drifting crossover and no critical point of that sort at
 all.
@@ -197,109 +256,39 @@ It sustains causal amplification across the full $32$--$256$ rule range:
 exchange rate, not diversity alone, controls reach
 (\secref{sec:diversity-axis}).
 
-Placing every one of those coordinates on the calibrated scale then shows why
-the search failed, and where the order parameter had been hiding. The
+Placing the tested architectures on the calibrated scale then identifies a
+candidate control within the extension. The
 constructions separate by \emph{coupling}: where the genotype update never reads
 the phenotype---the bare operators, braids, niches, refuges, mutation, and blend
 strength across its whole range---nothing clears the bottom of the complex band,
-while everything that reads it lands inside (Empirical
-finding~\ref{find:architecture}). The coupling is moreover a dial rather than a
-switch. Tuning the gain of that loop carries reach smoothly from the frozen
+while everything that reads it lands inside (\suppfindingref{11}). The coupling
+is moreover a dial rather than a switch. Tuning the gain of that loop carries reach smoothly from the frozen
 identity past rules $90$, $110$ and $54$, with a locatable crossing; an ungated
 control matched in mobility, differing only in that its rewriting is blind to
-the phenotype, never leaves the ordered band. The classical picture is therefore
-recovered, in a coordinate it does not use: not a parameter of the update, but
-the gain of the loop from the phenotype back to the genotype.
+the phenotype, never leaves the ordered band. Within these constructions the
+classical picture is therefore recovered in a coordinate it does not usually
+use: not a truth-table parameter, but the gain of the loop from the phenotype
+back to the genotype.
 
-This is the paper's edge-of-chaos claim, and it is singular. The edge is real,
-it is measured rather than assumed, and it separates ordered from complex
-behaviour as sharply as anything in the classical picture. It is simply not
-located at a value of a parameter, which is why no parameter scan could find it.
-It is crossed by adding an edge.
+This is the paper's edge-of-chaos claim, and its scope is the feedback-coupled
+extension, not the $8!$ family as a whole. It is measured rather than assumed:
+in the tested construction, adding the phenotype-to-genotype edge carries
+causal reach into the calibrated complex band and cutting it carries reach back.
 
-An accompanying supplement reports a separate exploratory analysis of
+Supplement~2 reports a separate exploratory analysis of
 coexisting spatial domains and documents a boundary-transport statistic
 withdrawn after a circularity check. Neither is used to support either
 edge-of-chaos claim here.
 
-This paper presents a classification of the operators, a census of the spatially
-coupled dynamics across all cycle types, the finite-size search for a critical
-transition, and the causal measurement that produced the edge.
-The exact results hold for the entire family. The empirical claims are narrower
-and are marked as such: the causal measurement covers one construction at one
-lattice width over six seeds, and no comparable measurement of the bare operator
-family is attempted here.
+Part~I classifies the permutation-propagators, surveys their spatial dynamics,
+and tests the parameter-space reading of the edge of chaos. Part~II explicitly
+drops the restriction to a single permutation-propagator and studies causal
+reach in update architectures built on the same genotype--phenotype substrate.
+The exact results hold for the entire $8!$ core. The causal measurement covers
+one principal construction at one lattice width over six seeds, and no
+comparable causal census of either the $8!$ or $8^8$ family is attempted here.
 
-\section{The Object}
-\label{sec:object}
-
-A cellular automaton normally evolves a field of \emph{states} under one
-fixed rule. Here each cell also carries a \emph{rule}, and local writes evolve
-that rule field alongside the phenotype. We display an elementary cellular
-automaton (ECA) rule in Wolfram order,
-\[
-111,110,101,100,011,010,001,000,
-\]
-and index these displayed positions from left to right by $p=0,\ldots,7$.
-Thus position $0$ is the $111$ output and most significant bit, while position
-$7$ is the $000$ output and least significant bit. Throughout, the indices of
-$\sig$, $w$, $g$, and $\bit{p}$ are these \emph{displayed positions}, not the
-binary values of the neighbourhoods. If $n\in\{0,\ldots,7\}$ is a numerical
-neighbourhood value, its rule output is therefore $g(7-n)$.
-
-We study the operator $P_\sig$, parameterised by a permutation
-$\sig\in S_8$ of the displayed positions. Writing the displayed byte as a map
-$g\colon\{0,\dots,7\}\to\{0,1\}$, the operator sends $g$ to $P_\sig g$ defined by
-\begin{equation}
-(P_\sig\, g)(q) \;=\; \lnot\, g\bigl(\sig^{-1}(q)\bigr),
-\qquad\text{equivalently}\qquad \bit{\sig(p)} := \lnot\,\bit{p}.
-\label{eq:prop}
-\end{equation}
-Each output bit is one input bit, at the position $\sig$ moves it to, negated;
-$P_\sig$ is thus a permutation of the eight coordinates composed with a global
-complement. The truth table is thereby itself an eight-cell automaton whose
-wiring is $\sig$ and whose update is Boolean negation --- an automaton inside
-the automaton. Equation~\eqref{eq:prop} defines a family of $8! = 40{,}320$
-operators that is finite, exhaustively enumerable, and, as we show below,
-exactly classified.
-
-The legacy engine stored its table in the order
-$000,001,010,100,011,101,110,111$. Whenever a legacy writing is imported, the
-reproduction code conjugates it into the displayed Wolfram order above before
-we quote its permutation or apply names such as offset $+2$.
-
-\begin{definition}[Writings, elementary writes, and propagators]\label{def:writing}
-A \emph{writing} is any function $w\colon\{0,\dots,7\}\to\{0,\dots,7\}$ on the
-truth-table positions. Its elementary update at source position $p$ is
-\[
-(U_{w,p}g)(q)=
-\begin{cases}
-\lnot g(p),&q=w(p),\\
-g(q),&q\ne w(p).
-\end{cases}
-\]
-Thus one update complements source bit $p$ and writes it to target $w(p)$. If
-$w$ is a bijection---a permutation $\sig\in S_8$---all eight writes can be
-performed simultaneously without collisions, giving the
-\emph{permutation-propagator} $P_\sig$ in Equation~\eqref{eq:prop}. Its fixed
-bytes are exactly the bytes fixed by every $U_{\sig,p}$. For a non-injective
-writing, individual updates $U_{w,p}$ remain well defined, but a simultaneous
-$P_w$ requires a collision-resolution convention; such a writing also has
-\emph{gaps}, or positions targeted by no source.
-\end{definition}
-
-\begin{observation}[label={obs:core}]{Permutations form a small bijective core}
-Permutations are only the bijective core of a far larger class: there are
-$8!=40{,}320$ permutations but $8^{8}=16{,}777{,}216$ writings, so the
-permutations are $0.24\%$ of the whole. The cycle-structure algebra of
-\secref{sec:classification} is available only on this core. The historical
-operator $[0\,0\,1\,2\,3\,4\,5\,6]$ (Figure~\ref{fig:fig2pair}) is itself a
-non-bijective writing---bits $0$ and $1$ both write to position $0$, and
-position $7$ is never written---and its behaviour ranges widely between its two
-standard-order forms.
-\end{observation}
-
-\begin{figure}[!tp]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[font=\scriptsize, >={Stealth[length=1.5mm]},
   bx/.style={draw, rounded corners=1.5pt, align=center, inner sep=2.5pt,
@@ -349,26 +338,93 @@ standard-order forms.
   node[pos=.26, left=1mm, font=\scriptsize, text=blue!55!black, align=right]
   {$\lambda$ constant:\\no order parameter\\to tune};
 \end{tikzpicture}
-\caption{\textbf{Argument map.} The exact branch (blue) derives fixed-point
-existence, number, and balance from the operator definition. Balance forces the
-rest: with $\lambda = 1/2$ at every fixed point of every operator, the classical
-order parameter cannot discriminate within this family, so an edge of chaos must
-be sought in another coordinate. The empirical branch (amber) pursues the
-parameter-space reading and finds no critical point; the constructive branch
-(green) pursues the dynamical reading, sustaining structure by braiding and by
-phenotype-to-genotype feedback and measuring how far a perturbation travels.
-Both converge on a causal test of the candidate diversity coordinate, which the
-conservative-flow control rejects as an order parameter. Arrows mark logical or
-methodological dependence. Exploratory material on spatial domains, and a
-withdrawn boundary statistic, are reported in the supplement and are not
-premises here.}
+\caption{\textbf{Argument map and scope boundary.} Part~I contains the exact
+branch (blue) and the empirical parameter-space branch (amber) inside the
+permutation core. The constant value $\lambda=1/2$ closes off that classical
+coordinate there; it motivates looking elsewhere but does not entail what
+follows. Part~II is the constructive branch (green): it leaves the
+single-operator family, introduces time- and phenotype-dependent update
+architectures, and measures causal propagation. Arrows mark dependence; the
+change of object between the amber and green branches is explicit.}
 \label{fig:map}
 \end{figure}
+
+\part{The Permutation Core}
+\label{part:core}
+
+\section{The Object}
+\label{sec:object}
+
+A cellular automaton normally evolves a field of \emph{states} under one
+fixed rule. Here each cell also carries a \emph{rule}, and local writes evolve
+that rule field alongside the phenotype. We display an elementary cellular
+automaton (ECA) rule in Wolfram order,
+\[
+111,110,101,100,011,010,001,000,
+\]
+and index these displayed positions from left to right by $p=0,\ldots,7$.
+Thus position $0$ is the $111$ output and most significant bit, while position
+$7$ is the $000$ output and least significant bit. Throughout, the indices of
+$\sig$, $w$, $g$, and $\bit{p}$ are these \emph{displayed positions}, not the
+binary values of the neighbourhoods. If $n\in\{0,\ldots,7\}$ is a numerical
+neighbourhood value, its rule output is therefore $g(7-n)$.
+
+We study the operator $P_\sig$, parameterised by a permutation
+$\sig\in S_8$ of the displayed positions. Writing the displayed byte as a map
+$g\colon\{0,\dots,7\}\to\{0,1\}$, the operator sends $g$ to $P_\sig g$ defined by
+\begin{equation}
+(P_\sig\, g)(q) \;=\; \lnot\, g\bigl(\sig^{-1}(q)\bigr),
+\qquad\text{equivalently}\qquad \bit{\sig(p)} := \lnot\,\bit{p}.
+\label{eq:prop}
+\end{equation}
+Each output bit is one input bit, at the position $\sig$ moves it to, negated;
+$P_\sig$ is thus a permutation of the eight coordinates composed with a global
+complement. The truth table is thereby itself an eight-cell automaton whose
+wiring is $\sig$ and whose update is Boolean negation --- an automaton inside
+the automaton. Equation~\eqref{eq:prop} defines a family of $8! = 40{,}320$
+operators that is finite, exhaustively enumerable, and, as we show below,
+exactly classified.
+
+The legacy engine stored its table in the order
+$000,001,010,100,011,101,110,111$. Whenever a legacy writing is imported, the
+reproduction code conjugates it into the displayed Wolfram order above before
+we quote its permutation or apply names such as offset $+2$.
+
+\begin{definition}[fold,label={def:writing}]{Writings, elementary writes, and propagators}
+A \emph{writing} is any function $w\colon\{0,\dots,7\}\to\{0,\dots,7\}$ on the
+truth-table positions. Its elementary update at source position $p$ is
+\[
+(U_{w,p}g)(q)=
+\begin{cases}
+\lnot g(p),&q=w(p),\\
+g(q),&q\ne w(p).
+\end{cases}
+\]
+Thus one update complements source bit $p$ and writes it to target $w(p)$. If
+$w$ is a bijection---a permutation $\sig\in S_8$---all eight writes can be
+performed simultaneously without collisions, giving the
+\emph{permutation-propagator} $P_\sig$ in Equation~\eqref{eq:prop}. Its fixed
+bytes are exactly the bytes fixed by every $U_{\sig,p}$. For a non-injective
+writing, individual updates $U_{w,p}$ remain well defined, but a simultaneous
+$P_w$ requires a collision-resolution convention; such a writing also has
+\emph{gaps}, or positions targeted by no source.
+\end{definition}
+
+\begin{observation}[fold,label={obs:core}]{Permutations form a small bijective core}
+Permutations are only the bijective core of a far larger class: there are
+$8!=40{,}320$ permutations but $8^{8}=16{,}777{,}216$ writings, so the
+permutations are $0.24\%$ of the whole. The cycle-structure algebra of
+\secref{sec:classification} is available only on this core. The historical
+operator $[0\,0\,1\,2\,3\,4\,5\,6]$ (Figure~\ref{fig:fig2pair}) is itself a
+non-bijective writing---bits $0$ and $1$ both write to position $0$, and
+position $7$ is never written---and its behaviour ranges widely between its two
+standard-order forms.
+\end{observation}
 
 Box~\ref{box:propagator} works through one member of the
 family bit by bit.
 
-\begin{workedexample}[label={box:propagator}]{A simultaneous propagator by hand}
+\begin{workedexample}[fold,label={box:propagator}]{A simultaneous propagator by hand}
 \small
 Write an ECA rule in Wolfram's standard neighbourhood order:
 \begin{center}
@@ -396,7 +452,7 @@ cell; it has changed the truth table that the cell will use.
 The simultaneous operator acts on one eight-bit rule; the spatial experiments
 place its elementary writes inside a two-layer automaton.
 
-\begin{definition}[Genotype and phenotype]\label{def:genopheno}
+\begin{definition}[fold,label={def:genopheno}]{Genotype and phenotype}
 Each cell carries an eight-bit rule. The field of rules---the
 \emph{genotype}---governs a field of black-and-white states---the
 \emph{phenotype}---and neighbouring rules also interact. One complete local
@@ -405,7 +461,7 @@ behind the space--time diagrams in Figure~\ref{fig:regimes}.
 \end{definition}
 
 \Needspace{0.72\textheight}
-\begin{workedexample}[label={box:metaca-step}]{One site, one complete MetaCA step}
+\begin{workedexample}[fold,label={box:metaca-step}]{One site, one complete MetaCA step}
 \small
 At time $t$, site $x$ holds an eight-bit rule $g_x(t)$ and a phenotype bit
 $X_x(t)$. One ordinary coupled step has three parts.
@@ -485,7 +541,7 @@ colours are the legacy engine's own.}
 
 \subsection{Fixed points exist iff every cycle is even}
 
-\begin{theorem}\label{thm:parity}
+\begin{theorem}[fold,label={thm:parity}]
 $P_\sig$ has a fixed point (a fixed rule) if and only if every cycle of
 $\sig$ has even length. Since a one-cycle has odd length, this already
 requires $\sig$ to be fixed-point-free.
@@ -503,7 +559,7 @@ Box~\ref{box:even-cycle} shows the theorem on the offset-$+2$ operator. The
 same small calculation also makes the later $2^k$ count and forced
 $\lambda=1/2$ balance visible before we state them generally.
 
-\begin{workedexample}[label={box:even-cycle}]{Even and odd cycles}
+\begin{workedexample}[fold,label={box:even-cycle}]{Even and odd cycles}
 \small
 For offset $+2$ on eight truth-table positions,
 \[
@@ -555,7 +611,7 @@ our operator family, not as a new identity.
 
 \subsection{Fixed bytes number \texorpdfstring{$2^k$}{2 to the k}}
 
-\begin{corollary}\label{cor:count}
+\begin{corollary}[fold,label={cor:count}]
 An all-even $\sig$ with $k$ cycles has exactly $2^k$ fixed bytes; any $\sig$ with
 an odd cycle has none.
 \end{corollary}
@@ -570,7 +626,7 @@ number of fixed bytes across the family.
 \section{Every Fixed Point Is Balanced}
 \label{sec:lambda}
 
-\begin{definition}[Langton's activity $\lambda$]\label{def:lambda}
+\begin{definition}[fold,label={def:lambda}]{Langton's activity $\lambda$}
 $\lambda$ measures a rule's \emph{activity}: the fraction of its neighbourhood
 entries that map to the non-quiescent
 state~\parencite{langton1990computation}---for an eight-bit ECA table, the
@@ -579,7 +635,7 @@ neighbourhood dies) through $1/2$ to $1$. A rule with $\lambda = 1/2$ is
 \emph{balanced}.
 \end{definition}
 
-\begin{observation}[label={obs:lambda}]{Balance is a truth-table property}
+\begin{observation}[fold,label={obs:lambda}]{Balance is a truth-table property}
 Langton's thesis was that complex behaviour concentrates near a critical
 $\lambda$, shown most clearly for larger tables ($K=4$, $N=5$); for the
 two-symbol, three-neighbour ECAs Langton is explicit that $\lambda$ only roughly
@@ -591,7 +647,7 @@ separate from any empirical claim about what it predicts dynamically.
 
 \subsection{Every fixed point has \texorpdfstring{$\lambda = 1/2$}{lambda = 1/2}}
 
-\begin{theorem}\label{thm:lambda}
+\begin{theorem}[fold,label={thm:lambda}]
 Every fixed point of every operator in the family has exactly four one-bits;
 equivalently, Langton's activity parameter $\lambda = 4/8 = 1/2$.
 \end{theorem}
@@ -771,7 +827,7 @@ diversity, not literal aperiodicity.
 \subsection{The full census, tabulated by class}
 \label{sec:full-census}
 
-\begin{definition}[Census protocol and aliveness]\label{def:aliveness}
+\begin{definition}[fold,label={def:aliveness}]{Census protocol and aliveness}
 For each of the $40{,}320$ permutations, we ran seeds $0$--$2$ on a width-$60$
 line for $100$ generations. Initial rule bytes are independent uniform draws
 from $0$--$255$, initial phenotype bits are independent fair binary draws, and
@@ -788,19 +844,7 @@ The trend becomes an exhaustive finite-run observation once every operator is ta
 $40{,}320$ permutation-propagators and grouped them by cycle type
 (Table~\ref{tab:census}).
 
-\begin{empiricalfinding}[label={find:census}]{The full permutation census}
-Every permutation containing an odd cycle lacks a fixed byte
-(Theorem~\ref{thm:parity}); under the census protocol, all $29{,}295$ such
-operators were classified genotype-alive. The theorem excludes a common fixed
-byte for all elementary writes; the observed $100\%$ alive rate is an additional
-dynamical result. Every all-even cycle type splits between live and dead
-operators. Among those types, the alive fraction falls as the number of cycles
-$k$ increases: $[8]$ ($k{=}1$) is $83\%$ alive, $[2\,6]$ and $[4\,4]$ ($k{=}2$)
-$70$/$67\%$, $[2\,2\,4]$ ($k{=}3$) $49\%$, and $[2\,2\,2\,2]$ ($k{=}4$) $26\%$.
-Overall, $92.5\%$ have a live genotype. The regime split is $82.7\%$ live/live,
-$9.8\%$ live/dead, $6.0\%$ dead/dead, and $1.4\%$ dead/live, so all four regimes
-occur among bijective operators.
-\end{empiricalfinding}
+\suppfinding{1}{The full permutation census}
 
 \begin{table}[t]
 \centering\small
@@ -853,7 +897,7 @@ different properties: the two pages visually summarise the distinction between
 fixed-point existence and spatial persistence.}
 \end{figure}
 
-\begin{workedexample}[label={box:survey},breakable=false]{Reading the rotation survey}
+\begin{workedexample}[fold,label={box:survey},breakable=false]{Reading the rotation survey}
 \small
 The fields of Figure~\ref{fig:eoc} evolve under the \emph{spatially coupled}
 dynamics of \secref{sec:interrupter}---stochastic elementary writes together
@@ -887,26 +931,7 @@ the experiments therefore belongs to the stochastic elementary-write dynamics,
 with or without neighbour coupling, rather than to iteration of the simultaneous
 map $P_\sig$.
 
-\begin{empiricalfinding}[label={find:survey}]{The rotation survey}
-Within the wrap-rotation subfamily, every non-trivial rotation is all-even and
-so possesses fixed rules (Theorem~\ref{thm:parity}), yet under the
-neighbour-blend coupling the tested rotations split by cycle structure
-(Figures~\ref{fig:eoc},~\ref{fig:lambda}):
-\begin{itemize}\setlength{\itemsep}{1pt}
-\item the single 8-cycles---$\gcd(\text{offset},8)=1$, offset $\pm 1$ and
-$\pm 3$---\emph{sustain} a high-diversity field, holding $\sim$30--40 distinct
-rules through the longest runs we made ($400$ generations);
-\item offset $\pm 2$ ($\gcd 2$, two $4$-cycles) and offset $\pm 4$ ($\gcd 4$,
-four $2$-cycles) \emph{collapse} to one or two rules within a few dozen
-generations.
-\end{itemize}
-The distinct-rule population curve (Figure~\ref{fig:lambda}) separates the two by
-more than an order of magnitude in a single scalar. Possessing a fixed rule and
-having the coupled field stay near it are different properties. The present
-claim is limited to two seeds per rotation and treats population size as a
-descriptive observable, not as an order parameter in the statistical-mechanics
-sense.
-\end{empiricalfinding}
+\suppfinding{2}{The rotation survey}
 
 \begin{figure}[t]
 \centering
@@ -941,7 +966,7 @@ two-4-cycle class splits between sustaining and collapsing.}
 \subsection{Constructive control by temporal schedules}
 \label{sec:braiding}
 
-\begin{definition}[Temporal braid]\label{def:braid}
+\begin{definition}[fold,label={def:braid}]{Temporal braid}
 A \emph{temporal braid} alternates two writings between complete coupled spatial
 updates: writing $w_A$ is used at even times and $w_B$ at odd times. More
 generally, a periodic \emph{schedule} selects one writing at each time step.
@@ -950,17 +975,7 @@ the algebraic composition $P_{\sigma_A}\circ P_{\sigma_B}$ of two simultaneous
 maps.
 \end{definition}
 
-\begin{empiricalfinding}[label={find:braid}]{A braid of two collapsing operators can sustain the field}
-At width $80$, horizon $120$, and seed $0$, offset $+2$ and offset $+4$ each
-have genotype change rate $0$ when held alone, while their alternating braid
-has change rate $0.76$ (Figure~\ref{fig:braid}, top). The matched schedule
-control offset $+2$/offset $-2$ remains dead (Figure~\ref{fig:braid}, bottom).
-This establishes that two collapsing components can construct a sustaining
-schedule. It does not establish the previously suggested block-system
-criterion: all three even offsets preserve the evens/odds partition, and both
-pairs generate the same translation subgroup $\langle {+2}\rangle$. The cause
-of the contrasting braid outcomes remains to be identified.
-\end{empiricalfinding}
+\suppfinding{3}{A braid of two collapsing operators can sustain the field}
 
 \begin{figure}[t]
 \centering
@@ -977,17 +992,7 @@ of the simultaneous maps $P_\sigma$.}
 \label{fig:braid}
 \end{figure}
 
-\begin{empiricalfinding}[label={find:knob}]{The mixing fraction is a reproducible diversity control}
-Let $\sigma$ be displayed-position offset $+1$. We ran periodic 12-step
-schedules mixing the sustaining 8-cycle $\sigma^1$ with the collapsing
-two-4-cycle operator $\sigma^2$, at width $80$ for $120$ generations and five
-seeds per mixture. Mean late-window diversity rises from $1.0$ rule when the
-$\sigma^1$ fraction is zero, through $16.8$ at fraction $0.25$, to $36.9$ at
-fraction $5/12$; above that it remains in the range $34$--$41$ rather than
-increasing monotonically (Figure~\ref{fig:knob}). The schedule fraction is thus
-a tunable control for entry into a sustained high-diversity regime, with
-saturation rather than a continuously linear response.
-\end{empiricalfinding}
+\suppfinding{4}{The mixing fraction is a reproducible diversity control}
 
 \begin{figure}[t]
 \centering
@@ -1001,7 +1006,7 @@ at the same representative seed.}
 \label{fig:knob}
 \end{figure}
 
-\begin{definition}[Interrupter]\label{def:interrupter}
+\begin{definition}[fold,label={def:interrupter}]{Interrupter}
 An \emph{interrupter} is an update between elementary propagator writes that is
 not itself a propagator write. The coordinate-wise neighbour blend of
 Box~\ref{box:metaca-step} is the interrupter in the ordinary spatial runs; a
@@ -1010,17 +1015,9 @@ changes the coupled dynamics but does not, by definition, guarantee sustained
 diversity.
 \end{definition}
 
-\begin{empiricalfinding}[label={obs:couplings}]{The rotation split occurs with and without neighbour blending}
-Figure~\ref{fig:parity} uses stochastic elementary writes without neighbour
-blending; Figures~\ref{fig:eoc} and~\ref{fig:lambda} include the blend. Over the
-displayed horizons, offset $+1$ remains active and offset $+2$ settles under
-both protocols, although their diversity levels and transients differ. These
-runs therefore do not identify neighbour blending as the cause of the split;
-they show that fixed-byte existence alone does not determine finite-horizon
-settling under either protocol.
-\end{empiricalfinding}
+\suppfinding{5}{The rotation split occurs with and without neighbour blending}
 
-\begin{proposition}[Composition parity]\label{obs:flat}
+\begin{proposition}[fold,label={obs:flat}]{Composition parity}
 Products alternate between complemented and uncomplemented coordinate permutations.
 Each operator of Equation~\eqref{eq:prop} negates every bit
 ($P_\sig(g)[j] = \lnot\,g[\sig^{-1}(j)]$, a coordinate permutation followed by a
@@ -1044,55 +1041,12 @@ intermediate coupled state, which is why the braids of
 second constructive mechanism pairs a propagator with a step of a different
 kind.
 
-\begin{definition}[River]\label{def:river}
-A \emph{river} is the composed operator obtained by following the collapsing
-offset-$+2$ propagator ($\gcd 2$) with a phenotype-reading construction
-step---match the local phenotype against four template candidates, first match
-wins, and fall back to the all-zero rule when none matches.
-\end{definition}
-
-\begin{empiricalfinding}[label={find:river}]{The river sustains structured phenotype}
-In all six tested seeds at $L=80$, $T=120$, the river produces coherent bands
-of alternating phenotype that drift through a disordered background. In the
-larger pinned run at $L=240$, $T=360$ (Figure~\ref{fig:river}), those structures
-persist while branching, merging, and reorganising across the full spacetime
-field. This is a bounded six-seed observation plus one larger representative
-run, not a claim that the structure is an attractor or survives arbitrarily
-long.
-\end{empiricalfinding}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{figures/river.pdf}
-\caption{\textbf{A larger river spacetime plate.} One pinned representative
-run (seed 1) at $L=240$, $T=360$, with genotype at left and phenotype at
-right. The offset-$+2$ propagator is composed with a phenotype-reading,
-four-candidate, first-match template construction (fallback: the all-zero
-rule). Alternating phenotype domains branch, merge, and reorganise throughout
-the run rather than resolving to a homogeneous or short-period field.
-Genotype is coloured by rule as in
-Figures~\ref{fig:regimes}--\ref{fig:eoc}: greyscale by byte value, with
-well-known ECAs highlighted and red denoting Rule~110. Where the bare rotations
-collapse or cycle (Figure~\ref{fig:eoc}), this composition sustains structured
-phenotype for the length of the observed run.}
-\label{fig:river}
-\end{figure}
-
 \section{Limits of the Tested Distance and Complexity Measures}
 \label{sec:metrics}
 
-\begin{empiricalfinding}[label={obs:metrics}]{The tested per-trajectory metrics do not separate the parity classes}
-The classification is a conjugacy invariant of $\sig$---its cycle type---while
-the complexity and compression measures we tried read a single rule's bits or one
-space--time trajectory without explicitly encoding $\sig$. In our tests these
-measures did not recover the parity classification: a population count reads a collapsed-but-maximally-selected
-field as nearly dead; a frozen periodic genotype scores a lower statistical
-complexity $C_\mu$ \parencite{crutchfield1989inferring} than Rule~110; gzip rates
-a self-similar rule as noise. This is a negative result about the tested
-summaries, not an impossibility theorem for trajectory-based inference.
-\end{empiricalfinding}
+\suppfinding{6}{The tested per-trajectory metrics do not separate the parity classes}
 
-\section{Discussion}
+\section{A Parameter-Space Test}
 \label{sec:discussion}
 
 The survey (Figure~\ref{fig:eoc}) exposes a sharp behavioural split within a
@@ -1108,37 +1062,14 @@ that reading is put to the question. We then ask
 whether the sustained diversity is spatially organised into coexisting
 dynamical regimes.
 
-\begin{empiricalfinding}[label={find:crossover}]{No finite-size evidence of a critical point over the tested range}
-The natural control parameter is the \emph{propagator fraction} $q$ ($q = 0$ all
-blend, $q = 1$ all propagator, offset $+2$). If the sustained phase sat at a
-critical point in $q$, a finite-size scan would show three things as the lattice
-grows: the transition in genotype activity $a_G(q)$ \emph{sharpening}, its width
-shrinking toward zero; a susceptibility proxy peaking at a \emph{fixed} interior
-value of $q$, the peak growing without bound; and Binder cumulants for different
-$L$ crossing at that same value. Across widths $L = 30$--$240$ (32 seeds each)
-we observe none of the three.
-
-First, $a_G(q)$ rises \emph{smoothly}, well described by a logistic crossover
-($R^2 > 0.99$, Figure~\ref{fig:phase}a), and its width does not shrink over the
-tested sizes ($w \approx 0.13$, $w \sim L^{-0.04}$)---the transition is not
-sharpening. Second, the size-scaled run-to-run spread $L\,\mathrm{Var}(a_G)$
-(Figure~\ref{fig:phase}b), used as a finite-size susceptibility proxy, does
-\emph{peak} inside the crossover band and does grow (${\sim}5.7\times$ from the
-smallest width to the largest), but its location drifts rather than converging
-($q=0.75,0.50,1.00,1.00$ as $L$ increases), and for the two largest sizes the
-maximum lies at the sampled boundary $q=1$, so no interior peak is resolved at
-all. Third, there is no Binder-cumulant crossing. The scan therefore provides no
-finite-size evidence for a sharpening transition over $L=30$--$240$. These results support a broad crossover, plausibly
-influenced by seed-dependent residence times, rather than a confirmed critical
-point; they do not exclude different scaling outside the tested range.
-\end{empiricalfinding}
+\suppfinding{7}{No finite-size evidence of a critical point over the tested range}
 
 The genotype field is also spatially organised. Tinting by activity resolves it
 into coexisting low- and high-activity domains whose boundaries trace
 fractal-like filamentary walls through spacetime; those walls carry elevated
 genotype churn, and at matched activity the two sides hold measurably different
 rule populations, so they are not an artefact of the tint that draws them. We
-report that structure in the accompanying supplement, together with a measure of
+report that structure in Supplement~2, together with a measure of
 information transport along those boundaries that we built, validated against
 three nulls, and then withdrew when it proved to be an artefact of its own
 construction. Neither is a third edge, and nothing in the argument below depends
@@ -1166,15 +1097,65 @@ activity at $q=0$, $0.05$, $0.25$, and $0.75$.}
 \label{fig:phase}
 \end{figure}
 
+\newpage
+\part{Beyond the Permutation Core: Feedback and Causal Propagation}
+\label{part:feedback}
+
+Part~I's classified object and exhaustive census were the finite permutation
+core; its temporal braid was the boundary case, already replacing one held
+operator with a schedule. We now retain the same genotype--phenotype lattice
+and elementary rule semantics but drop the single-operator restriction. The
+objects in Part~II are update architectures: time-dependent schedules,
+phenotype-conditioned writes, mutation and holding protocols, and conservative
+local transports. Some use writings from the $8^8$ family as components, but a
+state-dependent architecture is not itself one fixed writing. Consequently,
+the results below neither classify nor measure the $8!$ family as a whole; they
+test how causal propagation changes when the genotype update can read the
+phenotype.
+
+\section{A Feedback-Coupled Construction}
+\label{sec:feedback-construction}
+
+The next construction crosses that boundary by allowing the update to depend
+on the live phenotype.
+
+\begin{definition}[fold,label={def:river}]{River}
+A \emph{river} is the composed operator obtained by following the collapsing
+offset-$+2$ propagator ($\gcd 2$) with a phenotype-reading construction
+step---match the local phenotype against four template candidates, first match
+wins, and fall back to the all-zero rule when none matches.
+\end{definition}
+
+\suppfinding{8}{The river sustains structured phenotype}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/river.pdf}
+\caption{\textbf{A larger river spacetime plate.} One pinned representative
+run (seed 1) at $L=240$, $T=360$, with genotype at left and phenotype at
+right. The offset-$+2$ propagator is composed with a phenotype-reading,
+four-candidate, first-match template construction (fallback: the all-zero
+rule). Alternating phenotype domains branch, merge, and reorganise throughout
+the run rather than resolving to a homogeneous or short-period field.
+Genotype is coloured by rule as in
+Figures~\ref{fig:regimes}--\ref{fig:eoc}: greyscale by byte value, with
+well-known ECAs highlighted and red denoting Rule~110. Where the bare rotations
+collapse or cycle (Figure~\ref{fig:eoc}), this composition sustains structured
+phenotype for the length of the observed run.}
+\label{fig:river}
+\end{figure}
+
 \section{A Causal Measure}
 \label{sec:causal}
 
-The failure above is not peculiar to our estimator. Any statistic computed over
-a region drawn from the field it is computed on invites it, and no null defined
-on the region can detect it. The repair is to stop drawing regions: perturb one
-cell and ask where the effect arrives.
+A causal test also avoids a general problem with observational regions. Any
+statistic computed over a region drawn from the field it is computed on invites
+circularity, and no null defined only by moving that region can necessarily
+detect it. We therefore stop drawing regions: perturb one cell and ask where
+the effect arrives.
 
-We run the phenotype-reading construction of \secref{sec:braiding} to $t^{*}=60$,
+We run the phenotype-reading construction of
+\secref{sec:feedback-construction} to $t^{*}=60$,
 fork, flip a single phenotype bit at site $x$, and continue both branches to
 $T=120$, recording which cells differ. The fork is exact: the construction draws
 one pseudo-random position per cell per step, so re-running from the same seed
@@ -1183,24 +1164,7 @@ consequence of the flip. The control is the matched feedback-off variant---same
 seed, tape, construction and initial state, with only the live
 phenotype-to-genotype edge cut.
 
-\begin{empiricalfinding}[label={find:causal}]{Phenotype-to-genotype feedback roughly doubles causal reach}
-All runs use $L = 80$, $T = 120$, $t^{*} = 60$, with damage measured on the
-\emph{phenotype} layer as the number of cells differing between branches and
-distance as the shorter circular displacement. At $dt \le 10$ the two branches
-are empirically indistinguishable. By $dt = 59$, in a single-seed sweep over all
-$80$ sites, the live construction has damaged $12.97$ cells against the
-control's $5.51$ and spread $16.95$ against $7.46$
-(Figure~\ref{fig:river-perturbation} plots that sweep). Replication uses a
-separate design---six seeds, $20$ evenly spaced sites each, aggregated to one
-mean per seed so that the \emph{seed} is the unit of replication. The live
-construction exceeds its control in $6/6$ seeds, per-seed differences
-$+1.90$, $+7.95$, $+6.65$, $+6.60$, $+6.05$, $+0.85$ cells, mean $+5.00$
-(sd $2.90$). Because $n = 6$ makes a $t$-statistic fragile we quote the exact
-sign-flip permutation test over all $2^{6}$ assignments: the observed mean is
-the extremum, one-sided $p = 1/64 \approx 0.016$ (paired $t(5) = 4.23$ for
-comparison). Perturbations do not spread uniformly: in the single-seed sweep
-$22$ of $80$ sites are dead ends, and they form a contiguous region.
-\end{empiricalfinding}
+\suppfinding{9}{Phenotype-to-genotype feedback roughly doubles causal reach}
 
 \begin{figure}[tb]
 \centering
@@ -1227,66 +1191,9 @@ computation, does not give a fixed packet under a random single-site
 perturbation, because the perturbation creates and destroys gliders which then
 collide.
 
-\begin{empiricalfinding}[label={find:ladder}]{Causal reach on a scale calibrated against elementary rules}
-On a third design---four seeds, ten sites each, damage recorded at every
-$dt$---width grows as $dt^{0.64}$ for the live construction against $dt^{0.43}$
-for its control, with centroid displacement scaling as $dt^{0.56}$ against
-$dt^{0.43}$. Exponents are least-squares fits over $dt \in [5,59]$ on
-site-averaged curves, conditional on damage existing---a run whose perturbation
-has died contributes no width and is excluded rather than entered as zero---and
-we quote no interval on them
-(Figure~\ref{fig:river-centroid}); these are reported descriptively and we draw
-no inference from them about gliders or particles, for a reason given below.
-Placed on one scale against elementary rules run under an identical protocol
-(mean damaged cells at $dt=59$): rule $0$ $0.00$; rule $204$ $1.00$; rule $90$
-$8.00$; \textbf{the construction $12.97$}; rule $54$ $15.05$; rule $110$
-$20.23$; rule $30$ $37.50$. The instrument returns exactly zero where nothing
-propagates, and the construction propagates at a magnitude comparable to the
-elementary rules that do.
-\end{empiricalfinding}
+\suppfinding{10}{Causal reach on a scale calibrated against elementary rules}
 
-\begin{empiricalfinding}[label={find:architecture}]{The order parameter is the strength of the phenotype-to-genotype coupling}
-Run under the protocol above---$L=80$, $t^{*}=60$, one phenotype flip, damaged
-phenotype cells at $dt=59$---the constructions separate by \emph{coupling}, not
-by which parameter they vary. Where the genotype update never reads the
-phenotype, nothing clears the bottom of the complex band: the bare operators
-($P_a$ $0.03$, rot$+1$ $2.05$), braided writings ($0.12$, $5.20$), spatial
-niches ($0.50$, $0.72$), asynchronous refuges ($0.47$, $0.75$), replacement
-mutation ($0.23$, $0.85$), the preserving limit ($1.10$), and blend strength
-across its whole range---$1.00$ giving $0.03$, $0.70$ giving $0.55$, $0.35$
-giving $3.38$, and $0.00$, the most propagating feedforward configuration we
-found, giving $8.15$, level with rule $90$. Most sit below rule $204$ ($1.00$),
-the frozen identity.
-
-The coupling is not merely present or absent; it is a dial, and reach is graded
-and monotone along it. Conservative transport whose swap probability is gated on
-the local phenotype interface rises from $1.10$ at rate $0$ through $4.25$ at
-$0.10$, $9.43$ at $0.20$, $14.45$ at $0.35$, $19.27$ at $0.50$ and $26.05$ at
-$0.75$, crossing rule $90$ between rates $0.10$ and $0.20$ and passing rules
-$110$ and $54$ before saturating. The river construction sits at $12.97$ on the
-same scale, and cutting its single edge returns it to $5.51$, back among the
-feedforward constructions.
-
-That this is the \emph{coupling} and not merely rule mobility is established by
-an ungated control. Replacing the phenotype-gated swap probability with a
-constant one leaves the mean number of swaps unchanged---for a balanced field
-the gated mean is exactly the rate---and leaves the dynamics bijective and the
-rule histogram invariant, so the two differ only in whether the genotype can see
-the phenotype. The ungated control never leaves the ordered band: $1.65$, $1.68$,
-$1.77$, $2.77$ and $4.05$ at rates $0.20$ through $1.00$, against $9.43$ to
-$25.38$ for the gated version, a factor of $5.7$ to $10.9$ at matched mobility
-(Figure~\ref{fig:regime-placement}).
-
-An order parameter therefore exists, and the classical picture is recovered in
-it: reach is a graded, monotone function of coupling strength with a locatable
-crossing into the complex band. What is unusual is only \emph{which} coordinate
-it is. Every parameter internal to the update---$\lambda$, propagator fraction,
-sustained diversity, blend strength, mutation rate, refuge probability, niche
-width, and rule mobility itself---is silent or nearly so. The coordinate that
-governs is the gain of the loop from the phenotype back to the genotype, which
-conventional scans do not sweep because architecture is usually treated as a
-property a model has or lacks rather than as a quantity.
-\end{empiricalfinding}
+\suppfinding{11}{The order parameter is the strength of the phenotype-to-genotype coupling}
 
 \begin{figure}[tb]
 \centering
@@ -1295,7 +1202,7 @@ property a model has or lacks rather than as a quantity.
 protocol ($L=80$, $t^{*}=60$, a single phenotype flip, damaged phenotype cells
 at $dt=59$); bands are drawn from the elementary rules, and the calibration
 reproduces rules $0$, $204$ and $90$ exactly against
-Empirical finding~\ref{find:ladder}. \textbf{(a)} Constructions split by
+\suppfindingref{10}. \textbf{(a)} Constructions split by
 coupling rather than provenance. Nothing whose genotype update is blind to the
 phenotype clears the bottom of the complex band---including the ungated
 transport controls (squares), which are fully mobile---while everything that
@@ -1325,13 +1232,76 @@ fixed-width translating packet even where gliders certainly exist.}
 \label{fig:river-centroid}
 \end{figure}
 
+\subsection{The coupling as a dial}
+\label{sec:gain}
+
+Treating that coupling as present or absent understates it. In both
+constructions that read the phenotype it is a quantity, and causal reach is a
+graded, monotone function of it.
+
+\suppfinding{12}{Coupling is a dial, not a switch, and reach is monotone along it}
+
+For conservative transport the gain is the phenotype-gated swap rate; reach
+crosses rule $90$ between rates $0.10$ and $0.20$ and saturates past $0.75$. For
+the river it is the \emph{currency} of the phenotype bits the genotype reads:
+each cell at each step reads the live phenotype with probability $\gamma$ and a
+frozen reference otherwise, so $\gamma$ is the fraction of the genotype's view
+that is causally current. Because the frozen field is itself a real phenotype,
+marginals and spatial structure are matched at every $\gamma$ and only causal
+currency varies; because $\gamma = 1$ reproduces the live river exactly, the
+dial is anchored against a measurement made independently of it.
+
+Two consequences bear on the reading of \secref{sec:causal}. First, the
+$\gamma = 0$ endpoint is $1.28$, not the $5.51$ of the ablated control: that
+control freezes the phenotype the genotype reads but still presents a field
+which, in the perturbed branch, contains the flip. It cuts the \emph{currency}
+of the read, not the read. The doubling reported for it is therefore the smaller
+part of a coupling effect that spans an order of magnitude.
+
+Second, the two dials have opposite curvature (Figure~\ref{fig:gain-curves}).
+Transport is concave and buys most of its reach early; the river is convex, with
+$45$\% of its span in the last eighth of $\gamma$, so one stale read in eight
+costs $40$\% of the reach. Monotonicity in the coupling is thus common to both
+constructions while its shape is not, and we would not generalise the shape from
+two cases.
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=\linewidth]{figures/gain_curves.pdf}
+\caption{\textbf{Two couplings, dialled.} Both panels vary the gain of the
+phenotype-to-genotype loop and nothing else, under the protocol of
+\suppfindingref{10}; bands are the elementary-rule regimes of
+Figure~\ref{fig:regime-placement}. \textbf{Left:} conservative transport, whose
+swap probability is gated on the local phenotype interface, against an ungated
+control at matched mean swap probability---both bijective, both leaving the rule
+histogram invariant, differing only in whether the swap reads the phenotype. The
+blind control never leaves the ordered band. \textbf{Right:} the river, where
+the gain is the fraction of the genotype's phenotype read that is causally
+current. Error bars are standard errors over three seeds and eighty sites.
+Reach is monotone in gain in both, with opposite curvature: transport saturates
+past $0.75$, while the river gains $45$\% of its span in the last eighth.}
+\label{fig:gain-curves}
+\end{figure}
+
 \subsection{Diversity and conservative transport}
 \label{sec:diversity-axis}
 
 Langton's $\lambda$ is silent on this family: the classification puts
 \emph{every} fixed rule of \emph{every} operator at $\lambda = 1/2$, so it
 cannot distinguish an operator whose field stays diverse from one that
-collapses. The sustained distinct-rule count can, and the causal measure above
+collapses. It cannot be rescued by computing it on the realized dynamics
+either. Across the nine configurations of
+Figure~\ref{fig:diversity-spread} the empirical neighbourhood distribution is
+close to uniform---normalised visitation entropy $0.946$ to $0.999$, all eight
+neighbourhoods visited in every run---so $\lambda$ read off the realized
+transitions with uniform weight ($0.42$ to $0.52$) and the same quantity
+weighted by visitation ($0.40$ to $0.51$) differ by $0.035$ on average, and both
+sit near $1/2$ wherever the nominal value does. Nor is the silence peculiar to
+this family: of the elementary rules calibrating the scale above, rules $30$,
+$54$, $90$, $150$, $204$ and $232$ all have $\lambda = 1/2$ exactly, spanning
+frozen, ordered, complex and chaotic. What the balance theorem contributes is
+not a new failure of $\lambda$ but an exact and provable instance of a known
+one. The sustained distinct-rule count can, and the causal measure above
 lets us ask the stronger question: does causal reach depend on diversity
 itself, or on the mechanism used to sustain it?
 
@@ -1346,41 +1316,7 @@ diversity and no rewriting at all. The coordinate throughout is diversity
 the fork---a field seeded with all $256$ rules holds them for one step and
 collapses during the very window the damage is measured in.
 
-\begin{empiricalfinding}[label={find:diversity-axis}]{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
-The original $76$ configurations produce an apparent rise and fall: binned
-medians rise from $0.10$ cells below $40$ sustained rules to $2.34$ at
-$125$--$135$, then fall to zero above $135$. That descent is completely
-confounded. Every original configuration above $135$ obtains its diversity
-either by replacement mutation or by holding the genotype fixed. The observed
-failures are real---mutation erases the lesion and holding prevents its
-spread---but they do not show that high diversity suppresses propagation.
-
-We therefore add a conservative eighth mechanism. Each run begins from a
-balanced empirical rule measure with support
-$32,64,96,128,160,192,224,$ or $256$. Alternating layers of disjoint local
-pairs exchange their rules with a probability controlled by a transport rate
-and the local phenotype interface. These exchanges are bijections: no rule is
-created or destroyed, and the complete genotype histogram and its Shannon
-diversity remain invariant at every checked step. A local transposition supplies
-the perturbation while preserving that same measure in both branches. We run
-five transport rates, six seeds, and eight perturbation sites for $40$ response
-steps, giving $1{,}920$ paired responses.
-
-Figure~\ref{fig:diversity-axis} reports causal amplification---final genotype
-damage divided by the two initially exchanged sites---so the conservative
-responses share a scale with the original single-site survey. With transport
-zero, amplification is exactly $1.00$ at every diversity. At transport rates
-$0.25$, $0.50$, $0.75$, and $1.00$, the ranges across the full diversity axis
-are respectively $6.63$--$8.26$, $14.11$--$15.31$, $18.75$--$21.26$, and
-$20.78$--$22.08$. There is no descending limb: within each transport rate the
-dependence on diversity is approximately flat or slightly positive, while
-changing transport changes reach by more than an order of magnitude.
-
-Sustained rule diversity is therefore not an order parameter for causal reach.
-Mutation and holding are distinct suppression mechanisms, but they are not
-flanks of a common diversity optimum. Structured genotype transport is the
-control exposed by this experiment.
-\end{empiricalfinding}
+\suppfinding{13}{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
 
 \begin{figure}[tb]
 \centering
@@ -1447,11 +1383,12 @@ without mutation. It does not establish that transport rate is a universal
 order parameter.
 
 The defensible conclusion is narrower and cleaner. Distinct-rule diversity
-describes whether this operator family sustains a population, but it does not
-govern causal reach. The latter depends on how rewriting or transport is
-organised. Identifying a coordinate that captures that organisation across
-mechanisms is work for another paper; the classification of
-\secref{sec:classification} guarantees that $\lambda$ is not it.
+describes population persistence in the Part~I operator experiments, but it
+does not govern causal reach across the Part~II architectures. The latter
+depends on how rewriting or transport is organised. Identifying a coordinate
+that captures that organisation across mechanisms is work for another paper;
+the classification of \secref{sec:classification} guarantees only that
+$\lambda$ cannot discriminate among fixed points in the permutation core.
 
 What this scale does and does not license needs saying plainly. It separates
 systems that propagate a perturbation from those that do not, and that
@@ -1463,80 +1400,93 @@ system as ordered, complex or chaotic, and we make no such classification. What
 we claim is narrower and causal: the live phenotype-to-genotype edge roughly
 doubles how far a single-cell perturbation reaches, on a measure that involves
 no region-drawing and therefore cannot fail in the way the withdrawn measure of
-the supplement failed. It concerns the phenotype-coupled construction, not the bare operators;
+the Supplement~2 analysis failed. It concerns the phenotype-coupled construction, not the bare operators;
 no comparable measurement of the family is attempted here.
+
+\subsection{What the coupling supplies}
+
+One measurement bounds how the convexity of \secref{sec:gain} should be read.
+Asking, per cell and step, whether the live phenotype context selects a
+\emph{different} rule than a frozen context would: it does in $73.1$\% of
+cell-steps (and in $76.8$\% against no context), over four seeds at $L=80$ for
+$120$ steps. The construction's first-match runs over four candidates, so an
+uninformative re-selection would differ in about $75$\% of cases: at $73.1$\% a
+frozen context carries almost no information about the live answer. The read is
+determinative rather than a tiebreak, which is what a convex gain curve should
+lead one to expect, and it means there is no common case that a
+phenotype-blind rule could encode in its place. We draw no stronger conclusion
+from this than that: whether \emph{any} blind construction could match the
+river is a question about a search we have not run, and
+\suppfindingref{9} reports only that sixteen hand-chosen ones do not.
 
 \section{Limits}
 \label{sec:limits}
 
-The theorems are the Boolean case and are exact; the dynamical claims are
-narrower and empirical. The census and the sustained-diversity behaviour are
-reported for a single spatial coupling ($S_8$, radius one, one value map) at
-limited seed counts, and invite a fuller treatment. \secref{sec:discussion}
-takes up the local, structural reading and reports an exploratory
-interface-dimension statistic under its own stated caveats (few seeds,
-fixed-boundary variant), and the spatial domain structure is reported in the
-supplement rather than here. The information measures of that supplement
-are withdrawn: their mask and their measure are derived from the same
-thresholded field, the three nulls we ran cannot detect that, and measures which
-avoid it return nothing. We report the failure in full because the same
-construction is easy to reproduce and the nulls that would seem to guard against
-it do not. The causal measure of \secref{sec:causal} replaces it, and carries
-its own limits: one construction rather than the operator family, one lattice
-width, six seeds, and an exponent fitted over a range where the damage width
-reaches only a tenth of the lattice, so finite-size effects are not excluded.
-The empirical components use different fixed sample sizes: three seeds per
-operator in the census, two per rotation in the survey, six for the river and
-Rule~110 comparison, and $32$ per parameter cell in the finite-size scan; the
-interface analysis uses the smaller samples stated with that result.
-Illustrative diagrams use pinned representative seeds. All are reproducible
-from the accompanying package. The
-substrate the object sits in is not itself new (\secref{sec:object}); $\lambda$
-is one heuristic among several \parencite{wuensche1999classifying}, and we
-make no claim that balance implies any particular dynamics---only that here
-balance is \emph{derived}. What is new, and what we rest the paper on, is the
-object of Equation~\eqref{eq:prop} and the fixed-point structure that forces
-every fixed rule to be balanced, $\lambda = 1/2$, as a matter of proof.
+The Part~I theorems are exact for the Boolean permutation core; its dynamical
+claims are narrower and empirical. The census uses three seeds per operator,
+the rotation survey two, and the finite-size scan $32$ per parameter cell, all
+under the stated radius-one spatial protocol. These finite-run results do not
+turn fixed-point balance into a claim about attraction. The substrate itself is
+not new (\secref{sec:object}), and $\lambda$ is one heuristic among several
+\parencite{wuensche1999classifying}; what is exact is only that the fixed-point
+structure of Equation~\eqref{eq:prop} forces every fixed rule in the core to
+have $\lambda=1/2$.
+
+Part~II has different limits because it has a different object. Its central
+causal comparison concerns one feedback-coupled construction rather than
+either writing family, one lattice width, and six seeds. The descriptive
+exponents are fitted over a range where damage width reaches only a tenth of
+the lattice, so finite-size effects are not excluded. The architecture survey
+and conservative-transport control compare mechanisms rather than exhaustively
+sampling $8^8$ writings, and their fixed sample sizes are stated with each
+result. They identify feedback and transport as controls in the tested
+constructions, not as universal order parameters. Illustrative diagrams use
+pinned representative seeds. All reported computations are reproducible from
+the accompanying package.
+
+Supplement~2 carries the separate spatial-domain analysis and the information
+measure withdrawn after its mask and measure proved circular. Its claims and
+failures do not enter either Part~I's classification or Part~II's causal
+comparison.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-The characterisation promised at the outset (\secref{sec:object}) has two
-halves. The
-first is static and exact: which operators possess fixed points (the
-all-even ones), how many ($2^k$), and where they lie (balanced,
-$\lambda = 1/2$, always). The second is empirical and tentative. Because
-every fixed point sits at $\lambda = 1/2$, that parameter is silent on the
-difference between an operator whose field stays diverse and one whose field
-collapses; the distinct-rule count is not, and in our
-runs it separates the two across the rotation family by more than an order of
-magnitude (Figure~\ref{fig:lambda}). The same observable offers a suggestive
-reading of the search that produced the family, reported both as a
-representative run and as a fixed six-seed sample (\secref{sec:limits}). The
-operator of Figure~\ref{fig:regimes} that comes to be dominated by
-Rule~110---a conventional target in a search for computationally distinguished
-behaviour---concentrates the field onto it and pays for it in diversity.
-At the representative seed, $39\%$ of its genotype cells are Rule~110 and it
-sustains $16$ distinct rules, against a foil that holds Rule~110 below $1\%$
-and sustains $33$; over the six-seed sample the ordering is unchanged---Rule
-110 $35\%$ (range $31$--$39\%$) versus $0.2\%$ ($0$--$0.2\%$), sustained diversity
-$15$ versus $23$. On this pair, recovering a universal rule and sustaining a
-diverse population pull against each other---a suggestion worth testing at
-scale, not a law we have established.
+The paper has studied two related objects, and its conclusions must keep them
+separate. Part~I concerns the finite permutation core. Its static results are
+exact: a permutation-propagator possesses fixed rules exactly when all cycles
+are even; an all-even permutation with $k$ cycles has $2^k$ fixed rules; and
+every such rule is balanced, with $\lambda=1/2$. Its dynamical results are
+finite-run observations over that core. The exhaustive census shows that all
+odd-cycle operators remain genotype-alive under the stated protocol while
+every all-even cycle type contains both sustaining and collapsing members. The
+rotation survey and finite-size scan sharpen the distinction: fixed-point
+existence does not determine attraction, and the tested propagator-fraction
+scan gives a broad crossover rather than evidence of a critical point.
 
-A third strand set out to ask whether the filamentary boundaries of
-\secref{sec:discussion} carry information, and returns a negative. The statistic
-we used is an artefact of drawing the region from the field the statistic is
-computed on, and the geometry-preserving nulls that appear to guard against that
-cannot---they displace the mask off exactly the cells that produce the effect.
-We report it because the construction is a natural one to reach for and the
-failure is invisible from inside it. What replaces it is causal rather than
-observational: perturbing a single cell and tracking the divergence against a
-matched control shows that the phenotype-reading construction roughly doubles
-how far a perturbation travels, and places it between elementary rules $90$ and
-$54$ on a scale calibrated against rules of undisputed regime. That is a
-narrower claim than the one we set out to make, and it is the one the evidence
-supports.
+Part~II retains the two-layer lattice but changes the object from an individual
+writing to an update architecture. The river construction composes a
+permutation-propagator with a phenotype-reading step; the wider comparison adds
+temporal schedules, mutation, holding, niches, and conservative local
+transport. These are not a census of the $8^8$ writings, and the results do not
+retroactively characterise the $8!$ core. They establish a narrower causal
+claim. Against a matched feedback-off control, phenotype-to-genotype feedback
+roughly doubles the reach of a single-cell perturbation. When the strength of
+that feedback is varied, reach changes monotonically, while a control matched
+in rule mobility but blind to the phenotype remains in the low-reach band.
+Conservative transport further shows that sustained genotype diversity is not
+itself the governing coordinate: high diversity can coexist with propagation,
+and transport changes reach far more than diversity does.
+
+The connection between the parts is therefore motivational rather than
+deductive. Part~I proves that the classical $\lambda$ coordinate cannot
+discriminate among fixed points in the permutation core and finds no critical
+point in the tested parameter scan. Part~II asks what a causal measurement can
+reveal once the architecture itself is allowed to change. Its answer is
+feedback coupling for the constructions tested here, not a theorem about all
+permutations or all writings. Supplement~2 records the separate spatial-domain
+analysis and the withdrawn boundary statistic; neither is a premise of this
+two-part argument.
 
 \paragraph{Data and code availability.} Every numerical result in this paper is
 regenerated from source rather than deposited: the generators are seeded, so a
