@@ -739,32 +739,6 @@ $[2\,2\,2\,2]$ & $105$   & $25.7\%$ \\
 \section{Fixed Points Are Not Attractors}
 \label{sec:interrupter}
 
-\begin{figure}[p]
-\centering
-\includegraphics[height=0.73\textheight]{figures/survey_a.pdf}
-\caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
-offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$ (two
-seeds; genotype in 256 colours, phenotype black and white, first hundred
-generations). Of these all-even rotations only the single 8-cycles,
-$\gcd(\text{offset},8) = 1$---offset $\pm 1$ and $\pm 3$, highlighted---sustain a
-high-diversity phase; offset $\pm 2$ ($\gcd 2$) and $\pm 4$ ($\gcd 4$) collapse.
-See Worked Worked example~4; continued in~(b).}
-\label{fig:eoc}
-\end{figure}
-
-\begin{figure}[p]
-\ContinuedFloat
-\centering
-\includegraphics[height=0.73\textheight]{figures/survey_b.pdf}
-\caption{\textbf{(b)~Positive offsets.} Continued from~(a). The classification is
-symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+1$ sustains
-as offset $-1$ does, and offset $+2$ collapses as offset $-2$ does---inverse
-rotations sharing verdict but not their transients (Worked
-Worked example~4). Possessing a fixed point and staying near it are
-different properties: the two pages visually summarise the distinction between
-fixed-point existence and spatial persistence.}
-\end{figure}
-
 \supptheory{Worked example~4}{Reading the rotation survey}
 
 Possessing a fixed point (Theorem~1) is not the same as
@@ -790,7 +764,7 @@ the wrap rotations (two seeds each). All begin at $\approx 70$; the four
 8-cycles, $\gcd(\text{offset},8)=1$ (offset $\pm 1$ and $\pm 3$, green), keep a
 large diverse population, while offset $\pm 2$ and $\pm 4$ (grey) collapse to one
 or two rules. This makes quantitative, on the runs shown, the difference visible
-by eye in Figure~\ref{fig:eoc}. Figure~\ref{fig:parity} gives the corresponding
+by eye in Supplement~3, Figure~1. Figure~\ref{fig:parity} gives the corresponding
 without-blend comparison for offsets $+1$ and $+2$: the former remains active at
 lower diversity over that run, while the latter settles onto its four fixed
 rules.}
@@ -877,7 +851,7 @@ kind.
 \section{A Parameter-Space Test}
 \label{sec:discussion}
 
-The survey (Figure~\ref{fig:eoc}) exposes a sharp behavioural split within a
+The survey (Supplement~3, Figure~1) exposes a sharp behavioural split within a
 family of provably fixed-point-bearing operators: only the single 8-cycles
 (offset $\pm 1$, $\pm 3$) sustain a high-diversity phase, while offset $\pm 2$ and
 $\pm 4$ collapse. A reader is entitled to ask whether that phase sits at a
@@ -891,6 +865,20 @@ whether the sustained diversity is spatially organised into coexisting
 dynamical regimes.
 
 \suppfinding{7}{No finite-size evidence of a critical point over the tested range}
+
+Figure~\ref{fig:phase} collects the four diagnostics. The scan is over the
+propagator fraction $q$, from all blend at $q=0$ to all propagator at $q=1$, at
+lattice widths $L = 30$ to $240$ with $32$ seeds each; the point of varying $L$
+is that a genuine transition sharpens as the system grows while a crossover does
+not. Genotype activity fits a logistic in $q$ at every size ($R^2 > 0.99$), but
+the crossover width does not shrink over these sizes ($w \sim L^{-0.04}$). The
+size-scaled run-to-run spread $L\,\mathrm{Var}(a_G)$, used here as a
+susceptibility proxy, does peak inside the band and grows about $5.7$-fold, but
+its maximum wanders---from $q=0.75$ to $0.50$ and then to the sampled boundary
+$q=1$ for the two largest sizes---rather than settling. Finite-horizon collapse
+becomes rarer with size, and the Binder cumulant has no common crossing. Each
+diagnostic is individually consistent with a critical point; none of them
+locates one, and together they support a broad crossover instead.
 
 The genotype field is also spatially organised. Tinting by activity resolves it
 into coexisting low- and high-activity domains whose boundaries trace
@@ -906,22 +894,12 @@ on them.
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/eoc_phase.pdf}
-\caption{\textbf{No finite-size evidence of a critical point over the tested
-range.} Offset $+1$ feedforward finite-size scan against the
-propagator fraction $q$ ($0$: all blend, $1$: all propagator). $L$ is the
-\emph{system size}---the lattice width in cells; the scan spans $L = 30$--$240$
-(32 seeds each), because a genuine transition sharpens as $L$ grows while a
-crossover does not. \textbf{(a)}~genotype activity $a_G$ with logistic fits
-($R^2 > 0.99$); the crossover width does not shrink over these sizes
-($w \sim L^{-0.04}$). \textbf{(b)}~the size-scaled run-to-run spread
-$L\,\mathrm{Var}(a_G)$ is used as a susceptibility proxy: it peaks inside the
-band, but its maximum moves from $q=0.75$ to $0.50$ and then to the sampled
-boundary $q=1$ for the two largest sizes; its height grows ${\sim}5.7\times$.
-\textbf{(c)}~finite-horizon collapse becomes rarer with size.
-\textbf{(d)}~the Binder cumulant has no common crossing. Together these
-diagnostics support a broad crossover rather than a confirmed critical point.
-Bottom: one paired realisation ($L = 240$, single seed) tinted by isolated-rule
-activity at $q=0$, $0.05$, $0.25$, and $0.75$.}
+\caption{\textbf{Finite-size scan across the propagator fraction.}
+Offset $+1$ feedforward, $L = 30$--$240$, $32$ seeds per size.
+\textbf{(a)}~genotype activity with logistic fits; \textbf{(b)}~size-scaled
+spread as a susceptibility proxy; \textbf{(c)}~finite-horizon collapse
+frequency; \textbf{(d)}~the Binder cumulant. Bottom: one paired realisation at
+$L = 240$ tinted by isolated-rule activity.}
 \label{fig:phase}
 \end{figure}
 
@@ -961,9 +939,9 @@ four-candidate, first-match template construction (fallback: the all-zero
 rule). Alternating phenotype domains branch, merge, and reorganise throughout
 the run rather than resolving to a homogeneous or short-period field.
 Genotype is coloured by rule as in
-Figures~\ref{fig:regimes}--\ref{fig:eoc}: greyscale by byte value, with
+Figures~\ref{fig:regimes}--Supplement~3, Figure~1: greyscale by byte value, with
 well-known ECAs highlighted and red denoting Rule~110. Where the bare rotations
-collapse or cycle (Figure~\ref{fig:eoc}), this composition sustains structured
+collapse or cycle (Supplement~3, Figure~1), this composition sustains structured
 phenotype for the length of the observed run.}
 \label{fig:river}
 \end{figure}
@@ -992,17 +970,9 @@ phenotype-to-genotype edge cut.
 \begin{figure}[tb]
 \centering
 \includegraphics[width=0.94\linewidth]{figures/river_perturbation.pdf}
-\caption{\textbf{A causal measure of reach.} A single phenotype bit is flipped
-at $t^{*}=60$ (blue marker) and the damage---\emph{phenotype} cells differing
-from an otherwise identical run, distance measured as the shorter circular
-displacement on the periodic lattice---is tracked. Curves are the single-seed
-sweep over all $80$ sites at $L=80$; the six-seed replication is reported in the
-text. Top: three light cones at different perturbation
-sites. \textbf{(a)}~damaged cells against the matched feedback-off control;
-\textbf{(b)}~spatial spread, with the light-cone bound for reference;
-\textbf{(c)}~damage by perturbation site, showing a contiguous region of dead
-ends. Same seed, same pseudo-random tape, same construction; the two branches
-differ only in the live phenotype-to-genotype edge.}
+\caption{\textbf{Damage from a single phenotype flip.}
+Live construction against its matched control, $L=80$, $t^{*}=60$, swept over all
+$80$ sites; mass and spread at a sequence of horizons $dt$.}
 \label{fig:river-perturbation}
 \end{figure}
 
@@ -1018,25 +988,25 @@ collide.
 
 \suppfinding{11}{The order parameter is the strength of the phenotype-to-genotype coupling}
 
+Figure~\ref{fig:regime-placement} places every construction on that one axis.
+All points share the protocol of \suppfindingref{10}, and the calibration
+reproduces rules $0$, $204$ and $90$ exactly against it, so the bands drawn from
+the elementary rules carry over unchanged. The rows split the constructions by
+coupling rather than by provenance, and the split is clean. Nothing whose
+genotype update is blind to the phenotype clears the bottom of the complex
+band---not even the ungated transport controls, which are fully mobile and
+merely cannot see what they are moving through. Everything that reads the
+phenotype lands inside. The river appears in both rows, at $12.97$ with its edge
+and $5.51$ without, so the arrow between them is one construction moved by
+adding an edge rather than by changing a parameter.
+
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/regime_placement.pdf}
-\caption{\textbf{The order parameter is the coupling.} All points share one
-protocol ($L=80$, $t^{*}=60$, a single phenotype flip, damaged phenotype cells
-at $dt=59$); bands are drawn from the elementary rules, and the calibration
-reproduces rules $0$, $204$ and $90$ exactly against
-\suppfindingref{10}. \textbf{(a)} Constructions split by
-coupling rather than provenance. Nothing whose genotype update is blind to the
-phenotype clears the bottom of the complex band---including the ungated
-transport controls (squares), which are fully mobile---while everything that
-reads it lands inside. The river appears in both rows, at $12.97$ with its edge
-and $5.51$ without, so the arrow is one construction moved by adding an edge.
-\textbf{(b)} The same coupling as a dial. Gated and ungated transport are both
-bijective, both leave the rule histogram invariant, and are matched in mean swap
-probability; they differ only in whether the swap reads the local phenotype.
-Error bars are standard errors over four seeds and ten sites. The gated curve
-crosses rule $90$ between rates $0.10$ and $0.20$ and saturates past rule $54$;
-the blind control stays near the frozen identity throughout.}
+\caption{\textbf{Every construction on one scale.} Causal reach under the
+protocol of \suppfindingref{10}, with regime bands drawn from the elementary
+rules. Rows divide constructions by whether the genotype update reads the
+phenotype.}
 \label{fig:regime-placement}
 \end{figure}
 
@@ -1091,18 +1061,9 @@ two cases.
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/gain_curves.pdf}
-\caption{\textbf{Two couplings, dialled.} Both panels vary the gain of the
-phenotype-to-genotype loop and nothing else, under the protocol of
-\suppfindingref{10}; bands are the elementary-rule regimes of
-Figure~\ref{fig:regime-placement}. \textbf{Left:} conservative transport, whose
-swap probability is gated on the local phenotype interface, against an ungated
-control at matched mean swap probability---both bijective, both leaving the rule
-histogram invariant, differing only in whether the swap reads the phenotype. The
-blind control never leaves the ordered band. \textbf{Right:} the river, where
-the gain is the fraction of the genotype's phenotype read that is causally
-current. Error bars are standard errors over three seeds and eighty sites.
-Reach is monotone in gain in both, with opposite curvature: transport saturates
-past $0.75$, while the river gains $45$\% of its span in the last eighth.}
+\caption{\textbf{Two couplings, dialled.} Causal reach against coupling gain
+for conservative transport (left, with an ungated control at matched mean swap
+probability) and for the river (right). Error bars are standard errors.}
 \label{fig:gain-curves}
 \end{figure}
 
@@ -1114,7 +1075,7 @@ Langton's $\lambda$ is silent on this family: the classification puts
 cannot distinguish an operator whose field stays diverse from one that
 collapses. It cannot be rescued by computing it on the realized dynamics
 either. Across the nine configurations of
-Figure~\ref{fig:diversity-spread} the empirical neighbourhood distribution is
+Supplement~3, Figure~2 the empirical neighbourhood distribution is
 close to uniform---normalised visitation entropy $0.946$ to $0.999$, all eight
 neighbourhoods visited in every run---so $\lambda$ read off the realized
 transitions with uniform weight ($0.42$ to $0.52$) and the same quantity
@@ -1141,57 +1102,24 @@ collapses during the very window the damage is measured in.
 
 \suppfinding{13}{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
 
+Figure~\ref{fig:diversity-axis} shows why the apparent optimum was an artefact.
+The original configurations trace a rise and fall against sustained diversity,
+but every point on the descending limb obtains its diversity either by
+replacement mutation or by holding rules still, so the descent measures those
+two mechanisms rather than diversity. The conservative runs, which hold the rule
+histogram exactly invariant while varying transport, separate into flat bands
+--- one per transport rate --- that span the whole diversity axis. Reading
+across a band shows the effect of diversity at fixed transport and finds almost
+none; reading between bands shows the effect of transport and finds an order of
+magnitude.
+
 \begin{figure}[tb]
 \centering
 \includegraphics[width=\linewidth]{figures/diversity_axis.pdf}
-\caption{\textbf{Causal reach against sustained genotype diversity.}
-The original $76$ configurations appear in the lower part of the panel, grouped
-as structured mechanisms, replacement mutation, and holding or preservation.
-Their apparent descending limb above $135$ rules is mechanism-confounded.
-Coloured curves show the conservative-flow control: prescribed balanced
-measures of $32$--$256$ distinct rules, transported only by local bijective
-exchanges at five rates. Points are means over six seeds after averaging eight
-perturbation sites within each seed; bars are standard errors across seeds.
-Causal amplification is final divided by initial genotype damage, leaving the
-original one-site intervention unchanged and normalising the conservative
-two-site exchange by two. At every non-zero transport rate, reach is sustained
-across the entire diversity range. The vertical separation by transport and
-near-flat curves within rate show that transport mechanism, not diversity
-alone, governs propagation.}
+\caption{\textbf{Causal reach against sustained genotype
+diversity.} The original $76$ configurations, grouped by mechanism, with the
+conservative-transport runs overlaid as one band per transport rate.}
 \label{fig:diversity-axis}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[width=\linewidth]{figures/diversity_spread_a.pdf}
-\caption{\textbf{(a)~Structured high-diversity fields.} Six examples from four
-mechanism families: temporal alternation; alternation of two operators that
-\emph{collapse} when run alone; continuous blending at two strengths; and
-spatial niches at two widths. Each tile stacks genotype over phenotype and
-reports both distinct-rule and Shannon-effective diversity at $T=70$;
-full-population seed $0$, $L=256$. The fields sustain $78$--$121$ rules and
-carry coherent diagonal structure at a range of scales. These examples
-motivated the candidate diversity coordinate, but the conservative-flow control
-in Figure~\ref{fig:diversity-axis} shows that diversity itself does not account
-for their propagation.
-Continued in~(b).}
-\label{fig:diversity-spread}
-\end{figure}
-
-\begin{figure}[p]
-\ContinuedFloat
-\centering
-\includegraphics[width=\linewidth]{figures/diversity_spread_b.pdf}
-\caption{\textbf{(b)~Two mechanism-specific suppressions.} Continued from~(a);
-suppressed configurations are outlined in red. Replacement mutation at rates
-$0.20$ and $0.40$ turns the genotype into progressively finer, unstructured
-speckle. Asynchronous holding at update fractions $0.25$, $0.50$, and $0.75$
-instead produces vertical persistence whose strength changes continuously with
-the dial. The unoutlined braid-plus-blend control at bottom right propagates
-($3.88$ cells) and recovers the diagonal texture of~(a). The expanded
-population makes the distinction visible as a family resemblance rather than a
-single selected contrast: these are genuine failure modes of their respective
-mechanisms, not evidence for suppression by high diversity.}
 \end{figure}
 
 Two cautions bound this result. First, the conservative intervention is a local

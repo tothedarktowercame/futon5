@@ -1,0 +1,127 @@
+\documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
+
+\usepackage[american]{babel}
+\usepackage{csquotes}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[style=apa,backend=biber]{biblatex}
+\usepackage{xr}
+\externaldocument{draft6}
+\addbibresource{refs.bib}
+\hypersetup{
+  hidelinks,
+  pdftitle={Supplement 3: Additional Figures},
+  pdfauthor={Joseph Corneli},
+  pdfsubject={Additional figures accompanying Rule-Rewriting Cellular Automata
+    and the Edge of Chaos}
+}
+
+\newcommand{\sig}{\sigma}
+\newcommand{\bit}[1]{\mathrm{bit}[#1]}
+% Cross-reference a finding box by its label (tcolorbox auto counter supplies the number).
+\newcommand{\findref}[1]{Box~\ref{#1}}
+
+\newtcolorbox[auto counter]{empiricalfinding}[2][]{%
+  enhanced,
+  breakable,
+  colback=orange!7,
+  colframe=orange!65!black,
+  boxrule=0.7pt,
+  arc=1.5mm,
+  left=2.5mm,
+  right=2.5mm,
+  top=1.5mm,
+  bottom=1.5mm,
+  fonttitle=\bfseries,
+  title={Box~\thetcbcounter: #2},
+  #1}
+
+\title{Supplement 3: Additional Figures}
+\shorttitle{Empirical Findings Notebook}
+\authorsnames{Joseph Corneli}
+\authorsaffiliations{{Oxford Brookes University, Oxford OX3 0BP, United Kingdom},
+  {Hyperreal Enterprises Ltd, United Kingdom}}
+\note{Supplement to \emph{Rule-Rewriting Cellular Automata and the Edge of
+Chaos}. Correspondence: \href{mailto:jcorneli@brookes.ac.uk}
+{jcorneli@brookes.ac.uk}.}
+
+\abstract{%
+This notebook collects the twelve empirical findings referenced from the main
+paper. The numbering is stable: ``Supplement 1, Box \(n\)'' in the paper points
+to Box \(n\) here. Mathematical definitions, protocols, figures, and
+interpretation remain in the main paper; this supplement isolates the compact
+claims that those materials support. A parallel Clay rendering provides a
+public-facing literate-notebook view from the same canonical source.}
+
+\begin{document}
+
+\section*{Supplement 3: Additional Figures}
+
+Two survey galleries referred to from the main paper. Each shows a family of runs at a
+glance rather than carrying an argument on its own: the first sweeps the rotation
+offsets that Part~I classifies, the second shows the spacetime fields behind the
+diversity mechanisms of Part~II. They are collected here so the main narrative is not
+interrupted by four full pages of plates.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[height=0.73\textheight]{figures/survey_a.pdf}
+\caption{\textbf{(a)~Negative offsets.} The rotation subfamily, ordered by
+offset: each row is one wrap rotation $\bit{\sig(k)} := \lnot\,\bit{k}$ (two
+seeds; genotype in 256 colours, phenotype black and white, first hundred
+generations). Of these all-even rotations only the single 8-cycles,
+$\gcd(\text{offset},8) = 1$---offset $\pm 1$ and $\pm 3$, highlighted---sustain a
+high-diversity phase; offset $\pm 2$ ($\gcd 2$) and $\pm 4$ ($\gcd 4$) collapse.
+See Worked Worked example~4; continued in~(b).}
+\label{fig:eoc}
+\end{figure}
+
+\begin{figure}[tbp]
+\ContinuedFloat
+\centering
+\includegraphics[height=0.73\textheight]{figures/survey_b.pdf}
+\caption{\textbf{(b)~Positive offsets.} Continued from~(a). The classification is
+symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+1$ sustains
+as offset $-1$ does, and offset $+2$ collapses as offset $-2$ does---inverse
+rotations sharing verdict but not their transients (Worked
+Worked example~4). Possessing a fixed point and staying near it are
+different properties: the two pages visually summarise the distinction between
+fixed-point existence and spatial persistence.}
+\end{figure}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=\linewidth]{figures/diversity_spread_a.pdf}
+\caption{\textbf{(a)~Structured high-diversity fields.} Six examples from four
+mechanism families: temporal alternation; alternation of two operators that
+\emph{collapse} when run alone; continuous blending at two strengths; and
+spatial niches at two widths. Each tile stacks genotype over phenotype and
+reports both distinct-rule and Shannon-effective diversity at $T=70$;
+full-population seed $0$, $L=256$. The fields sustain $78$--$121$ rules and
+carry coherent diagonal structure at a range of scales. These examples
+motivated the candidate diversity coordinate, but the conservative-flow control
+in Figure~\ref{fig:diversity-axis} shows that diversity itself does not account
+for their propagation.
+Continued in~(b).}
+\label{fig:diversity-spread}
+\end{figure}
+
+\begin{figure}[tbp]
+\ContinuedFloat
+\centering
+\includegraphics[width=\linewidth]{figures/diversity_spread_b.pdf}
+\caption{\textbf{(b)~Two mechanism-specific suppressions.} Continued from~(a);
+suppressed configurations are outlined in red. Replacement mutation at rates
+$0.20$ and $0.40$ turns the genotype into progressively finer, unstructured
+speckle. Asynchronous holding at update fractions $0.25$, $0.50$, and $0.75$
+instead produces vertical persistence whose strength changes continuously with
+the dial. The unoutlined braid-plus-blend control at bottom right propagates
+($3.88$ cells) and recovers the diagonal texture of~(a). The expanded
+population makes the distinction visible as a family resemblance rather than a
+single selected contrast: these are genuine failure modes of their respective
+mechanisms, not evidence for suppression by high diversity.}
+\end{figure}
+
+\end{document}
