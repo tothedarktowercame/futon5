@@ -4,6 +4,7 @@
 \usepackage{csquotes}
 \usepackage{amsmath,amssymb}
 \usepackage{amsthm}
+\usepackage[multiple]{footmisc}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{xcolor}
@@ -123,8 +124,13 @@
 \newcommand{\suppfindingref}[1]{Supplement~1, Box~#1}
 % Formal apparatus lives canonically in Supplement 2. The narrative states each
 % result in prose where it is used and points here for statement and proof.
-\newcommand{\supptheory}[2]{\footnote{Supplement~2, #1: #2.}}
-\newcommand{\suppfinding}[2]{\footnote{\suppfindingref{#1}: #2.}}
+\newcommand{\supptheorytext}[2]{Supplement~2, #1: #2.}
+\newcommand{\supptheory}[2]{\footnote{\supptheorytext{#1}{#2}}}
+\newcommand{\suppfindingtext}[2]{\suppfindingref{#1}: #2.}
+\newcommand{\suppfinding}[2]{\footnote{\suppfindingtext{#1}{#2}}}
+% Adjacent supplement pointers merge into one note: footmisc's `multiple' is
+% defeated by hyperref, which apa7 loads itself, and one marker reads better.
+\newcommand{\suppnote}[1]{\footnote{#1}}
 
 % Observations (teal): consequences/remarks pulled out of definitions and prose.
 \newtcolorbox[auto counter]{observationframe}[2][]{%
@@ -398,13 +404,13 @@ exactly classified.
 The legacy engine stored its table in the order
 $000,001,010,100,011,101,110,111$. Whenever a legacy writing is imported, the
 reproduction code conjugates it into the displayed Wolfram order above before
-we quote its permutation or apply names such as offset $+2$.\supptheory{Definition~1}{Writings, elementary writes, and propagators}\supptheory{Observation~1}{Permutations form a small bijective core}
+we quote its permutation or apply names such as offset $+2$.\suppnote{\supptheorytext{Definition~1}{Writings, elementary writes, and propagators} \supptheorytext{Observation~1}{Permutations form a small bijective core}}
 
 Worked example~1 works through one member of the
 family bit by bit.\supptheory{Worked example~1}{A simultaneous propagator by hand}
 
 The simultaneous operator acts on one eight-bit rule; the spatial experiments
-place its elementary writes inside a two-layer automaton.\supptheory{Definition~2}{Genotype and phenotype}\supptheory{Worked example~2}{One site, one complete MetaCA step}
+place its elementary writes inside a two-layer automaton.\suppnote{\supptheorytext{Definition~2}{Genotype and phenotype} \supptheorytext{Worked example~2}{One site, one complete MetaCA step}}
 
 The substrate---a cellular automaton whose cells hold rules rather than
 states---is not itself new \parencite{corneli2015search}; what we study
@@ -765,7 +771,7 @@ constructive rather than merely destructive, and it is the first place in the
 paper where a schedule does something neither of its constituents can.
 
 Braiding two operators that each collapse alone can sustain the
-field.\supptheory{Definition~5}{Temporal braid}\suppfinding{3}{A braid of two collapsing operators can sustain the field}
+field.\suppnote{\supptheorytext{Definition~5}{Temporal braid} \suppfindingtext{3}{A braid of two collapsing operators can sustain the field}}
 Figure~\ref{fig:braid} shows the case: offset~$+2$ (two 4-cycles) and
 offset~$+4$ (four 2-cycles) are each genotypically dead run on their own, and
 alive when braided. The schedule is also a usable control rather than a
@@ -895,7 +901,7 @@ phenotype.
 The next construction crosses that boundary by allowing the update to depend
 on the live phenotype. Figure~\ref{fig:river} shows a representative run at
 $L=240$: alternating phenotype domains branch, merge and reorganise for the
-length of the run rather than resolving to a homogeneous or short-period field.\supptheory{Definition~7}{River}\suppfinding{8}{The river sustains structured phenotype}
+length of the run rather than resolving to a homogeneous or short-period field.\suppnote{\supptheorytext{Definition~7}{River} \suppfindingtext{8}{The river sustains structured phenotype}}
 
 \begin{figure}[t]
 \centering
@@ -948,7 +954,7 @@ centroid distinguishes them, and the reference values must be measured rather
 than assumed---elementary rule $110$, whose gliders support universal
 computation, does not give a fixed packet under a random single-site
 perturbation, because the perturbation creates and destroys gliders which then
-collide.\suppfinding{10}{Causal reach on a scale calibrated against elementary rules}\suppfinding{11}{The order parameter is the strength of the phenotype-to-genotype coupling}
+collide.\suppnote{\suppfindingtext{10}{Causal reach on a scale calibrated against elementary rules} \suppfindingtext{11}{The order parameter is the strength of the phenotype-to-genotype coupling}}
 
 Figure~\ref{fig:regime-placement} places every construction on that one axis.
 All points share the protocol of \suppfindingref{10}, and the calibration
