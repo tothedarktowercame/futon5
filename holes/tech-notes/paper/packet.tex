@@ -20,10 +20,17 @@
             pdfauthor={Joseph Corneli}]{hyperref}
 \usepackage{bookmark}
 
+% pdfpages' own addtotoc anchors the entry to a page INSIDE the included file,
+% which is what makes both the contents line and the PDF bookmark land on the
+% first page of that part rather than on the page before it.
+% pdfpages' addtotoc always writes a \numberline into the contents line. The
+% parts already name themselves ("Paper", "Supplement 1"), and a second
+% counter running 1--5 alongside them just reads as a contradiction, so drop it.
+\renewcommand{\numberline}[1]{}
+
 \newcommand{\packetpart}[3]{%
-  \phantomsection
-  \addcontentsline{toc}{section}{#1\quad#2}%
-  \includepdf[pages=-,link=true,linkname=#3]{#3.pdf}}
+  \includepdf[pages=-,link=true,linkname=#3,
+              addtotoc={1,section,1,{#1\quad#2},pk:#3}]{#3.pdf}}
 
 \begin{document}
 
