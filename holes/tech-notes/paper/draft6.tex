@@ -123,10 +123,8 @@
 \newcommand{\suppfindingref}[1]{Supplement~1, Box~#1}
 % Formal apparatus lives canonically in Supplement 2. The narrative states each
 % result in prose where it is used and points here for statement and proof.
-\newcommand{\supptheory}[2]{%
-  \par\smallskip\noindent\emph{Supplement~2, #1: #2.}\par\smallskip}
-\newcommand{\suppfinding}[2]{%
-  \par\smallskip\noindent\emph{\suppfindingref{#1}: #2.}\par\smallskip}
+\newcommand{\supptheory}[2]{\footnote{Supplement~2, #1: #2.}}
+\newcommand{\suppfinding}[2]{\footnote{\suppfindingref{#1}: #2.}}
 
 % Observations (teal): consequences/remarks pulled out of definitions and prose.
 \newtcolorbox[auto counter]{observationframe}[2][]{%
@@ -291,6 +289,8 @@ reach in update architectures built on the same genotype--phenotype substrate.
 The exact results hold for the entire $8!$ core. The causal measurement covers
 one principal construction at one lattice width over six seeds, and no
 comparable causal census of either the $8!$ or $8^8$ family is attempted here.
+Figure~\ref{fig:map} maps that division of labour and marks where the scope
+boundary falls.
 
 \begin{figure}[H]
 \centering
@@ -398,24 +398,13 @@ exactly classified.
 The legacy engine stored its table in the order
 $000,001,010,100,011,101,110,111$. Whenever a legacy writing is imported, the
 reproduction code conjugates it into the displayed Wolfram order above before
-we quote its permutation or apply names such as offset $+2$.
-
-\supptheory{Definition~1}{Writings, elementary writes, and propagators}
-
-\supptheory{Observation~1}{Permutations form a small bijective core}
+we quote its permutation or apply names such as offset $+2$.\supptheory{Definition~1}{Writings, elementary writes, and propagators}\supptheory{Observation~1}{Permutations form a small bijective core}
 
 Worked example~1 works through one member of the
-family bit by bit.
-
-\supptheory{Worked example~1}{A simultaneous propagator by hand}
+family bit by bit.\supptheory{Worked example~1}{A simultaneous propagator by hand}
 
 The simultaneous operator acts on one eight-bit rule; the spatial experiments
-place its elementary writes inside a two-layer automaton.
-
-\supptheory{Definition~2}{Genotype and phenotype}
-
-\Needspace{0.72\textheight}
-\supptheory{Worked example~2}{One site, one complete MetaCA step}
+place its elementary writes inside a two-layer automaton.\supptheory{Definition~2}{Genotype and phenotype}\supptheory{Worked example~2}{One site, one complete MetaCA step}
 
 The substrate---a cellular automaton whose cells hold rules rather than
 states---is not itself new \parencite{corneli2015search}; what we study
@@ -463,9 +452,7 @@ colours are the legacy engine's own.}
 \subsection{Fixed points exist iff every cycle is even}
 
 $P_\sig$ has a fixed rule if and only if every cycle of $\sig$ has even length;
-since a one-cycle is odd, this already forces $\sig$ to be fixed-point-free.
-
-\supptheory{Theorem~1}{Fixed points and even cycles}
+since a one-cycle is odd, this already forces $\sig$ to be fixed-point-free.\supptheory{Theorem~1}{Fixed points and even cycles}
 
 \noindent A fixed rule is a $g$ invariant under~\eqref{eq:prop}, i.e.\ a
 $\sig$-equivariant Boolean colouring with $g(\sig k) = \lnot\,g(k)$.
@@ -477,9 +464,7 @@ admits no such colouring, which is why even cycles are required throughout.
 
 Worked example~3 shows the theorem on the offset-$+2$ operator. The
 same small calculation also makes the later $2^k$ count and forced
-$\lambda=1/2$ balance visible before we state them generally.
-
-\supptheory{Worked example~3}{Even and odd cycles}
+$\lambda=1/2$ balance visible before we state them generally.\supptheory{Worked example~3}{Even and odd cycles}
 
 This is the signed-cycle fixed-point theorem of Boolean-network theory
 \parencite{aracena2008maximum} specialised to~\eqref{eq:prop}: our operator
@@ -506,9 +491,7 @@ our operator family, not as a new identity.
 \subsection{Fixed bytes number \texorpdfstring{$2^k$}{2 to the k}}
 
 An all-even $\sig$ with $k$ cycles therefore has exactly $2^k$ fixed bytes, and any
-$\sig$ with an odd cycle has none.
-
-\supptheory{Corollary~1}{The $2^k$ count}
+$\sig$ with an odd cycle has none.\supptheory{Corollary~1}{The $2^k$ count}
 Each even cycle admits exactly two alternating colourings, chosen independently
 across cycles, whence $2^k$; the zero case is Theorem~1. This too
 is machine-checked.%
@@ -520,22 +503,16 @@ number of fixed bytes across the family.
 \section{Every Fixed Point Is Balanced}
 \label{sec:lambda}
 
-\supptheory{Definition~3}{Langton's activity $\lambda$}
-
-\supptheory{Observation~2}{Balance is a truth-table property}
-
 \subsection{Every fixed point has \texorpdfstring{$\lambda = 1/2$}{lambda = 1/2}}
 
 Every fixed point of every operator in the family has exactly four one-bits---equivalently,
-Langton's activity parameter is pinned at $\lambda = 4/8 = 1/2$.
-
-\supptheory{Theorem~2}{Every fixed point is balanced}
+Langton's activity parameter is pinned at $\lambda = 4/8 = 1/2$.\supptheory{Theorem~2}{Every fixed point is balanced}
 
 \noindent By Theorem~1 each cycle has even length $2m$; an
 alternating colouring assigns such a cycle exactly $m$ ones; summing over
-cycles gives $(\sum L)/2 = 8/2 = 4$. Exhaustive enumeration confirms it:
+cycles gives $(\sum L)/2 = 8/2 = 4$.\supptheory{Definition~3}{Langton's activity $\lambda$} Exhaustive enumeration confirms it:
 across all $40{,}320$ operators and all their fixed points, every one has
-Hamming weight four, with zero exceptions. The statement is machine-checked
+Hamming weight four, with zero exceptions.\supptheory{Observation~2}{Balance is a truth-table property} The statement is machine-checked
 for $\mathrm{Fin}\,8$.\footnote{%
 \texttt{alternatingColouring\_true\_card\_eq\_four}: the true-cells and
 false-cells are put in bijection by $\sig$, forcing each to number four.}
@@ -706,13 +683,9 @@ diversity, not literal aperiodicity.
 \subsection{The full census, tabulated by class}
 \label{sec:full-census}
 
-\supptheory{Definition~4}{Census protocol and aliveness}
-
-The trend becomes an exhaustive finite-run observation once every operator is tabulated. We ran all
+The trend becomes an exhaustive finite-run observation once every operator is tabulated.\supptheory{Definition~4}{Census protocol and aliveness} We ran all
 $40{,}320$ permutation-propagators and grouped them by cycle type
-(Table~\ref{tab:census}).
-
-\suppfinding{1}{The full permutation census}
+(Table~\ref{tab:census}).\suppfinding{1}{The full permutation census}
 
 \begin{table}[t]
 \centering\small
@@ -739,11 +712,9 @@ $[2\,2\,2\,2]$ & $105$   & $25.7\%$ \\
 \section{Fixed Points Are Not Attractors}
 \label{sec:interrupter}
 
-\supptheory{Worked example~4}{Reading the rotation survey}
-
 Possessing a fixed point (Theorem~1) is not the same as
 reaching one, and $P_\sig$ does not by itself move a rule toward
-$\lambda = 1/2$. Because $P_\sig$ complements every bit,
+$\lambda = 1/2$.\supptheory{Worked example~4}{Reading the rotation survey} Because $P_\sig$ complements every bit,
 $\lambda(P_\sig g) = 1 - \lambda(g)$: the operator \emph{reflects} activity
 across $1/2$, exactly preserving the distance $\lvert\lambda - 1/2\rvert$
 rather than contracting toward it. And because $P_\sig$ is a bijection on
@@ -752,9 +723,7 @@ points are fixed, but they are not attractors and have no basins. The only
 rules pinned at $\lambda = 1/2$ are the fixed points themselves. Attraction in
 the experiments therefore belongs to the stochastic elementary-write dynamics,
 with or without neighbour coupling, rather than to iteration of the simultaneous
-map $P_\sig$.
-
-\suppfinding{2}{The rotation survey}
+map $P_\sig$.\suppfinding{2}{The rotation survey}
 
 \begin{figure}[t]
 \centering
@@ -789,9 +758,22 @@ two-4-cycle class splits between sustaining and collapsing.}
 \subsection{Constructive control by temporal schedules}
 \label{sec:braiding}
 
-\supptheory{Definition~5}{Temporal braid}
+Everything so far has held one operator fixed for the length of a run. Relaxing
+that---alternating the elementary spatial updates of two operators from step to
+step, rather than composing them into a single map---turns out to be
+constructive rather than merely destructive, and it is the first place in the
+paper where a schedule does something neither of its constituents can.
 
-\suppfinding{3}{A braid of two collapsing operators can sustain the field}
+Braiding two operators that each collapse alone can sustain the
+field.\supptheory{Definition~5}{Temporal braid}\suppfinding{3}{A braid of two collapsing operators can sustain the field}
+Figure~\ref{fig:braid} shows the case: offset~$+2$ (two 4-cycles) and
+offset~$+4$ (four 2-cycles) are each genotypically dead run on their own, and
+alive when braided. The schedule is also a usable control rather than a
+switch. Mixing a sustaining operator with a collapsing one in fixed proportion
+over a periodic twelve-step schedule moves late-window rule diversity smoothly
+with the mixing fraction (Figure~\ref{fig:knob}), which is what later lets us
+treat diversity as a dial to be turned rather than a property a run happens to
+have.\suppfinding{4}{The mixing fraction is a reproducible diversity control}
 
 \begin{figure}[t]
 \centering
@@ -808,8 +790,6 @@ of the simultaneous maps $P_\sigma$.}
 \label{fig:braid}
 \end{figure}
 
-\suppfinding{4}{The mixing fraction is a reproducible diversity control}
-
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/knob.pdf}
@@ -822,19 +802,13 @@ at the same representative seed.}
 \label{fig:knob}
 \end{figure}
 
-\supptheory{Definition~6}{Interrupter}
-
-\suppfinding{5}{The rotation split occurs with and without neighbour blending}
-
 Each operator negates every bit, so under composition the flips cancel in pairs: a product
-of two is a \emph{pure} coordinate permutation with no negation left.
-
-\supptheory{Proposition~1}{Composition parity}
+of two is a \emph{pure} coordinate permutation with no negation left.\supptheory{Proposition~1}{Composition parity}
 
 Exploratory searches over products of two and three simultaneous propagators
-found no additional structural regime. Temporal braiding is a different
+found no additional structural regime.\supptheory{Definition~6}{Interrupter} Temporal braiding is a different
 operation: it alternates stochastic elementary writes inside the spatially
-coupled dynamics rather than replacing them by one composed map.
+coupled dynamics rather than replacing them by one composed map.\suppfinding{5}{The rotation split occurs with and without neighbour blending}
 
 Algebraic composition is therefore closed in the sense of
 Proposition~1. Temporal scheduling is different: it retains each
@@ -846,15 +820,13 @@ kind.
 \section{Limits of the Tested Distance and Complexity Measures}
 \label{sec:metrics}
 
-\suppfinding{6}{The tested per-trajectory metrics do not separate the parity classes}
-
 \section{A Parameter-Space Test}
 \label{sec:discussion}
 
 The survey (Supplement~3, Figure~1) exposes a sharp behavioural split within a
 family of provably fixed-point-bearing operators: only the single 8-cycles
 (offset $\pm 1$, $\pm 3$) sustain a high-diversity phase, while offset $\pm 2$ and
-$\pm 4$ collapse. A reader is entitled to ask whether that phase sits at a
+$\pm 4$ collapse.\suppfinding{6}{The tested per-trajectory metrics do not separate the parity classes} A reader is entitled to ask whether that phase sits at a
 \emph{critical point}---tuned between an ordered and a disordered phase, as CA
 complexity is often supposed to \parencite{langton1990computation}. This is the
 first of the two readings distinguished at the outset---an edge of chaos located
@@ -862,9 +834,7 @@ in \emph{parameter space}, at some value of a tunable control parameter---and
 the finite-size scan below is the test of it, the only place in this paper where
 that reading is put to the question. We then ask
 whether the sustained diversity is spatially organised into coexisting
-dynamical regimes.
-
-\suppfinding{7}{No finite-size evidence of a critical point over the tested range}
+dynamical regimes.\suppfinding{7}{No finite-size evidence of a critical point over the tested range}
 
 Figure~\ref{fig:phase} collects the four diagnostics. The scan is over the
 propagator fraction $q$, from all blend at $q=0$ to all propagator at $q=1$, at
@@ -923,11 +893,9 @@ phenotype.
 \label{sec:feedback-construction}
 
 The next construction crosses that boundary by allowing the update to depend
-on the live phenotype.
-
-\supptheory{Definition~7}{River}
-
-\suppfinding{8}{The river sustains structured phenotype}
+on the live phenotype. Figure~\ref{fig:river} shows a representative run at
+$L=240$: alternating phenotype domains branch, merge and reorganise for the
+length of the run rather than resolving to a homogeneous or short-period field.\supptheory{Definition~7}{River}\suppfinding{8}{The river sustains structured phenotype}
 
 \begin{figure}[t]
 \centering
@@ -963,9 +931,7 @@ one pseudo-random position per cell per step, so re-running from the same seed
 gives both branches an identical tape and every divergence is the causal
 consequence of the flip. The control is the matched feedback-off variant---same
 seed, tape, construction and initial state, with only the live
-phenotype-to-genotype edge cut.
-
-\suppfinding{9}{Phenotype-to-genotype feedback roughly doubles causal reach}
+phenotype-to-genotype edge cut. Figure~\ref{fig:river-perturbation} sweeps the flip over all $80$ sites and records damage at a sequence of horizons.\suppfinding{9}{Phenotype-to-genotype feedback roughly doubles causal reach}
 
 \begin{figure}[tb]
 \centering
@@ -982,11 +948,7 @@ centroid distinguishes them, and the reference values must be measured rather
 than assumed---elementary rule $110$, whose gliders support universal
 computation, does not give a fixed packet under a random single-site
 perturbation, because the perturbation creates and destroys gliders which then
-collide.
-
-\suppfinding{10}{Causal reach on a scale calibrated against elementary rules}
-
-\suppfinding{11}{The order parameter is the strength of the phenotype-to-genotype coupling}
+collide.\suppfinding{10}{Causal reach on a scale calibrated against elementary rules}\suppfinding{11}{The order parameter is the strength of the phenotype-to-genotype coupling}
 
 Figure~\ref{fig:regime-placement} places every construction on that one axis.
 All points share the protocol of \suppfindingref{10}, and the calibration
@@ -1010,7 +972,6 @@ phenotype.}
 \label{fig:regime-placement}
 \end{figure}
 
-
 \begin{figure}[tb]
 \centering
 \includegraphics[width=0.94\linewidth]{figures/river_centroid.pdf}
@@ -1025,14 +986,16 @@ fixed-width translating packet even where gliders certainly exist.}
 \label{fig:river-centroid}
 \end{figure}
 
+The same sweep also gives the growth of the damage cone and the displacement
+of its centroid (Figure~\ref{fig:river-centroid}); we report those exponents
+descriptively and draw no inference from them about gliders or particles.
+
 \subsection{The coupling as a dial}
 \label{sec:gain}
 
 Treating that coupling as present or absent understates it. In both
 constructions that read the phenotype it is a quantity, and causal reach is a
-graded, monotone function of it.
-
-\suppfinding{12}{Coupling is a dial, not a switch, and reach is monotone along it}
+graded, monotone function of it.\suppfinding{12}{Coupling is a dial, not a switch, and reach is monotone along it}
 
 For conservative transport the gain is the phenotype-gated swap rate; reach
 crosses rule $90$ between rates $0.10$ and $0.20$ and saturates past $0.75$. For
@@ -1098,9 +1061,7 @@ the top of the range: a genotype held fixed at the full population has maximal
 diversity and no rewriting at all. The coordinate throughout is diversity
 \emph{sustained through the response window}, not diversity at the instant of
 the fork---a field seeded with all $256$ rules holds them for one step and
-collapses during the very window the damage is measured in.
-
-\suppfinding{13}{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
+collapses during the very window the damage is measured in.\suppfinding{13}{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
 
 Figure~\ref{fig:diversity-axis} shows why the apparent optimum was an artefact.
 The original configurations trace a rise and fall against sustained diversity,
