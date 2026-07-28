@@ -160,6 +160,57 @@ frozen reference supplied externally and identical in both branches, zero coupli
 12.97, so `find:causal`'s "roughly halves" understates it by a factor of about two. That
 finding needs either a qualifier or the corrected number when it moves into the notebook.
 
+## 7b. Could selection recover Baldwin proper? (and would it complete?)
+
+Raised by Joe, 2026-07-28. Two separable questions.
+
+**Is there a selection process in the system?** No. There is no fitness, no population and
+no generations; the coupling is a direct write, which is why §6 calls it Lamarckian. The
+nearest thing the family already has to a criterion is the census's *aliveness* (change
+rate over the final 40 generations), which could serve as a fitness in principle.
+
+**Could the dial model selection?** Yes, and there is a canonical design — Hinton &
+Nowlan's. Make γ heritable across a population of configurations, select on a criterion,
+mutate γ, and watch its trajectory. The Baldwin signature is specific and falsifiable:
+**γ rises and then falls while performance is maintained.** That fall is genetic
+assimilation — what was achieved by reading the phenotype comes to be achieved without it.
+
+**But our existing measurements predict that it would not complete here,** for a reason
+worth stating because it is not the usual one. Assimilation requires the plastic
+contribution to be *compressible into the genotype*. Three numbers say it is not:
+
+1. **The gain curve is convex** (§5). 45% of the river's span arrives in the last eighth of
+   γ. A partially assimilated genotype — one that has internalised most but not all of the
+   read — collects almost none of the benefit, so there is no gradient for selection to
+   climb.
+2. **The read is determinative, not a tiebreak** (`scripts/coupling_load.clj`, 4 seeds ×
+   80 × 120). The live context selects a *different* rule than a frozen context in
+   **73.1%** of cell-steps, and than no context in **76.8%**. The combine-rule is a
+   `firstMatch` over four candidates, so an uninformative re-selection would differ ~75%:
+   at 73% the frozen context tells you almost nothing about the live answer. There is no
+   common case for a blind rule to encode.
+3. **Sixteen blind constructions were tried and none matched** (§3, max 8.15 against the
+   river's 12.97). That is a weak search — hand-chosen, not exhaustive — but it points the
+   same way.
+
+So the prediction is that selection would **hold γ at 1** rather than drive it down. If
+that is right, this is a system where Baldwin cannot complete *in principle*, because the
+information the phenotype supplies is irreducibly dynamic rather than a fixed target
+waiting to be encoded. Hinton & Nowlan's needle-in-a-haystack has a genome that *can*
+express the answer; here the answer changes every step.
+
+**Does it matter for the present claim?** No. The paper's claim is that reach is graded and
+monotone in loop gain, and that holds whichever way the coupling is implemented. The
+Lamarck/Baldwin distinction affects only how the mechanism is *described*, and §6's caution
+covers that. Building a population, a fitness and a generational loop would be a
+substantial new apparatus in service of a distinction that does not move the measured
+result — worth doing as a follow-on, not as a prerequisite.
+
+It would however be a genuinely interesting follow-on, because the prediction is sharp and
+could be wrong. A γ that *did* decline under selection would mean the phenotype's
+contribution was compressible after all, and would falsify the reading of §5's convexity
+given here.
+
 ## 8. Open
 
 - A feedforward construction deliberately aimed *past* rule 90, to test §3's boundary.
@@ -168,11 +219,13 @@ finding needs either a qualifier or the corrected number when it moves into the 
 - Whether the convex/concave contrast in §5 is about the conjunctive `firstMatch` or about
   the constructions differing some other way. Gating the river's four context bits
   *independently* rather than together would separate these.
+- The selection experiment of §7b, whose predicted outcome (γ held at 1, no assimilation)
+  would confirm the reading of §5's convexity, and whose opposite would falsify it.
 
 ## 9. Files
 
 Code and data in `mmca-clj` (`64e6635` and ancestors):
 `scripts/regime_placement.clj`, `scripts/river_gain.clj`, `scripts/plot_coupling_dial.py`,
-`scripts/plot_gain_curves.py`, `scripts/phenotype_lambda.py`,
+`scripts/plot_gain_curves.py`, `scripts/phenotype_lambda.py`, `scripts/coupling_load.clj`,
 `data/regime_placement_summary.tsv`, `data/river_gain{,_summary}.tsv`,
 `figures/regime_placement.pdf`, `figures/gain_curves.pdf`.
