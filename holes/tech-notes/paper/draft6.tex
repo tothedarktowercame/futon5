@@ -234,7 +234,7 @@ classification lands on it from an unexpected direction---every fixed rule of
 every operator in the family is balanced, with Langton activity
 $\lambda = 1/2$, exactly the value the classical picture associates with the
 transition. Yet searching the Meta Cellular Automaton (MetaCA) for a critical
-transition does not produce one (\suppfindingref{7}). The
+transition does not produce one (\suppfindingref{6}). The
 algebra places the fixed points precisely at the classical critical value; the
 dynamics show a broad, drifting crossover and no critical point of that sort at
 all.
@@ -268,7 +268,7 @@ candidate control within the extension. The
 constructions separate by \emph{coupling}: where the genotype update never reads
 the phenotype---the bare operators, braids, niches, refuges, mutation, and blend
 strength across its whole range---nothing clears the bottom of the complex band,
-while everything that reads it lands inside (\suppfindingref{11}). The coupling
+while everything that reads it lands inside (\suppfindingref{10}). The coupling
 is moreover a dial rather than a switch. Tuning the gain of that loop carries reach smoothly from the frozen
 identity past rules $90$, $110$ and $54$, with a locatable crossing; an ungated
 control matched in mobility, differing only in that its rewriting is blind to
@@ -825,13 +825,26 @@ kind.
 \section{Limits of the Tested Distance and Complexity Measures}
 \label{sec:metrics}
 
+The classification is a conjugacy invariant of $\sig$---its cycle type---while
+the complexity and compression measures we tried read a single rule's bits, or
+one space--time trajectory, without explicitly encoding $\sig$. In our tests
+none of them recovered the parity classification. A population count reads a
+collapsed-but-maximally-selected field as nearly dead. A frozen periodic
+genotype scores a lower statistical complexity $C_\mu$
+\parencite{crutchfield1989inferring} than rule~110. And gzip rates a
+self-similar rule as noise. We report this as a limitation of the summaries we
+tested rather than as a finding: it is a negative result about those particular
+measures, not an impossibility theorem for trajectory-based inference, and
+unlike the findings collected in Supplement~1 it rests on exploratory runs we
+did not preserve in reproducible form.
+
 \section{A Parameter-Space Test}
 \label{sec:discussion}
 
 The survey (Figure~S3.1) exposes a sharp behavioural split within a
 family of provably fixed-point-bearing operators: only the single 8-cycles
 (offset $\pm 1$, $\pm 3$) sustain a high-diversity phase, while offset $\pm 2$ and
-$\pm 4$ collapse.\suppfinding{6}{The tested per-trajectory metrics do not separate the parity classes} A reader is entitled to ask whether that phase sits at a
+$\pm 4$ collapse. A reader is entitled to ask whether that phase sits at a
 \emph{critical point}---tuned between an ordered and a disordered phase, as CA
 complexity is often supposed to \parencite{langton1990computation}. This is the
 first of the two readings distinguished at the outset---an edge of chaos located
@@ -839,7 +852,7 @@ in \emph{parameter space}, at some value of a tunable control parameter---and
 the finite-size scan below is the test of it, the only place in this paper where
 that reading is put to the question. We then ask
 whether the sustained diversity is spatially organised into coexisting
-dynamical regimes.\suppfinding{7}{No finite-size evidence of a critical point over the tested range}
+dynamical regimes.\suppfinding{6}{No finite-size evidence of a critical point over the tested range}
 
 Figure~\ref{fig:phase} collects the four diagnostics. The scan is over the
 propagator fraction $q$, from all blend at $q=0$ to all propagator at $q=1$, at
@@ -900,7 +913,7 @@ phenotype.
 The next construction crosses that boundary by allowing the update to depend
 on the live phenotype. Figure~\ref{fig:river} shows a representative run at
 $L=240$: alternating phenotype domains branch, merge and reorganise for the
-length of the run rather than resolving to a homogeneous or short-period field.\suppnote{\supptheorytext{Definition~7}{River} \suppfindingtext{8}{The river sustains structured phenotype}}
+length of the run rather than resolving to a homogeneous or short-period field.\suppnote{\supptheorytext{Definition~7}{River} \suppfindingtext{7}{The river sustains structured phenotype}}
 
 \begin{figure}[t]
 \centering
@@ -936,7 +949,7 @@ one pseudo-random position per cell per step, so re-running from the same seed
 gives both branches an identical tape and every divergence is the causal
 consequence of the flip. The control is the matched feedback-off variant---same
 seed, tape, construction and initial state, with only the live
-phenotype-to-genotype edge cut. Figure~\ref{fig:river-perturbation} sweeps the flip over all $80$ sites and records damage at a sequence of horizons.\suppfinding{9}{Phenotype-to-genotype feedback roughly doubles causal reach}
+phenotype-to-genotype edge cut. Figure~\ref{fig:river-perturbation} sweeps the flip over all $80$ sites and records damage at a sequence of horizons.\suppfinding{8}{Phenotype-to-genotype feedback roughly doubles causal reach}
 
 \begin{figure}[tb]
 \centering
@@ -953,10 +966,10 @@ centroid distinguishes them, and the reference values must be measured rather
 than assumed---elementary rule $110$, whose gliders support universal
 computation, does not give a fixed packet under a random single-site
 perturbation, because the perturbation creates and destroys gliders which then
-collide.\suppnote{\suppfindingtext{10}{Causal reach on a scale calibrated against elementary rules} \suppfindingtext{11}{The order parameter is the strength of the phenotype-to-genotype coupling}}
+collide.\suppnote{\suppfindingtext{9}{Causal reach on a scale calibrated against elementary rules} \suppfindingtext{10}{The order parameter is the strength of the phenotype-to-genotype coupling}}
 
 Figure~\ref{fig:regime-placement} places every construction on that one axis.
-All points share the protocol of \suppfindingref{10}, and the calibration
+All points share the protocol of \suppfindingref{9}, and the calibration
 reproduces rules $0$, $204$ and $90$ exactly against it, so the bands drawn from
 the elementary rules carry over unchanged. The rows split the constructions by
 coupling rather than by provenance, and the split is clean. Nothing whose
@@ -971,7 +984,7 @@ adding an edge rather than by changing a parameter.
 \centering
 \includegraphics[width=\linewidth]{figures/regime_placement.pdf}
 \caption{\textbf{Every construction on one scale.} Causal reach under the
-protocol of \suppfindingref{10}, with regime bands drawn from the elementary
+protocol of \suppfindingref{9}, with regime bands drawn from the elementary
 rules. Rows divide constructions by whether the genotype update reads the
 phenotype.}
 \label{fig:regime-placement}
@@ -1000,7 +1013,7 @@ descriptively and draw no inference from them about gliders or particles.
 
 Treating that coupling as present or absent understates it. In both
 constructions that read the phenotype it is a quantity, and causal reach is a
-graded, monotone function of it.\suppfinding{12}{Coupling is a dial, not a switch, and reach is monotone along it}
+graded, monotone function of it.\suppfinding{11}{Coupling is a dial, not a switch, and reach is monotone along it}
 
 For conservative transport the gain is the phenotype-gated swap rate; reach
 crosses rule $90$ between rates $0.10$ and $0.20$ and saturates past $0.75$. For
@@ -1066,7 +1079,7 @@ the top of the range: a genotype held fixed at the full population has maximal
 diversity and no rewriting at all. The coordinate throughout is diversity
 \emph{sustained through the response window}, not diversity at the instant of
 the fork---a field seeded with all $256$ rules holds them for one step and
-collapses during the very window the damage is measured in.\suppfinding{13}{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
+collapses during the very window the damage is measured in.\suppfinding{12}{Sustained diversity does not determine causal reach; conservative transport breaks the apparent interior optimum}
 
 Figure~\ref{fig:diversity-axis} shows why the apparent optimum was an artefact.
 The original configurations trace a rise and fall against sustained diversity,
@@ -1134,7 +1147,7 @@ lead one to expect, and it means there is no common case that a
 phenotype-blind rule could encode in its place. We draw no stronger conclusion
 from this than that: whether \emph{any} blind construction could match the
 river is a question about a search we have not run, and
-\suppfindingref{9} reports only that sixteen hand-chosen ones do not.
+\suppfindingref{8} reports only that sixteen hand-chosen ones do not.
 
 \section{Limits}
 \label{sec:limits}

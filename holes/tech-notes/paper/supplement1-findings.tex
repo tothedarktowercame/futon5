@@ -67,17 +67,6 @@ they show that fixed-byte existence alone does not determine finite-horizon
 settling under either protocol.
 \end{empiricalfinding}
 
-\begin{empiricalfinding}[label={obs:metrics}]{The tested per-trajectory metrics do not separate the parity classes}
-The classification is a conjugacy invariant of $\sig$---its cycle type---while
-the complexity and compression measures we tried read a single rule's bits or one
-space--time trajectory without explicitly encoding $\sig$. In our tests these
-measures did not recover the parity classification: a population count reads a collapsed-but-maximally-selected
-field as nearly dead; a frozen periodic genotype scores a lower statistical
-complexity $C_\mu$ \parencite{crutchfield1989inferring} than Rule~110; gzip rates
-a self-similar rule as noise. This is a negative result about the tested
-summaries, not an impossibility theorem for trajectory-based inference.
-\end{empiricalfinding}
-
 \begin{empiricalfinding}[label={find:crossover}]{No finite-size evidence of a critical point over the tested range}
 The natural control parameter is the \emph{propagator fraction} $q$ ($q = 0$ all
 blend, $q = 1$ all propagator, offset $+2$). If the sustained phase sat at a
