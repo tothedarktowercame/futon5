@@ -1,0 +1,57 @@
+% =====================================================================
+%  Submission packet: the paper followed by its four supplements.
+%
+%  This assembles the already-compiled PDFs rather than re-typesetting the
+%  sources. Each document keeps its own preamble, class options, numbering and
+%  cross-document xr references, which is what we want: the packet is a binding,
+%  not a rewrite. Build the five documents first, then this.
+%
+%      latexmk -pdf draft6 supplement1 supplement2-theory \
+%                   supplement3-figures supplement
+%      latexmk -pdf packet
+% =====================================================================
+\documentclass[12pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{pdfpages}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue,
+            pdftitle={Rule-Rewriting Cellular Automata and the Edge of Chaos:
+                      paper and supplements},
+            pdfauthor={Joseph Corneli}]{hyperref}
+\usepackage{bookmark}
+
+\newcommand{\packetpart}[3]{%
+  \phantomsection
+  \addcontentsline{toc}{section}{#1\quad#2}%
+  \includepdf[pages=-,link=true,linkname=#3]{#3.pdf}}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries Rule-Rewriting Cellular Automata\\[2pt] and the Edge of Chaos\par}
+  \vspace{1.2em}
+  {\large Joseph Corneli\par}
+  \vspace{2em}
+  {\large Paper and supplementary material\par}
+\end{center}
+
+\vspace{1em}
+\noindent This packet contains the paper and its four supplements as a single
+file. The paper is self-contained: it states each definition, theorem and
+empirical finding in prose where it is used, and the supplements carry the
+formal statements and proofs, the findings notebook, the additional figures, and
+one exploratory analysis that is reported but not relied upon. Supplement~4
+records a measure that was withdrawn after its mask and measure proved circular;
+it is included for completeness and is not a premise of the argument.
+
+\vspace{1.5em}
+\tableofcontents
+\clearpage
+
+\packetpart{Paper}{Rule-Rewriting Cellular Automata and the Edge of Chaos}{draft6}
+\packetpart{Supplement 1}{Empirical Findings Notebook}{supplement1}
+\packetpart{Supplement 2}{Definitions, Theorems and Worked Examples}{supplement2-theory}
+\packetpart{Supplement 3}{Additional Figures}{supplement3-figures}
+\packetpart{Supplement 4}{Exploratory Domain Analysis and a Withdrawn Statistic}{supplement}
+
+\end{document}
