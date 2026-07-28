@@ -121,6 +121,10 @@
 % Empirical findings live canonically in the literate notebook submitted as
 % Supplement 1. Keep only stable, compact pointers in the narrative.
 \newcommand{\suppfindingref}[1]{Supplement~1, Box~#1}
+% Formal apparatus lives canonically in Supplement 2. The narrative states each
+% result in prose where it is used and points here for statement and proof.
+\newcommand{\supptheory}[2]{%
+  \par\smallskip\noindent\emph{Supplement~2, #1: #2.}\par\smallskip}
 \newcommand{\suppfinding}[2]{%
   \par\smallskip\noindent\emph{\suppfindingref{#1}: #2.}\par\smallskip}
 
@@ -350,6 +354,12 @@ change of object between the amber and green branches is explicit.}
 \end{figure}
 
 \part{The Permutation Core}
+
+\noindent Definitions, theorems, corollaries and worked examples are stated and proved in
+Supplement~2, and referred to here by number. The narrative gives each result in prose at
+the point where it is used, so this part can be read without turning to the supplement;
+the supplement carries the formal statements, the proofs, and the arithmetic worked by hand.
+
 \label{part:core}
 
 \section{The Object}
@@ -390,111 +400,22 @@ $000,001,010,100,011,101,110,111$. Whenever a legacy writing is imported, the
 reproduction code conjugates it into the displayed Wolfram order above before
 we quote its permutation or apply names such as offset $+2$.
 
-\begin{definition}[fold,label={def:writing}]{Writings, elementary writes, and propagators}
-A \emph{writing} is any function $w\colon\{0,\dots,7\}\to\{0,\dots,7\}$ on the
-truth-table positions. Its elementary update at source position $p$ is
-\[
-(U_{w,p}g)(q)=
-\begin{cases}
-\lnot g(p),&q=w(p),\\
-g(q),&q\ne w(p).
-\end{cases}
-\]
-Thus one update complements source bit $p$ and writes it to target $w(p)$. If
-$w$ is a bijection---a permutation $\sig\in S_8$---all eight writes can be
-performed simultaneously without collisions, giving the
-\emph{permutation-propagator} $P_\sig$ in Equation~\eqref{eq:prop}. Its fixed
-bytes are exactly the bytes fixed by every $U_{\sig,p}$. For a non-injective
-writing, individual updates $U_{w,p}$ remain well defined, but a simultaneous
-$P_w$ requires a collision-resolution convention; such a writing also has
-\emph{gaps}, or positions targeted by no source.
-\end{definition}
+\supptheory{Definition~1}{Writings, elementary writes, and propagators}
 
-\begin{observation}[fold,label={obs:core}]{Permutations form a small bijective core}
-Permutations are only the bijective core of a far larger class: there are
-$8!=40{,}320$ permutations but $8^{8}=16{,}777{,}216$ writings, so the
-permutations are $0.24\%$ of the whole. The cycle-structure algebra of
-\secref{sec:classification} is available only on this core. The historical
-operator $[0\,0\,1\,2\,3\,4\,5\,6]$ (Figure~\ref{fig:fig2pair}) is itself a
-non-bijective writing---bits $0$ and $1$ both write to position $0$, and
-position $7$ is never written---and its behaviour ranges widely between its two
-standard-order forms.
-\end{observation}
+\supptheory{Observation~1}{Permutations form a small bijective core}
 
-Box~\ref{box:propagator} works through one member of the
+Worked example~1 works through one member of the
 family bit by bit.
 
-\begin{workedexample}[fold,label={box:propagator}]{A simultaneous propagator by hand}
-\small
-Write an ECA rule in Wolfram's standard neighbourhood order:
-\begin{center}
-\setlength{\tabcolsep}{3.2pt}
-\begin{tabular}{c@{\quad}*{8}{c}}
-position & $0$ & $1$ & $2$ & $3$ & $4$ & $5$ & $6$ & $7$ \\
-neighbourhood & $111$ & $110$ & $101$ & $100$ & $011$ & $010$ & $001$ & $000$ \\
-\midrule
-Rule 110 & $0$ & $1$ & $1$ & $0$ & $1$ & $1$ & $1$ & $0$ \\
-\end{tabular}
-\end{center}
-Thus Rule~110 is the byte $01101110$. Let $\sig(p)=p+2\pmod 8$ on the
-displayed position indices: each source bit is complemented and written two
-positions further to the right, wrapping at the end.
-Carrying out the eight writes gives
-\[
-P_{+2}(01101110)=01100100,
-\]
-which is Rule~100. This changes what the cell does to its black-and-white
-phenotype. For example, neighbourhood $011$ maps to $1$ under Rule~110 but
-to $0$ under Rule~100. The propagator has not directly flipped a phenotype
-cell; it has changed the truth table that the cell will use.
-\end{workedexample}
+\supptheory{Worked example~1}{A simultaneous propagator by hand}
 
 The simultaneous operator acts on one eight-bit rule; the spatial experiments
 place its elementary writes inside a two-layer automaton.
 
-\begin{definition}[fold,label={def:genopheno}]{Genotype and phenotype}
-Each cell carries an eight-bit rule. The field of rules---the
-\emph{genotype}---governs a field of black-and-white states---the
-\emph{phenotype}---and neighbouring rules also interact. One complete local
-update (Box~\ref{box:metaca-step}) evolves both layers; this is the computation
-behind the space--time diagrams in Figure~\ref{fig:regimes}.
-\end{definition}
+\supptheory{Definition~2}{Genotype and phenotype}
 
 \Needspace{0.72\textheight}
-\begin{workedexample}[fold,label={box:metaca-step}]{One site, one complete MetaCA step}
-\small
-At time $t$, site $x$ holds an eight-bit rule $g_x(t)$ and a phenotype bit
-$X_x(t)$. One ordinary coupled step has three parts.
-\begin{enumerate}
-\item \textbf{Express the current rule.} The phenotype neighbourhood is
-evaluated by the rule at its centre. With numerical neighbourhood value
-$n_x(t)=4X_{x-1}(t)+2X_x(t)+X_{x+1}(t)$, its displayed position is $7-n_x(t)$:
-\[
-X_x(t+1)=g_x(t)\bigl(7-n_x(t)\bigr).
-\]
-\item \textbf{Blend neighbouring rules.} For each truth-table position $j$,
-inspect the three genotype bits
-$\bigl(g_{x-1}(j),g_x(j),g_{x+1}(j)\bigr)$. If the two outer bits agree, copy
-their value. Thus $(0,1,0)$ blends to $0$. If they disagree, the centre rule
-decides by treating the triple as one of its ECA neighbourhoods, converting
-its numerical value $n$ to displayed position $7-n$ as above. The eight
-coordinate-wise decisions form an intermediate rule
-\[
-h_x=B\bigl(g_{x-1}(t),g_x(t),g_{x+1}(t)\bigr).
-\]
-\item \textbf{Write one propagated bit.} Draw a source position
-$K_x(t)\in\{0,\ldots,7\}$ uniformly and apply its elementary write to the
-intermediate byte:
-\[
-g_x(t+1)=U_{\sig,K_x(t)}(h_x).
-\]
-\end{enumerate}
-The ordinary spatial runs make one such elementary write per cell and
-generation. The historical Figure~8 variant made two. By contrast,
-$P_\sig$ denotes the simultaneous eight-write map classified in
-\secref{sec:classification}; its fixed bytes are precisely the bytes left
-unchanged by every possible elementary write.
-\end{workedexample}
+\supptheory{Worked example~2}{One site, one complete MetaCA step}
 
 The substrate---a cellular automaton whose cells hold rules rather than
 states---is not itself new \parencite{corneli2015search}; what we study
@@ -541,11 +462,10 @@ colours are the legacy engine's own.}
 
 \subsection{Fixed points exist iff every cycle is even}
 
-\begin{theorem}[fold,label={thm:parity}]
-$P_\sig$ has a fixed point (a fixed rule) if and only if every cycle of
-$\sig$ has even length. Since a one-cycle has odd length, this already
-requires $\sig$ to be fixed-point-free.
-\end{theorem}
+$P_\sig$ has a fixed rule if and only if every cycle of $\sig$ has even length;
+since a one-cycle is odd, this already forces $\sig$ to be fixed-point-free.
+
+\supptheory{Theorem~1}{Fixed points and even cycles}
 
 \noindent A fixed rule is a $g$ invariant under~\eqref{eq:prop}, i.e.\ a
 $\sig$-equivariant Boolean colouring with $g(\sig k) = \lnot\,g(k)$.
@@ -555,37 +475,11 @@ $L$ is even; conversely, colour each orbit by the parity of its distance
 from a chosen representative. A one-cycle of $\sig$ ($L=1$) is odd and so
 admits no such colouring, which is why even cycles are required throughout.
 
-Box~\ref{box:even-cycle} shows the theorem on the offset-$+2$ operator. The
+Worked example~3 shows the theorem on the offset-$+2$ operator. The
 same small calculation also makes the later $2^k$ count and forced
 $\lambda=1/2$ balance visible before we state them generally.
 
-\begin{workedexample}[fold,label={box:even-cycle}]{Even and odd cycles}
-\small
-For offset $+2$ on eight truth-table positions,
-\[
-\sig=(0\;2\;4\;6)(1\;3\;5\;7).
-\]
-A fixed rule must change colour at every arrow because
-$g(\sig k)=\lnot g(k)$. Around either four-cycle it can therefore read
-$0101$ or $1010$: after four negations it returns consistently to its
-starting bit. The two four-cycles are coloured independently, so two binary
-choices fix all eight truth-table entries $\bit{0},\dots,\bit{7}$. Read back as
-an ECA rule number---those eight bits in Wolfram neighbourhood order (the table
-of \secref{sec:object}) taken as an integer in $0$--$255$---the four colourings
-are the fixed rules
-\[
-2^2=4:\quad
-51,\ 102,\ 153,\ 204,
-\]
-each with four zero-bits and four one-bits. An odd cycle admits no such
-colouring: after an odd number of negations the bit returns to its starting
-position demanding its own opposite, so no fixed rule exists. Admitting a fixed
-rule and settling onto one are distinct. An operator carrying an odd cycle has no
-fixed rule for its field to collapse onto, and its field correspondingly stays
-diverse (the any-odd reduced rotate$+2$, Figure~\ref{fig:parity}, right); whether
-a fixed-point-bearing operator collapses onto one of its fixed rules is a
-separate, dynamical question (\secref{sec:interrupter}).
-\end{workedexample}
+\supptheory{Worked example~3}{Even and odd cycles}
 
 This is the signed-cycle fixed-point theorem of Boolean-network theory
 \parencite{aracena2008maximum} specialised to~\eqref{eq:prop}: our operator
@@ -611,12 +505,12 @@ our operator family, not as a new identity.
 
 \subsection{Fixed bytes number \texorpdfstring{$2^k$}{2 to the k}}
 
-\begin{corollary}[fold,label={cor:count}]
-An all-even $\sig$ with $k$ cycles has exactly $2^k$ fixed bytes; any $\sig$ with
-an odd cycle has none.
-\end{corollary}
+An all-even $\sig$ with $k$ cycles therefore has exactly $2^k$ fixed bytes, and any
+$\sig$ with an odd cycle has none.
+
+\supptheory{Corollary~1}{The $2^k$ count}
 Each even cycle admits exactly two alternating colourings, chosen independently
-across cycles, whence $2^k$; the zero case is Theorem~\ref{thm:parity}. This too
+across cycles, whence $2^k$; the zero case is Theorem~1. This too
 is machine-checked.%
 \footnote{\texttt{alternatingColouring\_card\_eq\_two\_pow\_cycleType\_card}.}
 Summed against these weights the family is consistent:
@@ -626,33 +520,18 @@ number of fixed bytes across the family.
 \section{Every Fixed Point Is Balanced}
 \label{sec:lambda}
 
-\begin{definition}[fold,label={def:lambda}]{Langton's activity $\lambda$}
-$\lambda$ measures a rule's \emph{activity}: the fraction of its neighbourhood
-entries that map to the non-quiescent
-state~\parencite{langton1990computation}---for an eight-bit ECA table, the
-Hamming weight over eight, $\lambda = \lVert r \rVert_1 / 8$, from $0$ (every
-neighbourhood dies) through $1/2$ to $1$. A rule with $\lambda = 1/2$ is
-\emph{balanced}.
-\end{definition}
+\supptheory{Definition~3}{Langton's activity $\lambda$}
 
-\begin{observation}[fold,label={obs:lambda}]{Balance is a truth-table property}
-Langton's thesis was that complex behaviour concentrates near a critical
-$\lambda$, shown most clearly for larger tables ($K=4$, $N=5$); for the
-two-symbol, three-neighbour ECAs Langton is explicit that $\lambda$ only roughly
-correlates with dynamics, and later work is
-cautious~\parencite{mitchell1993revisiting}. Theorem~\ref{thm:lambda} below
-concerns the \emph{value} $\lambda = 1/2$ itself---balance---which we keep
-separate from any empirical claim about what it predicts dynamically.
-\end{observation}
+\supptheory{Observation~2}{Balance is a truth-table property}
 
 \subsection{Every fixed point has \texorpdfstring{$\lambda = 1/2$}{lambda = 1/2}}
 
-\begin{theorem}[fold,label={thm:lambda}]
-Every fixed point of every operator in the family has exactly four one-bits;
-equivalently, Langton's activity parameter $\lambda = 4/8 = 1/2$.
-\end{theorem}
+Every fixed point of every operator in the family has exactly four one-bits---equivalently,
+Langton's activity parameter is pinned at $\lambda = 4/8 = 1/2$.
 
-\noindent By Theorem~\ref{thm:parity} each cycle has even length $2m$; an
+\supptheory{Theorem~2}{Every fixed point is balanced}
+
+\noindent By Theorem~1 each cycle has even length $2m$; an
 alternating colouring assigns such a cycle exactly $m$ ones; summing over
 cycles gives $(\sum L)/2 = 8/2 = 4$. Exhaustive enumeration confirms it:
 across all $40{,}320$ operators and all their fixed points, every one has
@@ -672,7 +551,7 @@ a folklore intuition for why $1/2$ is special --- binomial sampling variance
 $\lambda(1-\lambda)$ is maximal there --- and it is not ours; and it has been
 noted that $\lambda$ alone does not fix a rule's dynamical class, distinct
 classes coexisting at a single value \parencite{sakai2002edge}. What
-Theorem~\ref{thm:lambda} adds is narrower and firmer than any of these: under
+Theorem~2 adds is narrower and firmer than any of these: under
 the complementation in~\eqref{eq:prop} the value $1/2$ is \emph{forced} as an
 algebraic matter, because any alternation-under-complement colouring is
 balanced by parity. We claim balance, exactly; any connection of that
@@ -686,7 +565,7 @@ themselves---number $2^k$, where $k$ is the number of cycles of $\sig$
 (\secref{sec:classification}): each even cycle admits two alternating
 colourings, chosen independently across cycles. In the spatial runs these are
 the rules onto which the field is observed to settle. Every one has
-$\lambda = 1/2$ (Theorem~\ref{thm:lambda}), so the observed terminal
+$\lambda = 1/2$ (Theorem~2), so the observed terminal
 population is a cast of \emph{distinct} rules---distinct truth tables---sharing
 a \emph{single} activity.
 
@@ -731,7 +610,7 @@ aliveness from one historical write.}
 \label{sec:shell}
 
 The balanced shell is a definite object: exactly $\binom{8}{4} = 70$ rules
-carry four active outputs, and by Theorem~\ref{thm:lambda} the absorbing set of
+carry four active outputs, and by Theorem~2 the absorbing set of
 every operator in the family lies wholly inside it. Collapse is therefore not
 merely a loss of diversity but a fall onto this particular $70$-rule balanced
 shell at $\lambda = 1/2$.
@@ -749,7 +628,7 @@ in its genotype while the surviving rule keeps its phenotype in motion.
 Figure~\ref{fig:shell} is such a field, built to specification. To seat a
 collapse on a chosen live rule $R$ it suffices to pair $R$'s four active
 positions with its four inactive ones as an involution: four transpositions, an
-all-even operator that holds $R$ among its fixed points (Theorem~\ref{thm:parity}).
+all-even operator that holds $R$ among its fixed points (Theorem~1).
 Whether the field actually settles onto that fixed rule is a separate, dynamical
 question (as \secref{sec:interrupter} stresses); here it does. Carried out for
 Rule~$54$ this yields
@@ -783,7 +662,7 @@ dynamics keep it complex. Seed~$1$, $W = 80$, $T = 120$.}
 
 \subsection{The parity dichotomy in the spatial dynamics}
 
-Theorems~\ref{thm:parity}--\ref{thm:lambda} concern fixed bytes; the spatial
+Theorem~1--2 concern fixed bytes; the spatial
 dynamics adds stochastic elementary writes and, in the census, neighbour
 blending. Figure~\ref{fig:parity} shows why fixed-point existence is not itself
 a dynamical verdict: without blending, all-even rotate$+2$ settles within the
@@ -799,7 +678,7 @@ difference} between the classes, not the class sizes.
 \caption{The parity dichotomy, by example (the census of all $40{,}320$
 permutations is summarised in the text). Five operators as genotype (top) and
 phenotype (bottom) over time. \emph{Left:} both all-even operators possess fixed
-bytes (Theorem~\ref{thm:parity}), but only rotate$+2$ settles within the run,
+bytes (Theorem~1), but only rotate$+2$ settles within the run,
 reaching its $2^k=2^2$ fixed rules; the single-8-cycle rotate$+1$ remains active
 at diversity $12$. \emph{Right:} the odd-cycle operators
 (reduced rotate$+2$, acting on a subset so the remaining positions are odd
@@ -816,7 +695,7 @@ To guard against reading structure into a completed enumeration, we fixed a
 prediction before running the case. The reduced $\text{rotate}{+}2$
 operators act as a single even cycle on a subset of positions and leave the
 remaining positions as one-cycles; by that leftover they are \emph{not}
-all-even, so by Theorem~\ref{thm:parity} they possess no fixed point and
+all-even, so by Theorem~1 they possess no fixed point and
 should fall on the no-fixed-points side of the dichotomy---no rule for the
 field to settle onto, and correspondingly less extinction. They do
 (Figure~\ref{fig:parity}, right): they stay diverse rather than dying off.
@@ -827,18 +706,7 @@ diversity, not literal aperiodicity.
 \subsection{The full census, tabulated by class}
 \label{sec:full-census}
 
-\begin{definition}[fold,label={def:aliveness}]{Census protocol and aliveness}
-For each of the $40{,}320$ permutations, we ran seeds $0$--$2$ on a width-$60$
-line for $100$ generations. Initial rule bytes are independent uniform draws
-from $0$--$255$, initial phenotype bits are independent fair binary draws, and
-both layers have fixed zero boundaries. Each genotype update uses the
-neighbour blend and one uniformly sampled elementary write described in
-Box~\ref{box:metaca-step}. A layer's \emph{change rate} is the mean fraction of
-cells differing between consecutive rows over the final $40$ generations,
-averaged over the three seeds. The layer is \emph{alive} when this rate is at
-least $0.10$ and \emph{dead} otherwise. Scoring genotype and phenotype
-separately gives four regimes: live/live, live/dead, dead/live, and dead/dead.
-\end{definition}
+\supptheory{Definition~4}{Census protocol and aliveness}
 
 The trend becomes an exhaustive finite-run observation once every operator is tabulated. We ran all
 $40{,}320$ permutation-propagators and grouped them by cycle type
@@ -850,7 +718,7 @@ $40{,}320$ permutation-propagators and grouped them by cycle type
 \centering\small
 \caption{Genotype-alive fraction by cycle type under the census protocol, over
 all $40{,}320$ permutations. Any odd cycle forbids a fixed byte
-(Theorem~\ref{thm:parity}); empirically, every such operator is alive. The
+(Theorem~1); empirically, every such operator is alive. The
 all-even types split, with collapse becoming more frequent as the number of
 cycles $k$ increases.}
 \label{tab:census}
@@ -880,7 +748,7 @@ seeds; genotype in 256 colours, phenotype black and white, first hundred
 generations). Of these all-even rotations only the single 8-cycles,
 $\gcd(\text{offset},8) = 1$---offset $\pm 1$ and $\pm 3$, highlighted---sustain a
 high-diversity phase; offset $\pm 2$ ($\gcd 2$) and $\pm 4$ ($\gcd 4$) collapse.
-See Worked Example~\ref{box:survey}; continued in~(b).}
+See Worked Worked example~4; continued in~(b).}
 \label{fig:eoc}
 \end{figure}
 
@@ -892,33 +760,14 @@ See Worked Example~\ref{box:survey}; continued in~(b).}
 symmetric under $d \to -d$ (verdict follows $\gcd(d,8)$), so offset $+1$ sustains
 as offset $-1$ does, and offset $+2$ collapses as offset $-2$ does---inverse
 rotations sharing verdict but not their transients (Worked
-Example~\ref{box:survey}). Possessing a fixed point and staying near it are
+Worked example~4). Possessing a fixed point and staying near it are
 different properties: the two pages visually summarise the distinction between
 fixed-point existence and spatial persistence.}
 \end{figure}
 
-\begin{workedexample}[fold,label={box:survey},breakable=false]{Reading the rotation survey}
-\small
-The fields of Figure~\ref{fig:eoc} evolve under the \emph{spatially coupled}
-dynamics of \secref{sec:interrupter}---stochastic elementary writes together
-with the coupling between cells---not $P_\sig$ applied cell-by-cell. This is
-what the survey turns on. Without the blend, Figure~\ref{fig:parity} already
-shows rotate$+1$ remaining active over the observed horizon while rotate$+2$
-settles. With neighbour blending, the finite-horizon split persists and widens:
-the single 8-cycles---$\gcd(\text{offset},8)=1$, offset $\pm 1$ and $\pm 3$---
-sustain a high-diversity field, while offset $\pm 2$ ($\gcd 2$) and $\pm 4$
-($\gcd 4$) collapse; that split is what the survey shows.
+\supptheory{Worked example~4}{Reading the rotation survey}
 
-The two panels are \emph{almost} mirror images, and where they differ is
-instructive. Offset $+d$ and offset $-d$ are the same permutation exactly when
-$2d \equiv 0 \pmod 8$---so offset $\pm 4$ (and the identity) are one operator with
-bit-identical panels, whereas offset $\pm 1$ and $\pm 3$ are distinct
-\emph{inverse} rotations. Inverses share cycle structure, fixed rules, and the
-sustain-or-collapse verdict, but not their transient dynamics: offset $+1$ and
-offset $-1$ realise the same sustaining regime through visibly different fields.
-\end{workedexample}
-
-Possessing a fixed point (Theorem~\ref{thm:parity}) is not the same as
+Possessing a fixed point (Theorem~1) is not the same as
 reaching one, and $P_\sig$ does not by itself move a rule toward
 $\lambda = 1/2$. Because $P_\sig$ complements every bit,
 $\lambda(P_\sig g) = 1 - \lambda(g)$: the operator \emph{reflects} activity
@@ -966,14 +815,7 @@ two-4-cycle class splits between sustaining and collapsing.}
 \subsection{Constructive control by temporal schedules}
 \label{sec:braiding}
 
-\begin{definition}[fold,label={def:braid}]{Temporal braid}
-A \emph{temporal braid} alternates two writings between complete coupled spatial
-updates: writing $w_A$ is used at even times and $w_B$ at odd times. More
-generally, a periodic \emph{schedule} selects one writing at each time step.
-This preserves the intermediate spatial states and neighbour blends; it is not
-the algebraic composition $P_{\sigma_A}\circ P_{\sigma_B}$ of two simultaneous
-maps.
-\end{definition}
+\supptheory{Definition~5}{Temporal braid}
 
 \suppfinding{3}{A braid of two collapsing operators can sustain the field}
 
@@ -1006,28 +848,14 @@ at the same representative seed.}
 \label{fig:knob}
 \end{figure}
 
-\begin{definition}[fold,label={def:interrupter}]{Interrupter}
-An \emph{interrupter} is an update between elementary propagator writes that is
-not itself a propagator write. The coordinate-wise neighbour blend of
-Box~\ref{box:metaca-step} is the interrupter in the ordinary spatial runs; a
-hold gate that suppresses a scheduled write is another example. An interrupter
-changes the coupled dynamics but does not, by definition, guarantee sustained
-diversity.
-\end{definition}
+\supptheory{Definition~6}{Interrupter}
 
 \suppfinding{5}{The rotation split occurs with and without neighbour blending}
 
-\begin{proposition}[fold,label={obs:flat}]{Composition parity}
-Products alternate between complemented and uncomplemented coordinate permutations.
-Each operator of Equation~\eqref{eq:prop} negates every bit
-($P_\sig(g)[j] = \lnot\,g[\sig^{-1}(j)]$, a coordinate permutation followed by a
-global flip), so under composition the flips cancel in pairs: $P_\sig \circ
-P_\tau$ is a \emph{pure} coordinate permutation with no negation left---a
-bijection that fixes $2^{c}$ bytes for $c$ cycles but carries none of the forced
-$\lambda = 1/2$ structure. An even number of propagators therefore composes to
-an uncomplemented coordinate permutation, and an odd number to another member
-of the permutation-propagator family.
-\end{proposition}
+Each operator negates every bit, so under composition the flips cancel in pairs: a product
+of two is a \emph{pure} coordinate permutation with no negation left.
+
+\supptheory{Proposition~1}{Composition parity}
 
 Exploratory searches over products of two and three simultaneous propagators
 found no additional structural regime. Temporal braiding is a different
@@ -1035,7 +863,7 @@ operation: it alternates stochastic elementary writes inside the spatially
 coupled dynamics rather than replacing them by one composed map.
 
 Algebraic composition is therefore closed in the sense of
-Proposition~\ref{obs:flat}. Temporal scheduling is different: it retains each
+Proposition~1. Temporal scheduling is different: it retains each
 intermediate coupled state, which is why the braids of
 \secref{sec:braiding} can produce dynamics absent from either held operator. A
 second constructive mechanism pairs a propagator with a step of a different
@@ -1119,12 +947,7 @@ phenotype.
 The next construction crosses that boundary by allowing the update to depend
 on the live phenotype.
 
-\begin{definition}[fold,label={def:river}]{River}
-A \emph{river} is the composed operator obtained by following the collapsing
-offset-$+2$ propagator ($\gcd 2$) with a phenotype-reading construction
-step---match the local phenotype against four template candidates, first match
-wins, and fall back to the all-zero rule when none matches.
-\end{definition}
+\supptheory{Definition~7}{River}
 
 \suppfinding{8}{The river sustains structured phenotype}
 
