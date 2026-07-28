@@ -75,6 +75,10 @@ for completeness and is not a premise of the argument.
 % Each begins on a fresh page under its own heading. Float counters reset so
 % the supplements number as they do standalone; their \thefigure carries the
 % supplement number (S3.1, S4.1), so no two floats share a printed number.
+% Supplements sit at \part level, as peers of Parts I and II. That is what makes
+% their own \section headings nest beneath them in the contents and the PDF
+% outline instead of appearing as siblings.
+%
 % Two forms, because the sources differ: supplements 1 and 4 are full apa7
 % documents that call \maketitle and carry no heading of their own, while 2 and
 % 3 open with their own \section*. Emitting a heading for the latter would print
@@ -91,11 +95,11 @@ for completeness and is not a premise of the argument.
   \phantomsection}
 \newcommand{\packetsupp}[2]{%
   \packetsuppstart{#1}%
-  \section*{Supplement #1: #2}%
-  \addcontentsline{toc}{section}{Supplement #1: #2}}
+  \part*{Supplement #1: #2}%
+  \addcontentsline{toc}{part}{Supplement #1: #2}}
 \newcommand{\packetsuppself}[2]{%
   \packetsuppstart{#1}%
-  \addcontentsline{toc}{section}{Supplement #1: #2}}
+  \addcontentsline{toc}{part}{Supplement #1: #2}}
 
 % The supplements are standalone documents that call \maketitle. The packet has
 % its own front matter, so neutralise it from here on.
