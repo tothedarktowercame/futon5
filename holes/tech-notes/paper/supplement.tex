@@ -14,7 +14,7 @@
 \usepackage[style=apa,backend=biber]{biblatex}
 \usepackage{xr}
 \externaldocument{draft6}
-\externaldocument[S1-]{supplement1}
+\externaldocument{supplement1}
 \addbibresource{refs.bib}
 \usepackage{nameref}
 \hypersetup{
@@ -35,7 +35,9 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}{Corollary}
 \newtheorem{proposition}{Proposition}
-\newtheorem{definition}{Definition}
+% Named distinctly: `definition' is a tcolorbox environment in the main
+% paper, and this file is \input into packet.tex under docmute.
+\newtheorem{scoredef}{Definition}
 \newtcolorbox[auto counter]{workedexample}[2][]{%
   enhanced,
   breakable,
@@ -131,6 +133,11 @@ exhaustive classification, domain walls}
   {}{\PackageError{draft5}{Could not place abstract on title page}{}}
 \makeatother
 
+% Float numbers carry the supplement number so they are unambiguous both
+% standalone and when bound into packet.tex.
+\renewcommand{\thefigure}{S4.\arabic{figure}}
+\renewcommand{\thetable}{S4.\arabic{table}}
+
 \begin{document}
 \maketitle
 
@@ -153,7 +160,7 @@ Figure, section and empirical-finding numbers below that are not preceded by
 \section{Domain Structure and Filamentary Boundaries}
 \label{supp:domains}
 
-The finite-size scan of the main paper (\emph{Supplement 1, Box~\ref{S1-find:crossover}},
+The finite-size scan of the main paper (\emph{Supplement 1, Box~\ref{find:crossover}},
 Figure~\ref{fig:phase}) finds a broad crossover rather than a critical point. We then asked whether the
 sustained diversity is spatially organised. It is.
 
@@ -166,7 +173,7 @@ crossover is what we call a \emph{littoral edge}: a descriptive name for a shore
 of finite width, not a thermodynamic phase boundary.
 \end{empiricalfinding}
 
-\begin{definition}[Isolated-rule activity score]\label{def:activity}
+\begin{scoredef}[Isolated-rule activity score]\label{def:activity}
 The \emph{activity score} of a rule is the mean per-step cell-change fraction
 over the final $150$ steps of a $300$-step ordinary ECA run on a periodic line
 of width $300$. Every rule uses the same density-$1/2$ pseudorandom initial
@@ -175,7 +182,7 @@ truth-table balance $\lambda$ (\secref{sec:lambda}). Ordered rules score near
 $0$; Rule~$110$ scores approximately $0.42$, and several standard chaotic rules
 score approximately $0.50$. The score orders activity levels but does not by
 itself distinguish complex from chaotic dynamics.
-\end{definition}
+\end{scoredef}
 
 Tinting the genotype by this score (Figure~\ref{fig:tint}) resolves the
 intermediate field into coexisting low- and high-activity domains whose
@@ -341,7 +348,7 @@ in one state---the conditional probabilities driving the score become extreme
 and it inflates without bound, and this happens at \emph{either} end. The
 genotypically dead offset $+4$ operator is the demonstration. Its genotype
 freezes (row-to-row rewrite rate falls to $0$, Empirical
-\emph{Supplement 1, Box~\ref{S1-find:braid}}) into a
+\emph{Supplement 1, Box~\ref{find:braid}}) into a
 population that is $98\%$ active, and on that saturated field it records the
 largest on-filament transport we measured anywhere: $317\times$ the domain
 interior, $+0.59$ bits filament-specific, for an operator that transports
@@ -502,7 +509,7 @@ the same way. The filamentary walls separating them are localised, persistent,
 and propagate through spacetime with box-counting dimension $1.5$--$1.7$
 (Empirical finding~\ref{find:walls}); they occupy the position particles
 occupy, and they are where genotype rewriting is fastest. The river (Empirical
-\emph{Supplement 1, Box~\ref{S1-find:river}}) produces coherent bands that drift through a
+\emph{Supplement 1, Box~\ref{find:river}}) produces coherent bands that drift through a
 disordered background and then branch, merge, and reorganise---which is what a
 population of interacting particles looks like. That last resemblance is
 qualitative and we do not press it: the river's denser boundary is an unmatched

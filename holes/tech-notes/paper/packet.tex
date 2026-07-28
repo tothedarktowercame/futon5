@@ -1,64 +1,116 @@
 % =====================================================================
-%  Submission packet: the paper followed by its four supplements.
+%  Submission packet: the paper and its four supplements, from TeX source.
 %
-%  This assembles the already-compiled PDFs rather than re-typesetting the
-%  sources. Each document keeps its own preamble, class options, numbering and
-%  cross-document xr references, which is what we want: the packet is a binding,
-%  not a rewrite. Build the five documents first, then this.
+%  This includes the SOURCE of each document, not its compiled PDF, so the
+%  packet is a genuine compilable submission (arXiv holds real source) and
+%  cross-references between the parts resolve natively rather than through xr.
 %
-%      latexmk -pdf draft6 supplement1 supplement2-theory \
-%                   supplement3-figures supplement
+%  `docmute' makes \input of a full document ignore everything outside its
+%  \begin{document}...\end{document}, so the five sources stay standalone-
+%  buildable and are included here verbatim -- no shadow copies to drift.
+%
+%  The preamble below is draft6's, which is the superset: every environment and
+%  macro the supplements use is defined there, except \findref, added here.
+%
 %      latexmk -pdf packet
 % =====================================================================
-\documentclass[12pt]{article}
+\documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
 
-\usepackage[a4paper,margin=1in]{geometry}
-\usepackage{pdfpages}
-\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue,
-            pdftitle={Rule-Rewriting Cellular Automata and the Edge of Chaos:
-                      paper and supplements},
-            pdfauthor={Joseph Corneli}]{hyperref}
-\usepackage{bookmark}
+\usepackage[american]{babel}
+\usepackage{csquotes}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage[multiple]{footmisc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage[most]{tcolorbox}
+\usepackage{needspace}
+\usepackage[style=apa,backend=biber]{biblatex}
+\usepackage{nameref}
+% apa7 pulls tikz in itself; the argument map needs these libraries.
+\usetikzlibrary{positioning, arrows.meta, fit, calc, decorations.pathreplacing}
+\usepackage{docmute}
+\addbibresource{refs.bib}
 
-% pdfpages' own addtotoc anchors the entry to a page INSIDE the included file,
-% which is what makes both the contents line and the PDF bookmark land on the
-% first page of that part rather than on the page before it.
-% pdfpages' addtotoc always writes a \numberline into the contents line. The
-% parts already name themselves ("Paper", "Supplement 1"), and a second
-% counter running 1--5 alongside them just reads as a contradiction, so drop it.
-\renewcommand{\numberline}[1]{}
+\input{packet-preamble}
 
-\newcommand{\packetpart}[3]{%
-  \includepdf[pages=-,link=true,linkname=#3,
-              addtotoc={1,section,1,{#1\quad#2},pk:#3}]{#3.pdf}}
+% Cross-reference a finding box by its label (supplement sources use this).
+\providecommand{\findref}[1]{Box~\ref{#1}}
+
+% Supplement 4 states one scoring definition in an amsthm environment; it is
+% named distinctly because `definition' here is a tcolorbox from the paper.
+\newtheorem{scoredef}{Definition}
+
+\title{Rule-Rewriting Cellular Automata and the Edge of Chaos}
+\shorttitle{Rule-Rewriting Cellular Automata}
+\author{Joseph Corneli}
+\affiliation{}
 
 \begin{document}
 
 \begin{center}
   {\LARGE\bfseries Rule-Rewriting Cellular Automata\\[2pt] and the Edge of Chaos\par}
-  \vspace{1.2em}
-  {\large Joseph Corneli\par}
-  \vspace{2em}
-  {\large Paper and supplementary material\par}
+  \vspace{1.2em}{\large Joseph Corneli\par}
+  \vspace{2em}{\large Paper and supplementary material\par}
 \end{center}
 
 \vspace{1em}
-\noindent This packet contains the paper and its four supplements as a single
-file. The paper is self-contained: it states each definition, theorem and
-empirical finding in prose where it is used, and the supplements carry the
-formal statements and proofs, the findings notebook, the additional figures, and
-one exploratory analysis that is reported but not relied upon. Supplement~4
-records a measure that was withdrawn after its mask and measure proved circular;
-it is included for completeness and is not a premise of the argument.
+\noindent This packet contains the paper and its four supplements in one file.
+The paper is self-contained: it states each definition, theorem and empirical
+finding in prose where it is used, and the supplements carry the formal
+statements and proofs, the findings notebook, the additional figures, and one
+exploratory analysis that is reported but not relied upon. Supplement~4 records
+a measure withdrawn after its mask and measure proved circular; it is included
+for completeness and is not a premise of the argument.
 
 \vspace{1.5em}
 \tableofcontents
 \clearpage
 
-\packetpart{Paper}{Rule-Rewriting Cellular Automata and the Edge of Chaos}{draft6}
-\packetpart{Supplement 1}{Empirical Findings Notebook}{supplement1}
-\packetpart{Supplement 2}{Definitions, Theorems and Worked Examples}{supplement2-theory}
-\packetpart{Supplement 3}{Additional Figures}{supplement3-figures}
-\packetpart{Supplement 4}{Exploratory Domain Analysis and a Withdrawn Statistic}{supplement}
+\input{draft6}
+
+% --- supplements -----------------------------------------------------
+% Each begins on a fresh page under its own heading. Float counters reset so
+% the supplements number as they do standalone; their \thefigure carries the
+% supplement number (S3.1, S4.1), so no two floats share a printed number.
+% Two forms, because the sources differ: supplements 1 and 4 are full apa7
+% documents that call \maketitle and carry no heading of their own, while 2 and
+% 3 open with their own \section*. Emitting a heading for the latter would print
+% it twice, so they get the contents line only.
+% Float counters restart per supplement and their printed numbers carry the
+% supplement number (S3.1, S4.2), so nothing collides with the paper's
+% Figures 1--16. The sources set this in their own preambles for standalone
+% builds; docmute discards those, so it must be set again here.
+\newcommand{\packetsuppstart}[1]{%
+  \clearpage
+  \setcounter{figure}{0}\setcounter{table}{0}%
+  \renewcommand{\thefigure}{S#1.\arabic{figure}}%
+  \renewcommand{\thetable}{S#1.\arabic{table}}%
+  \phantomsection}
+\newcommand{\packetsupp}[2]{%
+  \packetsuppstart{#1}%
+  \section*{Supplement #1: #2}%
+  \addcontentsline{toc}{section}{Supplement #1: #2}}
+\newcommand{\packetsuppself}[2]{%
+  \packetsuppstart{#1}%
+  \addcontentsline{toc}{section}{Supplement #1: #2}}
+
+% The supplements are standalone documents that call \maketitle. The packet has
+% its own front matter, so neutralise it from here on.
+\let\maketitle\relax
+
+\packetsupp{1}{Empirical Findings Notebook}
+\input{supplement1}
+
+\packetsuppself{2}{Definitions, Theorems and Worked Examples}
+\input{supplement2-theory}
+
+\packetsuppself{3}{Additional Figures}
+\input{supplement3-figures}
+
+\packetsupp{4}{Exploratory Domain Analysis and a Withdrawn Statistic}
+\input{supplement}
 
 \end{document}
