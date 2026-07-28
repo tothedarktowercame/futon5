@@ -6,7 +6,9 @@ notebook, and this is staged here until that lands. Every number below is re-der
 a committed artefact; the scripts are named at each claim.
 
 Companion to [`TN-baldwin-reconstructed.md`](TN-baldwin-reconstructed.md), whose Q2 this
-extends — see §6.
+extends — see §6. The design question it raises (could selection recover Baldwin proper?)
+is parked in [`TN-baldwin-reconsidered.md`](TN-baldwin-reconsidered.md), which places it
+in the exotype/xenotype tower.
 
 ---
 
