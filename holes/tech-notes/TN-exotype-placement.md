@@ -130,6 +130,36 @@ ratio. Conditioning is therefore several times more efficient per actual
 firing; this is a positive mechanism result even though Test A does not resolve
 the regime-boundary question.
 
+## Test C: reachability with boundary-straddling constituents
+
+The decisive positive control replaces the weak active constituent by the
+existing chaotic `transport $1.00$` construction while retaining hold:
+`switch(bored?, transport-1.00, hold)`. At each Margolus transport-pair
+opportunity, the same uniform phenotype-neighbourhood predicate selects either
+the unchanged transport branch or no update. The row uses the same 16 seeds and
+the same damage protocol as Tests A and B.
+
+The selector fired `71,086` times in `783,840` pair opportunities, a measured
+fraction `f=0.090689`. Its seed-mean reach was `10.4625` (between-seed SD
+`4.0317`, 95% t interval `[8.3142, 12.6108]`). It therefore lands in the
+**complex band**, where neither constituent sits: hold is ordered at `1.2063`,
+while transport 1.00 is chaotic at `25.3750`.
+
+The preregistered interpolation check strongly fails:
+
+```text
+f × transport + (1-f) × hold
+= 0.090689 × 25.3750 + 0.909311 × 1.2063
+= 3.3981 predicted
+
+10.4625 observed  (observed - predicted = +7.0644)
+```
+
+The result is therefore **CREATES**, not INTERPOLATES. Conditional composition
+can create a regime occupied by neither constituent, so the exotype space is
+live and worth searching. The original rotate+2/hold result concerns weak
+constituents and cannot be generalized into a structural impossibility claim.
+
 ## Reproduction and determinism
 
 From `/home/joe/code/mmca-clj`:
@@ -149,8 +179,10 @@ were byte-identical:
 
 ## Conclusion
 
-The conditional composition does not create a complex-band operator on the
-paper's causal-reach scale. Its point estimate is higher than both constituents,
-but that difference is seed-sensitive and unresolved relative to `explore`.
-The honest classification is **(c)** at the present seed count: the switch adds
-no demonstrated causal reach on this measure.
+The original rotate+2/hold composition has a seed-sensitive ordered-band point
+estimate and remains unresolved relative to the `8.00` boundary at 16 seeds.
+It is nevertheless highly efficient per actual firing. More decisively, the
+boundary-straddling transport/hold positive control creates a complex-band
+operator far above its linear-interpolation prediction. The exotype space is
+therefore demonstrably live; the original null reflects its chosen weak
+constituents, not a general limitation of conditional composition.
