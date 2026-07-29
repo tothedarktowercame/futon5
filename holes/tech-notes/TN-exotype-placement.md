@@ -106,6 +106,30 @@ The same full producer invocation regenerated all calibration rows. The ten
 protected published values—rules 204/90/110/54/30, transport
 0.50/0.75/1.00, blend 0.00, and ungated 1.00—were unchanged.
 
+## Test B: measured duty cycle
+
+The producer was instrumented without adding any RNG draws. It counts each
+genotype-update opportunity and whether the selected exotype policy fires,
+including the shared trajectory to `t*=60` and both cloned trajectories after
+each perturbation. Across the 16 seeds, each policy had `1,587,200`
+opportunities:
+
+| policy | fired | firing fraction | mean reach | reach / firing fraction |
+|---|---:|---:|---:|---:|
+| hold | 0 | 0.000000 | 1.2063 | undefined |
+| explore | 1,587,200 | 1.000000 | 3.3813 | 3.3813 |
+| exotype | 199,177 | 0.125490 | 6.7875 | 54.0882 |
+
+The structured phenotype field therefore makes the uniform-neighbourhood gate
+fire only `12.5490%` of the time, about half the `25%` random-field estimate.
+Nevertheless, raw reach per unit firing is `15.996×` higher for exotype than
+for unconditional explore. Subtracting the hold baseline gives the same
+qualitative result: `(6.7875-1.2063)/0.125490 = 44.4756` excess-reach units per
+firing fraction, versus `3.3813-1.2063 = 2.1750` for explore, a `20.449×`
+ratio. Conditioning is therefore several times more efficient per actual
+firing; this is a positive mechanism result even though Test A does not resolve
+the regime-boundary question.
+
 ## Reproduction and determinism
 
 From `/home/joe/code/mmca-clj`:
