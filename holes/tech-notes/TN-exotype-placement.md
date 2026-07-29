@@ -82,6 +82,63 @@ By contrast, exotype exceeds `hold` in all four seeds. The null concerns whether
 the switch adds reach beyond the active constituent, not whether mutation and
 no mutation are equivalent.
 
+## Correction: a tape-desynchronisation confound (2026-07-29)
+
+Tests A-C below were first reported from a producer in which **the gate changed
+how much randomness was consumed**. `c/propagate` draws internally, and the
+exotype's non-firing branch returned the rule without drawing; the transport
+switch's `and` short-circuited past its `rand-double`. Which cells fire depends
+on the phenotype, and the perturbation changes the phenotype -- so the two damage
+branches consumed different numbers of draws, their tapes desynchronised, and
+the divergence that followed was RNG artefact rather than causal effect.
+
+The confound aligned exactly with the treatment: `explore` fires everywhere and
+`hold` nowhere, so neither can desynchronise, while both conditional
+constructions could. `river_gain.clj` states the required discipline explicitly
+-- "the gate coins come from a SEPARATE stream, re-seeded identically in both
+branches of the fork, so the gate itself never injects divergence" -- and the
+port did not carry it over.
+
+Both constructions now draw unconditionally and use the draw only when firing.
+The controls are unchanged to four decimal places, which is the signature of the
+bug; the conditional rows collapse:
+
+| policy | as first reported | tape-aligned | change |
+|---|---:|---:|---:|
+| hold | 1.2063 | 1.2063 | 0.0000 |
+| explore | 3.3813 | 3.3813 | 0.0000 |
+| exotype | 6.7875 | **1.4438** | -5.3438 |
+| switch transport 1.00/hold | 10.4625 | **3.5063** | -6.9563 |
+
+**Every headline below is withdrawn.** Corrected:
+
+- **Test A.** Exotype is `1.4438`, 95% CI `[1.0591, 1.8284]` -- firmly ordered and
+  now *below* `explore`. The four-seed null is not merely unresolved-but-elevated;
+  it is resolved, downward. Between-seed SD falls from `3.8262` to `0.7220`: the
+  "heterogeneity" was desynchronisation noise.
+- **Test B.** Excess reach over `hold` per unit firing is `1.8926` for exotype
+  against `2.1750` for explore -- a ratio of **0.87x**, not `20.449x`.
+  Conditioning buys no efficiency. (Raw reach over `f` still favours exotype
+  `3.40x`, but that statistic flatters any low-duty-cycle construction, since
+  `hold` scores `1.2063` while never firing at all.)
+- **Test C.** Observed `3.5063` against the preregistered prediction
+  `f x transport + (1-f) x hold = 3.3981`: a difference of `+0.108`, and a 95%
+  CI of `[2.7914, 4.2211]` wholly inside the ordered band. The verdict is
+  **INTERPOLATES**, not CREATES.
+
+So the original (c) null stands and now generalises: across these constituents,
+conditional composition interpolates rather than creating a new regime. The
+positive control was the right experiment; it simply answered the other way once
+the instrument was fixed.
+
+Regression: the nine protected published values are unchanged. The producer
+rerun is byte-identical (`a2255fb8957662cf...`). clj-kondo 6 errors / 41
+warnings (baseline); 35 tests, 0 failures.
+
+The sections below are retained as first written, for the record. Their numbers
+are superseded by this correction, and the SHA-256 values quoted in their
+determinism section were already stale before it.
+
 ## Test A: sixteen-seed power check
 
 The identical protocol was rerun without stopping early, extending only the
