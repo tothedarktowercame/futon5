@@ -1222,10 +1222,13 @@ two-part argument.
 regenerated from source rather than deposited: the generators are seeded, so a
 single documented command rebuilds the fields underlying the tables, figures,
 and reported summary statistics from an empty data directory, and the analysis
-scripts consume no input that command does not produce. The code and those
+scripts consume no input that command does not produce. That command was run
+twice from an empty data directory and all $307$ generated artefacts were
+byte-identical across the two runs; the $298$ of them that also exist as
+published artefacts match those as well. The code and those
 commands are publicly available at
 \texttt{https://github.com/tothedarktowercame/mmca-clj} (commit
-\texttt{e3e7bc59a02a229ef87bc7b7f296be0f5dc4b0c6})---a standalone,
+\texttt{7e04a6de6afe35de041b0ac4bb52a5cea25fe8d4})---a standalone,
 dependency-light Clojure port of the MetaCA dynamics whose \texttt{README} gives
 the complete reproduction command and commands for individual figure groups.
 The classification and balance theorems are
