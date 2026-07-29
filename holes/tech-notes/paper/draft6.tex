@@ -160,10 +160,11 @@ $P_\sig$ has a fixed rule exactly when every cycle of $\sig$ is even, an
 all-even permutation with $k$ cycles has $2^k$ fixed rules, and every fixed rule
 is balanced, with Langton activity $\lambda = 1/2$.
 
-That last result is our point of departure. It places every fixed point of every
+This places every fixed point of every
 operator at exactly the value the classical picture associates with the
-transition, and so leaves $\lambda$ powerless to distinguish an operator whose
-rule field stays diverse from one that collapses. The dynamics bear this out: a
+transition between chaos and order.  However, in this setting,
+$\lambda$ is powerless to distinguish an operator whose
+rule field stays diverse from one that collapses. A
 census across all cycle types separates sustaining from collapsing operators
 where $\lambda$ cannot, and a finite-size scan over $L = 30$--$240$ finds a
 broad, drifting crossover rather than a sharpening critical point. The classical
@@ -171,24 +172,28 @@ search, conducted in parameter space, returns nothing.
 
 We then leave the permutation core while retaining the same two-layer
 genotype--phenotype substrate. The objects are now update
-\emph{architectures}---temporal schedules, phenotype-reading constructions,
-mutation, holding, and conservative transport---rather than individual members
-of either the $8!$ or $8^8$ writing families. Flipping one cell and tracking
-divergence against an otherwise identical run places one phenotype-reading
-construction between elementary rules $90$ and $54$ on a damage-spreading scale
-calibrated against rules of undisputed regime. Sustained rule diversity looked
-like the order parameter the classical account wants; a conservative control
-that holds the rule histogram exactly invariant while varying transport shows
-that it is not, reach being nearly flat in diversity and moving by an order of
-magnitude with transport. Within the tested architectures, causal reach
-separates instead by \emph{coupling}: treating the phenotype-to-genotype edge as
-a graded quantity moves reach monotonically across the calibrated scale, while
-a mobility-matched control blind to the phenotype remains in the low-reach
-band. The exact classification therefore describes the permutation core; the
-causal result describes a feedback-coupled extension of it.}
-\keywords{cellular automata, rule evolution, Langton's lambda,
-self-modifying systems, edge of chaos, artificial life, permutation operators,
-exhaustive classification, damage spreading, perturbation analysis}
+\emph{architectures} on this substrate, constructed from simple
+operators including those mentioned above, along with temporal
+schedules, phenotype-reading constructions, mutation, and conservative
+transport. We use the reach of damage-spreading to characterise these
+architectures, calibrated against rules of undisputed regime.  
+Sustained rule diversity is an analogue of the order parameter from
+the classical account, however, we develop a conservative control that holds
+the rule histogram invariant while varying transport, and show that
+damage-spreading can be effectively unchanged with regard to diversity
+while moving by an order of magnitude with transport. Within the
+tested architectures, differences in causal reach are driven by
+genotype-to-phenotype \emph{coupling}. That coupling is a gain rather than a
+switch: as the genotype's view of the phenotype moves from an ancestral copy to
+the causally current one---marginal statistics matched throughout, so that only
+currency varies---reach rises monotonically out of the ordered band and into the
+complex one fixed by the elementary rules. How legible acquired state is to the
+heritable layer is therefore a quantitative control on dynamical regime rather
+than a categorical distinction, and a substrate able to regulate that gain would
+hold an actuator on its own.}  \keywords{cellular automata, rule evolution,
+  Langton's lambda, self-modifying systems, edge of chaos, artificial
+  life, permutation operators, exhaustive classification, damage
+  spreading, perturbation analysis}
 
 % Artificial Life asks for the abstract and keywords on the cover page and the
 % main text on page 2. In apa7 manuscript mode, suppress the page break that
@@ -1214,9 +1219,47 @@ discriminate among fixed points in the permutation core and finds no critical
 point in the tested parameter scan. Part~II asks what a causal measurement can
 reveal once the architecture itself is allowed to change. Its answer is
 feedback coupling for the constructions tested here, not a theorem about all
-permutations or all writings. Supplement~4 records the separate spatial-domain
+permutations or all writings.
+
+This admits a reading the substrate makes unusually clean. The gain $\gamma$
+interpolates between a genotype that reads only an ancestral phenotype and one
+that reads the currently acquired state, with the frozen field a real phenotype
+so that marginal statistics and spatial structure are matched at every setting;
+only causal currency varies. What the dial varies is thus how legible acquired
+state is to the heritable layer---the Lamarckian question, posed as a continuum
+rather than a dichotomy. Its discriminating power is unusual in this family:
+across $\lambda$, propagator fraction, sustained rule diversity, mutation rate,
+refuge probability, niche width and rule mobility, causal reach never leaves the
+ordered band, and blend strength alone reaches its edge. The substrate carries no
+fitness, so this concerns what the heritable layer can see and not what is
+selected for. Supplement~4 records the separate spatial-domain
 analysis and the withdrawn boundary statistic; neither is a premise of this
 two-part argument.
+
+\paragraph{Future work.} Two extensions follow from the gain result, and the
+second is the more interesting. The gain is imposed from outside here: $\gamma$ is
+a parameter we set, not a quantity the system controls. The 2014 ancestor of this
+substrate already contains a construction that makes it endogenous---a switch
+that fires a propagator only where the local context carries no new information
+and holds otherwise, so that write-back is state-dependent and requires no
+edge-of-chaos oracle. Its behaviour differs from both of its unconditional
+constituents, preserving rule diversity that unconditional firing destroys while
+remaining more quiescent than holding. Placing $\gamma$ under that kind of local
+control would test whether a system can locate the complex band unaided rather
+than being tuned into it, which is the difference between a dial and a regulator.
+
+The substrate also makes available a comparison that is usually only possible
+across different models. As it stands it instantiates the Lamarckian arm alone:
+acquired state writes into the heritable layer, and $\gamma$ is the strength of
+that write-back. The Baldwin effect requires something this substrate lacks---a
+selective filter, so that plasticity alters what selection sees and the heritable
+layer follows without direct transcription. Adding selection over a population of
+these architectures would supply that missing ingredient, and because both arms
+would then be expressible in one family, they could be placed on the single
+measure used throughout this paper: the reach of damage-spreading, calibrated
+against rules of undisputed regime. Whether direct write-back and
+selection-mediated assimilation arrive at the same place on that scale, and by
+what route, is a question the family is now equipped to ask.
 
 \paragraph{Data and code availability.} Every numerical result in this paper is
 regenerated from source rather than deposited: the generators are seeded, so a
