@@ -82,6 +82,30 @@ By contrast, exotype exceeds `hold` in all four seeds. The null concerns whether
 the switch adds reach beyond the active constituent, not whether mutation and
 no mutation are equivalent.
 
+## Test A: sixteen-seed power check
+
+The identical protocol was rerun without stopping early, extending only the
+three exotype-family rows to seeds `0,…,15` (160 site observations per policy).
+Between-seed summaries use the 16 seed means and a two-sided Student-t 95%
+interval (`df=15`):
+
+| policy | seed-mean mean | between-seed SD | 95% CI | margin from CI upper bound to 8.00 |
+|---|---:|---:|---:|---:|
+| hold | 1.2063 | 0.4768 | [0.9522, 1.4603] | +6.5397 |
+| explore | 3.3813 | 1.3227 | [2.6764, 4.0861] | +3.9139 |
+| exotype | 6.7875 | 3.8262 | [4.7487, 8.8263] | -0.8263 |
+
+The projected outcome did **not** occur. Rather than holding near `4.70`, the
+exotype mean rose by `2.0875` cells, driven by heterogeneous seed means ranging
+from `1.70` to `14.50`. Its point estimate remains in the ordered band, but the
+confidence interval now crosses the `8.00` ordered/complex boundary. Thus the
+four-seed null is still unresolved: increasing power exposed larger
+between-seed heterogeneity instead of excluding a complex-band mean.
+
+The same full producer invocation regenerated all calibration rows. The ten
+protected published values—rules 204/90/110/54/30, transport
+0.50/0.75/1.00, blend 0.00, and ungated 1.00—were unchanged.
+
 ## Reproduction and determinism
 
 From `/home/joe/code/mmca-clj`:
