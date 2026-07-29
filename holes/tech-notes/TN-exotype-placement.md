@@ -82,6 +82,77 @@ By contrast, exotype exceeds `hold` in all four seeds. The null concerns whether
 the switch adds reach beyond the active constituent, not whether mutation and
 no mutation are equivalent.
 
+## Duty-cycle sweep: the condition carries information beyond its rate
+
+**Measured 2026-07-29 (codex-9, job invoke-1785326780212). Reviewed and verified
+by re-running the producer: byte-identical, `879b2531c4fe49d1...`.** The job was
+killed at 32 minutes before it could write this section, so the analysis below
+is the reviewer's; the data and producer are codex-9's, committed incrementally
+as `81bf85e` and `5d6690b`.
+
+### The question
+
+Correcting the tape confound left one interior point supporting interpolation.
+The endpoints are fixed by construction (`f=0` is hold, `f=1` is transport), so
+any monotone curve passes through them and one point is thin evidence for a
+line. This sweeps the firing fraction, and — decisively — adds a **rate-matched
+random control**: a gate that fires at the same measured rate but is blind to
+the phenotype. Its coins come from a separate stream cloned identically into
+both fork branches, so the gate never injects divergence.
+
+### Tape alignment
+
+Verified before any number was read. The transport coin is drawn
+unconditionally, *before* the gate is consulted; random-gate coins live on a
+separate `gr` stream cloned per branch; the deterministic `agreement-gate?`
+predicate draws nothing. Draw counts therefore match across branches whatever
+the gate does. The invariants hold exactly: `explore` `3.3813`, `hold` `1.2063`.
+
+### Result
+
+| f | conditioned | rate-matched random | linear prediction | conditioned − random |
+|---:|---:|---:|---:|---:|
+| 0.120 | 6.6812 | 3.5562 | 4.1107 | +3.13 |
+| 0.237 | 18.4937 | 6.0812 | 6.9315 | +12.41 |
+| 0.647 | **36.7812** | 14.8750 | 16.8385 | +21.91 |
+| 0.683 | 33.1562 | 17.7375 | 17.7183 | +15.42 |
+| 0.935 | 30.3813 | 22.0375 | 23.8103 | +8.34 |
+
+**The random controls are a gain dial.** They track `f*A + (1-f)*B` with
+residuals from `-1.91` to `+0.06`, rising monotonically. Duty cycle alone behaves
+exactly as the linear model says.
+
+**The conditioned gates are not.** They exceed the rate-matched control by 3 to
+22 cells; the departure is **non-monotone**, peaking at `f=0.647` and falling by
+`f=0.935` while the random series still rises. At `f=0.647` the switch reaches
+`36.78`, **above transport-1.00's own `25.375`**: firing a chaotic operator on
+65% of opportunities, conditioned on phenotype structure, spreads more damage
+than firing it on all of them.
+
+### But not every condition departs
+
+Two conditioned gates at nearly the same rate, in the same run, behave
+oppositely:
+
+| gate | f | observed | predicted | residual |
+|---|---:|---:|---:|---:|
+| `bored?` (3 of 3 uniform) | 0.0994 | 3.51 | 3.61 | **-0.10** |
+| `agree 4/5` | 0.1202 | 6.68 | 4.11 | **+2.57** |
+
+So the blanket claim *conditional composition is exactly a gain dial* is
+**refuted**, but so is its negation. Some conditions interpolate; others depart
+strongly. What distinguishes them is unexplained: `bored?` reads a narrow
+3-cell neighbourhood and demands unanimity, `agree 4/5` reads a wider one and
+tolerates a dissenter. Whether width, strictness, or the resulting spatial
+correlation of firing is what matters is the obvious next question, and this
+sweep does not answer it.
+
+### Standing
+
+Nine protected published values unchanged. Producer rerun byte-identical.
+clj-kondo 6 errors / 41 warnings (baseline); 35 tests, 0 failures. 16 seeds,
+ten sites per seed, the same protocol as every other row.
+
 ## Correction: a tape-desynchronisation confound (2026-07-29)
 
 Tests A-C below were first reported from a producer in which **the gate changed
