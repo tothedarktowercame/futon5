@@ -1,5 +1,6 @@
 (ns futon5.mmca.exoevolve-test
   (:require [clojure.test :refer [deftest is testing]]
+            [futon5.ca.core :as ca]
             [futon5.mmca.exoevolve :as exoevolve]
             [futon5.mmca.exotype :as exotype]))
 
@@ -12,7 +13,7 @@
 (deftest gain-decodes-full-domain
   (testing "sigil decoding exposes all eight gain levels including 0 and 1"
     (let [decoded (->> (range 256)
-                       (map (comp :sigil #(nth (futon5.ca.core/sigil-entries) %)))
+                       (map (comp :sigil #(nth (ca/sigil-entries) %)))
                        (map (comp :gain :params exotype/lift))
                        set)]
       (is (= (set exotype/gain-levels) decoded))
@@ -40,3 +41,27 @@
       (is (every? #(contains? (:params %) :gain) next-pop))
       (is (every? (set exotype/gain-levels)
                   (map #(get-in % [:params :gain]) next-pop))))))
+
+(deftest width-decodes-and-mutation-reaches-full-domain
+  (testing "all four odd widths decode and are reachable by seeded mutation"
+    (let [decoded (->> (range 256)
+                       (map (comp :sigil #(nth (ca/sigil-entries) %)))
+                       (map (comp :width :params exotype/lift))
+                       set)]
+      (is (= (set exotype/width-levels) decoded)))
+    (let [mutations (mutation-sequence 404 (exotype/lift "一") 256)
+          reached (set (map #(get-in % [:params :width]) mutations))]
+      (is (= (set exotype/width-levels) reached)))))
+
+(deftest width-survives-selection-and-reproduction
+  (testing "selection distinguishes otherwise identical genomes by inherited width"
+    (let [narrow (assoc-in (exotype/lift "一") [:params :width] 3)
+          wide (assoc-in (exotype/lift "一") [:params :width] 9)
+          batch [{:exotype narrow :score {:final 2.0}}
+                 {:exotype wide :score {:final 8.0}}]
+          next-pop (exoevolve/evolve-population
+                     (java.util.Random. 23) [narrow wide] batch :local)]
+      (is (= wide (first next-pop)))
+      (is (every? #(contains? (:params %) :width) next-pop))
+      (is (every? (set exotype/width-levels)
+                  (map #(get-in % [:params :width]) next-pop))))))

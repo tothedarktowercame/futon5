@@ -23,6 +23,10 @@
   "Heritable coupling-gain levels, including fully frozen and fully live reads."
   (mapv #(/ (double %) 7.0) (range 8)))
 
+(def width-levels
+  "Heritable centred phenotype-neighbourhood widths."
+  [3 5 7 9])
+
 (defn- rand-double
   "Get a random double [0,1), optionally using provided RNG for reproducibility."
   [^java.util.Random rng]
@@ -58,6 +62,7 @@
   (let [bits (sigil-bits sigil)
         rotation (mod (bits->int (subs bits 0 2)) 4)
         gain (nth gain-levels (bits->int (subs bits 0 3)))
+        width (nth width-levels (bits->int (subs bits 3 5)))
         threshold-idx (bits->int (subs bits 2 5))
         match-threshold (/ (double (inc threshold-idx)) 9.0)
         invert? (= \1 (nth bits 5))
@@ -67,6 +72,7 @@
         mix-shift (mod (quot idx 3) 4)]
     {:rotation rotation
      :gain gain
+     :width width
      :match-threshold match-threshold
      :invert-on-phenotype? invert?
      :update-prob update-prob

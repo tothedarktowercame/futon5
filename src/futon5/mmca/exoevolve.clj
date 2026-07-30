@@ -202,7 +202,9 @@
         resolved (if (= sigil (:sigil exotype))
                    (exotype/resolve-exotype (assoc exotype :tier tier))
                    (exotype/resolve-exotype {:sigil sigil :tier tier}))]
-    (assoc-in resolved [:params :gain] (rng-nth rng exotype/gain-levels))))
+    (-> resolved
+        (assoc-in [:params :gain] (rng-nth rng exotype/gain-levels))
+        (assoc-in [:params :width] (rng-nth rng exotype/width-levels)))))
 
 (defn- load-xeno-specs [path]
   (when path
