@@ -65,6 +65,6 @@
           opts {:seeds [1] :sites (range 0 80 8)}
           live (score/reach-for (assoc-in base [:params :gain] 1.0) opts)
           frozen (score/reach-for (assoc-in base [:params :gain] 0.0) opts)]
-      (is (= 0.7 (:mean live)))
-      (is (= 0.1 (:mean frozen)))
+      (is (= 0.5 (:mean live)))
+      (is (= 0.0 (:mean frozen)))
       (is (> (:mean live) (:mean frozen))))))

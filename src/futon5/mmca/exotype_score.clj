@@ -48,8 +48,13 @@
          (majority-bit right)
          (rule-output (nth field index) phenotype index))))
 
-(defn- source-rng [source-draw]
-  (java.util.Random. (long source-draw)))
+(defn- source-rng [source-a source-b]
+  ;; `draw-count` supplies two source values alongside the two gate decisions.
+  ;; Fold both into the isolated per-cell kernel tape; no supplied source value
+  ;; is skipped or replaced by global randomness.
+  (java.util.Random.
+   (bit-xor (long source-a)
+            (bit-shift-left (long source-b) 31))))
 
 (defn- initial-field [genotype]
   (with-meta (mapv str genotype)
@@ -98,6 +103,7 @@
               gain-coins (subvec gate-coins 0 lattice-width)
               update-coins (subvec gate-coins lattice-width)
               cell-sources (subvec source-draws 0 lattice-width)
+              cell-sources-2 (subvec source-draws lattice-width)
               next-field
               (mapv
                (fn [index ego]
@@ -111,7 +117,9 @@
                        family (phenotype-family field viewed index width)
                        update? (< (nth update-coins index) update-prob)]
                    (if update?
-                     (binding [ca/*rng* (source-rng (nth cell-sources index))]
+                     (binding [ca/*rng*
+                               (source-rng (nth cell-sources index)
+                                           (nth cell-sources-2 index))]
                        (:sigil
                         (exotype/evolve-sigil-local
                          ego pred succ prev family {})))
