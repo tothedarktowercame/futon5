@@ -88,3 +88,90 @@
       (is (every? #(contains? (:params %) :update-prob) next-pop))
       (is (every? (set exotype/update-prob-levels)
                   (map #(get-in % [:params :update-prob]) next-pop))))))
+
+(deftest inherited-initial-genotype-is-created-used-and-point-mutated
+  (testing "length-aware genomes carry the exact field used by evaluation"
+    (let [genome (exoevolve/pick-exotype (java.util.Random. 31) :local 12)
+          field (:initial-genotype genome)]
+      (is (= 12 (count field)))
+      (is (= field
+             (exoevolve/initial-genotype-for
+               genome (java.util.Random. 999) 12)))
+      (is (= field
+             (exoevolve/mutate-initial-genotype
+               (java.util.Random. 32) field 0.0)))
+      (let [mutated (exoevolve/mutate-initial-genotype
+                      (java.util.Random. 32) field 1.0)]
+        (is (= 12 (count mutated)))
+        (is (every? false? (map = field mutated)))))))
+
+(deftest inherited-initial-genotype-mutation-is-deterministic
+  (testing "same seed, genome, and mutation rate produce the same field sequence"
+    (let [genome (exoevolve/pick-exotype (java.util.Random. 33) :both 16)
+          mutate-seq (fn []
+                       (let [rng (java.util.Random. 34)]
+                         (vec
+                           (rest
+                             (take 65
+                                   (iterate
+                                     #(exoevolve/mutate-exotype
+                                        rng % :both
+                                        {:initial-field-mutation-rate 0.2})
+                                     genome))))))]
+      (is (= (mutate-seq) (mutate-seq))))))
+
+(deftest inherited-initial-genotype-survives-selection-and-reproduction
+  (testing "field identity participates in selection and is inherited intact at rate zero"
+    (let [base (exotype/lift "一")
+          field-a (apply str (repeat 8 "一"))
+          field-b (apply str (repeat 8 "乐"))
+          genome-a (assoc base :initial-genotype field-a)
+          genome-b (assoc base :initial-genotype field-b)
+          batch [{:exotype genome-a :score {:final 1.0}}
+                 {:exotype genome-b :score {:final 12.0}}]
+          next-pop (exoevolve/evolve-population
+                     (java.util.Random. 35)
+                     [genome-a genome-b]
+                     batch
+                     :local
+                     {:initial-field-mutation-rate 0.0})]
+      (is (= genome-b (first next-pop)))
+      (is (= [field-b field-b] (mapv :initial-genotype next-pop))))))
+
+(deftest known-genome-mutation-roundtrip-covers-every-gene-domain
+  (testing "a seeded mutation walk from known values reaches every gene level"
+    (let [base (exotype/lift "一")
+          known (-> base
+                    (assoc-in [:params :gain] 0.0)
+                    (assoc-in [:params :width] 3)
+                    (assoc-in [:params :update-prob] 0.0)
+                    (assoc :initial-genotype (apply str (repeat 10 "一"))))
+          rng (java.util.Random. 20260730)
+          mutations (rest
+                      (take 4097
+                            (iterate
+                              #(exoevolve/mutate-exotype
+                                 rng % :both
+                                 {:initial-field-mutation-rate 0.1})
+                              known)))
+          decoded (map exotype/lift (map :sigil (ca/sigil-entries)))
+          domain (fn [k] (set (map #(get-in % [:params k]) decoded)))
+          reached (fn [k] (set (map #(get-in % [:params k]) mutations)))]
+      (is (= (set exotype/gain-levels) (reached :gain)))
+      (is (= (set exotype/width-levels) (reached :width)))
+      (is (= (set exotype/update-prob-levels) (reached :update-prob)))
+      (doseq [gene [:rotation :match-threshold :mix-mode]]
+        (is (= (domain gene) (reached gene))))
+      (is (some #(not= (:initial-genotype known) (:initial-genotype %))
+                mutations)))))
+
+(deftest legacy-genomes-retain-fresh-field-fallback
+  (testing "old two-argument genomes remain fieldless and evaluate via fresh fields"
+    (let [legacy (exoevolve/pick-exotype (java.util.Random. 41) :local)
+          a (exoevolve/initial-genotype-for
+              legacy (java.util.Random. 42) 10)
+          b (exoevolve/initial-genotype-for
+              legacy (java.util.Random. 42) 10)]
+      (is (not (contains? legacy :initial-genotype)))
+      (is (= 10 (count a)))
+      (is (= a b)))))

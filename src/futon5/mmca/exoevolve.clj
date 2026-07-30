@@ -21,6 +21,7 @@
 (def ^:private default-runs 400)
 (def ^:private default-pop 32)
 (def ^:private default-update-every 100)
+(def ^:private default-initial-field-mutation-rate 0.01)
 
 (defn- usage []
   (str/join
@@ -44,6 +45,7 @@
     "  --score-mode MODE      legacy, triad, or shift (default legacy)."
     "  --update-prob P        Override exotype update-prob (optional)."
     "  --match-threshold P    Override exotype match-threshold (optional)."
+    "  --initial-field-mutation-rate P  Per-cell inherited-field mutation rate (default 0.01)."
     "  --envelope-center P    Entropy envelope center (0-1, default 0.6)."
     "  --envelope-width P     Entropy envelope width (0-1, default 0.25)."
     "  --envelope-change-center P  Change envelope center (0-1, default 0.2)."
@@ -119,6 +121,11 @@
           (= "--match-threshold" flag)
           (recur (rest more) (assoc opts :match-threshold (parse-double* (first more))))
 
+          (= "--initial-field-mutation-rate" flag)
+          (recur (rest more)
+                 (assoc opts :initial-field-mutation-rate
+                        (parse-double* (first more))))
+
           (= "--envelope-center" flag)
           (recur (rest more) (assoc opts :envelope-center (parse-double* (first more))))
 
@@ -179,33 +186,75 @@
 (defn- rng-phenotype-string [^java.util.Random rng length]
   (apply str (repeatedly length #(rng-int rng 2))))
 
-(defn pick-exotype [^java.util.Random rng tier]
-  (let [sigils (mapv :sigil (ca/sigil-entries))
-        sigil (nth sigils (rng-int rng (count sigils)))]
-    (case tier
-      :local (exotype/lift sigil)
-      :super (exotype/promote sigil)
-      :both (if (< (.nextDouble rng) 0.5)
-              (exotype/lift sigil)
-              (exotype/promote sigil))
-      (exotype/lift sigil))))
+(defn pick-exotype
+  ([^java.util.Random rng tier]
+   (let [sigils (mapv :sigil (ca/sigil-entries))
+         sigil (nth sigils (rng-int rng (count sigils)))]
+     (case tier
+       :local (exotype/lift sigil)
+       :super (exotype/promote sigil)
+       :both (if (< (.nextDouble rng) 0.5)
+               (exotype/lift sigil)
+               (exotype/promote sigil))
+       (exotype/lift sigil))))
+  ([^java.util.Random rng tier length]
+   (assoc (pick-exotype rng tier)
+          :initial-genotype (rng-sigil-string rng length))))
 
-(defn mutate-exotype [^java.util.Random rng exotype tier]
-  (let [roll (.nextDouble rng)
-        sigil (if (< roll 0.5)
-                (:sigil (pick-exotype rng tier))
-                (:sigil exotype))
-        tier (cond
-               (not= tier :both) tier
-               (< roll 0.75) (if (= :local (:tier exotype)) :super :local)
-               :else (or (:tier exotype) :local))
-        resolved (if (= sigil (:sigil exotype))
-                   (exotype/resolve-exotype (assoc exotype :tier tier))
-                   (exotype/resolve-exotype {:sigil sigil :tier tier}))]
-    (-> resolved
-        (assoc-in [:params :gain] (rng-nth rng exotype/gain-levels))
-        (assoc-in [:params :width] (rng-nth rng exotype/width-levels))
-        (assoc-in [:params :update-prob] (rng-nth rng exotype/update-prob-levels)))))
+(defn mutate-initial-genotype
+  "Point-mutate individual cell rules in an inherited initial genotype."
+  [^java.util.Random rng genotype rate]
+  {:pre [(<= 0.0 rate 1.0)]}
+  (let [sigils (mapv :sigil (ca/sigil-entries))]
+    (apply str
+           (map (fn [current]
+                  (if (< (.nextDouble rng) rate)
+                    (let [alternatives (filterv #(not= (str current) %) sigils)]
+                      (rng-nth rng alternatives))
+                    current))
+                genotype))))
+
+(defn mutate-exotype
+  ([^java.util.Random rng exotype tier]
+   (mutate-exotype rng exotype tier
+                   {:initial-field-mutation-rate
+                    default-initial-field-mutation-rate}))
+  ([^java.util.Random rng exotype tier {:keys [initial-field-mutation-rate]}]
+   (let [roll (.nextDouble rng)
+         sigil (if (< roll 0.5)
+                 (:sigil (pick-exotype rng tier))
+                 (:sigil exotype))
+         tier (cond
+                (not= tier :both) tier
+                (< roll 0.75) (if (= :local (:tier exotype)) :super :local)
+                :else (or (:tier exotype) :local))
+         resolved (if (= sigil (:sigil exotype))
+                    (exotype/resolve-exotype (assoc exotype :tier tier))
+                    (exotype/resolve-exotype
+                      (cond-> {:sigil sigil :tier tier}
+                        (:initial-genotype exotype)
+                        (assoc :initial-genotype (:initial-genotype exotype)))))
+         rate (double (or initial-field-mutation-rate
+                          default-initial-field-mutation-rate))]
+     (cond-> (-> resolved
+                 (assoc-in [:params :gain] (rng-nth rng exotype/gain-levels))
+                 (assoc-in [:params :width] (rng-nth rng exotype/width-levels))
+                 (assoc-in [:params :update-prob]
+                           (rng-nth rng exotype/update-prob-levels)))
+       (:initial-genotype resolved)
+       (update :initial-genotype
+               #(mutate-initial-genotype rng % rate))))))
+
+(defn initial-genotype-for
+  "Return the inherited initial field, or the legacy fresh field when absent."
+  [exotype ^java.util.Random rng length]
+  (if-let [genotype (:initial-genotype exotype)]
+    (do
+      (when (not= length (count genotype))
+        (throw (ex-info "Inherited initial genotype has the wrong length"
+                        {:expected length :actual (count genotype)})))
+      genotype)
+    (rng-sigil-string rng length)))
 
 (defn- load-xeno-specs [path]
   (when path
@@ -267,7 +316,7 @@
 (defn- evaluate-exotype
   [exotype length generations ^java.util.Random rng xeno-specs xeno-weight context-depth ratchet-context ratchet-library hex-opts score-mode envelope-opts exotype-overrides]
   (let [exotype (apply-exotype-overrides exotype exotype-overrides)
-        genotype (rng-sigil-string rng length)
+        genotype (initial-genotype-for exotype rng length)
         phenotype (rng-phenotype-string rng length)
         seed (rng-int rng Integer/MAX_VALUE)
         result (mmca/run-mmca {:genotype genotype
@@ -350,7 +399,7 @@
    :generations generations
    :context-depth context-depth
    :kernel :mutating-template
-   :exotype (select-keys exotype [:sigil :tier :params])
+   :exotype (select-keys exotype [:sigil :tier :params :initial-genotype])
    :program-template (program-template exotype)
    :score {:short (:short-score eval)
            :xeno (get-in eval [:xeno :mean])
@@ -436,23 +485,27 @@
                [:schema/version :experiment/id :event :window :stats :delta]))
 
 (defn evolve-population
-  [^java.util.Random rng population batch tier]
-  (let [by-exotype (group-by (fn [entry]
-                               (select-keys (:exotype entry) [:sigil :tier :params]))
-                             batch)
-        scored (mapv (fn [exo]
-                       (let [runs (get by-exotype (select-keys exo [:sigil :tier :params]))
-                             finals (mapv (comp :final :score) runs)
-                             mean (if (seq finals)
-                                    (/ (reduce + 0.0 finals) (double (count finals)))
-                                    0.0)]
-                         (assoc exo :fitness mean)))
-                     population)
-        ranked (sort-by :fitness > scored)
-        survivors (vec (take (max 1 (quot (count ranked) 2)) ranked))
-        offspring (vec (repeatedly (- (count ranked) (count survivors))
-                                  #(mutate-exotype rng (rng-nth rng survivors) tier)))]
-    (vec (concat (map #(dissoc % :fitness) survivors) offspring))))
+  ([^java.util.Random rng population batch tier]
+   (evolve-population rng population batch tier {}))
+  ([^java.util.Random rng population batch tier mutation-opts]
+   (let [genome-key #(select-keys % [:sigil :tier :params :initial-genotype])
+         by-exotype (group-by (comp genome-key :exotype) batch)
+         scored (mapv (fn [exo]
+                        (let [runs (get by-exotype (genome-key exo))
+                              finals (mapv (comp :final :score) runs)
+                              mean (if (seq finals)
+                                     (/ (reduce + 0.0 finals) (double (count finals)))
+                                     0.0)]
+                          (assoc exo :fitness mean)))
+                      population)
+         ranked (sort-by :fitness > scored)
+         survivors (vec (take (max 1 (quot (count ranked) 2)) ranked))
+         offspring (vec (repeatedly (- (count ranked) (count survivors))
+                                    #(mutate-exotype rng
+                                                      (rng-nth rng survivors)
+                                                      tier
+                                                      mutation-opts)))]
+     (vec (concat (map #(dissoc % :fitness) survivors) offspring)))))
 
 (defn- default-iiching-root []
   (let [candidates ["../futon3/library/iiching" "futon3/library/iiching"]]
@@ -465,6 +518,7 @@
            context-depth curriculum-gate tap hexagram-weight hexagram-log score-mode
            envelope-center envelope-width envelope-change-center envelope-change-width
            envelope-change update-prob match-threshold
+           initial-field-mutation-rate
            iiching-root iiching-manifest heartbeat on-error argv]}]
   (let [runs (or runs default-runs)
         length (or length default-length)
@@ -492,6 +546,9 @@
                       :manifest iiching-manifest}
         on-error (or on-error :fail)
         heartbeat (when (and heartbeat (pos? heartbeat)) heartbeat)
+        initial-field-mutation-rate
+        (double (or initial-field-mutation-rate
+                    default-initial-field-mutation-rate))
         bundle {:schema/version 1
                 :experiment/id :exoevolve
                 :event :bundle
@@ -518,6 +575,7 @@
                          :envelope envelope-opts
                          :update-prob update-prob
                          :match-threshold match-threshold
+                         :initial-field-mutation-rate initial-field-mutation-rate
                          :curriculum-gate (boolean curriculum-gate)
                          :iiching-root iiching-root
                          :iiching-manifest iiching-manifest
@@ -531,7 +589,7 @@
            prev-window nil
            ratchet-state (ratchet/init-state)
            ratchet-context nil
-           population (vec (repeatedly pop #(pick-exotype rng tier)))
+           population (vec (repeatedly pop #(pick-exotype rng tier length)))
            batch []
            errors 0]
       (if (= i runs)
@@ -560,7 +618,10 @@
                                      {:delta-mean (- (:mean stats) (:mean prev-window))
                                       :delta-q50 (- (:q50 stats) (:q50 prev-window))})
                              population' (if update?
-                                           (evolve-population rng population batch' tier)
+                                           (evolve-population
+                                             rng population batch' tier
+                                             {:initial-field-mutation-rate
+                                              initial-field-mutation-rate})
                                            population)
                              batch'' (if update? [] batch')
                              window' (if update? (inc window) window)
@@ -613,7 +674,10 @@
                                       :experiment/id :exoevolve
                                       :event :error
                                       :run/id (inc i)
-                                      :exotype (select-keys exotype [:sigil :tier :params])
+                                      :exotype (select-keys
+                                                 exotype
+                                                 [:sigil :tier :params
+                                                  :initial-genotype])
                                       :error {:class (str (class e))
                                               :message (.getMessage e)}}]
                            (when log
