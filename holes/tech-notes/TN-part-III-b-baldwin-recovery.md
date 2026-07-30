@@ -13,6 +13,61 @@ measurements, including the frozen control).
 
 ---
 
+## 0. CORRECTION (2026-07-30): this experiment belongs in mmca-clj, not futon5
+
+**The plan below sited the run in futon5 because the evolution machinery is there.
+That was the wrong criterion and cost three dispatches.** The phenomenon lives in
+`mmca-clj`. Recorded here so the detour is not repeated.
+
+What was built in futon5, all verified and committed, all for the wrong substrate:
+heritable `gain`/`width`/`update-prob`-to-zero/initial field (codex-9); a port of
+the causal measure that `mmca-clj` already had (codex-5); an adapter joining them
+(codex-6). Each passed review on its own terms.
+
+Then a 648-config ceiling sweep over that family — 2 fields x 12 sigils x
+gain {0,0.5,1} x width {3,5,9} x update-prob {0,0.5,1} — returned:
+
+    best mean reach 2.667, at gain 0.0, width 3, update-prob 0.0
+
+Three things follow. The ceiling is **below the complex band** (8.00), so the
+family never enters the regime Parts II and III are about. The optimum sits at
+**zero gain and zero rewriting** — a fixed field. And therefore, in that family,
+plasticity is not merely useless but *harmful*.
+
+**That would have produced a false positive.** Run the loop there and gamma falls
+while score holds, which reads as Baldwin completing — when the mechanism is
+"plasticity never helped." Only the rise-then-fall requirement in §5 catches it:
+gamma never rises past 0.5, so the run lands in the bottom row, *experiment
+failed, not the hypothesis*. Preregistering that is the sole reason this did not
+become a claimed result.
+
+Caveats, since 648 configs is not a proof of impossibility: 12 sigils of the
+available set, two field types, one seed and three sites per config. The width
+gene there also compresses via half-majorities rather than Part III's
+`agree k/m`, so it may not carry the mechanism at all.
+
+### What mmca-clj already provides
+
+Three of the four ingredients, each reproduced byte-identically on independent
+hardware:
+
+| ingredient | status in mmca-clj |
+|---|---|
+| plasticity that **helps** | the gain dial, `1.2833` at gamma=0 to `12.3875` at gamma=1, monotone |
+| a blind **destination** in the complex band | fixed rules 90, 110, 54 at `8.00`, `16.68`, `18.30`, reading no phenotype |
+| tape discipline | already stated and enforced in `river_gain.clj`; `regime_placement.clj` corrected |
+| a **selection loop** | **the only missing piece** |
+
+So the build is far smaller than what was dispatched: a population over
+(gain, rule field) with fitness a two-sided band score on reach minus `c`·gain.
+Everything the loop needs to call already exists and is calibrated.
+
+Sections 1-8 below stand as written **except** for their siting: read every
+reference to `exoevolve`, `exotype.clj` and the tower as referring to the
+equivalent to be built in `mmca-clj`. The question, the prediction, the cost
+argument, the preregistered criteria and the failure modes are all
+substrate-independent and unaffected.
+
 ## 1. The question
 
 Part III establishes that an endogenous gain does not escape causal currency: a
