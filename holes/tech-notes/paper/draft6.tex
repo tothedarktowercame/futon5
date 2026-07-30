@@ -189,8 +189,14 @@ the causally current one---marginal statistics matched throughout, so that only
 currency varies---reach rises monotonically out of the ordered band and into the
 complex one fixed by the elementary rules. How legible acquired state is to the
 heritable layer is therefore a quantitative control on dynamical regime rather
-than a categorical distinction, and a substrate able to regulate that gain would
-hold an actuator on its own.}  \keywords{cellular automata, rule evolution,
+than a categorical distinction. We then make that gain endogenous, replacing the
+dial with a local predicate. A predicate blind to the phenotype reproduces the
+dial exactly, linear in its firing fraction; one that reads the phenotype exceeds
+it, by margins growing with the width of the neighbourhood read; and an otherwise
+identical predicate reading a phenotype frozen at the perturbation time does not
+exceed it at all. Since width is the spatial correlation length of the firing
+pattern, correlated firing alone accounts for none of the gain: what a
+self-setting coupling exploits is that what it reads is current.}  \keywords{cellular automata, rule evolution,
   Langton's lambda, self-modifying systems, edge of chaos, artificial
   life, permutation operators, exhaustive classification, damage
   spreading, perturbation analysis}
@@ -296,6 +302,9 @@ Part~I classifies the permutation-propagators, surveys their spatial dynamics,
 and tests the parameter-space reading of the edge of chaos. Part~II explicitly
 drops the restriction to a single permutation-propagator and studies causal
 reach in update architectures built on the same genotype--phenotype substrate.
+Part~III makes the gain of that coupling endogenous rather than imposed, and asks
+whether a composition whose condition reads the lattice escapes the coordinate
+Part~II identifies.
 The exact results hold for the entire $8!$ core. The causal measurement covers
 one principal construction at one lattice width over six seeds, and no
 comparable causal census of either the $8!$ or $8^8$ family is attempted here.
@@ -1154,6 +1163,130 @@ from this than that: whether \emph{any} blind construction could match the
 river is a question about a search we have not run, and
 \suppfindingref{8} reports only that sixteen hand-chosen ones do not.
 
+\part{Endogenous Coupling}
+\label{part:endogenous}
+
+\noindent In Part~II the gain of the phenotype-to-genotype loop is a parameter we
+set. This part asks what happens when it is not: when the coupling is a function
+of the lattice's own local state rather than a dial turned from outside. The
+objects are still compositions of operators Part~I classifies, so nothing new is
+introduced at the level of the substrate; what changes is who sets the gain.
+
+\section{An Endogenous Gain}
+\label{sec:endogenous-gain}
+
+A \emph{conditional composition} applies one operator where a local predicate
+holds and another where it does not: $\mathrm{switch}(c, A, B)$. Throughout this
+part $A$ is conservative transport at unit rate, which sits in the chaotic band
+of the calibration of Section~\ref{sec:causal} at $25.38$, and $B$ is
+holding, which sits in the ordered band at $1.21$. The predicate decides, cell by
+cell and step by step, which applies. Its \emph{firing fraction} $f$---the
+proportion of opportunities at which $A$ is selected---is measured from the run
+rather than prescribed.
+
+Two disciplines make the comparison below meaningful rather than merely
+suggestive, and both are inherited from the gain dial of
+Section~\ref{sec:gain}. First, the transport stream advances once at every
+opportunity whether or not the gate fires, so a predicate that reads the
+phenotype cannot desynchronise the two branches of the damage fork and
+manufacture divergence that is not causal. Second, where the predicate consumes
+randomness of its own, those draws come from a separate stream re-seeded
+identically in both branches, so the gate never itself injects difference.
+
+The first question is what a composition does when its condition carries no
+information about the lattice. A gate firing at a prescribed rate, blind to the
+phenotype, is well described across six rates spanning $f = 0.10$ to $f = 0.94$
+by a line through the holding value,
+%
+\begin{equation}
+  \mathrm{reach}(f) \;=\; 1.21 \;+\; 22.42\,f ,
+  \label{eq:blind-line}
+\end{equation}
+%
+with the unconstrained fit returning $R^{2} = 0.993$. A blind conditional
+composition is therefore \emph{exactly} a gain dial: its duty cycle plays the
+role $\gamma$ plays in Section~\ref{sec:gain}, and reach is linear in it. This is
+worth stating plainly because it is the null against which everything else in
+this part is measured, and because it means the construction adds nothing on its
+own. Making the gain a function of \emph{something} does not by itself buy
+anything; it matters what that something is.
+
+\section{A Reading Gate Exceeds the Dial}
+\label{sec:reading-gate}
+
+Now let the predicate read the phenotype. Write $\mathrm{agree}\,k/m$ for the
+condition that at least $k$ cells of the centred circular $m$-cell phenotype
+neighbourhood agree with the centre. Thirteen such gates were placed on the same
+scale, spanning widths $m \in \{3,5,7,9\}$ and, at each width, strictness from
+bare majority to unanimity.
+
+Every one of them exceeds the blind line of Equation~\ref{eq:blind-line} at its
+own measured firing fraction, and several do so by a wide margin. The largest
+departure is $+22.8$ cells; the widest permissive gate, $\mathrm{agree}\,5/9$,
+reaches $38.23$ while firing on only $63\%$ of opportunities---not merely above
+the blind line but above unit-rate transport's own $25.38$. Firing a chaotic
+operator less often, in the right places, spreads damage further than firing it
+always.
+
+What predicts the size of the departure is the \emph{width} of the neighbourhood
+the gate reads, not how hard the gate is to satisfy. Adding width to a
+quadratic-in-$f$ model of departure raises $R^{2}$ from $0.84$ to $0.96$, at
+$+1.47$ cells per cell of width; adding strictness instead raises it only to
+$0.88$. The design separates the two---the correlation between width and
+strictness across the thirteen gates is $+0.01$---whereas strictness is nearly
+collinear with the firing fraction itself at $-0.91$, so its apparent effect is
+largely $f$ under another name. The model-free version of the same statement is
+that within each of three groups of gates matched on $f$, departure increases
+monotonically with width; in the group near $f \approx 0.65$ the strictness ratio
+is almost constant at $0.56$--$0.60$ while the width nearly doubles.
+
+\section{Currency, Not Correlation}
+\label{sec:currency}
+
+That result admits a deflationary reading, and it is the reading its own
+mechanism suggests. A gate reading $m$ cells has neighbouring decisions sharing
+$m-1$ inputs, so width \emph{is} the spatial correlation length of the firing
+pattern. The blind gate of Equation~\ref{eq:blind-line} draws an independent coin
+per cell and is therefore spatially uncorrelated. Correlated firing of a
+\emph{transport} operator composes adjacent swaps into longer-range movement, so
+a departure that grows with width might be pure geometry, with the phenotype
+playing no part beyond supplying a conveniently correlated field.
+
+The control that separates the two possibilities holds the phenotype still. A
+\emph{frozen} gate applies the identical $\mathrm{agree}\,k/m$ predicate to the
+phenotype as it stood at $t^{*}$: same predicate, same width, same spatial
+statistics, a real phenotype field, and therefore the same correlation structure
+in its firing. What it cannot do is track where the perturbation has since
+spread. Each branch of the damage fork keeps its own $t^{*}$ snapshot, so both
+frozen fields contain the perturbation itself and only the live gate sees its
+consequences---the ablation of Section~\ref{sec:causal} applied to the
+gate rather than to the update.
+
+Across seven pairs matched on $(m,k)$, the live gate exceeds its frozen
+counterpart in every case, by $14.5$ cells on average. More tellingly, every
+frozen departure from the blind line is \emph{negative}, between $-0.04$ and
+$-4.18$. A gate with the same width and the same correlated firing, reading a
+field that is merely stale, sits at or slightly below the spatially uncorrelated
+baseline. Spatial correlation on its own buys nothing here; if anything it costs
+a little. The comparison is also conservative in the direction that matters: the
+frozen gate fires \emph{more} often than its live counterpart in six of the seven
+pairs, so it is given more opportunities and still reaches far less.
+
+The reading we take from this is that the gate is a targeting mechanism, and
+targeting works only on current information. Firing transport where the
+phenotype is \emph{now} locally uniform lifts causal reach far above a blind gate
+at the same rate; firing it where the phenotype \emph{was} uniform at $t^{*}$
+does not, though the two firing patterns share width, spatial statistics and
+rate. So the coordinate that governed in Part~II governs here too, reached by a
+different route: an endogenous gain does not escape the causal currency of what
+the genotype reads, it re-derives it. A composition whose condition is blind
+reproduces the dial exactly; a composition whose condition reads the phenotype
+exceeds the dial precisely to the extent that what it reads is current.
+
+\part*{Discussion}
+\label{part:discussion}
+\addcontentsline{toc}{part}{Discussion}
+
 \section{Limits}
 \label{sec:limits}
 
@@ -1187,7 +1320,7 @@ comparison.
 \section{Conclusion}
 \label{sec:conclusion}
 
-The paper has studied two related objects, and its conclusions must keep them
+The paper has studied three related objects, and its conclusions must keep them
 separate. Part~I concerns the finite permutation core. Its static results are
 exact: a permutation-propagator possesses fixed rules exactly when all cycles
 are even; an all-even permutation with $k$ cycles has $2^k$ fixed rules; and
@@ -1232,34 +1365,65 @@ across $\lambda$, propagator fraction, sustained rule diversity, mutation rate,
 refuge probability, niche width and rule mobility, causal reach never leaves the
 ordered band, and blend strength alone reaches its edge. The substrate carries no
 fitness, so this concerns what the heritable layer can see and not what is
-selected for. Supplement~4 records the separate spatial-domain
+selected for.
+
+Part~III changes the object once more, from an architecture whose gain we set to
+one that computes its own. Its results are narrower than Part~I's and of the same
+kind as Part~II's: finite-run causal measurements over a chosen family of
+predicates, not a characterisation of conditional compositions in general. What
+they establish is a negative and a positive that belong together. A composition
+whose condition is blind to the phenotype reproduces the Part~II dial exactly,
+linear in its duty cycle---so conditional composition is not by itself a new
+mechanism. A composition whose condition reads the phenotype exceeds that dial,
+by margins that grow with the width of the neighbourhood read; but an otherwise
+identical gate reading a phenotype frozen at $t^{*}$ does not exceed it at all,
+and in every tested pair falls slightly below. Width is the spatial correlation
+length of the firing pattern, so this is the comparison that matters: correlated
+firing alone buys nothing, and what the reading gate exploits is that what it
+reads is current. The coordinate is therefore the same one Part~II identifies,
+recovered from a construction that shares none of Part~II's dials. That
+convergence is the strongest connection the paper draws between its parts, and it
+is still a convergence of measurements rather than a theorem. Supplement~4 records the separate spatial-domain
 analysis and the withdrawn boundary statistic; neither is a premise of this
 two-part argument.
 
-\paragraph{Future work.} Two extensions follow from the gain result, and the
-second is the more interesting. The gain is imposed from outside here: $\gamma$ is
-a parameter we set, not a quantity the system controls. The 2014 ancestor of this
-substrate already contains a construction that makes it endogenous---a switch
-that fires a propagator only where the local context carries no new information
-and holds otherwise, so that write-back is state-dependent and requires no
-edge-of-chaos oracle. Its behaviour differs from both of its unconditional
-constituents, preserving rule diversity that unconditional firing destroys while
-remaining more quiescent than holding. Placing $\gamma$ under that kind of local
-control would test whether a system can locate the complex band unaided rather
-than being tuned into it, which is the difference between a dial and a regulator.
+Part~III is narrower still. Its measurements cover one pair of constituents---unit-rate
+transport against holding---and one predicate family, agreement within a centred
+circular neighbourhood. Thirteen conditioned gates at four widths support the width
+gradient; seven matched pairs support the frozen control. Each row is sixteen seeds at
+one lattice width, so the between-seed spread is real and reported rather than
+smoothed. Two limits deserve naming. The frozen gate's firing fraction does not match
+its live counterpart exactly, differing by up to $0.04$; the discrepancy runs in the
+direction that weakens the result, since the frozen gate mostly fires more often and
+still reaches less, but it is not zero. And while the frozen control shows that current
+information is \emph{necessary} for the departure, it does not decompose the width
+gradient: how much of that gradient is currency and how much is the geometry of
+correlated firing is not resolved here. A blind gate with matched correlation length,
+rather than matched rate alone, would separate them and has not been run.
 
-The substrate also makes available a comparison that is usually only possible
-across different models. As it stands it instantiates the Lamarckian arm alone:
-acquired state writes into the heritable layer, and $\gamma$ is the strength of
-that write-back. The Baldwin effect requires something this substrate lacks---a
-selective filter, so that plasticity alters what selection sees and the heritable
-layer follows without direct transcription. Adding selection over a population of
-these architectures would supply that missing ingredient, and because both arms
-would then be expressible in one family, they could be placed on the single
-measure used throughout this paper: the reach of damage-spreading, calibrated
-against rules of undisputed regime. Whether direct write-back and
-selection-mediated assimilation arrive at the same place on that scale, and by
-what route, is a question the family is now equipped to ask.
+\paragraph{Future work.} Part~III closes the first of the two extensions the gain
+result suggested and sharpens the second. The gain is no longer only a parameter we
+set: a predicate reading the lattice sets it, and reach responds to whether what the
+predicate reads is current. What that leaves open is the step from a gate to a
+regulator. The conditions tested here are fixed families chosen by us; nothing yet
+adjusts its own condition in response to how it is doing. The 2014 ancestor of this
+substrate already contains the relevant construction---a switch that fires only where
+the local context carries no new information---so a system that tunes its own gate is
+buildable on this lattice rather than hypothetical, and the question is whether such a
+system settles anywhere in particular on the calibrated scale.
+
+The second extension is unchanged and remains the more interesting. As it stands the
+substrate instantiates the Lamarckian arm alone: acquired state writes into the
+heritable layer, and both the dial of Part~II and the gates of Part~III vary the
+strength or the aim of that write-back. The Baldwin effect requires something this
+substrate lacks---a selective filter, so that plasticity alters what selection sees and
+the heritable layer follows without direct transcription. Adding selection over a
+population of these architectures would supply that ingredient, and because both arms
+would then be expressible in one family they could be placed on the single measure used
+throughout this paper: the reach of damage-spreading, calibrated against rules of
+undisputed regime. Whether direct write-back and selection-mediated assimilation arrive
+at the same place on that scale, and by what route, is a question the family is now
+equipped to ask.
 
 \paragraph{Data and code availability.} Every numerical result in this paper is
 regenerated from source rather than deposited: the generators are seeded, so a
