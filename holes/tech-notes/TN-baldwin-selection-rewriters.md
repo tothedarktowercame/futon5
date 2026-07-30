@@ -98,3 +98,92 @@ population evaluation is `pmap`-parallel; determinism was re-verified
 (byte-identical output twice) before renting anything.
 
 That run is the first in which the degeneration row is testable.
+
+
+---
+
+## 5. Selection under cost, with a reachable blind destination (2026-07-30)
+
+Eight arms, 30 generations, population 24, 3 seeds x 10 sites, warm-up 8, run on a
+rented 32-vCPU box. Data in `mmca-clj/data/baldwin/`.
+
+### 5.1 The scalar-gain landscape is a spike, so no cost could have worked
+
+This is the most reusable result here and it stands independent of any selection
+run. Take the published gain dial and score it two-sided against the calibration
+(complex band 8--22, centre 15, half-width 7):
+
+| gamma | reach | band-score |
+|--:|--:|--:|
+| 0.875 | 7.375 | **0.000** |
+| 1.000 | 12.387 | **0.627** |
+
+Band-score is **exactly zero for every gamma below 1.0**, because reach at
+`gamma = 0.875` is `7.375` and the complex band begins at `8.00`. The gain curve
+is convex enough that only full plasticity clears the threshold.
+
+So dropping one gamma level costs the *entire* score while saving only `c x 0.125`.
+Retreat pays only when `c > 5.01`. The costs tested were `0.05`--`0.40`, about
+**13x too small** -- and raising `c` past `5.01` would not produce gradual retreat
+either, it would abandon plasticity outright. There is no intermediate regime.
+
+**Gradual assimilation is geometrically impossible under a scalar gain.** The cost
+sweep must therefore be read as *this parameterisation cannot express partial
+assimilation*, not as *Baldwin did not complete*. The four cost arms coming out
+identical in gamma, reach and update is the signature of exactly this, not a defect.
+
+### 5.2 Results
+
+| arm | final gamma | score | reach | plastic | criterion |
+|---|--:|--:|--:|--:|---|
+| c=0.05 | 0.970 | 0.569 | 11.35 | 1.000 | (b) gamma held |
+| c=0.10 | 0.970 | 0.521 | 11.35 | 1.000 | (b) |
+| c=0.20 | 0.970 | 0.424 | 11.35 | 1.000 | (b) |
+| c=0.40 | 0.970 | 0.230 | 11.35 | 1.000 | (b) |
+| per-cell | 0.964 | 0.392 | 9.90 | 0.963 | (b) |
+| per-cell + HGT | 0.976 | 0.329 | 9.94 | 0.954 | (b) |
+| pin gamma=1 | 1.000 | 0.427 | 11.38 | — | (b) |
+| pin gamma=0 | 0.000 | 0.000 | 0.70 | — | blind ceiling |
+
+Every arm is criterion (b). Gamma rose and did not fall while score was
+maintained, in every condition. All arms beat the blind ceiling comfortably, so
+the maintenance claims are not vacuous.
+
+### 5.3 A refuted prediction, and why it is the useful part
+
+**Predicted:** per-cell `mean-plastic` would fall toward `0.73` and stall, since
+the live read selects a different rule in `73.1%` of cell-steps, leaving ~27%
+assimilable free. **Observed: `0.963`** -- about 4% assimilated, not 27%.
+
+The prediction was wrong because **73.1% is a figure about cell-STEPS, not cells.**
+Treating "27% of cell-steps are indifferent" as "27% of cells are indifferent"
+assumes indifference is concentrated in particular cells. If it is instead
+scattered across time, then over 120 steps every cell is determinative at some
+point and none is assimilable for free.
+
+That is the structural difference from Hinton & Nowlan. Their loci are
+**persistently** relevant or irrelevant -- a `?` at position 7 either matters for
+the whole lifetime or never does -- so partial assimilation accumulates. Ours is
+**transient**: a cell whose read is irrelevant at one step may be decisive at the
+next. Assimilation needs indifference **spatially localised**; here it is
+**temporally scattered**.
+
+A secondary effect compounds it: at `c = 0.05`, assimilating one cell of eighty
+saves about `0.0006` while reach swings `9.4`--`11.5` between generations, so the
+per-cell signal sits below evaluation noise.
+
+### 5.4 Horizontal transfer was not the bottleneck
+
+Contiguous segment transfer, carrying field and mask together, moved
+`mean-plastic` from `0.963` to `0.954` -- roughly 1%, within noise. Recombination
+therefore does **not** rescue assimilation here, which supports §5.3: the problem
+is the absence of stable assimilable loci, not an inability to assemble them.
+
+### 5.5 The measurement that would settle it, not yet run
+
+For each cell, the fraction of steps at which the live and frozen reads select the
+same rule. If that distribution is flat near `0.27` for every cell, indifference is
+scattered and no per-cell scheme can work. If it is bimodal with some cells near
+`1.0`, those are genuine assimilable loci and the failure is the noise floor
+instead. This is a direct measurement rather than the inference above, and it
+distinguishes the two explanations that §5.3 cannot separate.
