@@ -187,3 +187,76 @@ scattered and no per-cell scheme can work. If it is bimodal with some cells near
 `1.0`, those are genuine assimilable loci and the failure is the noise floor
 instead. This is a direct measurement rather than the inference above, and it
 distinguishes the two explanations that §5.3 cannot separate.
+
+
+## 6. Hold mask: fixed loci, and a drift baseline that changes the reading
+
+**Section 5.3's per-cell result measured the wrong thing and is superseded.** That
+`:mask` chose only which phenotype a cell *read* (live or frozen) while the rewrite
+stayed on a global `update-prob`, so a "non-plastic" cell still churned its rule
+every step from stale context. Nothing was ever fixed, and `mean-plastic = 0.963`
+therefore said nothing about assimilation. Joe identified this by asking why a
+genotype like the elisp `刀` -- the same eight-bit string in every universe the
+genome meets -- could not be treated as Hinton & Nowlan treat theirs.
+
+`:hold` is the corrected mechanism: per-cell, controlling the **rewrite**. A held
+cell keeps its inherited rule permanently, so its value is invariant across
+evaluations, which is H&N's fixed locus. Mutation flips each locus independently
+between plastic and fixed. Cost charges for the fraction NOT held, so assimilating
+genuinely saves.
+
+Verified: nothing held with `update-prob = 1` reproduces the published dial exactly
+(`1.2833` / `12.3875`); all held gives `1.2875`, confirming the field truly stops
+changing.
+
+### 6.1 Result
+
+24 generations, population 16, `c = 0.05`, warm-up 8.
+
+| arm | gamma | score | reach | held | neutral drift | ratio |
+|---|--:|--:|--:|--:|--:|--:|
+| hold | 0.696 | 0.074 | 6.19 | 0.0250 | 0.3007 | **0.08x** |
+| hold + HGT | 0.991 | 0.226 | 9.08 | 0.0680 | 0.3007 | **0.23x** |
+
+### 6.2 The drift baseline is the guard, and it inverts the naive reading
+
+The held fraction *rising* while score is maintained looks like assimilation. It is
+not, without a null. Mutation flips each locus with probability `0.02` per
+generation, so from all-plastic the neutral expectation is
+`0.5 (1 - e^{-2 x 0.02 n})`, giving `0.3007` at `n = 23`.
+
+Observed held fractions are `0.0250` and `0.0680` -- **0.08x and 0.23x of neutral
+drift**. Holding is not being selected *for*; it is being selected **against**, by a
+factor of four to twelve. That is what should happen when a held cell keeps a
+*random* inherited rule and an all-held field scores only `1.2875`: every hold is a
+liability, not a saving.
+
+**Any future claim about the hold fraction must be stated against this baseline.**
+Three times in this line of work a number moved in the expected direction and meant
+something else -- "100% of peak" with a peak of zero, cell-steps read as cells, and
+now a falling plastic fraction that is slower than drift.
+
+### 6.3 Horizontal transfer reversed its verdict
+
+In the scalar and read-mask designs, HGT was worth nothing (`0.963` against
+`0.943`, within noise). Here it is the difference between climbing and not: without
+it the population stalls at `gamma = 0.696`, reach `6.19`; with it, `gamma = 0.991`
+and reach `9.08`, into the complex band.
+
+Recombination's value scales with the number of independent loci, and the genome
+went from about three scalars to eighty hold loci. This is a result about method
+rather than about Baldwin, and it is worth carrying into any future design on this
+substrate.
+
+### 6.4 Standing
+
+Gamma rose and did not fall while score was maintained, in both arms. The
+prediction on record holds -- and this is the first version of the experiment in
+which that is a measurement rather than an artefact of a design that could not have
+shown otherwise.
+
+`codex-1`'s review adds the gate that should have come first: the design is not
+structurally validated until a **high-function static endpoint** and a
+**score-preserving partial-hold path** are shown to exist. Section 6.1 is direct
+evidence the first fails -- if holding were toward something good, selection would
+not suppress it four- to twelve-fold below drift.
