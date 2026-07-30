@@ -23,123 +23,123 @@ all. That is assimilation failing *by construction* — we froze the read by han
 The selection question is whether assimilation fails *under evolution*, when
 nothing is frozen by hand and a population is free to find whatever works:
 
-> Make the coupling gain heritable, select on causal reach, and watch the gain's
-> trajectory. Does it rise and then fall while reach is maintained?
+> Make the coupling gain heritable and costly, select on causal reach, and watch
+> the **joint** trajectory of gain and score. Does the gain fall while score is
+> maintained?
 
-Rise-then-fall with score maintained is the Baldwin signature: what was first
+Rise-then-fall *with score maintained* is the Baldwin signature: what was first
 achieved by reading the phenotype comes to be achieved without reading it.
 
-## 2. The prediction, and why
+## 2. Two corrections to an earlier draft of this plan
 
-**We predict the gain rises and does not fall.** Four measurements support this,
-all prior:
+**(a) Plasticity must cost something.** The first version of this note made γ
+heritable but free, and then predicted γ would not fall. That is close to a
+tautology: nothing selects against a costless trait. Joe's diagnostic case is skin
+pigmentation — melanin recedes at high latitude because it *costs* something,
+not merely because sun is scarce. Assimilation's second phase is driven by the
+cost of plasticity, so a design without such a cost cannot exhibit it and cannot
+test for it.
 
-1. **The gain curve is convex.** 45% of the river's span arrives in the last
-   eighth of γ (`TN-coupling-gain.md`). A partially assimilated exotype collects
-   almost nothing, so selection has no gradient to climb toward blindness.
-2. **The read is determinative, not a tiebreak.** The live context selects a
-   different rule than a frozen one in 73.1% of cell-steps, against ~75% for an
-   uninformative re-selection (`TN-coupling-gain.md`). There is no common case a
-   blind exotype could encode.
-3. **Sixteen blind exotypes were tried by hand and none matched the river** —
-   best 8.15 against 12.97 (`TN-coupling-gain.md`).
-4. **The frozen gate collects nothing.** Same predicate, width and spatial
-   statistics, reading a field held at `t*`: every departure negative, and the
-   live gate wins 7 of 7 pairs by 14.5 cells
-   (`TN-exotype-placement.md`). This is the assimilated form scoring at baseline,
-   measured rather than argued.
+Note what does *not* substitute. Scoring two-sided against the elementary-rule
+calibration penalises γ high enough to tip into chaos, but that is a cost on the
+**outcome**, not on the **mechanism**. It produces an optimal γ\* the population
+climbs to and sits at. For a retreat you need blind to beat reading *at matched
+outcome*, which requires charging for the reading itself.
 
-If the prediction holds, the claim is sharper than "Baldwin did not occur here":
-it is that **Baldwin cannot complete in this substrate in principle**, because
-the information plasticity supplies is irreducibly dynamic rather than a fixed
-target waiting to be encoded. Hinton & Nowlan's genome can express the answer;
-here the answer changes every step. A negative result of that shape is worth more
-than a positive one would be, and it is falsifiable.
+**(b) The convexity argument was filed on the wrong side.** The gain curve's
+convexity — 45% of the river's span in the last eighth of γ
+(`TN-coupling-gain.md`) — was listed as supporting a stable high γ. It does the
+opposite. With a cost on reading, convexity predicts **bistability**: pay in full
+for the reach or don't pay and don't get it, with little worth having in between.
+Under sufficient cost that predicts an *abrupt* collapse to γ=0, which is a fall.
+Convexity therefore bears on the *shape* of any transition, not on whether one
+occurs.
 
-## 3. What must be built
+## 3. Does Baldwin have a destination? Yes — and the first plan could not reach it
 
-The machinery exists. `src/futon5/mmca/` has `exotype.clj`, `genoevolve.clj`,
-`exoevolve.clj` (short-horizon exotype evolution) and `xenoevolve.clj` (slow
-outer loop). The gaps are narrow and worth stating precisely so they are not
-overstated.
+Baldwin needs somewhere for the phenotypic solution to be encoded. The strongest
+form of the "cannot complete" claim was that no blind alternative exists. **That
+is false as stated, and the paper's own calibration says so.**
 
-### G1 — the two lines are not wired together
+| blind construction | reach | band |
+|---|--:|---|
+| rule 90 | 8.00 | complex |
+| rule 110 | 16.68 | complex |
+| rule 54 | 18.30 | complex |
+| rule 30 | 36.45 | chaotic |
 
-The tower and its evolution loops live in futon5's cyber-mmca line; Part III's
-measurements live in `mmca-clj` and know nothing about them. The exotypes have
-never been handed to `exoevolve`.
+These are fixed elementary rules. They read no phenotype, carry no coupling, and
+three of them sit squarely in the complex band that two-sided scoring targets. A
+genotype field that simply *is* rule-110-like, updating not at all, scores well
+with γ = 0 and pays no plasticity cost. That is a complete Baldwin destination.
 
-*Closure:* the smaller move is to bring the causal measure to the tower, not the
-tower to `mmca-clj` — port `regime_placement.clj`'s damage protocol as a scoring
-function callable from `exoevolve`. It is one paired run per evaluation, which is
-the cost driver of the whole experiment (see §6).
+So why did sixteen hand-tried blind exotypes top out at 8.15? Because they were
+blind *rewriters* — operators that still rewrite the rule field — not fixed
+fields. The search never included the destination.
 
-### G2 — no heritable gain gene
+Two consequences for the design, and they are the difference between an
+experiment that can recover Baldwin and one that cannot:
 
-Decoding an exotype (`exotype.clj:55-67`) yields `rotation` (4 values),
-`match-threshold` (9 values), `update-prob` (4 values) and `mix-mode` (8 values).
-There is no gene governing whether, or how much, the local regime reads the
-phenotype. γ is a parameter added by hand to study one construction.
+### G5 — plasticity must be switchable off
 
-*Closure:* add γ as a heritable field, mutable like any other gene. Its
-resolution matters given the convexity in §2.1 — too coarse and the loop cannot
-express a partial retreat, which is precisely the trajectory we are watching for.
-Start at 8 levels.
+`exotype.clj:59` gives `update-prob ∈ {0.25, 0.5, 0.75, 1.0}`. The floor is
+`0.25`, so the genotype can never stop rewriting. A population cannot reach a
+fixed field, which is exactly the destination §3 identifies. **`update-prob` must
+be able to reach 0.**
 
-### G3 — the fitness is a proxy
+### G6 — the initial genotype field must be heritable
 
-`exoevolve` blends score modes (`legacy`, `triad`, `shift`) with xenotype and
-hexagram weights. The xenotype layer scores edge-of-chaos *appearance*,
-penalising stasis and confetti — the same two-sided intent the damage-spreading
-scale measures, but not the same instrument.
+If every generation starts from a fresh random rule field, no "good fixed field"
+can ever be inherited, and assimilation has nothing to accumulate in. The field
+must be part of the heritable material alongside the exotype genes.
 
-*Closure:* substitute the causal measure, with the proxy retained as a cheap
-pre-filter if the cost in §6 bites.
-
-### G4 — width is not a gene (new; found while scoping)
-
-This one is not in the companion note and it changes the plan. Part III's result
-is that **width** governs the departure — R² from 0.84 to 0.96 when width is
-added, against 0.88 for strictness, which is itself nearly collinear with firing
-rate. But the evolvable exotype carries `match-threshold` (strictness) and
-`update-prob` (duty cycle) and **no width gene at all**.
-
-So the current population can vary the two parameters Part III shows do not
-govern, and cannot vary the one that does. Selection would be searching a space
-that excludes the answer. Width must become heritable or the run is
-uninterpretable — a null could mean "Baldwin cannot complete" or merely "the
-population could not express reach in the first place", and those must not be
-confusable.
+Without G5 and G6 a null result would mean only that we forbade the answer. With
+them, Baldwin has a route we can name in advance: **evolve a rule field
+intrinsically in the complex band, then let γ and `update-prob` fall away.**
 
 ## 4. The experiment
 
-- **Heritable:** γ (8 levels), neighbourhood width `m` ∈ {3,5,7,9}, plus the
-  existing `rotation`, `match-threshold`, `update-prob`, `mix-mode`.
+- **Heritable:** γ (8 levels), neighbourhood width `m ∈ {3,5,7,9}` (G4), the
+  initial genotype field (G6), `update-prob` extended to include 0 (G5), plus the
+  existing `rotation`, `match-threshold`, `mix-mode`.
+- **Cost:** an explicit per-step charge proportional to γ, swept over `c` rather
+  than fixed. A single hand-chosen `c` can produce any answer; the object is the
+  *range* of `c` over which the joint trajectory decouples, if any.
 - **Selected on:** causal reach at the Part III protocol (L=80, t\*=60, dt=59),
-  scored two-sided against the elementary-rule calibration so that both stasis
-  and saturation are penalised, not raw reach.
-- **Watched:** the population trajectory of γ against score, generation by
-  generation.
-- **Controls:** (a) a γ-frozen-at-1 lineage, to confirm selection can hold score
-  without varying γ; (b) a γ-frozen-at-0 lineage, to establish the blind ceiling
-  under selection rather than by hand — this is the direct successor to the
-  sixteen hand-tried blind exotypes in §2.3.
+  scored two-sided against the elementary-rule calibration, minus `c·γ`.
+- **Watched:** the joint trajectory (γ, score) per generation, plus the route —
+  `update-prob`, and whether the field has drifted toward a fixed high-reach
+  configuration.
+- **Controls, wired before the main run:** γ pinned at 1 (can score be held
+  without varying γ?); γ pinned at 0 with the field free (the blind ceiling under
+  selection, the direct successor to the sixteen hand-tried exotypes).
 
-## 5. Preregistered criteria
+## 5. Prediction and preregistered criteria
 
-Fixed now, before any run. Three of the last four positive-looking results in
-this line dissolved on inspection, so the criteria are written where tuning
-cannot reach them.
+**The prediction is now genuinely uncertain, and weaker than the earlier draft's.**
+With G5 and G6 in place a blind destination exists and is reachable, so the
+strong claim — that Baldwin cannot complete in this substrate in principle — is
+not defensible in advance. What survives from the earlier reasoning is narrower:
+the live read selects a different rule than a frozen one in 73.1% of cell-steps,
+and the frozen gate collects nothing, so there is no blind *rewriter* that mimics
+the read. Assimilation, if it happens, should therefore route through **abandoning
+rewriting altogether** rather than through a cleverer blind rewriter.
+
+That is a specific, falsifiable expectation about the *route*, and it is what to
+instrument.
 
 | outcome | criterion |
 |---|---|
 | **Baldwin completes** | mean γ rises above 0.5, then falls below 0.25 for ≥10 consecutive generations, while mean score stays ≥90% of its peak |
-| **Baldwin does not complete** (predicted) | mean γ rises and stays above 0.5 while score is maintained; no sustained retreat |
-| **Assimilation via another route** | score maintained with γ below 0.25, but the γ-frozen-at-0 control reaches comparable score — assimilation happened, *not* through γ. Report as such; do not call it Baldwin |
-| **Experiment failed, not the hypothesis** | score never rises above the γ-frozen-at-0 control. Selection had no traction; the run says nothing about Baldwin and must not be reported as a null |
+| **Baldwin completes by degeneration** (expected route if it completes) | as above, *and* `update-prob` falls toward 0 with the field converging on a fixed high-reach configuration. Assimilation is real but the system has stopped being a two-layer MetaCA — report this explicitly rather than as unqualified Baldwin |
+| **Baldwin does not complete** | γ stays above 0.5 with score maintained, or γ falls and score falls *with* it — loss of function, not assimilation |
+| **Assimilation via another route** | score maintained with γ below 0.25 while `update-prob` stays high — a blind rewriter after all, contradicting the 73.1% measurement. Would be the most surprising outcome and needs the hardest scrutiny |
+| **Experiment failed, not the hypothesis** | score never rises above the γ-pinned-at-0 control. Selection had no traction; says nothing about Baldwin and must not be reported as a null |
 
-That last row is the one to guard hardest. A flat run is the most likely outcome
-of a first attempt and the easiest to misreport as a result.
+Two disciplines on top. The decisive observable is the **joint** trajectory, never
+γ alone — the earlier draft's criteria led on γ with score as a side condition,
+and that ordering is what hid the missing cost. And the prediction in this section
+stands as written; it is not to be revised after seeing a trajectory.
 
 ## 6. Cost, and where it bites
 
