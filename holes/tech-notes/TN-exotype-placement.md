@@ -82,6 +82,112 @@ By contrast, exotype exceeds `hold` in all four seeds. The null concerns whether
 the switch adds reach beyond the active constituent, not whether mutation and
 no mutation are equivalent.
 
+## What predicts departure: neighbourhood width, not strictness
+
+**Measured 2026-07-29 by the reviewer** (the run exceeds the 30-minute Codex
+subprocess cap, so it was executed here as a systemd unit rather than belled).
+Thirteen conditioned gates `switch(agree k/m, transport-1.00, hold)` spanning
+four widths, each up to unanimity.
+
+### Baseline
+
+Departure is measured against the **rate-matched random** control, not against
+the naive linear model. The six paired controls fit
+`reach = 1.2063 + 22.4248*f`, with the intercept **constrained to `hold`**: at
+`f=0` the switch *is* hold, and the unconstrained fit put the intercept at
+`0.6031`, below hold, which inflated departures at very small `f` by about
+`+0.6`. Four of the thirteen gates fire at `f < 0.10`, below the paired-control
+range, so their baseline is an anchored extrapolation rather than a measurement.
+Their departures are near zero either way.
+
+### Result
+
+| m | k | k/m | f | reach | departure |
+|--:|--:|--:|--:|--:|--:|
+| 3 | 2 | 0.67 | 0.7314 | 25.86 | +8.26 |
+| 3 | 3 | 1.00 | 0.0994 | 3.51 | +0.07 |
+| 5 | 2 | 0.40 | 0.9353 | 30.38 | +8.20 |
+| 5 | 3 | 0.60 | 0.6832 | 33.16 | +16.63 |
+| 5 | 4 | 0.80 | 0.1202 | 6.68 | +2.78 |
+| 5 | 5 | 1.00 | 0.0249 | 1.39 | -0.37 |
+| 7 | 4 | 0.57 | 0.6468 | 36.78 | +21.07 |
+| 7 | 5 | 0.71 | 0.2369 | 18.49 | +11.98 |
+| 7 | 6 | 0.86 | 0.0206 | 1.92 | +0.25 |
+| 7 | 7 | 1.00 | 0.0062 | 1.24 | -0.10 |
+| 9 | 5 | 0.56 | 0.6336 | **38.23** | **+22.82** |
+| 9 | 7 | 0.78 | 0.0249 | 2.97 | +1.20 |
+| 9 | 9 | 1.00 | 0.0003 | 1.19 | -0.03 |
+
+Adding a term to a quadratic-in-`f` model of departure:
+
+| model | R^2 | added coefficient |
+|---|--:|--:|
+| `f + f^2` | 0.8425 | — |
+| `f + f^2 + m` (width) | **0.9629** | +1.468 per cell |
+| `f + f^2 + k` | 0.9334 | +1.796 |
+| `f + f^2 + k/m` (strictness) | 0.8769 | -18.601 |
+
+**Width predicts departure; strictness does not.** Width takes R^2 from `0.84`
+to `0.96`; strictness barely moves it. The design separates the two cleanly —
+`corr(m, k/m) = +0.010` across the thirteen gates — whereas strictness is nearly
+collinear with the firing fraction itself (`corr(k/m, f) = -0.906`), so its
+apparent effect is mostly `f` wearing another label.
+
+The model-free version is three matched-`f` groups, each monotone in width:
+
+| f | m=3 | m=5 | m=7 | m=9 |
+|--:|--:|--:|--:|--:|
+| ~0.10-0.12 | +0.07 | +2.78 | | |
+| ~0.02-0.025 | | -0.37 | +0.25 | +1.20 |
+| ~0.63-0.68 | | +16.63 | +21.07 | **+22.82** |
+
+In the third group `k/m` is almost constant (`0.60, 0.57, 0.56`) while `m`
+nearly doubles, so that comparison isolates width on its own.
+
+### Reading
+
+What makes a conditioned gate exceed a rate-matched random one is **how far the
+gate looks**, not how hard it is to satisfy. A wider predicate correlates firing
+over a longer spatial range, and it is that correlation length — not the rate,
+not the threshold — that buys the extra reach. Rate fixes the scale of the
+effect and its non-monotone peak near `f ~ 0.65`; width sets how far above the
+random baseline the gate sits at that rate.
+
+The widest, most permissive gate reaches `38.23`, which is not only in the
+chaotic band but **above `transport-1.00` itself (`25.375`)** while firing on
+only 63% of opportunities.
+
+### Standing
+
+Invariants exact (`explore` `3.3813`, `hold` `1.2063`). Nine protected published
+values unchanged. 16 seeds, ten sites per seed, protocol identical to every
+other row. Tape alignment unchanged from the corrected producer: the transport
+coin is drawn unconditionally before the gate, `agreement-gate?` draws nothing.
+Caveats stated above: four gates sit below the paired-control range, and the
+width coefficient rests on 13 points with four distinct widths.
+
+Producer rerun confirmed byte-identical.
+
+### A deflationary reading this does not exclude
+
+Width is not an incidental parameter: a gate reading `m` cells means adjacent
+cells' decisions share `m-1` inputs, so **width is the spatial correlation
+length of the firing pattern**. The rate-matched random control is an
+independent coin per cell (`(< (rng/rand-double gr) rate)`) and so is spatially
+*uncorrelated*.
+
+The comparison therefore conflates two things: that the gate reads the
+phenotype, and that reading a neighbourhood makes firing correlated in space.
+Correlated firing of a *transport* operator composes adjacent swaps into
+longer-range movement, which would raise reach for purely geometric reasons and
+would say nothing about genotype-phenotype coupling. The width result is
+evidence *for* that deflationary reading, not against it.
+
+The control that separates them is a frozen-phenotype gate: same predicate, same
+width, same spatial statistics, but held at `t*` so it cannot track where the
+perturbation has spread — `river_gain.clj`'s discipline applied to the gate
+rather than to the update. Reported below.
+
 ## Duty-cycle sweep: the condition carries information beyond its rate
 
 **Measured 2026-07-29 (codex-9, job invoke-1785326780212). Reviewed and verified
