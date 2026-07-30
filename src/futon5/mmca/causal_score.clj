@@ -14,6 +14,9 @@
 
 (def ^:private uint32-mask 0xffffffff)
 (def ^:private emacs-int-mask (dec (bit-shift-left 1 61)))
+(def ^:private lattice-width 80)
+(def ^:private burn-in-steps 60)
+(def ^:private damage-steps 59)
 
 (defrecord ^:private EmacsRng [state index])
 
@@ -173,14 +176,14 @@
 (defn- mean [values]
   (/ (reduce + 0.0 values) (double (count values))))
 
-(defn- burn-in [field cfg seed width t-star]
+(defn- burn-in [field cfg seed width]
   (let [source-rng (make-rng (format "prop-%d" seed))
         gate-rng (make-rng (format "gate-%d" seed))
         phenotype (initial-phenotype source-rng width)]
     (loop [time 0
            current-field field
            current-phenotype phenotype]
-      (if (= time t-star)
+      (if (= time burn-in-steps)
         {:field current-field
          :phenotype current-phenotype
          :source-rng source-rng
@@ -192,18 +195,18 @@
 
 (defn- damage-at
   [{:keys [field phenotype source-rng gate-rng]}
-   cfg site t-star dt]
+   cfg site]
   (let [source-a (clone-rng source-rng)
         source-b (clone-rng source-rng)
         gate-a (clone-rng gate-rng)
         gate-b (clone-rng gate-rng)
         perturbed (flip-bit phenotype site)]
-    (loop [time t-star
+    (loop [time burn-in-steps
            field-a field
            phenotype-a phenotype
            field-b field
            phenotype-b perturbed]
-      (if (= time (+ t-star dt))
+      (if (= time (+ burn-in-steps damage-steps))
         (differing-cells phenotype-a phenotype-b)
         (let [[next-field-a next-phenotype-a]
               (advance field-a phenotype-a time source-a gate-a cfg)
@@ -223,37 +226,30 @@
    Options:
    - `:seeds` perturbation seeds (default 0..3)
    - `:sites` perturbation cell indices (default every eighth cell)
-   - `:t-star` burn-in steps (default 60)
-   - `:dt` post-perturbation steps (default 59)
 
    Returns site-level mean/sample-SD plus per-seed means and their sample-SD."
   ([field cfg]
    (reach field cfg {}))
-  ([field cfg {:keys [seeds sites t-star dt]
-               :or {seeds (range 4)
-                    t-star 60
-                    dt 59}}]
+  ([field cfg {:keys [seeds sites]
+               :or {seeds (range 4)}}]
    (let [width (count field)
          sites (or sites (range 0 width 8))
          seeds (vec seeds)
          sites (vec sites)]
-     (when-not (and (pos? width)
+     (when-not (and (= lattice-width width)
                     (fn? (:phenotype-step cfg))
                     (seq seeds)
                     (seq sites)
-                    (every? #(<= 0 % (dec width)) sites)
-                    (nat-int? t-star)
-                    (nat-int? dt))
+                    (every? #(<= 0 % (dec width)) sites))
        (throw (ex-info "Invalid causal-reach field, configuration, or options"
                        {:width width
+                        :required-width lattice-width
                         :seeds seeds
-                        :sites sites
-                        :t-star t-star
-                        :dt dt})))
+                        :sites sites})))
      (let [by-seed
            (mapv (fn [seed]
-                   (let [state (burn-in field cfg seed width t-star)
-                         damages (mapv #(damage-at state cfg % t-star dt) sites)]
+                   (let [state (burn-in field cfg seed width)
+                         damages (mapv #(damage-at state cfg %) sites)]
                      {:seed seed
                       :damages damages
                       :mean (mean damages)}))

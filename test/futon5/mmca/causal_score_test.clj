@@ -49,9 +49,14 @@
                  ;; Deliberately branch on the perturbed phenotype. The RNG
                  ;; vectors have already been drawn before this branch.
                  (if (= \1 (nth phenotype 0)) field field))}
-          _ (causal/reach (fixed-field 204) cfg
-                          {:seeds [0] :sites [0] :t-star 0 :dt 1})
-          [branch-a branch-b] @calls]
-      (is (not= (:gate-bit branch-a) (:gate-bit branch-b)))
-      (is (= (:source-draws branch-a) (:source-draws branch-b)))
-      (is (= (:gate-coins branch-a) (:gate-coins branch-b))))))
+          _ (causal/reach (fixed-field 204) cfg {:seeds [0] :sites [0]})
+          fork-calls (drop 60 @calls)
+          branch-pairs (partition 2 fork-calls)]
+      (is (some (fn [[a b]] (not= (:gate-bit a) (:gate-bit b)))
+                branch-pairs))
+      (is (every? (fn [[a b]]
+                    (= (:source-draws a) (:source-draws b)))
+                  branch-pairs))
+      (is (every? (fn [[a b]]
+                    (= (:gate-coins a) (:gate-coins b)))
+                  branch-pairs)))))
