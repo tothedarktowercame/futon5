@@ -82,6 +82,72 @@ By contrast, exotype exceeds `hold` in all four seeds. The null concerns whether
 the switch adds reach beyond the active constituent, not whether mutation and
 no mutation are equivalent.
 
+## The frozen-phenotype control: causal currency, not spatial correlation
+
+**Measured 2026-07-29 by the reviewer.** This is the control that could have
+killed the exotype line, and it did not.
+
+### What it isolates
+
+The width result below is equally consistent with a deflationary reading: a gate
+reading `m` cells has firing correlated over length `m`, the rate-matched random
+control is an independent per-cell coin and therefore uncorrelated, and
+correlated firing of a *transport* operator composes adjacent swaps into
+longer-range movement. That would be geometry, not coupling.
+
+The frozen gate separates the two. It applies the identical `agree k/m`
+predicate to a phenotype **held at `t*`** — same width, same predicate, same
+spatial statistics, a real phenotype field — so its firing is correlated exactly
+as the live gate's is. What it cannot do is track where the perturbation has
+since spread. Each fork branch holds its own `t*` snapshot (`p` and `pB`), so
+both frozen fields contain the perturbation; only the live gate sees its
+consequences. This is `river_gain.clj`'s discipline applied to the gate rather
+than to the update.
+
+### Result
+
+| m | k | f live | f frozen | reach live | reach frozen | dep live | dep frozen | live − frozen |
+|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 3 | 2 | 0.7314 | 0.7242 | 25.86 | 13.27 | +8.26 | **-4.18** | +12.59 |
+| 5 | 3 | 0.6832 | 0.6949 | 33.16 | 13.26 | +16.63 | **-3.53** | +19.90 |
+| 5 | 4 | 0.1202 | 0.1607 | 6.68 | 2.81 | +2.78 | **-2.00** | +3.87 |
+| 7 | 4 | 0.6468 | 0.6592 | 36.78 | 12.01 | +21.07 | **-3.98** | +24.77 |
+| 7 | 5 | 0.2369 | 0.2514 | 18.49 | 4.58 | +11.98 | **-2.27** | +13.92 |
+| 9 | 5 | 0.6336 | 0.6509 | 38.23 | 12.48 | +22.82 | **-3.32** | +25.75 |
+| 9 | 7 | 0.0249 | 0.0383 | 2.97 | 2.02 | +1.20 | **-0.04** | +0.94 |
+
+Live exceeds frozen in **7 of 7 pairs**, mean `+14.53` cells (SD `9.68`). Mean
+departure is `+12.10` live against `-2.76` frozen.
+
+**Every frozen departure is negative.** A gate with the same width and the same
+spatial correlation, reading a stale field, sits at or slightly *below* the
+uncorrelated random baseline. Spatial correlation alone therefore buys nothing;
+if anything it costs a little. The deflationary reading is excluded.
+
+The comparison is also conservative on rate: the frozen gate fires *more* often
+than its live counterpart in 6 of 7 pairs (mean `+0.015`, max discrepancy
+`0.041`), so it is being given more opportunities and still reaches far less.
+
+### Reading
+
+The gate is a **targeting** mechanism, and targeting only works on current
+information. Firing transport where the phenotype is *now* locally uniform
+raises causal reach far above a rate-matched blind gate; firing it where the
+phenotype *was* uniform at `t*` does not, even though the two firing patterns
+have the same width, the same spatial statistics and the same rate. What the
+conditioned gate exploits is the causal currency of the phenotype it reads —
+which is the same coordinate Part II identifies as the order parameter, reached
+by a different construction.
+
+### Caveats
+
+Seven pairs, 16 seeds each, one transport constituent, one predicate family. The
+frozen firing fraction differs from the live one by up to `0.041`, largest in
+relative terms at `(5,4)` where frozen fires 34% more often — in the direction
+that weakens rather than flatters the result. The width effect reported below is
+still a mixture: currency is now shown to be necessary, but how much of the
+width gradient is currency and how much is geometry is not resolved here.
+
 ## What predicts departure: neighbourhood width, not strictness
 
 **Measured 2026-07-29 by the reviewer** (the run exceeds the 30-minute Codex
