@@ -19,6 +19,10 @@
 (def ^:private mix-modes
   [:none :rotate-left :rotate-right :reverse :xor-neighbor :majority :swap-halves :scramble])
 
+(def gain-levels
+  "Heritable coupling-gain levels, including fully frozen and fully live reads."
+  (mapv #(/ (double %) 7.0) (range 8)))
+
 (defn- rand-double
   "Get a random double [0,1), optionally using provided RNG for reproducibility."
   [^java.util.Random rng]
@@ -53,6 +57,7 @@
 (defn- sigil->params [sigil]
   (let [bits (sigil-bits sigil)
         rotation (mod (bits->int (subs bits 0 2)) 4)
+        gain (nth gain-levels (bits->int (subs bits 0 3)))
         threshold-idx (bits->int (subs bits 2 5))
         match-threshold (/ (double (inc threshold-idx)) 9.0)
         invert? (= \1 (nth bits 5))
@@ -61,6 +66,7 @@
         mix-mode (nth mix-modes (mod idx (count mix-modes)))
         mix-shift (mod (quot idx 3) 4)]
     {:rotation rotation
+     :gain gain
      :match-threshold match-threshold
      :invert-on-phenotype? invert?
      :update-prob update-prob

@@ -179,7 +179,7 @@
 (defn- rng-phenotype-string [^java.util.Random rng length]
   (apply str (repeatedly length #(rng-int rng 2))))
 
-(defn- pick-exotype [^java.util.Random rng tier]
+(defn pick-exotype [^java.util.Random rng tier]
   (let [sigils (mapv :sigil (ca/sigil-entries))
         sigil (nth sigils (rng-int rng (count sigils)))]
     (case tier
@@ -190,7 +190,7 @@
               (exotype/promote sigil))
       (exotype/lift sigil))))
 
-(defn- mutate-exotype [^java.util.Random rng exotype tier]
+(defn mutate-exotype [^java.util.Random rng exotype tier]
   (let [roll (.nextDouble rng)
         sigil (if (< roll 0.5)
                 (:sigil (pick-exotype rng tier))
@@ -198,8 +198,11 @@
         tier (cond
                (not= tier :both) tier
                (< roll 0.75) (if (= :local (:tier exotype)) :super :local)
-               :else (or (:tier exotype) :local))]
-    (exotype/resolve-exotype {:sigil sigil :tier tier})))
+               :else (or (:tier exotype) :local))
+        resolved (if (= sigil (:sigil exotype))
+                   (exotype/resolve-exotype (assoc exotype :tier tier))
+                   (exotype/resolve-exotype {:sigil sigil :tier tier}))]
+    (assoc-in resolved [:params :gain] (rng-nth rng exotype/gain-levels))))
 
 (defn- load-xeno-specs [path]
   (when path
@@ -429,13 +432,13 @@
   (select-keys entry
                [:schema/version :experiment/id :event :window :stats :delta]))
 
-(defn- evolve-population
+(defn evolve-population
   [^java.util.Random rng population batch tier]
   (let [by-exotype (group-by (fn [entry]
-                               (select-keys (:exotype entry) [:sigil :tier]))
+                               (select-keys (:exotype entry) [:sigil :tier :params]))
                              batch)
         scored (mapv (fn [exo]
-                       (let [runs (get by-exotype (select-keys exo [:sigil :tier]))
+                       (let [runs (get by-exotype (select-keys exo [:sigil :tier :params]))
                              finals (mapv (comp :final :score) runs)
                              mean (if (seq finals)
                                     (/ (reduce + 0.0 finals) (double (count finals)))
