@@ -1287,6 +1287,148 @@ exceeds the dial precisely to the extent that what it reads is current.
 \label{part:discussion}
 \addcontentsline{toc}{part}{Discussion}
 
+\section{Specifying an Experiment Before Running It}
+\label{sec:apparatus}
+
+A selection experiment reports trajectories. Nothing in a trajectory says whether
+the experiment was capable of exhibiting the effect it was built to detect, and a
+run that could not have succeeded produces the same shape of output as one that
+tried and failed. The apparatus described here exists to separate those two cases
+in advance rather than after the fact.
+
+\subsection{The target as a certificate}
+
+We state the target as an object that must be exhibited, not as a pattern to be
+recognised in a plot. A genome carries a rule at each locus together with a flag
+marking that locus as held; a held locus keeps its inherited rule for the whole
+evaluation. Writing $\mathrm{dep}$ for the dependence of a genome on
+within-evaluation rewriting and $\mathrm{perf}$ for its raw function, a completed
+assimilation claim is a path $g_0,\dots,g_n$ satisfying, simultaneously:
+
+\begin{enumerate}
+\item every step $g_i \to g_{i+1}$ is admitted by the declared genetic operators;
+\item $\mathrm{perf}(g_i) \ge \tau$ for every $i$, so the path never leaves the
+      functional region;
+\item $\mathrm{dep}(g_{i+1}) \le \mathrm{dep}(g_i)$ at every step, and
+      $\mathrm{dep}(g_n) < \mathrm{dep}(g_0)$ strictly;
+\item $g_n$ is static --- every locus held; and
+\item $\mathrm{perf}$ of $g_n$ with every locus held still clears $\tau$.
+\end{enumerate}
+
+The last condition is the one most easily omitted. A population can reduce its
+measured dependence without its inherited field being able to carry the behaviour
+alone, and only an explicit held-rule evaluation distinguishes the two.
+
+Selection, however, does not rank raw function. It ranks fitness
+$\mathrm{fit}_c = \mathrm{perf} - c\,\mathrm{dep}$. A path can therefore satisfy
+all five conditions and still be untraversable, because a step that preserves
+function may lose fitness. Adding the requirement
+$\mathrm{fit}_c(g_{i+1}) \ge \mathrm{fit}_c(g_i)$ gives a strictly stronger object,
+and makes a conflict explicit that is otherwise rediscovered empirically: a
+dependence-reducing step keeps its fitness exactly when
+\begin{equation}
+\mathrm{perf}(g_i) - \mathrm{perf}(g_{i+1}) \;\le\;
+  c\,\bigl(\mathrm{dep}(g_i) - \mathrm{dep}(g_{i+1})\bigr),
+\label{eq:selectable}
+\end{equation}
+that is, when the function a hold costs is no more than the cost it saves. If the
+inequality fails at every accessible dependence-reducing step, no traversable path
+exists at any length, and \eqref{eq:selectable} identifies $c$ as the parameter that
+would dissolve the obstruction.
+
+\subsection{Conditions checkable before the run}
+
+Two consequences are checkable without running anything. First, if dependence takes
+a single value across the reachable genomes, the strict-decrease condition cannot be
+met and no certificate of any length exists; a constant axis is therefore a
+disqualifying property of the design, not a null result. Second, and less obviously,
+an axis on which the score is non-constant may still be untraversable: a profile that
+is zero at every level but one has two distinct values and a single transition, and a
+hill-climber cannot cross a lone cliff. Counting the adjacent transitions that carry
+gradient, rather than counting distinct values, is what distinguishes a navigable axis
+from a spike.
+
+This distinction is not hypothetical here. Under the gain parameterisation used in
+\secref{sec:endogenous-gain}, sampled at eight uniform levels, the band score is zero
+at seven of them and positive at the eighth. The design is disqualified by the second
+criterion while passing the first, and re-resolving the parameter where the gain curve
+is convex is what makes the axis traversable --- a change to the experiment rather
+than to the check.
+
+\subsection{Invariants the implementation must satisfy}
+
+The specification above constrains the target. A second family of conditions
+constrains the apparatus, and each is stated as an executable predicate tested
+against the specific failure that motivated it, since a check written from the
+description of an invariant rather than from its counterexample can pass the defect
+it was introduced to catch.
+
+\begin{description}
+\item[Tape alignment.] Both branches of a perturbation fork must consume identical
+  random draws whatever their gates decide. A gate that reads the phenotype fires at
+  different loci in the two branches, so a closed gate that skips a draw
+  desynchronises the tapes and the divergence that follows is an artefact of the
+  generator rather than a causal effect. The discipline is to draw unconditionally and
+  then decide how to use the draw; the check must also confirm the branches actually
+  differed, since equal draw counts are trivially equal when they do not.
+\item[Layering fidelity.] Any extension must reproduce the measurement it extends
+  when its additional machinery is in the neutral position. Determinism does not imply
+  fidelity: an extension can reproduce byte-for-byte and still report a different value
+  than the construction it claims to generalise.
+\item[Linked inheritance.] Every heritable component must travel together under
+  recombination. Transferring a rule without its held flag places it under an
+  unrelated hold pattern, so the operator no longer tests the mechanism it was
+  introduced for.
+\item[Operator reachability.] Every value of every gene must be attainable under
+  mutation. A value the operator cannot reach is present in the representation and
+  absent from the experiment.
+\item[Empirical null.] Any claim of the form ``rarer than chance'' requires a
+  no-selection control running the identical lifecycle. An analytical baseline must
+  match the lifecycle actually implemented: with elitist retention, in which survivors
+  are not re-mutated, the mutation-only expectation for a symmetric flip rate $\mu$
+  after $n$ generations is $\tfrac{1}{2}\bigl(1 - (1-\mu)^n\bigr)$ rather than the
+  familiar $\tfrac{1}{2}\bigl(1 - (1-2\mu)^n\bigr)$.
+\item[Treatment separation.] Selection ranks scores, so a term that shifts every
+  genome equally cannot act. Arms differing in such a term will coincide, and their
+  coincidence is a diagnostic of an inert treatment rather than a robust result.
+\end{description}
+
+Two of these deserve emphasis because they invert a natural reading. The empirical
+null is not a formality: in the runs reported here, dependence falls and the held
+fraction rises under no selection at all, purely because holds accumulate by
+mutation. Declining dependence is therefore not evidence of assimilation, and a
+treatment must be compared against that trajectory rather than against zero.
+Treatment separation is the complementary case: identical arms indicate that the
+parameter never reached selection.
+
+\subsection{Diagnosing a negative result}
+
+When a run produces no certificate, the specification does not say why, and the three
+possible reasons call for different remedies. Holding each locus of a high-performing
+plastic genome at each admissible rule separates them. If no rule preserves function
+at a locus, the plastic computation there is not representable by any single static
+rule. If some rule preserves function but the inherited allele does not, the
+representation suffices and the difficulty is that mutation cannot prepare the allele
+before it is fixed. If the inherited allele itself preserves function and improves
+fitness, an assimilation step was available and the search did not take it. Only the
+first is a statement about the substrate.
+
+The distinction is decidable cheaply. Testing each locus at its current allele costs
+one evaluation per locus rather than one per locus and rule, and settles the third
+case outright when it fires.
+
+\subsection{What the apparatus does not establish}
+
+These conditions are necessary, not sufficient. They constrain what an experiment can
+claim; they do not make its measurements correct, and no invariant here would detect a
+mis-specified dynamics that satisfies all of them. They are also specific to the
+construction studied in Part~III: the certificate assumes a genome with per-locus
+holding and a scalar cost, and neither the conditions nor the diagnostic transfers
+unchanged to a different architecture. Finally, the calibration used by the score must
+share dynamics with the constructions placed on it; boundary conditions that differ
+between a calibration and the objects it calibrates can reorder the reference rules
+themselves, and where that holds the resulting band assignments are not comparable.
+
 \section{Limits}
 \label{sec:limits}
 
