@@ -57,3 +57,14 @@
       (is (every? (fn [[a b]]
                     (= (:gate-coins a) (:gate-coins b)))
                   branch-pairs)))))
+
+(deftest live-gain-scores-above-frozen-gain
+  (testing "the live and frozen reads are causally distinct"
+    (let [base (scored-exotype
+                110 {:width 3 :update-prob 1.0})
+          opts {:seeds [1] :sites (range 0 80 8)}
+          live (score/reach-for (assoc-in base [:params :gain] 1.0) opts)
+          frozen (score/reach-for (assoc-in base [:params :gain] 0.0) opts)]
+      (is (= 0.7 (:mean live)))
+      (is (= 0.1 (:mean frozen)))
+      (is (> (:mean live) (:mean frozen))))))
