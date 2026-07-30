@@ -34,3 +34,26 @@
           opts {:seeds [0 2] :sites [0 16]}]
       (is (= (pr-str (score/reach-for candidate opts))
              (pr-str (score/reach-for candidate opts)))))))
+
+(deftest exotype-fork-tapes-stay-aligned-across-live-phenotype-gates
+  (testing "opposite damaged phenotypes cannot desynchronise source draws"
+    (let [calls (atom [])
+          candidate (scored-exotype
+                     110 {:gain 1.0 :width 3 :update-prob 1.0})
+          _ (score/reach-for
+             candidate
+             {:seeds [0]
+              :sites [0]
+              :on-field-step #(swap! calls conj %)})
+          fork-calls (drop 60 @calls)
+          branch-pairs (partition 2 fork-calls)]
+      (is (some (fn [[a b]]
+                  (not= (nth (:phenotype a) 0)
+                        (nth (:phenotype b) 0)))
+                branch-pairs))
+      (is (every? (fn [[a b]]
+                    (= (:source-draws a) (:source-draws b)))
+                  branch-pairs))
+      (is (every? (fn [[a b]]
+                    (= (:gate-coins a) (:gate-coins b)))
+                  branch-pairs)))))
