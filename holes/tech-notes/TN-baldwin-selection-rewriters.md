@@ -260,3 +260,94 @@ structurally validated until a **high-function static endpoint** and a
 **score-preserving partial-hold path** are shown to exist. Section 6.1 is direct
 evidence the first fails -- if holding were toward something good, selection would
 not suppress it four- to twelve-fold below drift.
+
+
+## 7. CORRECTIONS to section 6, from an independent Codex audit
+
+A read-only audit of the committed code found two errors. Both are confirmed. The
+section-6 claims are withdrawn to the extent stated here.
+
+### 7.1 The HGT arm did not implement the stated experiment
+
+`hgt` splices `:field` and `:mask` and **never `:hold`**
+(`scripts/baldwin_selection.clj`, the `assoc` in `hgt`). `:hold` was added in a
+later commit and the transfer function was not updated, despite a comment claiming
+field and hold travel together. Transferred rules therefore landed under the
+recipient's unrelated hold pattern, so recombination could not combine an inherited
+rule with its fixed/plastic status -- the entire mechanism the arm existed to test.
+
+**The claim that "HGT matters enormously" is withdrawn.** It is not merely
+underpowered at two trajectories; the arm did not run the experiment described.
+Fixed now: `:hold` splices with `:field`.
+
+### 7.2 The mutation baseline used the wrong lifecycle
+
+Survivors are retained **unmutated**; only offspring are mutated. So roughly half
+the population receives a flip opportunity per generation, and the mutation-only
+expectation is `½(1 - 0.98^t)`, not `½(1 - 0.96^t)`.
+
+| | h at t=23 |
+|---|--:|
+| my assumption (every member mutates) | 0.3045 |
+| **actual lifecycle** (half retained) | **0.1858** |
+
+| arm | observed held | reported ratio | **corrected ratio** |
+|---|--:|--:|--:|
+| hold | 0.0250 | 0.083x | **0.135x** |
+| hold + HGT | 0.0680 | 0.226x | **0.366x** |
+
+The qualitative direction survives -- holds are rarer than mutation alone predicts --
+but the magnitude was overstated by roughly 1.6x. The audit also notes, correctly,
+that "neutral drift" is the wrong name: symmetric mutation, not drift, drives the
+expectation toward 0.5. An explicit no-selection control running the identical
+lifecycle would be safer than any analytical baseline.
+
+### 7.3 The endpoint claim was wrong, and our own boundary work confirms it
+
+Section 6.4 said section 6.1 was "direct evidence" that no high-function static
+endpoint exists. **That does not follow.** Showing a *random* all-held field scores
+`1.2875` shows a random endpoint is bad, not that no good endpoint exists.
+
+Independent confirmation arrived the same day from an unrelated investigation: under
+the constructions' own dynamics (`c/phenotype-step`, zero boundaries) a uniform
+**rule-90 field scores 10.00**, inside the target complex band of 8--22. A
+high-function fully static endpoint therefore **does** exist. The endpoint gate
+passes.
+
+Note this also resolves the long-open `19.60` anomaly as a compound of two effects:
+boundary condition (`8.00` periodic to `10.00` zero-boundary) and initial-condition
+generator (`10.00` to `19.60`, `rng/make-rng` versus `java.util.Random`).
+
+### 7.4 What the section-6 runs actually support
+
+Only this: *in two 24-generation trajectories, random hold mutations remained rarer
+than a mutation-only expectation while successful individuals retained high gamma,
+so holding currently-inherited random rules was disadvantageous under this
+treatment.*
+
+The stronger framing -- "the first version where 'no Baldwin' is a measurement
+rather than an artefact" -- is **withdrawn**. It is not an artefact-free measurement
+of Baldwin; it is a measurement of selection against random hold mutations in two
+short unreplicated runs, one of which did not implement its stated mechanism.
+
+### 7.5 What the audit requires next
+
+1. Re-evaluate uniform rule 90 fully held **under the exact production fitness
+   protocol** -- section 7.3 uses the calibration protocol, not the loop's.
+2. An all-held evolutionary control in which `field` rules can still evolve: does
+   genetic search find fixed solutions at all?
+3. Paths that jointly modify `field` and `hold`, rather than freezing an existing
+   plastic genome's random rules.
+4. An exact mutation-only lifecycle control instead of an analytical baseline.
+5. Replicated paired HGT / no-HGT arms with common evaluation cases and separated
+   RNG streams -- enabling HGT currently perturbs subsequent draws.
+6. A fixed training environment with held-out evaluation, if the target is meant to
+   be invariant.
+7. A functional-transfer demonstration: evolved held rules must beat random or
+   ancestral replacements, and the final genome must retain performance when
+   residual rewriting is disabled.
+
+A hold mutation currently does two things at once -- exposes an unprepared inherited
+allele and permanently removes that locus's rewriting -- so there may be no gradual
+route to preparing a rule before fixing it. That is a property of this mutation
+operator, not evidence about Baldwin in general.
