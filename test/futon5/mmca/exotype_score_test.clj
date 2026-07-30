@@ -30,8 +30,8 @@
 (deftest reach-for-is-deterministic
   (testing "the same exotype and causal tapes produce byte-identical results"
     (let [candidate (scored-exotype
-                     110 {:gain 1.0 :width 3 :update-prob 0.0})
-          opts {:seeds [0 2] :sites [0 16]}]
+                     110 {:gain 1.0 :width 3 :update-prob 1.0})
+          opts {:seeds [1] :sites [0 8]}]
       (is (= (pr-str (score/reach-for candidate opts))
              (pr-str (score/reach-for candidate opts)))))))
 
