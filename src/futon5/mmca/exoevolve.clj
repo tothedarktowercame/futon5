@@ -204,7 +204,8 @@
                    (exotype/resolve-exotype {:sigil sigil :tier tier}))]
     (-> resolved
         (assoc-in [:params :gain] (rng-nth rng exotype/gain-levels))
-        (assoc-in [:params :width] (rng-nth rng exotype/width-levels)))))
+        (assoc-in [:params :width] (rng-nth rng exotype/width-levels))
+        (assoc-in [:params :update-prob] (rng-nth rng exotype/update-prob-levels)))))
 
 (defn- load-xeno-specs [path]
   (when path

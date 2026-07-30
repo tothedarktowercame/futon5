@@ -27,6 +27,14 @@
   "Heritable centred phenotype-neighbourhood widths."
   [3 5 7 9])
 
+(def update-prob-levels
+  "Heritable rewrite probabilities. Zero makes plasticity switchable off."
+  [0.0 0.25 0.5 0.75 1.0])
+
+(def ^:private legacy-update-prob-levels
+  "The four-value sigil decoding retained for backward compatibility."
+  [0.25 0.5 0.75 1.0])
+
 (defn- rand-double
   "Get a random double [0,1), optionally using provided RNG for reproducibility."
   [^java.util.Random rng]
@@ -66,7 +74,7 @@
         threshold-idx (bits->int (subs bits 2 5))
         match-threshold (/ (double (inc threshold-idx)) 9.0)
         invert? (= \1 (nth bits 5))
-        update-prob (nth [0.25 0.5 0.75 1.0] (bits->int (subs bits 6 8)))
+        update-prob (nth legacy-update-prob-levels (bits->int (subs bits 6 8)))
         idx (bits->int bits)
         mix-mode (nth mix-modes (mod idx (count mix-modes)))
         mix-shift (mod (quot idx 3) 4)]

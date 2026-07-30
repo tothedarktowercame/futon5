@@ -65,3 +65,26 @@
       (is (every? #(contains? (:params %) :width) next-pop))
       (is (every? (set exotype/width-levels)
                   (map #(get-in % [:params :width]) next-pop))))))
+
+(deftest zero-update-prob-is-reachable-with-legacy-decoding-intact
+  (testing "legacy sigils retain their four meanings while mutation adds zero"
+    (is (= [0.25 0.5 0.75 1.0]
+           (mapv #(get-in (exotype/lift %) [:params :update-prob])
+                 ["一" "乙" "二" "丁"])))
+    (let [mutations (mutation-sequence 505 (exotype/lift "一") 256)
+          reached (set (map #(get-in % [:params :update-prob]) mutations))]
+      (is (= (set exotype/update-prob-levels) reached))
+      (is (contains? reached 0.0)))))
+
+(deftest update-prob-survives-selection-and-reproduction
+  (testing "selection distinguishes otherwise identical genomes by update probability"
+    (let [fixed (assoc-in (exotype/lift "一") [:params :update-prob] 0.0)
+          plastic (assoc-in (exotype/lift "一") [:params :update-prob] 1.0)
+          batch [{:exotype plastic :score {:final 1.0}}
+                 {:exotype fixed :score {:final 10.0}}]
+          next-pop (exoevolve/evolve-population
+                     (java.util.Random. 29) [plastic fixed] batch :local)]
+      (is (= fixed (first next-pop)))
+      (is (every? #(contains? (:params %) :update-prob) next-pop))
+      (is (every? (set exotype/update-prob-levels)
+                  (map #(get-in % [:params :update-prob]) next-pop))))))
