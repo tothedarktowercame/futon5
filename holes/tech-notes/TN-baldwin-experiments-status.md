@@ -292,3 +292,281 @@ training/held-out tasks, and preserve the strict `BaldwinWitness` only as the st
 secondary endpoint. That experiment would test the missing mechanism identified by the
 current evidence rather than spending more computation on a path already shown to be
 poorly supplied.
+
+## Review
+
+**Status: review of §§1--9, 2026-08-01, claude (Fable 5). No new runs.** This section
+adds no measurement of its own. It reports one experiment the note records as pending
+which has in fact been run, one construct-validity defect in the guidance pilot, and one
+mechanism reading which — if correct — subsumes several of the open questions in §8.
+Everything below is either a citation of committed code and data, or an explicitly
+labelled prediction.
+
+Checked: §§1--9 of this note and the three companion notes; `mmca-clj`
+`src/mmca/baldwin_selection.clj`, `src/mmca/baldwin_guidance.clj`,
+`src/mmca/hinton_nowlan.clj`, `src/mmca/core.clj`; the recovered guidance result EDN;
+the 2×2 search `result.edn`; `data/baldwin/indifference_map_fixedgeno.tsv` and the
+commits that produced it.
+
+### R1. The §8 Q2 indifference measurement has been run, and it answers the question
+
+§8 open question 2 and `TN-baldwin-selection-rewriters.md` §5.5 both record the per-cell
+live-versus-frozen agreement measurement as outstanding. It was run on 2026-07-30
+(`mmca-clj/scripts/indifference_map.clj`), and corrected in commit `1081503` after the
+first version drew a fresh genotype per seed and so compared different rules in the same
+cell. The corrected artefact is `mmca-clj/data/baldwin/indifference_map_fixedgeno.tsv`:
+one fixed field, varying only `p0`, which is what a genome in the selection loop actually
+faces.
+
+| quantity | value |
+|---|---|
+| per-cell agreement, distribution | unimodal, mean `0.290`, sd `0.089` |
+| cells above `0.6` agreement | **0** |
+| within-run lag-1 spatial autocorrelation | `+0.422` |
+| cross-seed correlation of the per-cell pattern | `-0.010`, `-0.060`, `+0.111` |
+
+The answer is neither of the two options §8 Q2 poses. The distribution is not flat-and-
+scattered, and it is not bimodal-with-hold-candidates. Indifference **is** spatially
+structured — but the structure is a function of the initial phenotype, not of the genome,
+and it does not survive a change of `p0`. Since a genome is scored across seeds, a
+per-cell hold mask cannot encode a pattern that is redrawn in every universe the genome
+meets.
+
+This should be read as a structural negative for **per-cell** assimilation on this
+substrate, measured rather than inferred. It also gives a single common cause for §7's
+items 3 and 4 and for the withdrawn HGT result: recombination cannot assemble stable
+assimilable loci when no locus is stably assimilable.
+
+**Ledger consequence.** §2's row for the read mask is marked "superseded measurement" and
+§8 Q2 is marked open; both should now point at this artefact instead.
+
+### R2. Fixing `p0` did not make the target stationary, and there is a candidate reason
+
+Commit `1081503` put a prediction on record: "under fixed p0, mean-plastic should fall
+well below 0.96." The 2×2 pilot's fixed-`p0` arms (§5) did not show this — dependence
+`0.9844` and `0.9609`, held fractions `0.0156` and `0.0391`, both still far below the
+`0.1858` mutation-only expectation. Holding remained selected against.
+
+A candidate explanation, from the code rather than from the result: **fixing `p0` removes
+only one of two sources of cross-lifetime variation.** In `gain-genotype-step`
+(`baldwin_selection.clj:102`) every cell draws `source (.nextInt random c/bit-count)` at
+every step, and `propagate-at` (`core.clj:92-103`) uses it to write one *randomly chosen*
+bit of the combined rule. The rewrite is therefore a deterministic combine
+(`original-river-combine-rule`) plus a random single-bit perturbation, and the `random`
+stream is seeded per evaluation seed. Two evaluations of the same genome on the same
+fixed `p0` still follow different rewrite trajectories.
+
+So the fixed-`p0` arm tested a necessary but not sufficient condition. This is a
+hypothesis about why that arm was null, not a finding; R7.1 is the measurement that
+would settle it.
+
+### R3. The guidance pilot's learning-budget axis is confounded with the instrument
+
+This is a construct-validity defect, and it is more serious than the zero-inflation
+described in §6.
+
+`learning-budget` gates rewriting by **absolute timestep**:
+`learning? (< (+ time-offset t) learning-budget)` (`baldwin_selection.clj:130-132`). The
+reach protocol perturbs at `t* = 60` and measures divergence at `t* + dt = 119`
+(`baldwin_selection.clj:179-204`, constants at `:27`). Therefore:
+
+| budget | rewriting during `[0, t*)` | rewriting during the damage window `[t*, 119]` |
+|---:|---|---|
+| 0 | none | none |
+| 4, 16 | first 4 / 16 steps | none |
+| 64 | all 60 steps | **4 of 59 steps** |
+| 120 | all 60 steps | all 59 steps |
+
+The first four budgets do not measure a learning curve. Budget 0 is the static-field
+condition, and its observed reach (`1.18`--`1.41`) matches the all-held static reach of
+`1.1778` in §4.3 and `hold` at `1.10` in §3. The rise from `2.4` at budget 64 to
+`11.5`--`12.8` at budget 120 is the measurement window opening from 4 live steps to 59 —
+which is the same live-versus-frozen axis §3 already established, not a learning rate.
+
+The curve is also **non-monotone**: mean reach runs `1.391 → 0.914 → 0.836 → 2.266 →
+11.500` (no-learning, training) and `1.406 → 0.784 → 0.786 → 2.419 → 12.763` (learning,
+training). Budgets 4 and 16 sit *below* budget 0 in every one of the four
+population×partition cells. That is what one expects from rewriting the inherited field
+for a few steps and then freezing the result: a partially scrambled field is worse than
+the untouched inherited one.
+
+**Consequence for §6 and §9.1.** §6 attributes the null to the preparedness statistic
+being zero-inflated, and §9 proposes a continuous readout as the fix. That fix is
+necessary but not sufficient: a continuous readout on these budgets would still measure
+plasticity-during-the-measurement-window rather than learning speed. A revised
+preregistration must decouple the two — vary the learning budget over `[0, t*)` while
+holding plasticity during `[t*, 119]` identical across arms, or adopt a functional
+readout at `t*` that does not require live rewriting to register.
+
+### R4. One directional signal survives, and it is guidance-shaped
+
+Budget 64 is the only budget at which anything is nonzero, and there the preregistered
+direction holds in **both** partitions:
+
+| partition | no-learning | learning | difference |
+|---|---:|---:|---:|
+| training | 2.2656 | 2.4193 | `+0.154` |
+| held-out | 2.4010 | 2.7083 | `+0.307` |
+
+At budget 0 there is no consistent advantage (training `1.3906` vs `1.4062`, held-out
+`1.2943` vs `1.1823` — opposite signs). That combination — no innate head start, an
+advantage appearing only once rewriting runs — is the shape of **guidance**, not
+assimilation, and it is what §8 Q10 proposes targeting.
+
+This is one evolution seed, on four budget points of which three are empty, under the
+axis defect of R3. It is **not** a result and must not be reported as one. It is a
+directional hypothesis with a sign, which is what the confirmation seeds exist to test —
+once the axis is fixed.
+
+**Do not spend the registered confirmation seeds yet.** Both preregistrations
+(`[20260801, 20260802]` for search, `[20260803, 20260804, 20260805]` for guidance) are
+still unspent per §8 Q8. Running them against a confounded budget axis would consume the
+preregistration without testing the claim.
+
+### R5. The inherited field carries no selection gradient while rewriting is on
+
+This is the mechanism reading, and if it holds it subsumes §8 Q1, Q4 and Q7 and explains
+§5's clean negative.
+
+```clojure
+(defn fitness [genome c seeds sites]                    ; baldwin_selection.clj:263-268
+  (let [r (:mean (reach genome seeds sites))]
+    {:reach r :score (- (band-score r) (* c (plastic-dependence genome)))}))
+```
+
+with `plastic-dependence = update-prob · gamma · frac(unheld ∧ unmasked)`
+(`:211-234`). Neither term is a function of the inherited rule content:
+
+- the cost term reads only `gamma`, `update-prob`, `mask` and `hold` — the plasticity
+  **machinery**. It is exactly flat in `:field`.
+- `band-score(reach)` is measured after rewriting has run for the whole lifetime, which
+  is precisely the operation that washes out the inherited field's contribution.
+
+So while plasticity is active, `:field` is close to a **neutral trait**. It random-walks
+under uniform re-draws at rate `field-rate` (`:325-328`), and a hold mutation then fixes
+whatever that walk happened to leave in place. §4.3's "coordination gap" and §8 Q1's
+"heritable shadow" are two descriptions of this one fact.
+
+If this reading is right, then §5's result is over-determined: **coupling adds proposal
+supply to a flat landscape**, and no mutation operator can supply a gradient that the
+fitness function does not contain. The 2×2 could not have come out any other way, which
+is a stronger statement than "these two repairs failed."
+
+In the Lean, this is `plasticDependence` being degenerate **in the `field` coordinate**.
+`BaldwinDesign.no_witness_of_degenerate` covers total degeneracy; the per-coordinate
+version is the lemma that would license a redesign rather than merely describing the
+failure afterwards.
+
+### R6. The positive control shows which kind of cost is load-bearing
+
+`TN-part-III-b-baldwin-recovery.md` §2(a) records a correction — "plasticity must cost
+something" — and the design implemented it as an explicit charge on the plasticity
+machinery. The planted control in this repository, which passes, has **no explicit
+plasticity cost at all**:
+
+```clojure
+(defn expected-learning-score                          ; hinton_nowlan.clj:23-28
+  [genome]
+  (if (compatible? genome)
+    (Math/pow 2.0 (- (plastic-count genome)))
+    0.0))
+```
+
+Fitness is a smooth monotone function of genome **content**: every locus correctly fixed
+doubles fitness, and any incorrectly fixed locus is lethal via `compatible?`. The cost of
+plasticity is implicit in the probability that learning succeeds, and that probability is
+determined by what the genome already carries.
+
+So §2(a) was right that costlessness is near-tautological, but the design answered it
+with a **capacity** cost where Hinton--Nowlan uses a **usage/reliability** cost. A
+capacity cost is flat in genome content by construction, which is R5. This is the
+sharpest available statement of what separates the passing control from the failing
+substrate, and it comes from the apparatus rather than from the literature.
+
+### R7. Suggested order of work
+
+**Free — reanalysis only.** Fold R1 into the §2 ledger and close §8 Q2. Re-read the
+guidance pilot on raw `:mean-reach`, which is already recorded per budget in
+`baldwin_guidance.clj:70-86` alongside the band score, and record R4 as the hypothesis
+for the confirmation seeds.
+
+**Cheap diagnostics, hours not days.**
+
+1. **Does lifetime rewriting have a target?** For one evolved genome, compute the field
+   at `t*` under K evaluation seeds and measure pairwise agreement, against chance
+   (`1/256`) and against the inherited field. Every Baldwin experiment presupposes that
+   learning converges on something reproducible enough to encode, and this note records
+   no check of it. R2 gives a specific reason to doubt it. If the fields agree at chance,
+   §8 Q12's "decisive negative" conditions are met by a single cheap measurement.
+2. **Is the inherited field selectable at all under active rewriting?** Perturb one locus
+   of `:field` at an unheld locus of an evolved genome; measure Δreach against evaluation
+   noise; repeat across loci. This converts R5 from a code reading into a number, and it
+   is the correct form of §8 Q7 — the relevant comparison is the selection coefficient of
+   an *allele*, not of a hold.
+3. Run `scripts/assimilation_map.clj` (the 80×256 locus×rule sweep) if it has not been.
+   It is the empirical map of `BaldwinDesign.LocallyAssimilable`, and it says what a
+   latent allele would have to contain.
+
+**The mechanistic change, if 1 and 2 come out as predicted.** Replace or supplement the
+capacity cost with a **usage** cost: a term proportional to realised rewriting, e.g.
+`c_use · (rewrite events)/(W·T)`, or the Hamming distance between the inherited field and
+the field at `t*`. `c/changed-count` (`core.clj:167`) already exists and
+`scripts/mutation_axis.clj:23` already computes churn with it. This makes `:field`
+non-neutral without touching the causal protocol, and — relevant to §4.1 — it is
+**smooth**, so it supplies a gradient even though `band-score` is a cliff with a hard
+zero outside `[10.0, 18.7]`.
+
+Preregister it as a two-phase signature, so that a partial result is still a result:
+
+- **Phase 1 (preparation / guidance):** agreement between the inherited field and the
+  converged field rises under selection *while dependence stays high*. This is §8 Q1's
+  heritable shadow made observable, and it is a positive result on its own.
+- **Phase 2 (assimilation):** held fraction rises above the `0.1858` mutation-only null.
+
+**A representation change, if diagnostic 1 says the target is unstable in cell space.**
+R1 says the assimilable structure is real but indexed by `p0` rather than by cell — so
+the cell may simply be the wrong heritable unit. The rewrite already conditions on a
+4-bit context quadruple `[ph(i-1), ph(i), ph(i+1), nph(i)]`
+(`baldwin_selection.clj:96-100`), which is only 16 classes, and contexts recur across
+initial conditions even when cells do not. **Recompute the R1 agreement statistic indexed
+by context instead of by cell index.** If context-indexed agreement is bimodal and stable
+across seeds where cell-indexed agreement was unimodal and unstable, the missing heritable
+unit has been found, and the genome becomes a small evolvable table over contexts — §8
+Q11's "evolvable prior over rewriting", made concrete and cheap to test. This is a
+re-indexing of instrumentation that already exists.
+
+### R8. A strategic alternative to demonstrating the effect
+
+§8 Q12 asks when a negative would become decisive. There is a third option between a
+decisive negative and a demonstrated positive, and the apparatus is already sized for it.
+
+The planted Hinton--Nowlan control passes and MetaCA fails, and R1/R2/R6 identify what
+separates them: **cross-lifetime stationarity of the learning target**. That is now a
+knob, not a property — share the rewrite tape across evaluations or not, fix `p0` or not
+— giving four cells from fully stationary to fully non-stationary. Sweeping it and
+locating where the witness switches off would yield a positive, explanatory result that
+retro-explains every negative in §2, and unlike "find a Baldwin effect in MetaCA" it is
+an outcome the design can be confident of obtaining.
+
+### R9. Statistical note
+
+Both pilots are single evolution seeds compared on arm means. The one experiment in this
+line that produced a decisive answer — the frozen-phenotype control in §3 — did so with
+seven **paired** comparisons and an all-seven sign, not with a mean contrast. Pair on
+(seed, site, task), test the sign of paired differences, and derive the required effect
+size from the mutation-only null before renting hardware again. §8 Q7's `0.0006` figure
+is the saving from one hold; the quantity that matters for R7.2 is the selection
+coefficient of one allele, and it has not been estimated.
+
+### R10. What this review does not establish
+
+- R2, R5 and R6 are readings of committed code, not measurements. R7.1 and R7.2 are the
+  measurements that would confirm or refute them.
+- The prediction that a usage cost supplies a workable gradient is untested. It is
+  motivated by the contrast in R6, not by any MetaCA run.
+- The context-indexing proposal is a conjecture about where stable structure might live.
+  R1 establishes that it does not live in cell space; it does not establish that it lives
+  anywhere.
+- R4 is one seed on a confounded axis and is not evidence of guidance.
+- No criterion, classifier or preregistration is changed by this section, and no pilot is
+  promoted.
