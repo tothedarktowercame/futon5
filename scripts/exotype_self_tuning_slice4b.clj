@@ -206,10 +206,10 @@
       :run-means run-mean-summary
       :histogram (histogram pooled)
       :distance-from-0.55-sd
-      {:pooled (when (pos? (:sd pooled-summary))
+      {:pooled (when (> (:sd pooled-summary) 1.0e-12)
                  (/ (Math/abs (- (:mean pooled-summary) 0.55))
                     (:sd pooled-summary)))
-       :run-means (when (pos? (:sd run-mean-summary))
+       :run-means (when (> (:sd run-mean-summary) 1.0e-12)
                     (/ (Math/abs (- (:mean run-mean-summary) 0.55))
                        (:sd run-mean-summary)))}}
      :trajectory (into (sorted-map)
@@ -318,9 +318,52 @@
   (spit "reports/exotype-self-tuning-slice4b.partial.edn"
         (str (pr-str result) "\n")))
 
+(def ^:private contrast-metrics
+  {:lambda-mean #(mean (:final-lambdas %))
+   :kind-count #(get-in % [:checkpoints 6000 :kind-count])
+   :entropy #(get-in % [:checkpoints 6000 :entropy])
+   :lambda-autocorrelation
+   #(get-in % [:checkpoints 6000 :lambda-autocorrelation])
+   :exotype-autocorrelation
+   #(get-in % [:checkpoints 6000 :exotype-autocorrelation])
+   :changed-steps :changed-steps
+   :changed-cells :changed-cells
+   :phenotype-activity :phenotype-activity
+   :genotype-rule-count :genotype-rule-count
+   :phenotype-damage #(get-in % [:damage :phenotype])
+   :genotype-damage #(get-in % [:damage :genotype])
+   :exotype-damage #(get-in % [:damage :exotype])})
+
+(defn- paired-contrast [left right measure]
+  (let [differences
+        (map (fn [[left-row right-row]]
+               (- (double (measure left-row))
+                  (double (measure right-row))))
+             (map vector (vals left) (vals right)))
+        row (summary differences)
+        sem (:sem row)]
+    (assoc row
+           :sem-multiples
+           (if (pos? sem)
+             (/ (Math/abs (:mean row)) sem)
+             (if (zero? (:mean row)) 0.0 Double/POSITIVE_INFINITY))
+           :resolved-at-two-sem?
+           (if (pos? sem)
+             (>= (Math/abs (:mean row)) (* 2.0 sem))
+             (not (zero? (:mean row)))))))
+
+(defn- paired-contrasts [raw]
+  (into (sorted-map)
+        (for [right [:random-walk :fixed-0.55]]
+          [(keyword (str "hunger-coupled-minus-" (name right)))
+           (into (sorted-map)
+                 (for [[metric measure] contrast-metrics]
+                   [metric (paired-contrast (:hunger-coupled raw)
+                                            (get raw right) measure)]))])))
+
 (defn experiment []
   (let [seeds (mapv #(+ (:seed-base config) %) (range (:seeds config)))
-        [measured _]
+        [measured raw]
         (reduce (fn [[result raw] arm]
                   (println :starting arm)
                   (flush)
@@ -332,6 +375,7 @@
                     [next-result next-raw]))
                 [(result-base seeds) (load-raw-checkpoint)] (:arms config))]
     (assoc measured
+           :contrasts (paired-contrasts raw)
            :determinism (determinism-check)
            :figures (into (sorted-map)
                           (for [arm (:arms config)] [arm (render-arm! arm)])))))
@@ -367,6 +411,17 @@
                         (fmt (get-in row [:damage :phenotype]))
                         (fmt (get-in row [:damage :genotype]))
                         (fmt (get-in row [:damage :exotype])))))
+       "\n## Paired contrasts\n\n"
+       "Differences are paired by seed. `resolved` means |mean| >= 2 SEM; no scientific verdict is inferred.\n\n"
+       "| comparison | metric | mean difference | sd | sem | SEM multiples | resolved |\n"
+       "|---|---|---:|---:|---:|---:|---|\n"
+       (apply str
+              (for [[comparison rows] (:contrasts result)
+                    [metric row] rows]
+                (format "| %s | %s | %.6f | %.6f | %.6f | %.3f | %s |\n"
+                        (name comparison) (name metric) (:mean row) (:sd row)
+                        (:sem row) (:sem-multiples row)
+                        (if (:resolved-at-two-sem? row) "yes" "UNRESOLVED"))))
        "\n## Lambda histograms\n\n```clojure\n"
        (pr-str (into (sorted-map)
                      (for [[arm row] (:arms result)]
