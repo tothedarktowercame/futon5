@@ -239,3 +239,6 @@
                :entropy (get-in row [:entropy :mean])))
     (println :wrote "reports/exotype-prevalence-slice3.edn"
              "reports/exotype-prevalence-slice3.md")))
+
+(apply -main *command-line-args*)
+(shutdown-agents)
