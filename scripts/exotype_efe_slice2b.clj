@@ -8,11 +8,28 @@
             [futon5.exotype.grid :as grid]
             [futon5.mmca.render :as render]))
 
+(def ^:private default-lambdas
+  "The first sweep. claude-11 specified it dense near ZERO, on the guess that the
+   transition sat close to 0 because a preferred-hunger of 0.05 already gave full chaos.
+   That guess was WRONG: the flip is between 0.4 and 0.7, and this grid has no point
+   inside that interval. Eight of its twelve points sit below 0.1 where nothing happens.
+   So the original run establishes only that lambda<=0.4 gives :identity and
+   lambda>=0.7 gives :chaos -- it does NOT establish the absence of an interior, because
+   the interval where the system actually changes was never sampled."
+  [0.0 0.001 0.002 0.005 0.01 0.02 0.05 0.1 0.2 0.4 0.7 1.0])
+
+(defn- parse-lambdas
+  "Override the sweep grid via SLICE2B_LAMBDAS (comma-separated). Defaults to the
+   original vector so the committed artifact regenerates byte-identically."
+  []
+  (if-let [raw (System/getenv "SLICE2B_LAMBDAS")]
+    (mapv #(Double/parseDouble (str/trim %)) (str/split raw #","))
+    default-lambdas))
+
 (def config
   {:seed-base 20260803 :seeds 100 :width 80 :steps 120
    :risk-probe-seeds 5
-   :lambdas [0.0 0.001 0.002 0.005 0.01 0.02
-             0.05 0.1 0.2 0.4 0.7 1.0]
+   :lambdas (parse-lambdas)
    :risk-preferences [0.15 0.4 0.6]})
 
 (defn- initial-state [seed lambda & [rule-change-preference]]
