@@ -163,6 +163,32 @@
    :damage (into (sorted-map) (for [k [:phenotype :genotype :exotype]]
                                 [k (summary (map #(get-in % [:damage k]) runs))]))})
 
+(def contrast-metrics
+  {:kind-count #(get-in % [:checkpoints 6000 :kind-count])
+   :entropy #(get-in % [:checkpoints 6000 :entropy])
+   :spatial-autocorrelation #(get-in % [:checkpoints 6000 :spatial-autocorrelation])
+   :changed-steps :changed-steps :changed-cells :changed-cells
+   :phenotype-activity :phenotype-activity :genotype-rule-count :genotype-rule-count
+   :phenotype-damage #(get-in % [:damage :phenotype])
+   :genotype-damage #(get-in % [:damage :genotype])
+   :exotype-damage #(get-in % [:damage :exotype])})
+(defn- paired-contrast [left right metric]
+  (let [row (summary (map #(- (double (metric %1)) (double (metric %2)))
+                          (vals left) (vals right)))
+        sem (:sem row)]
+    (assoc row :sem-multiples (if (pos? sem) (/ (Math/abs (:mean row)) sem)
+                                  (if (zero? (:mean row)) 0.0 Double/POSITIVE_INFINITY))
+           :resolved-at-two-sem? (if (pos? sem) (>= (Math/abs (:mean row)) (* 2 sem))
+                                     (not (zero? (:mean row)))))))
+(defn- contrasts [raw]
+  (into (sorted-map)
+        (for [[label left right] [[:next-C-minus-baseline :next-C :baseline]
+                                  [:next-C-plus-eig-minus-next-C
+                                   :next-C-plus-eig :next-C]]]
+          [label (into (sorted-map)
+                       (for [[name metric] contrast-metrics]
+                         [name (paired-contrast (get raw left) (get raw right) metric)]))])))
+
 (def exotype-colours {:builder [54 162 235] :collapser [245 166 35]
                       :chaos [220 55 65] :identity [55 190 105]})
 (defn- genotype-colour [x]
@@ -204,6 +230,8 @@
                             (fmt (get-in row [:damage :genotype])) (fmt (get-in row [:damage :exotype])))))
        "\n## Trajectories\n\n```clojure\n"
        (pr-str (into (sorted-map) (for [[arm row] (:arms result)] [arm (:trajectory row)])))
+       "\n```\n\n## Paired contrasts\n\nA contrast is marked resolved only at |mean| >= 2 SEM.\n\n```clojure\n"
+       (pr-str (:contrasts result))
        "\n```\n\n## Modelling choices and determinism\n\n```clojure\n"
        (pr-str (select-keys result [:modelling-choices :determinism :figures]))
        "\n```\n\nNo scientific verdict is made here.\n"))
@@ -228,6 +256,7 @@
                                       :global-statistic]}
                   :arms (into (sorted-map) (for [arm (:arms config)]
                                              [arm (arm-summary (vals (get raw arm)))]))
+                  :contrasts (contrasts raw)
                   :determinism (determinism)
                   :figures (into (sorted-map) (for [arm (:arms config)]
                                                 [arm (render-arm! arm)]))}]
