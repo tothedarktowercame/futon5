@@ -1,6 +1,7 @@
 (ns exotype-self-tuning-slice4b
   "Slice 4b: locally hunger-coupled per-cell lambda adaptation."
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [futon5.ca.core :as ca]
             [futon5.exotype.grid :as grid]
@@ -222,15 +223,38 @@
                    (for [layer [:phenotype :genotype :exotype]]
                      [layer (summary (map #(get-in % [:damage layer]) runs))]))}))
 
-(defn- parallel-map [f xs]
-  (let [pool (java.util.concurrent.Executors/newFixedThreadPool 4)]
+(def ^:private raw-checkpoint-path
+  "reports/exotype-self-tuning-slice4b.raw.edn")
+
+(defn- load-raw-checkpoint []
+  (if (.exists (io/file raw-checkpoint-path))
+    (edn/read-string (slurp raw-checkpoint-path))
+    (sorted-map)))
+
+(defn- save-raw-checkpoint! [raw]
+  (spit raw-checkpoint-path (str (pr-str raw) "\n")))
+
+(defn- run-arm! [arm seeds raw]
+  (let [existing (get raw arm (sorted-map))
+        missing (remove #(contains? existing %) seeds)
+        pool (java.util.concurrent.Executors/newFixedThreadPool 4)]
     (try
-      (let [tasks (mapv #(identity
-                          (.submit pool
-                                   ^java.util.concurrent.Callable
-                                   (fn [] (f %))))
-                        xs)]
-        (mapv #(.get ^java.util.concurrent.Future %) tasks))
+      (let [tasks (mapv (fn [seed]
+                          [seed (.submit pool
+                                         ^java.util.concurrent.Callable
+                                         (fn [] (seed-run arm seed)))])
+                        missing)
+            completed
+            (reduce (fn [rows [seed future]]
+                      (let [next-rows
+                            (assoc rows seed
+                                   (.get ^java.util.concurrent.Future future))]
+                        (save-raw-checkpoint! (assoc raw arm next-rows))
+                        (println :completed arm seed)
+                        (flush)
+                        next-rows))
+                    existing tasks)]
+        [(assoc raw arm completed) (mapv completed seeds)])
       (finally (.shutdown pool)))))
 
 (defn- determinism-check []
@@ -296,17 +320,17 @@
 
 (defn experiment []
   (let [seeds (mapv #(+ (:seed-base config) %) (range (:seeds config)))
-        measured
-        (reduce (fn [result arm]
+        [measured _]
+        (reduce (fn [[result raw] arm]
                   (println :starting arm)
                   (flush)
-                  (let [runs (parallel-map #(seed-run arm %) seeds)
+                  (let [[next-raw runs] (run-arm! arm seeds raw)
                         next-result (assoc-in result [:arms arm] (arm-summary runs))]
                     (checkpoint-result! next-result)
                     (println :completed arm)
                     (flush)
-                    next-result))
-                (result-base seeds) (:arms config))]
+                    [next-result next-raw]))
+                [(result-base seeds) (load-raw-checkpoint)] (:arms config))]
     (assoc measured
            :determinism (determinism-check)
            :figures (into (sorted-map)
