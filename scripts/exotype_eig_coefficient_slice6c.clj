@@ -1,33 +1,33 @@
-(System/setProperty "futon5.exotype.pattern.library-only" "true")
-(load-file "scripts/exotype_pattern_slice6.clj")
-(in-ns 'exotype-pattern-slice6)
-(require '[clojure.string :as str])
+(ns exotype-eig-coefficient-slice6c
+  "Slice 6c: corrected-EIG coefficient sweep. Measurements only."
+  (:require [clojure.edn :as edn]
+            [clojure.string :as str]
+            [futon5.exotype.pattern-eig :as pattern]
+            [futon5.exotype.slice-harness :as harness]))
 
 (def coefficients [0.0 0.5 1.0 1.2 1.35 1.45 1.475 1.5
                    1.6 1.75 2.0 2.5 3.0 5.0 7.5 10.0])
-(def coefficient-config
+(def config
   {:seed-base 20260803 :seeds 60 :width 80 :steps 6000 :workers 12
    :lambda 0.55 :mu 0.1 :tau 0.3 :prevalence-radius 1
    :eig-model :beta-posterior :damage-steps 59
    :checkpoints [0 120 600 1200 3000 6000]})
-(alter-var-root #'config (constantly coefficient-config))
-(alter-var-root #'raw-path
-                (constantly "reports/exotype-eig-coefficient-slice6c.raw.edn"))
-
-(def coefficient-edn-path "reports/exotype-eig-coefficient-slice6c.edn")
-(def coefficient-md-path "reports/exotype-eig-coefficient-slice6c.md")
+(def paths
+  {:raw "reports/exotype-eig-coefficient-slice6c.raw.edn"
+   :edn "reports/exotype-eig-coefficient-slice6c.edn"
+   :md "reports/exotype-eig-coefficient-slice6c.md"
+   :figure-prefix "reports/figures/slice6c-c-"})
 
 (defn coefficient-label [coefficient]
   (str/replace (format "%.3f" coefficient) "." "p"))
 
-(defn initial-state-coefficient [coefficient seed]
-  (assoc (initial-state :next-C-plus-eig seed)
-         :eig-model :beta-posterior
-         :eig-coefficient (double coefficient)))
+(defn coefficient-state [coefficient seed]
+  (harness/initial-state (assoc config :eig-coefficient coefficient)
+                         :next-C-plus-eig seed))
 
 (defn coefficient-stop-line [coefficient]
   (let [states (for [seed (range (:seed-base config) (+ (:seed-base config) 8))]
-                 (initial-state-coefficient coefficient seed))
+                 (coefficient-state coefficient seed))
         decisions (mapcat (fn [state]
                             (map #(pattern/cell-decision :next-C-plus-eig state %)
                                  (range (:width config)))) states)]
@@ -40,50 +40,14 @@
             [term {:fraction-discriminating
                    (/ (count (filter #(> % 1.0e-12) ranges))
                       (double (count ranges)))
-                   :within-decision-range (summary ranges)}]))))
+                   :within-decision-range (harness/summary ranges)}]))))
 
 (defn coefficient-seed-run [coefficient seed]
-  (let [wanted (set (:checkpoints config))
-        initial (initial-state-coefficient coefficient seed)]
-    (loop [state initial time 0 cps (sorted-map 0 (checkpoint initial))
-           changed-steps 0 changed-cells 0 phenotype-changes 0]
-      (if (= time (:steps config))
-        {:checkpoints cps :changed-steps changed-steps :changed-cells changed-cells
-         :phenotype-activity (/ phenotype-changes
-                                (double (* (:width config) (:steps config))))
-         :genotype-rule-count (count (distinct (:genotype state)))
-         :damage (damage state)}
-        (let [next (pattern/step-compact state)
-              changed (difference (:exotypes state) (:exotypes next))]
-          (recur next (inc time)
-                 (if (wanted (inc time)) (assoc cps (inc time) (checkpoint next)) cps)
-                 (+ changed-steps (if (pos? changed) 1 0))
-                 (+ changed-cells changed)
-                 (+ phenotype-changes
-                    (difference (:phenotype state) (:phenotype next)))))))))
-
-(defn run-coefficient! [raw coefficient seeds]
-  (let [existing (get raw coefficient (sorted-map))
-        missing (remove #(contains? existing %) seeds)
-        pool (java.util.concurrent.Executors/newFixedThreadPool (:workers config))]
-    (try
-      (let [tasks (mapv (fn [seed]
-                          [seed (.submit pool ^java.util.concurrent.Callable
-                                         #(coefficient-seed-run coefficient seed))])
-                        missing)]
-        (reduce (fn [r [seed future]]
-                  (let [next (assoc-in r [coefficient seed]
-                                       (.get ^java.util.concurrent.Future future))]
-                    (save-raw! next)
-                    (println :completed :coefficient coefficient :seed seed)
-                    (flush)
-                    next))
-                raw tasks))
-      (finally (.shutdown pool)))))
+  (harness/seed-run config :next-C-plus-eig seed
+                    {:eig-model :beta-posterior
+                     :eig-coefficient (double coefficient)}))
 
 (defn peak-summary [runs]
-  ;; The common t=0 initialization contains all four kinds by construction, so it is
-  ;; not a dynamical diversity peak.  Report the maximum after evolution begins.
   (let [times (rest (:checkpoints config))
         rows (for [run runs
                    :let [peak-time (apply max-key
@@ -91,13 +55,13 @@
                {:time peak-time
                 :entropy (get-in run [:checkpoints peak-time :entropy])
                 :kind-count (get-in run [:checkpoints peak-time :kind-count])})]
-    {:time (summary (map :time rows))
-     :entropy (summary (map :entropy rows))
-     :kind-count (summary (map :kind-count rows))
+    {:time (harness/summary (map :time rows))
+     :entropy (harness/summary (map :entropy rows))
+     :kind-count (harness/summary (map :kind-count rows))
      :modal-time (first (apply max-key val (frequencies (map :time rows))))}))
 
 (defn coefficient-summary [runs]
-  (assoc (arm-summary runs)
+  (assoc (harness/condition-summary config runs)
          :peak (peak-summary runs)
          :final-dominant-kind
          (frequencies
@@ -107,29 +71,18 @@
 
 (defn coefficient-contrast [raw coefficient]
   (into (sorted-map)
-        (for [[metric measure] contrast-metrics]
-          [metric (paired-contrast (get raw coefficient) (get raw 0.0) measure)])))
+        (for [[metric measure] (harness/contrast-metrics config)]
+          [metric (harness/paired-contrast
+                   (get raw coefficient) (get raw 0.0) measure)])))
 
 (defn render-coefficient! [coefficient]
   (let [states (take (inc (:steps config))
                      (iterate pattern/step-compact
-                              (initial-state-coefficient coefficient
-                                                         (:seed-base config))))
-        pixels (mapv (fn [s]
-                       (vec (concat (map genotype-colour (:genotype s)) [[255 255 255]]
-                                    (map #(if (= % \1) [245 245 245] [15 15 15])
-                                         (:phenotype s)) [[255 255 255]]
-                                    (map exotype-colours (:exotypes s))))) states)
-        path (str "reports/figures/slice6c-c-" (coefficient-label coefficient)
-                  "-triptych.png")
-        ppm (str path ".ppm")]
-    (clojure.java.io/make-parents path)
-    (render/write-ppm! ppm pixels :comment (str "EIG coefficient " coefficient))
-    (let [{:keys [exit err]} (clojure.java.shell/sh
-                              "convert" ppm "-filter" "point"
-                              "-resize" "1200x1200!" "-strip" path)]
-      (when-not (zero? exit) (throw (ex-info "convert failed" {:error err}))))
-    (.delete (clojure.java.io/file ppm)) path))
+                              (coefficient-state coefficient (:seed-base config))))]
+    (harness/render-pixels!
+     (harness/triptych-pixels states)
+     (str (:figure-prefix paths) (coefficient-label coefficient) "-triptych.png")
+     (str "EIG coefficient " coefficient))))
 
 (defn best-sustained-coefficient [summaries]
   (first
@@ -158,19 +111,21 @@
                 (format (str "| %.3f | `%s` | %s | %s | %s | %s | %d | %s | %s | "
                              "%s | %s | %s | %s | %s |\n")
                         coefficient (pr-str (:final-dominant-kind row))
-                        (fmt (:kind-count end)) (fmt (:entropy end))
-                        (fmt (get-in row [:peak :kind-count]))
-                        (fmt (get-in row [:peak :entropy]))
+                        (harness/fmt (:kind-count end)) (harness/fmt (:entropy end))
+                        (harness/fmt (get-in row [:peak :kind-count]))
+                        (harness/fmt (get-in row [:peak :entropy]))
                         (get-in row [:peak :modal-time])
-                        (fmt (:changed-steps row)) (fmt (:phenotype-activity row))
-                        (fmt (:genotype-rule-count row))
-                        (fmt (get-in row [:damage :phenotype]))
-                        (fmt (get-in row [:damage :genotype]))
-                        (fmt (get-in row [:damage :exotype]))
-                        (fmt (:spatial-autocorrelation end)))))
+                        (harness/fmt (:changed-steps row))
+                        (harness/fmt (:phenotype-activity row))
+                        (harness/fmt (:genotype-rule-count row))
+                        (harness/fmt (get-in row [:damage :phenotype]))
+                        (harness/fmt (get-in row [:damage :genotype]))
+                        (harness/fmt (get-in row [:damage :exotype]))
+                        (harness/fmt (:spatial-autocorrelation end)))))
        "\n## Full trajectories\n\n```clojure\n"
-       (pr-str (into (sorted-map) (for [[c row] (:coefficients result)]
-                                        [c (:trajectory row)])))
+       (pr-str (into (sorted-map)
+                     (for [[coefficient row] (:coefficients result)]
+                       [coefficient (:trajectory row)])))
        "\n```\n\n## Paired contrasts from c=0\n\n```clojure\n"
        (pr-str (:contrasts result))
        "\n```\n\n## Determinism, parity, and figures\n\n```clojure\n"
@@ -178,9 +133,11 @@
                                     :modelling-choices]))
        "\n```\n\nNo scientific verdict is made here.\n"))
 
-(defn coefficient-experiment []
+(defn experiment []
   (let [seeds (range (:seed-base config) (+ (:seed-base config) (:seeds config)))
-        raw (reduce #(run-coefficient! %1 %2 seeds) (load-raw) coefficients)
+        run-fn coefficient-seed-run
+        raw (reduce #(harness/run-condition! config (:raw paths) %1 %2 seeds run-fn)
+                    (harness/load-raw (:raw paths)) coefficients)
         summaries (into (sorted-map)
                         (for [coefficient coefficients]
                           [coefficient (coefficient-summary
@@ -189,29 +146,32 @@
         figure-coefficients (distinct [0.0 1.475 best])]
     {:kind :exotype-eig-coefficient-slice6c :schema 1 :config config
      :coefficients summaries
-     :stop-line (into (sorted-map) (for [c coefficients]
-                                     [c (coefficient-stop-line c)]))
-     :contrasts (into (sorted-map) (for [c coefficients :when (not (zero? c))]
-                                         [c (coefficient-contrast raw c)]))
+     :stop-line (into (sorted-map)
+                      (for [coefficient coefficients]
+                        [coefficient (coefficient-stop-line coefficient)]))
+     :contrasts (into (sorted-map)
+                      (for [coefficient coefficients :when (not (zero? coefficient))]
+                        [coefficient (coefficient-contrast raw coefficient)]))
      :determinism (coefficient-determinism)
      :c-one-parity {:reference :slice6b-next-C-plus-eig
                     :equal? (= (get raw 1.0)
                                (:next-C-plus-eig
-                                (clojure.edn/read-string
+                                (edn/read-string
                                  (slurp "reports/exotype-pattern-slice6b.raw.edn"))))}
-     :figures (into (sorted-map) (for [c figure-coefficients]
-                                       [c (render-coefficient! c)]))
+     :figures (into (sorted-map)
+                    (for [coefficient figure-coefficients]
+                      [coefficient (render-coefficient! coefficient)]))
      :modelling-choices {:eig-model :beta-posterior
                          :eig-prior pattern/beta-prior
                          :coefficient-role :pure-multiplier
                          :forbidden-inputs [:damage :reach :band :entropy
                                             :kind-count :global-statistic]}}))
 
-(defn -main-coefficient [& _]
-  (let [result (coefficient-experiment)]
-    (spit coefficient-edn-path (str (pr-str result) "\n"))
-    (spit coefficient-md-path (coefficient-markdown result))
-    (println :wrote coefficient-edn-path coefficient-md-path)))
+(defn -main [& _]
+  (let [result (experiment)]
+    (spit (:edn paths) (str (pr-str result) "\n"))
+    (spit (:md paths) (coefficient-markdown result))
+    (println :wrote (:edn paths) (:md paths))))
 
-(apply -main-coefficient *command-line-args*)
+(apply -main *command-line-args*)
 (shutdown-agents)
