@@ -234,3 +234,76 @@ Not being fixed now; must not reach submission unnoticed.
 Related: `M-propagators.md`, `scripts/exotype_by_example.clj` (Q1/Q2 with nulls built
 in), `scripts/exotype_demo.clj`, `futon2/holes/FEATUREGRID-aif-systems.md`,
 `p4ng/main-2026.tex`.
+
+## 10. RESULTS 2026-08-03 (Slices 2b/3 + characterisation) — READ THIS BEFORE QUOTING ANYTHING
+
+**The coexistence finding is REFUTED. What survives is dynamical, not configurational.**
+
+### The sequence
+1. Slice 2 found the EFE regulator collapses to ONE exotype: conatus off -> 80/80
+   `:identity` (dark room, as predicted), conatus on -> 80/80 `:chaos`.
+2. Joe: bistable endpoints mean the system needs TUNING, not discarding. Correct.
+3. Slice 2b's sweep found "no interior" — but its grid had NO POINT inside (0.4, 0.7),
+   the interval where the regime actually changes. claude-11's specification error.
+4. A refined sweep found an apparent critical point at lambda = 0.55: `:identity` and
+   `:chaos` coexisting 49.13/30.87 on all 100 seeds, grid activity 119 of 120 steps
+   against ~6.4 in both flanks, a 16-fold rise in changed cells.
+5. **Characterisation killed the coexistence.** It is a TRANSIENT decaying to
+   all-`:identity`: entropy 0.6030 (t=120) -> 0.2754 (t=480) -> 0.0643 (t=1200),
+   a -26.87 SEM decline. Spatial structure is DOMAINS (mean size 6.36, max 32.28,
+   12.58 per run) — i.e. a coarsening process, which is exactly what produces an
+   apparent mixture at 120 steps and consensus later.
+6. Slice 3 (prevalence E, stigmergic) appeared to show conformity INCREASING diversity
+   (kinds 2.00 at tau=0 rising to 3.94 at tau=10). **Also a transient**, measured by
+   claude-11 directly:
+
+   | tau | t=120 | t=600 | t=1200 | t=3000 | t=6000 |
+   |---:|---:|---:|---:|---:|---:|
+   | 0 | 2.00 | 1.50 | 1.08 | 1.00 | 1.00 |
+   | 0.3 | 2.00 | 1.92 | 1.67 | 1.08 | 1.00 |
+   | 10 | 4.00 | 3.50 | 2.58 | 2.17 | 1.92 |
+
+   Everything coarsens; tau only sets the RATE. At high tau `exp(-G/tau) -> 1` so
+   `Q -> E` and the rule becomes near-proportional imitation = the 1D voter model,
+   which coarsens diffusively (~N^2 = 6400 steps at width 80). argmin-G is
+   deterministic and drives straight to consensus.
+
+### What SURVIVES and may be quoted
+- **Damage peaks sharply at lambda* and is ZERO in both flanks**, at all three layers:
+
+  | lambda | phenotype | genotype | exotype |
+  |---:|---:|---:|---:|
+  | 0.40 | 0.48 | 1.00 | 0.00 |
+  | **0.55** | **7.72** | **9.92** | **7.08** |
+  | 0.70 | 3.60 | 0.00 | 0.00 |
+
+  Contrasts against both flanks run +6.1 to +12.6 sem, every one resolved.
+- **lambda* is SIZE-INVARIANT**: maximum entropy occupies the identical plateau
+  [0.54, 0.545, 0.55] across every width (40/80/160) and horizon (60/120/240) tested;
+  transition bracketed to (0.550, 0.555]. A unique lambda within the plateau is NOT
+  resolved.
+- **Conformity retards homogenisation** (it does not prevent it). This is the opposite
+  of the rich-get-richer intuition we started from, and the mechanism is that high tau
+  makes the rule diffusive rather than greedy.
+
+### What may NOT be quoted
+- Sustained coexistence at lambda = 0.55. It does not exist at t >= 1200.
+- The 49/31 mixture as a configuration. It is a snapshot of a coarsening transient.
+- Any three-layer JOINT band fraction. Genotype anchors are still inverted and exotype
+  anchors equal, so those layers remain honestly unbanded and the joint fraction is nil.
+- Slice 3's high-tau diversity as sustained.
+
+### The reading for Part III
+**Same lesson as [[project_metaca_eoc_is_dynamical]], one layer up: the edge of chaos
+here is DYNAMICAL, not configurational.** There is no mixed configuration to point at;
+there IS a boundary at which perturbations propagate (damage 7-10 vs exactly 0 in the
+flanks) and relaxation takes an order of magnitude longer. Quote the dynamics, not the
+configuration.
+
+### Method note — the recurring defect is SAMPLING, not measurement
+Four corrections in one day where the measurement was sound and the sampling was wrong:
+the gcd caption (partial offsets), the single-draw null (one partition per k), the
+Slice 2b grid (no point in the transition interval), and the 120-step horizon (a
+transient read as a steady state). **Rules: bracket the extremes then sweep densely
+BETWEEN them; and before calling any mixture a state, run it out at least 10x and show
+the trajectory.**
