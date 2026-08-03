@@ -144,6 +144,7 @@
   (str "# Exotype-grid Slice 1\n\n"
        "Fixed seeds `" (first (:seeds result)) "`–`" (last (:seeds result))
        "`; N=`" (count (:seeds result)) "` per arm; width 80; t*=60; dt=59.\n\n"
+       "The conformist policy takes a strict majority over left/self/right and retains self on a three-way tie. The boring-triggered policy copies the left neighbour when `boring?` is true; left is the fixed, locally available tie-break direction. All three grids update synchronously. Damage flips the midpoint phenotype bit, the first truth-table bit of the midpoint genotype rule, or advances the midpoint exotype to the next vocabulary entry, respectively.\n\n"
        "| arm | phenotype damage | genotype damage | exotype damage | pheno band | geno band | exo band | joint |\n"
        "|---|---:|---:|---:|---:|---:|---:|---:|\n"
        (apply str

@@ -2,6 +2,8 @@
 
 Fixed seeds `20260803`–`20260826`; N=`24` per arm; width 80; t*=60; dt=59.
 
+The conformist policy takes a strict majority over left/self/right and retains self on a three-way tie. The boring-triggered policy copies the left neighbour when `boring?` is true; left is the fixed, locally available tie-break direction. All three grids update synchronously. Damage flips the midpoint phenotype bit, the first truth-table bit of the midpoint genotype rule, or advances the midpoint exotype to the next vocabulary entry, respectively.
+
 | arm | phenotype damage | genotype damage | exotype damage | pheno band | geno band | exo band | joint |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | boring-triggered | 2.333 ± 3.158 | 1.708 ± 2.528 | 2.542 ± 4.452 | 0.16666666666666666 | nil | nil | nil |
