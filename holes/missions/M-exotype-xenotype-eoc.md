@@ -311,3 +311,90 @@ Slice 2b grid (no point in the transition interval), and the 120-step horizon (a
 transient read as a steady state). **Rules: bracket the extremes then sweep densely
 BETWEEN them; and before calling any mixture a state, run it out at least 10x and show
 the trajectory.**
+
+## 11. ARCHITECTURAL CLOSURE (Joe, 2026-08-03): AIF *is* the xenotype
+
+Section 2 had the xenotype as a **manifold of coordinates** we navigate (lift source,
+lift trigger, promotion, lapse; later lambda, tau, mu). **That framing was too weak.**
+
+Joe: *"since we seem to be rediscovering MetaCAs one dimension up, maybe what we need is
+operators on exotypes, just as we had operators on genotypes"* — and then, of the
+expanded policy set: *"that IS an operator on exotypes as well, so again, AIF as the
+xenotype continues to make sense."*
+
+So the structure is SELF-SIMILAR, not special-cased at the top:
+
+| level | operator acting on it |
+|---|---|
+| genotype | its cell's **exotype** |
+| exotype | **AIF policy selection** = the xenotype |
+
+`adopt kind X` is a map (current exotype, context) -> new exotype: an operator. G is what
+SELECTS which operator to apply. lambda, tau and mu are not a separate manifold — they
+are that operator's own parameters.
+
+### Why this diagnoses the layer's failure
+
+Joe's reading of the panels: the system shows vertical banding and *"doesn't seem to have
+any horizontalism to it yet"*. The measurement says the same thing — exotype damage is
+**exactly 0.00** at lambda=0.40 and lambda=0.70, rising to 7.08 only at lambda*. No
+lateral propagation anywhere except a knife-edge.
+
+The cause is the asymmetry:
+
+| layer | acted on? | result |
+|---|---|---|
+| genotype | rewritten by its exotype EVERY step | churns, cannot stabilise |
+| exotype | never acted on, only COPIED | freezes, cannot churn |
+
+Joe: *"opposite problems"* to the Baldwin experiments, where the genotype churned and
+nothing could stabilise.
+
+### The absorbing-chain fact (claude-11, verified in code)
+
+The only randomness in the entire exotype layer is the initial seeding (`grid.clj:44`).
+`policy-sources` is {hold, adopt-left, adopt-right}; `transmit` is local-majority or
+copy-left. All copy-only. **Therefore a globally-extinct kind can never return,
+consensus is absorbing, and coarsening is INEVITABLE for any copy-only rule on a finite
+vocabulary.**
+
+This reframes section 10: "everything coarsens, tau only sets the rate" is NOT a finding
+about AIF or about conformity. It is a statement about a system that cannot do
+otherwise. We were testing for sustained diversity in an architecture where it was
+impossible by construction.
+
+**Caveat Joe added, and it matters:** half the parameter space is not absorbing but
+FROZEN — in the fixed arms and the frozen regimes exotypes never move at all, so
+diversity is preserved exactly as seeded and is completely inert. So there are two
+failure modes, not one: **diversity that decays (dynamic arms) and diversity that does
+nothing (frozen arms). Sustained-AND-active has never been observed.**
+
+### The principled fix (Slice 5, dispatched)
+
+Expand the policy set from source-indexed to KIND-indexed,
+`{hold} u {adopt kind X : X in vocabulary}`, and give `E` a **pseudocount floor mu**:
+
+    E(X) proportional to (count of X in neighbourhood) + mu
+
+mu=0 reproduces the absorbing behaviour; mu>0 makes the chain ergodic so a stationary
+distribution exists. **mu is not an ad-hoc mutation rate — it is the Dirichlet prior
+strength on unobserved practices**, i.e. how much weight a culture gives something
+nobody nearby is doing. Innovation becomes a POLICY the regulator chose, not noise
+injected outside the model.
+
+**Why this is the pivotal experiment:** at mu=0 every lambda ends in consensus, so
+lambda* can only ever be a RATE effect. At mu>0 different lambda give genuinely
+different stationary distributions, and *"lambda* is where diversity is sustained"*
+becomes a claim that can be true or false. It is the first time the programme's central
+question has been askable.
+
+### Held, not built
+- **Operators applied to a cell's OWN exotype** (transformations rather than source
+  selection). The deeper move, and the machinery exists — `PROPS` in
+  `scripts/exotype_demo.clj` are permutations, and an exotype is 36 bits, so a
+  permutation acting on those bits is a xenotype operator in exactly the sense a
+  propagator acting on a genotype is an exotype. AIF handles this least comfortably:
+  the action space becomes compositional and G must predict observations for a
+  TRANSFORMED exotype rather than for an existing neighbour's. Real modelling cost.
+- **Blending / interventions on the exotype layer** (Joe parked these twice). Blending
+  is a structured mu, so the pseudocount is the natural place for them to land later.
