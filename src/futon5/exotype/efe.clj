@@ -95,24 +95,35 @@
   "Score one candidate exotype. Lower total is preferred.
 
    Raw contributions are always returned even when an ablation flag removes
-   them from `:total`, preventing a connected-but-invisible term."
-  [arm candidate-exotype observation]
-  (let [{:keys [risk? ambiguity? conatus?]} (get arm-flags arm)
-        prediction (predict candidate-exotype observation)
-        risk (bernoulli-kl (:rule-change prediction)
-                           (:rule-change preferences))
-        ambiguity (reduce + (map bernoulli-entropy (vals prediction)))
-        conatus (bernoulli-kl (:hunger prediction) (:hunger preferences))
-        total (+ (if risk? risk 0.0)
-                 (if ambiguity? ambiguity 0.0)
-                 (if conatus? conatus 0.0))]
-    {:candidate-exotype candidate-exotype
-     :prediction prediction
-     :risk risk
-     :ambiguity ambiguity
-     :conatus conatus
-     :total total
-     :enabled {:risk risk? :ambiguity ambiguity? :conatus conatus?}}))
+   them from `:total`, preventing a connected-but-invisible term. The optional
+   `:lambda` weights conatus; arm-derived defaults preserve Slice 2 exactly.
+   `:rule-change-preference` is a diagnostic override and never changes C."
+  ([arm candidate-exotype observation]
+   (score-policy arm candidate-exotype observation {}))
+  ([arm candidate-exotype observation opts]
+   (let [{:keys [risk? ambiguity? conatus?]} (get arm-flags arm)
+         lambda (double (if (contains? opts :lambda)
+                          (:lambda opts)
+                          (if conatus? 1.0 0.0)))
+         rule-change-preference
+         (double (get opts :rule-change-preference
+                      (:rule-change preferences)))
+         prediction (predict candidate-exotype observation)
+         risk (bernoulli-kl (:rule-change prediction)
+                            rule-change-preference)
+         ambiguity (reduce + (map bernoulli-entropy (vals prediction)))
+         conatus (bernoulli-kl (:hunger prediction) (:hunger preferences))
+         total (+ (if risk? risk 0.0)
+                  (if ambiguity? ambiguity 0.0)
+                  (* lambda conatus))]
+     {:candidate-exotype candidate-exotype
+      :prediction prediction
+      :risk risk
+      :ambiguity ambiguity
+      :conatus conatus
+      :lambda lambda
+      :total total
+      :enabled {:risk risk? :ambiguity ambiguity? :conatus conatus?}})))
 
 (defn cell-decision
   "Choose hold/left/right by minimum G; exact ties prefer hold, then left."
@@ -122,11 +133,13 @@
                  {:policy :adopt-left :source (mod (dec index) width)}
                  {:policy :adopt-right :source (mod (inc index) width)}]
         observation (local-observation state index)
+        score-options (select-keys state [:lambda :rule-change-preference])
         candidates (mapv (fn [{:keys [source] :as policy}]
                            (merge policy
                                   (score-policy arm
                                                 (nth (:exotypes state) source)
-                                                observation)))
+                                                observation
+                                                score-options)))
                          sources)
         winner (first (sort-by :total candidates))]
     {:index index
