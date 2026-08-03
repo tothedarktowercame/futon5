@@ -8,15 +8,20 @@
             [futon5.exotype.pattern-eig :as pattern]
             [futon5.mmca.render :as render]))
 
-(def config
-  {:seed-base 20260803 :seeds 60 :width 80 :steps 6000 :workers 12
-   :lambda 0.55 :mu 0.1 :tau 0.3 :prevalence-radius 1
-   :damage-steps 59 :checkpoints [0 120 600 1200 3000 6000]
-   :arms pattern/arms})
+(def slice6b? (= "6b" (System/getProperty "futon5.exotype.pattern.slice" "6")))
+(def slice-label (if slice6b? "slice6b" "slice6"))
 
-(def raw-path "reports/exotype-pattern-slice6.raw.edn")
-(def edn-path "reports/exotype-pattern-slice6.edn")
-(def md-path "reports/exotype-pattern-slice6.md")
+(def config
+  (cond->
+   {:seed-base 20260803 :seeds 60 :width 80 :steps 6000 :workers 12
+    :lambda 0.55 :mu 0.1 :tau 0.3 :prevalence-radius 1
+    :damage-steps 59 :checkpoints [0 120 600 1200 3000 6000]
+    :arms pattern/arms}
+    slice6b? (assoc :eig-model :beta-posterior)))
+
+(def raw-path (str "reports/exotype-pattern-" slice-label ".raw.edn"))
+(def edn-path (str "reports/exotype-pattern-" slice-label ".edn"))
+(def md-path (str "reports/exotype-pattern-" slice-label ".md"))
 
 (defn initial-state [arm seed]
   (ca/with-seed seed
@@ -24,6 +29,7 @@
           genotype (vec (ca/random-sigil-string width))]
       {:arm :efe-full :pattern-arm arm :seed seed :time 0
        :lambda (:lambda config) :mu (:mu config) :tau (:tau config)
+       :eig-model (get config :eig-model :legacy)
        :prevalence-radius (:prevalence-radius config)
        :genotype genotype :previous-genotype genotype
        :phenotype (apply str (repeatedly width #(if (< (ca/rnd) 0.5) \0 \1)))
@@ -202,7 +208,7 @@
                                     (map #(if (= % \1) [245 245 245] [15 15 15])
                                          (:phenotype s)) [[255 255 255]]
                                     (map exotype-colours (:exotypes s))))) states)
-        path (str "reports/figures/slice6-" (name arm) "-triptych.png")
+        path (str "reports/figures/" slice-label "-" (name arm) "-triptych.png")
         ppm (str path ".ppm")]
     (io/make-parents path) (render/write-ppm! ppm pixels :comment (name arm))
     (let [{:keys [exit err]} (sh/sh "convert" ppm "-filter" "point"
@@ -217,7 +223,8 @@
      :hash (format "%08x" (bit-and 0xffffffff (hash left)))}))
 (defn- fmt [x] (format "%.4f (sd %.4f; sem %.4f)" (:mean x) (:sd x) (:sem x)))
 (defn markdown [result]
-  (str "# Exotype patterns and local EIG — Slice 6\n\n"
+  (str "# Exotype patterns and local EIG — "
+       (if slice6b? "Slice 6b" "Slice 6") "\n\n"
        "Measurements only. N=60, width=80, horizon=6000; lambda=0.55, mu=0.1, tau=0.3.\n\n"
        "## Within-decision stop-line\n\n```clojure\n" (pr-str (:stop-line result)) "\n```\n\n"
        "## Endpoint and activity\n\n| arm | kinds | entropy | spatial | changed steps | changed cells | phenotype activity | genotype rules | P damage | G damage | X damage |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n"
@@ -242,18 +249,24 @@
       (throw (ex-info "STOP-LINE: EIG does not discriminate within decisions" probe)))
     (let [seeds (range (:seed-base config) (+ (:seed-base config) (:seeds config)))
           raw (reduce #(run-arm! %1 %2 seeds) (load-raw) (:arms config))
-          result {:kind :exotype-pattern-slice6 :schema 1 :config config
+          result {:kind (if slice6b? :exotype-pattern-slice6b
+                            :exotype-pattern-slice6)
+                  :schema 1 :config config
                   :stop-line probe
                   :modelling-choices
-                  {:next :existing-four-channel-probability-vector
-                   :claim-test {:statistic :mean-channel-log-likelihood
-                                :floor :log-one-half}
-                   :eig :entropy-of-current-local-holder-confirmations
-                   :no-cell-memory true :eig-coefficient 1.0
-                   :risk :sum-bernoulli-kl-prediction-to-candidate-next
-                   :eig-only-retains-conatus true
-                   :forbidden-inputs [:damage :reach :band :entropy :kind-count
-                                      :global-statistic]}
+                  (cond->
+                   {:next :existing-four-channel-probability-vector
+                    :claim-test {:statistic :mean-channel-log-likelihood
+                                 :floor :log-one-half}
+                    :eig (if slice6b?
+                           :normalized-beta-posterior-variance
+                           :entropy-of-current-local-holder-confirmations)
+                    :no-cell-memory true :eig-coefficient 1.0
+                    :risk :sum-bernoulli-kl-prediction-to-candidate-next
+                    :eig-only-retains-conatus true
+                    :forbidden-inputs [:damage :reach :band :entropy :kind-count
+                                       :global-statistic]}
+                    slice6b? (assoc :eig-prior pattern/beta-prior))
                   :arms (into (sorted-map) (for [arm (:arms config)]
                                              [arm (arm-summary (vals (get raw arm)))]))
                   :contrasts (contrasts raw)

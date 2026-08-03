@@ -29,3 +29,14 @@
       (is (every? #(every? (fn [key] (contains? % key))
                            [:risk :ambiguity :conatus :eig])
                   (:candidates decision))))))
+
+(deftest corrected-eig-values-unobserved-candidates-most
+  (let [s (state)
+        absent (first (remove (set (:exotypes s)) grid/exotype-kinds))]
+    (when absent
+      (is (= (Math/log 2.0) (pattern/corrected-local-eig s 4 1 absent))))
+    (is (= 0.0 (pattern/local-eig
+                (assoc s :exotypes (vec (repeat 12 :builder))) 4 1 :chaos)))
+    (is (= (Math/log 2.0)
+           (pattern/corrected-local-eig
+            (assoc s :exotypes (vec (repeat 12 :builder))) 4 1 :chaos)))))

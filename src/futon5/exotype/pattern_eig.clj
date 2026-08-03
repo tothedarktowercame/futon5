@@ -81,6 +81,34 @@
        (/ (count (filter true? outcomes)) (double (count outcomes))))
       0.0)))
 
+(def beta-prior
+  "Unfitted symmetric prior for corrected local epistemic uncertainty."
+  {:alpha 1.0 :beta 1.0})
+
+(defn corrected-local-eig
+  "Beta-posterior uncertainty about a candidate pattern's local salience.
+
+   This is normalized posterior variance, scaled to ln(2). Beta(1,1) with no
+   holders therefore has maximum value ln(2). Evidence always sharpens the
+   posterior, while mixed confirmations retain more uncertainty than unanimous
+   outcomes at the same holder count. All observations are recomputed from the
+   current neighbourhood; the posterior is not stored in a cell."
+  [state index radius kind]
+  (let [indices (prevalence/neighbourhood-indices
+                 (count (:exotypes state)) index radius)
+        holders (filter #(= kind (nth (:exotypes state) %)) indices)
+        outcomes (map #(claim-confirmed? (get-in patterns [kind :next])
+                                         (realized-context state %))
+                      holders)
+        successes (double (count (filter true? outcomes)))
+        failures (double (- (count outcomes) successes))
+        alpha (+ (:alpha beta-prior) successes)
+        beta (+ (:beta beta-prior) failures)
+        mass (+ alpha beta)
+        posterior-variance (/ (* alpha beta) (* mass mass (inc mass)))
+        prior-variance (/ 1.0 12.0)]
+    (* (Math/log 2.0) (/ posterior-variance prior-variance))))
+
 (defn- pattern-score [arm state index kind]
   (let [observation (efe/local-observation state index)
         base (efe/score-policy :efe-full kind observation
@@ -91,8 +119,12 @@
                      (for [channel (keys next-claim)]
                        (bernoulli-kl (get prediction channel)
                                      (get next-claim channel))))
-        eig (local-eig state index
-                       (long (get state :prevalence-radius 1)) kind)
+        eig-model (get state :eig-model :legacy)
+        eig-fn (case eig-model
+                 :legacy local-eig
+                 :beta-posterior corrected-local-eig)
+        eig (eig-fn state index
+                    (long (get state :prevalence-radius 1)) kind)
         lambda (double (get state :lambda 0.55))
         total (case arm
                 :next-C (+ risk (:ambiguity base) (* lambda (:conatus base)))
@@ -101,6 +133,7 @@
                 :eig-only (- (* lambda (:conatus base)) eig))]
     (assoc base
            :pattern (get patterns kind)
+           :eig-model eig-model
            :risk risk
            :eig eig
            :total total
@@ -168,6 +201,7 @@
            :previous-genotype previous :exotypes exotypes
            :pattern-decisions decisions
            :lambda (:lambda state) :tau (:tau state) :mu (:mu state)
+           :eig-model (get state :eig-model :legacy)
            :prevalence-radius (:prevalence-radius state))))
 
 (defn step-compact
@@ -183,4 +217,5 @@
     (assoc advanced :arm :efe-full :pattern-arm arm
            :previous-genotype previous :exotypes exotypes
            :lambda (:lambda state) :tau (:tau state) :mu (:mu state)
+           :eig-model (get state :eig-model :legacy)
            :prevalence-radius (:prevalence-radius state))))
