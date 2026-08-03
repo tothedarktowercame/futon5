@@ -128,9 +128,8 @@
                                   (> (/ (:mean stats) (:sem stats)) 2.0)))))
 
 (defn- risk-spread [preference]
-  (let [values
-        (vec
-         (mapcat
+  (let [runs
+        (mapv
          (fn [seed]
            (loop [state (initial-state seed 1.0 preference)
                   remaining (:steps config)
@@ -142,9 +141,11 @@
                         (into result
                               (map #(get-in % [:winner :risk])
                                    (:efe-decisions next-state))))))))
-          (map #(+ (:seed-base config) %)
-               (range (:risk-probe-seeds config)))))]
-    (distribution values)))
+         (map #(+ (:seed-base config) %)
+              (range (:risk-probe-seeds config))))
+        pooled (vec (mapcat identity runs))]
+    {:pooled-selected-policies (distribution pooled)
+     :seed-means (summary (map mean runs))}))
 
 (defn- lambda-label [lambda]
   (str/replace (format "%.3f" lambda) "." "p"))
@@ -174,9 +175,12 @@
         summaries (into (sorted-map)
                         (map (fn [[lambda runs]]
                                [lambda (lambda-summary runs)])) raw)
-        peak-lambda
-        (apply max-key #(get-in summaries [% :entropy :mean])
-               (reverse (:lambdas config)))
+        maximum-entropy (reduce max (map #(get-in summaries [% :entropy :mean])
+                                        (:lambdas config)))
+        maximizers (vec (filter #(= maximum-entropy
+                                   (get-in summaries [% :entropy :mean]))
+                                (:lambdas config)))
+        peak-lambda (first maximizers)
         endpoints [0.0 1.0]
         endpoint-contrasts
         (into (sorted-map)
@@ -195,6 +199,8 @@
      :lambdas summaries
      :diversity-maximum {:criterion :mean-shannon-entropy
                          :lambda peak-lambda
+                         :maximizers maximizers
+                         :maximum-mean maximum-entropy
                          :endpoint-contrasts endpoint-contrasts}
      :risk-preference-spread risk
      :figures figures
@@ -230,8 +236,8 @@
                      (:lambdas result)))
        "\n```\n\n## Diversity maximum\n\n```clojure\n"
        (pr-str (:diversity-maximum result))
-       "\n```\n\nThe maximisation criterion was mean Shannon entropy; ties use the smallest lambda. `:more-than-2-sem?` is the prerequested paired comparison with each endpoint.\n\n"
-       "## Risk-preference diagnostic\n\nThe default remains `0.15`. Alternative values are diagnostics only. Distributions are over selected policies for five fixed 120-step seeds.\n\n```clojure\n"
+       "\n```\n\nThe maximisation criterion was mean Shannon entropy. `:maximizers` reports every tie; `:lambda` is the smallest tied value used only as the representative render. `:more-than-2-sem?` is the prerequested paired comparison with each endpoint.\n\n"
+       "## Risk-preference diagnostic\n\nThe default remains `0.15`. Alternative values are diagnostics only. `:pooled-selected-policies` gives cell-step spread; `:seed-means` gives the directly comparable between-seed spread for five fixed 120-step seeds.\n\n```clojure\n"
        (pr-str (:risk-preference-spread result))
        "\n```\n\n## Modelling choices\n\n```clojure\n"
        (pr-str (:modelling-choices result))
