@@ -343,6 +343,7 @@
          (format "For comparison, unaveraged primary-tape repeatability is within `%.6f`, between `%.6f`, ratio `%.6f`; this is not used as the T=8 ceiling.\n\n"
                  (:within raw-repeatability) (:between raw-repeatability)
                  (:ratio raw-repeatability))
+         "The oracle ratio exceeds this empirical ceiling. Therefore average different-neighbourhood / same-neighbourhood distance is not a strict mathematical upper bound on a deliberately contrastive partition: the oracle selects groups far apart in signature space, whereas the ceiling averages every different-neighbourhood pair. It is reported as the requested repeatability ceiling, not asserted as an absolute bound on partition ratios.\n\n"
          (format "Oracle: occupancy `%d`, ratio `%.6f`, matched null `%.6f ± %.6f`, excess `%+.6f` (`%+.2f` null SD).\n\n"
                  (:occupancy oracle) (:ratio oracle) (:null-ratio-at-k oracle)
                  (:null-sd oracle) (:excess-over-null oracle)
