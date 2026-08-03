@@ -366,3 +366,76 @@ two seeds (0, 0, 3.5, 11.0, 4.5) and should be called suggestive, not establishe
 **Acceptance criterion this yields.** A correct epistemic term must increase phenotype
 damage or leave it alone — never trade it for genotype noise. That replaces an aesthetic
 judgement about figures with a testable one.
+
+### 7. The genotype layer has no spatial coupling — structural, not tuning
+
+Reading `grid/apply-exotype`:
+
+```clojure
+(defn apply-exotype [sigil exotype draw-seed]
+  (ca/with-seed draw-seed
+    (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
+                                      (get propagators exotype)))))
+```
+
+The exotype **already selects a propagator** (`:builder` → `51034267`, `:collapser` →
+`10345672`, `:chaos` → `13407265`, `:identity` → identity). But `apply-exotype` receives
+only `sigil` — the cell's own genotype. `rule-permute` copies the negation of one of the
+cell's own rule bits into another of its own bits under σ: a bijection on eight local bits.
+
+**No neighbour genotype is read anywhere in the genotype update.** A perturbation at site
+*i* cannot reach site *j* through the genotype layer at any μ, τ, λ, or c.
+
+Against the classical work (draft6 §Figure 10): the propagator-fraction scan interpolates
+between **all blend at q=0 and all propagator at q=1**, and *blend* is the neighbour-reading
+half. **This model implements the propagator half and omits blend entirely** — so there is
+nothing to interpolate, and no coefficient could ever have broken the vertical bands.
+
+Probe over the previously unsampled band (2 seeds, 6000 steps, width 80, λ=0.55):
+
+| μ | c | P damage | G damage | X damage |
+|---:|---:|---:|---:|---:|
+| 0.10 | off | 9.000 | **0.000** | 0.000 |
+| 0.10 | 0.05 … 3.0 (7 values) | 4.5–13.0 | **0.000 throughout** | 0–1 |
+| 0.30 | off | 9.500 | **0.000** | 0.000 |
+| 0.30 | 0.05 | 11.000 | 1.500 | 0.000 |
+| 0.30 | 0.2 | 5.000 | 6.000 | 0.000 |
+| 0.30 | 3.0 | 3.000 | 11.000 | 2.500 |
+
+At μ=0.10 genotype damage is **exactly 0.000 for all seven values of c**. Exact zeros
+across a whole parameter range indicate an absent mechanism, not a weak effect.
+
+The sporadic nonzero values at μ=0.30 come from the indirect loop
+`genotype → phenotype → exotype → genotype`: a flipped bit alters the neighbouring
+phenotype, which feeds `transmit`, which permutes a neighbour's rule. That path exists but
+is long and weak, hence values (1.5, 0, 6.0, 0, 0, 11.0) with no monotone response to c.
+
+**Not claimed:** the phenotype numbers range 4.5–13.0 at μ=0.10 with no pattern, so at two
+seeds nothing should be read into P variation. The single point weakly meeting the
+acceptance criterion (μ=0.30, c=0.05: P 11.0 *and* G 1.5) is contradicted by its neighbour
+at c=0.1 (P 6.0, G 0.0). Treat as noise; ~20 seeds would be needed to say otherwise.
+
+### 8. Consequence for the architecture (Joe's proposal)
+
+Expand horizontal transfer out of the exotype layer and into the **genotype** layer, with
+the exotype as a *propensity to transfer*. This supplies the missing `blend` half at a
+single call site: `apply-exotype` gains a neighbour argument, and the exotype governs how
+much of the neighbour's rule is taken rather than permuting in place.
+
+It also makes a correct epistemic term load-bearing rather than decorative. Once transfer
+is possible, "how much would I learn by acquiring this neighbour's rule?" has a referent:
+the expected divergence between one's own trajectory and one's trajectory under their
+rule — which is damage, already in the harness. Three quantities collapse into one:
+
+- **exotype** = propensity to transfer;
+- **EIG** = expected divergence from transferring;
+- **damage** = the measure of that divergence.
+
+And it inherits the right pathology-freedom: in a frozen region a neighbour's rule changes
+nothing, so EIG is low and no transfer occurs — the exact opposite of the implemented term,
+which fires hardest precisely there.
+
+**Sequencing (the reverse of what was done today): build the transfer mechanism first,
+then define the epistemic term over it.** With no transfer possible, an epistemic term has
+nothing to be epistemic about, which is why the implemented one degenerated into a novelty
+bonus on the exotype layer.

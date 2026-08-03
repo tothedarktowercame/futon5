@@ -23,15 +23,18 @@
      :P (dmg :phenotype) :G (dmg :genotype) :X (dmg :exotype)}))
 
 (defn -main [& _]
-  (println "\nDAMAGE PROBE — EIG off vs on, 2 seeds, 6000 steps, width 80\n")
+  (println "\nDAMAGE PROBE — the unsampled band 0 < c <= 3, 2 seeds, 6000 steps, width 80\n")
   (let [rows (doall
               (for [mu [0.1 0.3]
-                    [arm c] [[:next-C nil] [:next-C-plus-eig 3.0] [:next-C-plus-eig 5.0]]]
+                    [arm c] [[:next-C nil]
+                             [:next-C-plus-eig 0.05] [:next-C-plus-eig 0.1]
+                             [:next-C-plus-eig 0.2]  [:next-C-plus-eig 0.5]
+                             [:next-C-plus-eig 1.0]  [:next-C-plus-eig 3.0]]]
                 (probe mu 0.55 arm c)))]
     (printf "%6s %22s %8s %9s %9s %9s%n" "mu" "arm" "c" "P dmg" "G dmg" "X dmg")
     (println (apply str (repeat 68 "-")))
     (doseq [r rows]
       (printf "%6.2f %22s %8s %9.3f %9.3f %9.3f%n"
               (:mu r) (name (:arm r)) (str (:c r)) (:P r) (:G r) (:X r)))
-    (spit "reports/damage-probe-eig-off.edn" (with-out-str (pp/pprint rows)))
-    (println "\nwrote reports/damage-probe-eig-off.edn")))
+    (spit "reports/damage-probe-low-c.edn" (with-out-str (pp/pprint rows)))
+    (println "\nwrote reports/damage-probe-low-c.edn")))
