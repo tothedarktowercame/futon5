@@ -169,3 +169,18 @@
            :pattern-decisions decisions
            :lambda (:lambda state) :tau (:tau state) :mu (:mu state)
            :prevalence-radius (:prevalence-radius state))))
+
+(defn step-compact
+  "Long-run equivalent of `step`, omitting the per-cell decision audit from
+   the returned state. The sampled decisions and state transition are equal."
+  [state]
+  (let [arm (:pattern-arm state)
+        exotypes (if (= arm :baseline)
+                   (expansion/transmit-compact :efe-full state)
+                   (:exotypes (transmit arm state)))
+        previous (:genotype state)
+        advanced (grid/step (assoc state :arm :heterogeneous-fixed))]
+    (assoc advanced :arm :efe-full :pattern-arm arm
+           :previous-genotype previous :exotypes exotypes
+           :lambda (:lambda state) :tau (:tau state) :mu (:mu state)
+           :prevalence-radius (:prevalence-radius state))))
