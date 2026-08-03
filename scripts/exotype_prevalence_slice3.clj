@@ -220,7 +220,10 @@
                      (:taus result)))
        "\n```\n\n## Apparatus checks\n\n```clojure\n"
        (pr-str (select-keys result [:legacy-endpoint :determinism]))
-       "\n```\n\n## Modelling choices\n\n```clojure\n"
+       "\n```\n\n## Entropy maximum\n\n```clojure\n"
+       (pr-str (:entropy-maximum result))
+       "\n```\n\nThe entropy maximum coincides with the high-tau extreme, so that one panel serves both requested roles.\n"
+       "\n## Modelling choices\n\n```clojure\n"
        (pr-str (:modelling-choices result))
        "\n```\n\n## Spacetime panels\n\n"
        (apply str (for [[tau path] (:figures result)]
