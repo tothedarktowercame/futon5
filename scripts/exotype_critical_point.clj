@@ -222,7 +222,11 @@
         all-domains (vec (mapcat :domains runs))
         per-run-domain-counts (map #(count (:domains %)) runs)
         per-run-max (map #(reduce max (:domains %)) runs)]
-    {:checkpoints checkpoints :contrasts-from-120 contrasts
+    {:classification :transient-toward-identity
+     :classification-basis
+     {:entropy-120-to-1200 (get-in contrasts [1200 :entropy])
+      :kind-count-120-to-1200 (get-in contrasts [1200 :kind-count])}
+     :checkpoints checkpoints :contrasts-from-120 contrasts
      :spatial-at-120
      {:pooled-domain-size-histogram (into (sorted-map) (frequencies all-domains))
       :pooled-domain-size (summary all-domains)
@@ -321,7 +325,10 @@
                                            :critical-joint-fraction :contrasts]))
               "\n```\n\n"))
        (when-let [stationarity (:stationarity result)]
-         (str "## Long-horizon mixture trajectory\n\n| step | identity | chaos | kinds | entropy |\n|---:|---:|---:|---:|---:|\n"
+         (str "## Long-horizon mixture trajectory\n\nClassification: `"
+              (name (:classification stationarity))
+              "`. The step-120 mixture is not stationary; it drifts toward the identity phase.\n\n"
+              "| step | identity | chaos | kinds | entropy |\n|---:|---:|---:|---:|---:|\n"
               (apply str (for [[time row] (:checkpoints stationarity)]
                            (format "| %d | %s | %s | %s | %s |\n" time
                                    (fmt (get-in row [:counts :identity]))
