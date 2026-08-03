@@ -1,0 +1,102 @@
+(ns futon5.exotype.grid
+  "A per-cell exotype grid and four local transmission policies.
+
+   Exotypes are names from the measured propagator vocabulary. All legacy
+   positional permutations are converted through the historical Elisp
+   neighbourhood ordering before use. Policies read only the cell, its two
+   neighbours, and the current local phenotype neighbourhood."
+  (:require [futon5.ca.core :as ca]
+            [futon5.xenotype.generator :as gen]))
+
+(def exotype-kinds [:builder :collapser :chaos :identity])
+(def arms [:uniform-fixed :heterogeneous-fixed :conformist :boring-triggered])
+
+(def ^:private elisp-table
+  ["000" "001" "010" "100" "011" "101" "110" "111"])
+
+(defn- positional [s]
+  (mapv #(Character/digit ^char % 10) s))
+
+(def propagators
+  {:builder (gen/positional-sigma->neighbourhood-sigma
+             (positional "51034267") elisp-table)
+   :collapser (gen/positional-sigma->neighbourhood-sigma
+               (positional "10345672") elisp-table)
+   :chaos (gen/positional-sigma->neighbourhood-sigma
+           (positional "13407265") elisp-table)
+   :identity (gen/positional-sigma->neighbourhood-sigma
+              [0 1 2 3 4 5 6 7] elisp-table)})
+
+(defn boring?
+  "The three-bit circular phenotype neighbourhood is uniform."
+  [phenotype index]
+  (let [width (count phenotype)
+        at #(nth phenotype (mod % width))]
+    (= (at (dec index)) (at index) (at (inc index)))))
+
+(defn initial-grid
+  "Create the exotype grid for ARM. Transmitting arms share the same seeded
+   heterogeneous initialization as :heterogeneous-fixed."
+  [arm width]
+  (case arm
+    :uniform-fixed (vec (repeat width :builder))
+    (:heterogeneous-fixed :conformist :boring-triggered)
+    (vec (repeatedly width #(ca/rnd-nth exotype-kinds)))
+    (throw (ex-info "unknown exotype-grid arm" {:arm arm :available arms}))))
+
+(defn- local-majority [grid index]
+  (let [width (count grid)
+        self (nth grid index)
+        values [(nth grid (mod (dec index) width))
+                self
+                (nth grid (mod (inc index) width))]
+        winner (first (for [[value n] (frequencies values) :when (>= n 2)] value))]
+    (or winner self)))
+
+(defn transmit
+  "Advance exotypes synchronously under ARM. No policy reads global state."
+  [arm grid phenotype]
+  (case arm
+    (:uniform-fixed :heterogeneous-fixed) grid
+    :conformist
+    (mapv #(local-majority grid %) (range (count grid)))
+    :boring-triggered
+    (mapv (fn [index]
+            (if (boring? phenotype index)
+              (nth grid (mod (dec index) (count grid)))
+              (nth grid index)))
+          (range (count grid)))
+    (throw (ex-info "unknown exotype-grid arm" {:arm arm :available arms}))))
+
+(defn apply-exotype [sigil exotype draw-seed]
+  (ca/with-seed draw-seed
+    (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
+                                      (get propagators exotype)))))
+
+(defn- phenotype-step [genotype phenotype]
+  (let [width (count genotype)]
+    (apply str
+           (for [index (range width)]
+             (ca/evolve-digits-by-rule
+              (str (nth phenotype (mod (dec index) width)))
+              (str (nth phenotype index))
+              (str (nth phenotype (mod (inc index) width)))
+              (ca/bits-for (str (nth genotype index))))))))
+
+(defn step
+  "Advance phenotype, genotype, and exotype grids synchronously."
+  [{:keys [genotype phenotype exotypes arm seed time]
+    :or {seed 0 time 0}}]
+  {:arm arm
+   :seed seed
+   :time (inc time)
+   :phenotype (phenotype-step genotype phenotype)
+   :genotype (mapv (fn [index sigil exotype]
+                     (apply-exotype sigil exotype
+                                    (+ (long seed)
+                                       (* (long time) (count genotype)) index)))
+                   (range (count genotype)) genotype exotypes)
+   :exotypes (transmit arm exotypes phenotype)})
+
+(defn run-steps [state steps]
+  (nth (iterate step state) steps))
