@@ -4,7 +4,7 @@
 (require '[clojure.string :as str])
 
 (def coefficients [0.0 0.5 1.0 1.2 1.35 1.45 1.475 1.5
-                   1.6 1.75 2.0 2.5 3.0 5.0])
+                   1.6 1.75 2.0 2.5 3.0 5.0 7.5 10.0])
 (def coefficient-config
   {:seed-base 20260803 :seeds 60 :width 80 :steps 6000 :workers 12
    :lambda 0.55 :mu 0.1 :tau 0.3 :prevalence-radius 1
@@ -82,7 +82,9 @@
       (finally (.shutdown pool)))))
 
 (defn peak-summary [runs]
-  (let [times (:checkpoints config)
+  ;; The common t=0 initialization contains all four kinds by construction, so it is
+  ;; not a dynamical diversity peak.  Report the maximum after evolution begins.
+  (let [times (rest (:checkpoints config))
         rows (for [run runs
                    :let [peak-time (apply max-key
                                           #(get-in run [:checkpoints % :entropy]) times)]]
@@ -130,10 +132,11 @@
     (.delete (clojure.java.io/file ppm)) path))
 
 (defn best-sustained-coefficient [summaries]
-  (first (apply max-key
-                (fn [[_ row]] [(get-in row [:trajectory 6000 :entropy :mean])
-                               (get-in row [:trajectory 6000 :kind-count :mean])])
-                summaries)))
+  (first
+   (last
+    (sort-by (fn [[_ row]] [(get-in row [:trajectory 6000 :entropy :mean])
+                            (get-in row [:trajectory 6000 :kind-count :mean])])
+             summaries))))
 
 (defn coefficient-determinism []
   (let [left (pr-str (coefficient-seed-run 1.0 (:seed-base config)))
