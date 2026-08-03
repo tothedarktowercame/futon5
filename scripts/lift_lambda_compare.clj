@@ -16,6 +16,7 @@
   {:seed 20260803
    :samples (env-long "LIFT_LAMBDA_SAMPLES" 200)
    :tapes (env-long "LIFT_LAMBDA_TAPES" 8)
+   :ceiling-replicate-tapes (env-long "LIFT_LAMBDA_CEILING_TAPES" 8)
    :width 80
    :burn-in 60
    :damage-steps 59
@@ -190,7 +191,7 @@
                      (range draws))]
     {:mean (mean ratios) :sd (population-sd ratios) :draws draws}))
 
-(defn- ceiling [per-neighbourhood-tapes]
+(defn- raw-tape-repeatability [per-neighbourhood-tapes]
   (let [indexed (vec
                  (mapcat (fn [neighbourhood signatures]
                            (map-indexed (fn [tape signature]
@@ -222,17 +223,42 @@
      :within-pairs (get-in totals [:within :n])
      :between-pairs (get-in totals [:between :n])}))
 
+(defn- tape-averaged-ceiling [primary-averages replicate-averages]
+  (let [samples (count primary-averages)
+        all-signatures (vec (concat primary-averages replicate-averages))
+        normalised (normalise-signatures all-signatures)
+        primary (subvec normalised 0 samples)
+        replicate (subvec normalised samples (* 2 samples))
+        within-distances (mapv #(rms-distance (nth primary %) (nth replicate %))
+                               (range samples))
+        between-distances
+        (for [i (range samples) j (range samples) :when (not= i j)]
+          (rms-distance (nth primary i) (nth replicate j)))
+        within (mean within-distances)
+        between (mean between-distances)]
+    {:within within :between between :ratio (/ between within)
+     :within-pairs (count within-distances)
+     :between-pairs (* samples (dec samples))
+     :estimate-tapes (:tapes config)}))
+
 (defn experiment []
-  (let [{:keys [seed samples tapes null-draws]} config
+  (let [{:keys [seed samples tapes ceiling-replicate-tapes null-draws]} config
         rng (java.util.Random. (long seed))
         neighbourhoods (vec (repeatedly samples #(random-bits rng)))
-        tape-seeds (mapv #(+ seed 100000 %) (range tapes))
-        per-neighbourhood-tapes
+        primary-tape-seeds (mapv #(+ seed 100000 %) (range tapes))
+        replicate-tape-seeds
+        (mapv #(+ seed 200000 %) (range ceiling-replicate-tapes))
+        per-neighbourhood
         (vec
          (pmap (fn [bits]
-                 (mapv #(damage-signature bits %) tape-seeds))
+                 {:primary (mapv #(damage-signature bits %) primary-tape-seeds)
+                  :replicate (mapv #(damage-signature bits %)
+                                   replicate-tape-seeds)})
                neighbourhoods))
-        raw-averages (mapv average-signatures per-neighbourhood-tapes)
+        primary-tapes (mapv :primary per-neighbourhood)
+        replicate-tapes (mapv :replicate per-neighbourhood)
+        raw-averages (mapv average-signatures primary-tapes)
+        replicate-averages (mapv average-signatures replicate-tapes)
         signatures (normalise-signatures raw-averages)
         control-seed (+ seed 424242)
         oracle-classes* (oracle-classes raw-averages)
@@ -242,7 +268,8 @@
     {:kind :lift-lambda-comparison
      :schema 1
      :config config
-     :tape-seeds tape-seeds
+     :tape-seeds {:primary primary-tape-seeds
+                  :ceiling-replicate replicate-tape-seeds}
      :signature {:layers [:phenotype :genotype :exotype]
                  :aggregation :mean-over-fixed-tapes
                  :normalisation :per-layer-z-score-after-tape-average
@@ -253,7 +280,10 @@
      :packing {:lines-0-to-3 :current-left-ego-right-next-lambda-gte-half
                :line-4 :left-ego-right-not-all-identical
                :line-5 :phenotype-family-density-gte-half}
-     :ceiling (ceiling per-neighbourhood-tapes)
+     :ceiling {:tape-averaged
+               (tape-averaged-ceiling raw-averages replicate-averages)
+               :raw-primary-tape-repeatability
+               (raw-tape-repeatability primary-tapes)}
      :oracle (merge oracle-separation
                     {:occupancy oracle-k
                      :null-ratio-at-k (:mean oracle-null)
@@ -292,13 +322,15 @@
           null-ratio-at-k null-sd excess-over-null excess-sd-units))
 
 (defn markdown [result]
-  (let [{:keys [samples tapes width burn-in damage-steps seed null-draws
-                efe-conatus-weight]} (:config result)
-        ceiling (:ceiling result)
+  (let [{:keys [samples tapes ceiling-replicate-tapes width burn-in damage-steps
+                seed null-draws efe-conatus-weight]} (:config result)
+        ceiling (get-in result [:ceiling :tape-averaged])
+        raw-repeatability (get-in result [:ceiling :raw-primary-tape-repeatability])
         oracle (:oracle result)]
     (str "# Dynamically grounded lift comparison\n\n"
          "Fixed seed `" seed "`; N=`" samples "` neighbourhoods; T=`" tapes
-         "` fixed tapes; width `" width "`; t*=`" burn-in "`; dt=`"
+         "` fixed primary tapes plus `" ceiling-replicate-tapes
+         "` independent ceiling tapes; width `" width "`; t*=`" burn-in "`; dt=`"
          damage-steps "`. The active three-grid apparatus uses EFE conatus weight `"
          efe-conatus-weight "`.\n\n"
          "| variant | occupancy | flip locality | within | between | ratio | null@k | null sd | excess | excess sd |\n"
@@ -308,6 +340,9 @@
          (format "Damage ceiling: within-neighbourhood tape distance `%.6f` (%d pairs), between-neighbourhood distance `%.6f` (%d pairs), ratio `%.6f`.\n\n"
                  (:within ceiling) (:within-pairs ceiling)
                  (:between ceiling) (:between-pairs ceiling) (:ratio ceiling))
+         (format "For comparison, unaveraged primary-tape repeatability is within `%.6f`, between `%.6f`, ratio `%.6f`; this is not used as the T=8 ceiling.\n\n"
+                 (:within raw-repeatability) (:between raw-repeatability)
+                 (:ratio raw-repeatability))
          (format "Oracle: occupancy `%d`, ratio `%.6f`, matched null `%.6f ± %.6f`, excess `%+.6f` (`%+.2f` null SD).\n\n"
                  (:occupancy oracle) (:ratio oracle) (:null-ratio-at-k oracle)
                  (:null-sd oracle) (:excess-over-null oracle)
@@ -315,7 +350,7 @@
          "Matched-granularity nulls use `" null-draws
          "` deterministic random partitions per occupancy.\n\n"
          "## Method and packing\n\n"
-         "Each tape initializes the same 36-bit neighbourhood as four repeating current rule sigils plus its repeating phenotype family. Only the heterogeneous exotype field and subsequent rewrite tape vary. After 60 burn-in steps, independent midpoint perturbations are propagated for 59 steps and phenotype, genotype, and exotype Hamming reach are divided by width. The three reaches are averaged over the fixed tapes, then each layer is z-scored across neighbourhoods before RMS Euclidean distance.\n\n"
+         "Each tape initializes the same 36-bit neighbourhood as four repeating current rule sigils plus its repeating phenotype family. Only the heterogeneous exotype field and subsequent rewrite tape vary. After 60 burn-in steps, independent midpoint perturbations are propagated for 59 steps and phenotype, genotype, and exotype Hamming reach are divided by width. The three reaches are averaged over the eight fixed primary tapes, then each layer is z-scored across neighbourhoods before RMS Euclidean distance. The ceiling compares that T=8 estimate against an independent T=8 replicate estimate for the same neighbourhood, versus different neighbourhoods; it therefore uses the same averaging grain as the arm signatures.\n\n"
          "The lambda-grounded key packs six bottom-to-top lines: four lookup-table Langton-lambda bits for the CURRENT LEFT/EGO/RIGHT/NEXT rules (`lambda >= 0.5`); one bit saying LEFT/EGO/RIGHT are not all identical; and one bit saying at least two of the four phenotype-family bits are one. Thus evaluation is local in both space and time and never retains initial sigils. The half-inclusive tie rules are fixed, not fitted. `eigen-sign` calls the incumbent lift unchanged; `random` is the seeded-hash control.\n\n"
          "The old `2.4344` ceiling used a different signature and is not reused here.\n")))
 
@@ -326,7 +361,8 @@
     (io/make-parents edn-path)
     (spit edn-path (str (pr-str result) "\n"))
     (spit md-path (markdown result))
-    (println (format "ceiling %.6f oracle %.6f" (get-in result [:ceiling :ratio])
+    (println (format "ceiling %.6f oracle %.6f"
+                     (get-in result [:ceiling :tape-averaged :ratio])
                      (get-in result [:oracle :ratio])))
     (doseq [row (:rows result)]
       (println (format "%-16s occ=%2d ratio=%.6f null=%.6f+-%.6f excess-sd=%+.2f"
