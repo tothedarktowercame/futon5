@@ -12,22 +12,22 @@
 
 (def config
   {:seed-base 20260803
-   ;; Measured 51.02 s/run at width 40. Four workers make N=4 one wave;
-   ;; N=8 would be two waves and exceed the Agency cap with this 25-cell grid.
-   :seeds 4
-   :width 40
+   :seeds 100
+   :width 80
    :steps 6000
-   :workers 4
+   :workers 8
    :benchmark-seconds-per-run 51.02
    :tau 0.3
    :prevalence-radius 1
-   :mus [0.0 0.03 0.1 0.3 1.0]
-   :lambdas [0.4 0.525 0.55 0.575 0.7]
-   :checkpoints [0 120 600 1200 3000 4800 6000]
-   :plateau-start 4800})
+   :mus [0.0 0.01 0.03 0.1 0.3 1.0]
+   :lambdas [0.4 0.5 0.525 0.54 0.55 0.56 0.575 0.6 0.7]
+   :checkpoints [0 120 600 1200 3000 3600 4200 4800 5400 6000]
+   :reported-checkpoints [120 600 1200 3000 6000]
+   :plateau-checkpoints [3000 3600 4200 4800 5400 6000]
+   :plateau-start 3000})
 
-(def raw-path "reports/exotype-policy-slice5.raw.edn")
-(def partial-path "reports/exotype-policy-slice5.partial.edn")
+(def raw-path "reports/exotype-policy-slice5-full.raw.edn")
+(def partial-path "reports/exotype-policy-slice5-full.partial.edn")
 (def edn-path "reports/exotype-policy-slice5.edn")
 (def md-path "reports/exotype-policy-slice5.md")
 
@@ -111,7 +111,7 @@
          :phenotype-activity
          (/ phenotype-changes (double (* (:width config) (:steps config))))
          :genotype-rule-count (count (distinct (:genotype state)))}
-        (let [next-state (expansion/step state)
+        (let [next-state (expansion/step-compact state)
               next-time (inc time)
               changed (difference (:exotypes state) (:exotypes next-state))
               phenotype-changed
@@ -192,21 +192,32 @@
            :from start :to end)))
 
 (defn- condition-summary [runs]
-  {:trajectory (into (sorted-map)
+  (let [plateau-times (:plateau-checkpoints config)
+        plateau-count-summary
+        (fn [kind]
+          (summary
+           (for [run runs
+                 time plateau-times]
+             (get-in run [:checkpoints time :counts kind]))))]
+    {:trajectory (into (sorted-map)
                      (for [time (:checkpoints config)]
                        [time (checkpoint-summary runs time)]))
    :plateau-assessment
    {:kind-count (paired-delta runs :kind-count)
     :entropy (paired-delta runs :entropy)}
-   :plateau-exotype-distribution
+   :final-exotype-distribution
    (get-in (checkpoint-summary runs (:steps config)) [:counts])
+   :plateau-exotype-distribution
+   (into (sorted-map)
+         (for [kind grid/exotype-kinds]
+           [kind (plateau-count-summary kind)]))
    :changed-steps (summary (map :changed-steps runs))
    :changed-cells (summary (map :changed-cells runs))
    :phenotype-activity (summary (map :phenotype-activity runs))
    :genotype-rule-count (summary (map :genotype-rule-count runs))
    :spatial-autocorrelation
    (get-in (checkpoint-summary runs (:steps config))
-           [:spatial-autocorrelation])})
+           [:spatial-autocorrelation])}))
 
 (defn- result-from-raw [raw]
   (let [conditions
@@ -247,13 +258,12 @@
       :sampling :stateless-seed-time-cell
       :updates :synchronous
       :plateau-assessment {:window [(:plateau-start config) (:steps config)]
+                           :sample-times (:plateau-checkpoints config)
                            :resolved-threshold-sems 2.0}
       :spatial :chance-corrected-circular-neighbour-agreement
-      :scope-cut {:measured-seconds-per-run 51.02
-                  :width-cut-from 80 :width-used 40
-                  :seeds-cut-from 100 :seeds-used 4
-                  :grid-points-retained 25
-                  :reason :fit-agency-cap}}}))
+      :execution {:implementation :compact-audit-free-state
+                  :semantic-equivalence-test :compact-step-is-semantically-identical
+                  :pilot-seconds-per-run-width-40 51.02}}}))
 
 (def ^:private exotype-colours
   {:builder [54 162 235] :collapser [245 166 35]
@@ -322,17 +332,17 @@
 
 (defn markdown [result]
   (str "# Expanded exotype-policy Slice 5\n\n"
-       "Fixed tau `0.3`; width `40`; horizon `6000`; N=`4` per condition. A measured width-40 run cost `51.02s`; width was cut from 80 and N from 100 so the complete 25-condition grid fits the Agency cap. All five mu values and all five lambda values were retained.\n\n"
+       "Fixed tau `0.3`; width `80`; horizon `6000`; N=`100` per condition. The full grid uses mu `" (pr-str (get-in result [:config :mus])) "` and lambda `" (pr-str (get-in result [:config :lambdas])) "`.\n\n"
        "## Diversity trajectory\n\n"
        "Each cell is `kind-count / Shannon entropy` (mean; full SD/SEM in EDN).\n\n"
-       "| mu | lambda | t=0 | t=120 | t=600 | t=1200 | t=3000 | t=4800 | t=6000 |\n"
-       "|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n"
+       "| mu | lambda | t=0 | t=120 | t=600 | t=1200 | t=3000 | t=6000 |\n"
+       "|---:|---:|---:|---:|---:|---:|---:|---:|\n"
        (apply str
               (for [[mu lambdas] (:conditions result)
                     [lambda row] lambdas]
                 (str "| " mu " | " lambda " | "
                      (str/join " | "
-                               (for [time (:checkpoints config)]
+                               (for [time (cons 0 (:reported-checkpoints config))]
                                  (format "%.2f / %.4f"
                                          (get-in row [:trajectory time
                                                       :kind-count :mean])
@@ -340,7 +350,7 @@
                                                       :entropy :mean]))))
                      " |\n")))
        "\n## Late-window plateau assessment\n\n"
-       "Deltas are paired from t=4800 to t=6000.\n\n"
+       "Deltas are paired from t=3000 to t=6000; plateau distributions pool the six checkpoints at 600-step spacing across that window.\n\n"
        "| mu | lambda | kind delta | kind class | entropy delta | entropy class |\n"
        "|---:|---:|---:|---|---:|---|\n"
        (apply str
@@ -370,7 +380,10 @@
                      (for [[mu lambdas] (:conditions result)]
                        [mu (into (sorted-map)
                                  (for [[lambda row] lambdas]
-                                   [lambda (:plateau-exotype-distribution row)]))])))
+                                   [lambda {:plateau
+                                            (:plateau-exotype-distribution row)
+                                            :final
+                                            (:final-exotype-distribution row)}]))])))
        "\n```\n\n## Entropy maxima by mu\n\n```clojure\n"
        (pr-str (:entropy-maxima result))
        "\n```\n\n## Determinism and modelling choices\n\n```clojure\n"

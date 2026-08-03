@@ -48,6 +48,16 @@
              (get-in (second (run))
                      [:policy-expansion-decisions 0 :selection]))))))
 
+(deftest compact-step-is-semantically-identical
+  (doseq [mu [0.0 0.01 0.3 1.0]
+          lambda [0.4 0.55 0.7]
+          :let [input (assoc (state mu) :lambda lambda)
+                audited (map #(dissoc % :efe-decisions
+                                      :policy-expansion-decisions)
+                             (take 31 (iterate expansion/step input)))
+                compact (take 31 (iterate expansion/step-compact input))]]
+    (is (= audited compact))))
+
 (deftest invalid-temperature-or-floor-refuses
   (is (thrown-with-msg? clojure.lang.ExceptionInfo #"tau must be nonnegative"
                         (expansion/cell-decision

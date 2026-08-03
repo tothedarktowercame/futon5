@@ -70,6 +70,14 @@
                      (long index))]
     (.nextDouble (java.util.Random. draw-seed))))
 
+(def ^:private cached-score
+  ;; The frozen generative model reads a finite local observation. Caching its
+  ;; pure score avoids recomputing identical Bernoulli KL/entropy terms in the
+  ;; full grid; this cache is an implementation detail, not cell/model state.
+  (memoize
+   (fn [arm candidate-exotype observation score-options]
+     (efe/score-policy arm candidate-exotype observation score-options))))
+
 (defn- sample-candidate [candidates probabilities* draw]
   (loop [candidate-index 0 cumulative 0.0]
     (let [last? (= candidate-index (dec (count candidates)))
@@ -113,6 +121,53 @@
     {:exotypes (mapv #(get-in % [:winner :candidate-exotype]) decisions)
      :decisions decisions}))
 
+(defn transmit-compact
+  "Return only the next exotype grid, using the identical scored posterior as
+  `transmit`. Long experiments use this to avoid retaining 80 complete policy
+  audits in every intermediate state; it does not change policy construction,
+  G, E, sampling, or the stateless draw."
+  [arm state]
+  (let [exotypes (:exotypes state)
+        width (count exotypes)
+        radius (long (get state :prevalence-radius default-radius))
+        tau (double (get state :tau 0.0))
+        mu (double (get state :mu 0.0))
+        score-options (select-keys state [:lambda :rule-change-preference])]
+    (mapv
+     (fn [index]
+       (let [observation (efe/local-observation state index)
+             local-counts
+             (frequencies
+              (map #(nth exotypes %)
+                   (prevalence/neighbourhood-indices width index radius)))
+             candidate-kinds (into [(nth exotypes index)] grid/exotype-kinds)
+             totals (mapv #(get (cached-score arm % observation score-options)
+                                :total)
+                          candidate-kinds)
+             habit-masses (mapv #(+ (double (get local-counts % 0)) mu)
+                                candidate-kinds)
+             minimum (reduce min
+                             (keep-indexed
+                              #(when (pos? (nth habit-masses %1)) %2)
+                              totals))
+             raw (mapv (fn [total habit-mass]
+                         (* habit-mass
+                            (if (zero? tau)
+                              (if (= (double total) (double minimum)) 1.0 0.0)
+                              (Math/exp (/ (- minimum (double total)) tau)))))
+                       totals habit-masses)
+             normalizer (reduce + 0.0 raw)
+             probabilities* (mapv #(/ % normalizer) raw)
+             draw (draw-for state index)]
+         (loop [candidate-index 0 cumulative 0.0]
+           (let [last? (= candidate-index (dec (count candidate-kinds)))
+                 next-cumulative (+ cumulative
+                                    (nth probabilities* candidate-index))]
+             (if (or last? (< draw next-cumulative))
+               (nth candidate-kinds candidate-index)
+               (recur (inc candidate-index) next-cumulative))))))
+     (range width))))
+
 (defn step
   "Advance all three grids; MU is used only inside the policy prior floor."
   [state]
@@ -125,6 +180,26 @@
                    :exotypes exotypes
                    :efe-decisions decisions
                    :policy-expansion-decisions decisions
+                   :tau (double (get state :tau 0.0))
+                   :mu (double (get state :mu 0.0))
+                   :prevalence-radius
+                   (long (get state :prevalence-radius default-radius)))
+      (contains? state :lambda) (assoc :lambda (:lambda state))
+      (contains? state :rule-change-preference)
+      (assoc :rule-change-preference (:rule-change-preference state)))))
+
+(defn step-compact
+  "Advance all three grids without attaching the per-cell decision audit.
+  Intended only for long measurement runs after semantic equivalence with
+  `step` has been checked."
+  [state]
+  (let [exotypes (transmit-compact (:arm state) state)
+        previous (:genotype state)
+        advanced (grid/step (assoc state :arm :heterogeneous-fixed))]
+    (cond-> (assoc advanced
+                   :arm (:arm state)
+                   :previous-genotype previous
+                   :exotypes exotypes
                    :tau (double (get state :tau 0.0))
                    :mu (double (get state :mu 0.0))
                    :prevalence-radius
