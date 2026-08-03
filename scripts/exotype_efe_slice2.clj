@@ -185,11 +185,27 @@
 
 (defn- seed-run [arm seed]
   (let [states (trajectory (initial-state arm seed) (:steps config))
-        final-state (peek states)]
+        final-state (peek states)
+        winners (when (not= :boring-triggered arm)
+                  (mapcat #(map :winner (:efe-decisions %)) (rest states)))
+        score-terms
+        (when (seq winners)
+          (into (sorted-map)
+                (for [term [:risk :ambiguity :conatus :total]]
+                  [term
+                   (mean
+                    (map (fn [winner]
+                           (if (= term :total)
+                             (:total winner)
+                             (if (get-in winner [:enabled term])
+                               (term winner)
+                               0.0)))
+                         winners))])))]
     {:grid-activity (grid-activity states)
      :final-exotypes (exotype-counts final-state)
      :phenotype-activity (phenotype-activity states)
      :genotype-rule-count (count (distinct (:genotype final-state)))
+     :score-terms score-terms
      :damage (damage states)}))
 
 (defn- summary [values]
@@ -210,6 +226,11 @@
            [kind (summary (map #(get-in % [:final-exotypes kind]) runs))]))
    :phenotype-activity (summary (map :phenotype-activity runs))
    :genotype-rule-count (summary (map :genotype-rule-count runs))
+   :score-terms
+   (when (:score-terms (first runs))
+     (into (sorted-map)
+           (for [term [:risk :ambiguity :conatus :total]]
+             [term (summary (map #(get-in % [:score-terms term]) runs))])))
    :damage
    (into (sorted-map)
          (for [layer [:phenotype :genotype :exotype]]
@@ -247,7 +268,7 @@
         png (str base ".png")]
     (io/make-parents ppm)
     (render/write-ppm! ppm pixels :comment (name arm))
-    (let [{:keys [exit err]} (sh/sh "convert" ppm png)]
+    (let [{:keys [exit err]} (sh/sh "convert" ppm "-strip" png)]
       (when-not (zero? exit)
         (throw (ex-info "ImageMagick conversion failed" {:arm arm :error err}))))
     (.delete (io/file ppm))
@@ -313,6 +334,19 @@
                         (fmt (get-in row [:damage :phenotype]))
                         (fmt (get-in row [:damage :genotype]))
                         (fmt (get-in row [:damage :exotype])))))
+       "\n## Selected-policy score decomposition\n\n"
+       "Disabled terms are reported as zero contribution; each row's total is risk + ambiguity + conatus.\n\n"
+       "| arm | risk | ambiguity | conatus | total |\n"
+       "|---|---:|---:|---:|---:|\n"
+       (apply str
+              (for [[arm row] (:arms result)
+                    :when (:score-terms row)]
+                (format "| %s | %s | %s | %s | %s |\n"
+                        (name arm)
+                        (fmt (get-in row [:score-terms :risk]))
+                        (fmt (get-in row [:score-terms :ambiguity]))
+                        (fmt (get-in row [:score-terms :conatus]))
+                        (fmt (get-in row [:score-terms :total])))))
        "\n## Final exotype distribution\n\n```clojure\n"
        (pr-str (into (sorted-map)
                      (map (fn [[arm row]] [arm (:final-exotypes row)]))
@@ -349,6 +383,10 @@
                  :phenotype-activity (get-in row [:phenotype-activity :mean])
                  :genotype-rules (get-in row [:genotype-rule-count :mean])))
       (println :wrote edn-path md-path))
+    "render"
+    (doseq [arm arms]
+      (println arm (render-arm! arm)))
     (throw (ex-info "expected command: dynamic" {:args args}))))
 
 (apply -main *command-line-args*)
+(shutdown-agents)
