@@ -240,3 +240,129 @@ together they describe a mixture with unstable domains — which is what w80 loo
 - The figure-library percentages in Finding 3 come from single-seed panels; the 6d
   mixtures are 60-seed aggregates.
 - `risk ×6` changes the science rather than tuning it.
+
+---
+
+## Addendum (Joe, 2026-08-03 evening): the EIG definition is wrong, and damage says how
+
+Two structural criticisms, both correct, and together they yield a replacement rather
+than just a rejection.
+
+### 1. The EIG is layer-local
+
+`realized-context` reads genotype and phenotype through `efe/local-observation`, so the
+*outcomes* are cross-layer. But `holders` filters on `(:exotypes state)` alone:
+
+```clojure
+holders (filter #(= kind (nth (:exotypes state) %)) indices)
+```
+
+So evidence is pooled only over same-kind exotype neighbours, and the quantity is
+"how uncertain am I about this kind's local confirmation rate". It never asks what
+adopting a kind would reveal about the genotype or phenotype successor. A holistic
+epistemic term would be defined on the joint geno+pheno+exo transition.
+
+### 2. It is not expected information gain, and it anti-correlates with damage
+
+What the code computes is the **Beta posterior variance of a local confirmation rate**,
+maximal at zero evidence (Finding 1). What EIG should be is the expected reduction in
+uncertainty about the world *from taking the action*.
+
+Joe's diagnostic, which is the key observation: **a real EIG would correlate strongly
+with damage.** You learn most from an action whose consequences are large and uncertain,
+and damage-spreading is exactly the measure of how far a single choice propagates.
+
+The implemented term does the opposite. It is maximised by local *absence*, and absence
+is most common in frozen, low-propagation regions — so it peaks precisely where an action
+teaches least. That is the anti-correlation, and it is structural rather than incidental.
+
+It also explains Finding 1 mechanically. A domain interior is locally uniform, hence
+low-damage, hence low true-EIG — but *maximal* fake-EIG for every non-resident kind. The
+term destabilises exactly the configurations a real epistemic drive would leave alone.
+
+### 3. The replacement is already in the codebase
+
+`slice-harness/damage` perturbs one site, advances `damage-steps`, and takes the per-layer
+set difference against a control. That is damage spreading (Derrida), the classical
+edge-of-chaos instrument, and it is **holistic across all three layers by construction**.
+
+A damage-grounded epistemic term would score a candidate kind by how much adopting it
+changes the joint successor state, rather than by how absent it is locally. Its
+properties are the inverse of the current term's, in the right direction:
+
+| | implemented EIG | damage-grounded EIG |
+|---|---|---|
+| maximal when | kind is locally absent | the choice changes the future most |
+| domain interior | maximal for all non-residents → defection | low for all → **interiors stable** |
+| frozen region | maximal (no evidence) | low (nothing propagates) |
+| layers | exotype-pooled | joint geno+pheno+exo |
+| relation to EoC | anti-correlated | it *is* the EoC measure |
+
+The cost is forward simulation per candidate, so it needs approximation to be practical.
+But the conceptual point stands independently of cost: **the epistemic drive and the
+edge-of-chaos instrument should be the same quantity, and in this codebase they are
+opposites.**
+
+### 4. Damage was the right instrument all along
+
+Slice 6d, damage by layer against the reported entropy:
+
+| c | P damage | G damage | X damage | entropy@24000 |
+|---:|---:|---:|---:|---:|
+| 3.0 | 7.47 | 6.33 | 3.48 | 0.677 |
+| 4.5 | 9.15 | 11.12 | 4.15 | 0.408 |
+| **5.0** | **11.52** | **13.55** | 4.20 | 0.155 |
+| **5.5** | 11.33 | **13.85** | 4.67 | 0.059 |
+| 6.0 | 10.55 | 10.40 | 3.05 | 0.041 |
+| 7.0 | 6.18 | 8.88 | 4.32 | 0.636 |
+
+Damage has a genuine interior maximum at c ≈ 5–5.5 on both phenotype and genotype, and
+entropy is anti-correlated with it. Nothing saturates (peak ≈ 14 against a light-cone
+bound near 80).
+
+**The headline metric was entropy while the correct instrument sat in the same table.**
+
+Caveat that keeps this honest: there is no damage baseline at c = 0, and `slice5` — the
+run that produced the known-good figures — has no damage column at all. So peak damage at
+c ≈ 5 may be criticality, or may be the most propagation available inside an
+already-collapsed regime. Nothing currently held distinguishes those, which is what the
+two-seed probe below is for.
+
+### 5. Method note
+
+Both of these are definitional errors that no amount of running would have surfaced, and
+one of them (the anti-correlation) was visible from the figures before it was visible in
+the numbers. Using a placeholder definition and sweeping its coefficient is not a pilot;
+it produces a well-measured answer about a quantity nobody wanted.
+
+### 6. Two-seed damage probe: the known-good regime is EoC in the phenotype layer
+
+`scripts/damage_probe_eig_off.clj`, 2 seeds, 6000 steps, width 80, λ=0.55.
+`:next-C` is the identical objective with the EIG term off.
+
+| μ | arm | c | P damage | G damage | X damage |
+|---:|---|---:|---:|---:|---:|
+| 0.10 | **next-C (EIG off)** | — | **9.000** | 0.000 | 0.000 |
+| 0.10 | next-C-plus-eig | 3.0 | 7.000 | 0.000 | 0.000 |
+| 0.10 | next-C-plus-eig | 5.0 | 7.500 | 3.500 | 0.000 |
+| 0.30 | **next-C (EIG off)** | — | **9.500** | 0.000 | 0.000 |
+| 0.30 | next-C-plus-eig | 3.0 | 3.000 | 11.000 | 2.500 |
+| 0.30 | next-C-plus-eig | 5.0 | 3.000 | 4.500 | 0.000 |
+
+**With EIG off, phenotype damage is 9.0–9.5 and genotype/exotype damage is exactly zero
+in both μ conditions.** Perturbations propagate in the phenotype and die in the other two
+layers — one critical layer riding on two stable ones. This is the quantitative form of
+Joe's reading of the 12:51 figures.
+
+**EIG damages the wrong layers.** Switching it on reduces phenotype damage (9.0→7.0 at
+μ=0.1; 9.5→3.0 at μ=0.3) while injecting damage into genotype and exotype. At μ=0.30,
+c=3 the ordering inverts: genotype damage 11.0 becomes largest and phenotype falls to 3.0.
+The term damps the layer that was critical and destabilises the layers that were stable.
+
+Strength: the phenotype result is solid — consistent across both μ, and the zero G/X with
+EIG off is unambiguous. The genotype injection is directionally consistent but noisy at
+two seeds (0, 0, 3.5, 11.0, 4.5) and should be called suggestive, not established.
+
+**Acceptance criterion this yields.** A correct epistemic term must increase phenotype
+damage or leave it alone — never trade it for genotype noise. That replaces an aesthetic
+judgement about figures with a testable one.
