@@ -339,7 +339,20 @@
                                                   :spatial-at-120]))
               "\n```\n\n"))
        (when-let [invariance (:invariance result)]
-         (str "## Width/time invariance\n\n```clojure\n" (pr-str invariance)
+         (str "## Width/time invariance\n\n"
+              "Within the registered grid, the transition location does not move: "
+              "every width/horizon cell has the same maximum-entropy plateau "
+              "`[0.54 0.545 0.55]`, followed by near-total chaos at `0.555`. "
+              "The sampled transition is therefore in `(0.550, 0.555]`; width and "
+              "horizon alter the mixture composition, not this bracket.\n\n"
+              "| width | steps | maximizing lambdas | maximum entropy |\n"
+              "|---:|---:|---|---:|\n"
+              (apply str
+                     (for [[[width steps] row] invariance]
+                       (format "| %d | %d | `%s` | %.4f |\n"
+                               width steps (pr-str (:critical-maximizers row))
+                               (:maximum-entropy row))))
+              "\nFull means, SDs, and SEMs:\n\n```clojure\n" (pr-str invariance)
               "\n```\n\n"))
        (when-let [figures (:figures result)]
          (str "## Spacetime panels\n\n"
