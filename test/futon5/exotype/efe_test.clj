@@ -23,3 +23,14 @@
     (testing "the override changes risk but not the frozen prediction"
       (is (not= (:risk default) (:risk alternative)))
       (is (= (:prediction default) (:prediction alternative))))))
+
+(deftest score-controls-survive-synchronous-steps
+  (let [state {:arm :efe-full :seed 1 :time 0 :lambda 0.2
+               :rule-change-preference 0.4
+               :genotype ["一" "一" "一"]
+               :previous-genotype ["一" "一" "一"]
+               :phenotype "010"
+               :exotypes [:builder :collapser :identity]}
+        advanced (efe/step state)]
+    (is (= 0.2 (:lambda advanced)))
+    (is (= 0.4 (:rule-change-preference advanced)))))

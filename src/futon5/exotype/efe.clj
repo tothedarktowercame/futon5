@@ -161,11 +161,14 @@
   (let [{:keys [exotypes decisions]} (transmit (:arm state) state)
         previous (:genotype state)
         advanced (grid/step (assoc state :arm :heterogeneous-fixed))]
-    (assoc advanced
-           :arm (:arm state)
-           :previous-genotype previous
-           :exotypes exotypes
-           :efe-decisions decisions)))
+    (cond-> (assoc advanced
+                   :arm (:arm state)
+                   :previous-genotype previous
+                   :exotypes exotypes
+                   :efe-decisions decisions)
+      (contains? state :lambda) (assoc :lambda (:lambda state))
+      (contains? state :rule-change-preference)
+      (assoc :rule-change-preference (:rule-change-preference state)))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))
