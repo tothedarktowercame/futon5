@@ -329,7 +329,7 @@
               (name (:classification stationarity))
               "`. The step-120 mixture is not stationary; it drifts toward the identity phase.\n\n"
               "| step | identity | chaos | kinds | entropy |\n|---:|---:|---:|---:|---:|\n"
-              (apply str (for [[time row] (:checkpoints stationarity)]
+              (apply str (for [[time row] (sort-by key (:checkpoints stationarity))]
                            (format "| %d | %s | %s | %s | %s |\n" time
                                    (fmt (get-in row [:counts :identity]))
                                    (fmt (get-in row [:counts :chaos]))
@@ -348,7 +348,7 @@
               "| width | steps | maximizing lambdas | maximum entropy |\n"
               "|---:|---:|---|---:|\n"
               (apply str
-                     (for [[[width steps] row] invariance]
+                     (for [[[width steps] row] (sort-by key invariance)]
                        (format "| %d | %d | `%s` | %.4f |\n"
                                width steps (pr-str (:critical-maximizers row))
                                (:maximum-entropy row))))
