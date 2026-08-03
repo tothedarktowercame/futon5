@@ -125,17 +125,21 @@
                  :beta-posterior corrected-local-eig)
         eig (eig-fn state index
                     (long (get state :prevalence-radius 1)) kind)
+        eig-coefficient (double (get state :eig-coefficient 1.0))
+        weighted-eig (* eig-coefficient eig)
         lambda (double (get state :lambda 0.55))
         total (case arm
                 :next-C (+ risk (:ambiguity base) (* lambda (:conatus base)))
                 :next-C-plus-eig (- (+ risk (:ambiguity base)
-                                       (* lambda (:conatus base))) eig)
-                :eig-only (- (* lambda (:conatus base)) eig))]
+                                       (* lambda (:conatus base))) weighted-eig)
+                :eig-only (- (* lambda (:conatus base)) weighted-eig))]
     (assoc base
            :pattern (get patterns kind)
            :eig-model eig-model
            :risk risk
            :eig eig
+           :eig-coefficient eig-coefficient
+           :weighted-eig weighted-eig
            :total total
            :enabled {:risk (not= arm :eig-only)
                      :ambiguity (not= arm :eig-only)
@@ -202,6 +206,7 @@
            :pattern-decisions decisions
            :lambda (:lambda state) :tau (:tau state) :mu (:mu state)
            :eig-model (get state :eig-model :legacy)
+           :eig-coefficient (double (get state :eig-coefficient 1.0))
            :prevalence-radius (:prevalence-radius state))))
 
 (defn step-compact
@@ -218,4 +223,5 @@
            :previous-genotype previous :exotypes exotypes
            :lambda (:lambda state) :tau (:tau state) :mu (:mu state)
            :eig-model (get state :eig-model :legacy)
+           :eig-coefficient (double (get state :eig-coefficient 1.0))
            :prevalence-radius (:prevalence-radius state))))

@@ -277,5 +277,6 @@
       (spit md-path (markdown result))
       (println :wrote edn-path md-path))))
 
-(apply -main *command-line-args*)
-(shutdown-agents)
+(when-not (Boolean/getBoolean "futon5.exotype.pattern.library-only")
+  (apply -main *command-line-args*)
+  (shutdown-agents))

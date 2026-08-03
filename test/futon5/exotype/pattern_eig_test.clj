@@ -40,3 +40,13 @@
     (is (= (Math/log 2.0)
            (pattern/corrected-local-eig
             (assoc s :exotypes (vec (repeat 12 :builder))) 4 1 :chaos)))))
+
+(deftest eig-coefficient-is-pure-scaling
+  (let [base (assoc (state) :eig-model :beta-posterior)
+        one (pattern/cell-decision :next-C-plus-eig
+                                   (assoc base :eig-coefficient 1.0) 4)
+        two (pattern/cell-decision :next-C-plus-eig
+                                   (assoc base :eig-coefficient 2.0) 4)]
+    (is (= (mapv :eig (:candidates one)) (mapv :eig (:candidates two))))
+    (is (= (mapv #(* 2.0 (:weighted-eig %)) (:candidates one))
+           (mapv :weighted-eig (:candidates two))))))
