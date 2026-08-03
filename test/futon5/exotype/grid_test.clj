@@ -1,5 +1,9 @@
 (ns futon5.exotype.grid-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [futon5.ca.core :as ca]
+            [futon5.exotype.slice-harness :as harness]
             [futon5.exotype.grid :as grid]))
 
 (deftest fixed-and-local-transmission-policies
@@ -27,3 +31,20 @@
     (is (every? #(and (= neighbourhoods (set (keys %)))
                       (= neighbourhoods (set (vals %))))
                 (vals grid/propagators)))))
+
+(deftest zero-transfer-reproduces-stored-run-byte-identically
+  (let [config {:width 8 :steps 12 :lambda 0.55 :mu 0.1 :tau 0.3
+                :prevalence-radius 1 :eig-model :legacy :eig-coefficient 0.0
+                :damage-steps 5 :checkpoints [0 12] :transfer-fraction 0.0}
+        expected (str/trim-newline
+                  (slurp (io/resource "futon5/exotype/grid_q0_baseline.edn")))
+        actual (pr-str (harness/seed-run config :next-C 17))]
+    (is (= expected actual))))
+
+(deftest transfer-reads-only-immediate-neighbours
+  (let [own "甘" left "轧" right "示" exotype :identity]
+    (is (= (grid/apply-exotype own exotype 9)
+           (grid/apply-exotype own left right exotype 0.0 9)))
+    (let [result (grid/apply-exotype own left right exotype 1.0 9)
+          distance #(harness/difference (ca/bits-for result) (ca/bits-for %))]
+      (is (= 1 (min (distance left) (distance right)))))))

@@ -68,10 +68,26 @@
           (range (count grid)))
     (throw (ex-info "unknown exotype-grid arm" {:arm arm :available arms}))))
 
-(defn apply-exotype [sigil exotype draw-seed]
-  (ca/with-seed draw-seed
-    (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
-                                      (get propagators exotype)))))
+(defn apply-exotype
+  "Apply EXOTYPE to a local rule. At transfer fraction Q, the rule source is
+   chosen uniformly from the two immediate neighbours with probability Q;
+   otherwise it remains the cell's own rule. The three-argument arity is the
+   byte-compatible legacy path."
+  ([sigil exotype draw-seed]
+   (ca/with-seed draw-seed
+     (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
+                                       (get propagators exotype)))))
+  ([sigil left-sigil right-sigil exotype q draw-seed]
+   (when-not (<= 0.0 (double q) 1.0)
+     (throw (ex-info "transfer fraction must be in [0,1]" {:transfer-fraction q})))
+   (if (zero? (double q))
+     (apply-exotype sigil exotype draw-seed)
+     (ca/with-seed draw-seed
+       (let [source (if (< (ca/rnd) (double q))
+                      (ca/rnd-nth [left-sigil right-sigil])
+                      sigil)]
+         (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str source))
+                                           (get propagators exotype))))))))
 
 (defn- phenotype-step [genotype phenotype]
   (let [width (count genotype)]
@@ -85,18 +101,27 @@
 
 (defn step
   "Advance phenotype, genotype, and exotype grids synchronously."
-  [{:keys [genotype phenotype exotypes arm seed time]
-    :or {seed 0 time 0}}]
-  {:arm arm
-   :seed seed
-   :time (inc time)
-   :phenotype (phenotype-step genotype phenotype)
-   :genotype (mapv (fn [index sigil exotype]
-                     (apply-exotype sigil exotype
-                                    (+ (long seed)
-                                       (* (long time) (count genotype)) index)))
-                   (range (count genotype)) genotype exotypes)
-   :exotypes (transmit arm exotypes phenotype)})
+  [{:keys [genotype phenotype exotypes arm seed time transfer-fraction]
+    :or {seed 0 time 0 transfer-fraction 0.0}
+    :as state}]
+  (let [width (count genotype)
+        advanced
+        {:arm arm
+         :seed seed
+         :time (inc time)
+         :phenotype (phenotype-step genotype phenotype)
+         :genotype
+         (mapv (fn [index sigil exotype]
+                 (apply-exotype sigil
+                                (nth genotype (mod (dec index) width))
+                                (nth genotype (mod (inc index) width))
+                                exotype transfer-fraction
+                                (+ (long seed) (* (long time) width) index)))
+               (range width) genotype exotypes)
+         :exotypes (transmit arm exotypes phenotype)}]
+    (cond-> advanced
+      (contains? state :transfer-fraction)
+      (assoc :transfer-fraction transfer-fraction))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))

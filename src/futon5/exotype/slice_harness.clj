@@ -16,14 +16,17 @@
   (ca/with-seed seed
     (let [width (:width config)
           genotype (vec (ca/random-sigil-string width))]
-      {:arm :efe-full :pattern-arm arm :seed seed :time 0
-       :lambda (:lambda config) :mu (:mu config) :tau (:tau config)
-       :eig-model (get config :eig-model :legacy)
-       :eig-coefficient (double (get config :eig-coefficient 1.0))
-       :prevalence-radius (:prevalence-radius config)
-       :genotype genotype :previous-genotype genotype
-       :phenotype (apply str (repeatedly width #(if (< (ca/rnd) 0.5) \0 \1)))
-       :exotypes (grid/initial-grid :heterogeneous-fixed width)})))
+      (cond->
+       {:arm :efe-full :pattern-arm arm :seed seed :time 0
+        :lambda (:lambda config) :mu (:mu config) :tau (:tau config)
+        :eig-model (get config :eig-model :legacy)
+        :eig-coefficient (double (get config :eig-coefficient 1.0))
+        :prevalence-radius (:prevalence-radius config)
+        :genotype genotype :previous-genotype genotype
+        :phenotype (apply str (repeatedly width #(if (< (ca/rnd) 0.5) \0 \1)))
+        :exotypes (grid/initial-grid :heterogeneous-fixed width)}
+        (contains? config :transfer-fraction)
+        (assoc :transfer-fraction (:transfer-fraction config))))))
 
 (defn mean [xs] (/ (reduce + 0.0 xs) (double (count xs))))
 
