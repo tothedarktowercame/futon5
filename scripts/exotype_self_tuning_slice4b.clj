@@ -223,7 +223,15 @@
                      [layer (summary (map #(get-in % [:damage layer]) runs))]))}))
 
 (defn- parallel-map [f xs]
-  (vec (pmap f xs)))
+  (let [pool (java.util.concurrent.Executors/newFixedThreadPool 4)]
+    (try
+      (let [tasks (mapv #(identity
+                          (.submit pool
+                                   ^java.util.concurrent.Callable
+                                   (fn [] (f %))))
+                        xs)]
+        (mapv #(.get ^java.util.concurrent.Future %) tasks))
+      (finally (.shutdown pool)))))
 
 (defn- determinism-check []
   (let [left (pr-str (seed-run :hunger-coupled (:seed-base config)))
@@ -261,19 +269,11 @@
      :lambdas (write-panel! arm :lambdas
                             (mapv #(mapv lambda-colour (:lambdas %)) states))}))
 
-(defn experiment []
-  (let [seeds (mapv #(+ (:seed-base config) %) (range (:seeds config)))
-        raw (into (sorted-map)
-                  (for [arm (:arms config)]
-                    [arm (parallel-map #(seed-run arm %) seeds)]))]
-    {:kind :exotype-self-tuning-slice4b :schema 1 :config config :seeds seeds
-     :arms (into (sorted-map)
-                 (for [[arm runs] raw] [arm (arm-summary runs)]))
-     :determinism (determinism-check)
-     :figures (into (sorted-map)
-                    (for [arm (:arms config)] [arm (render-arm! arm)]))
-     :modelling-choices
-     {:feedback-input :selected-policy-predicted-hunger
+(defn- result-base [seeds]
+  {:kind :exotype-self-tuning-slice4b :schema 1 :config config :seeds seeds
+   :arms (sorted-map)
+   :modelling-choices
+   {:feedback-input :selected-policy-predicted-hunger
       :forbidden-feedback-inputs [:damage :reach :band :entropy :kind-count
                                   :global-statistic]
       :hunger-target-source :existing-efe-preference
@@ -288,7 +288,29 @@
                 :exotype :chance-corrected-circular-neighbour-agreement
                 :zero-variance :reported-zero}
       :histogram {:bins 20 :width 0.05 :last-bin-includes-1 true}
-      :distance-from-0.55 :absolute-distance-divided-by-sd}}))
+    :distance-from-0.55 :absolute-distance-divided-by-sd}})
+
+(defn- checkpoint-result! [result]
+  (spit "reports/exotype-self-tuning-slice4b.partial.edn"
+        (str (pr-str result) "\n")))
+
+(defn experiment []
+  (let [seeds (mapv #(+ (:seed-base config) %) (range (:seeds config)))
+        measured
+        (reduce (fn [result arm]
+                  (println :starting arm)
+                  (flush)
+                  (let [runs (parallel-map #(seed-run arm %) seeds)
+                        next-result (assoc-in result [:arms arm] (arm-summary runs))]
+                    (checkpoint-result! next-result)
+                    (println :completed arm)
+                    (flush)
+                    next-result))
+                (result-base seeds) (:arms config))]
+    (assoc measured
+           :determinism (determinism-check)
+           :figures (into (sorted-map)
+                          (for [arm (:arms config)] [arm (render-arm! arm)])))))
 
 (defn- fmt [x]
   (format "%.4f (sd %.4f; sem %.4f)" (:mean x) (:sd x) (:sem x)))
