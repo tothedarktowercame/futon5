@@ -2940,3 +2940,48 @@ for :odd53 to be choosable in dynamics. That is H5 / S0's next step: make
 exotype-kinds carry the extended vocabulary so the objective can actually
 select the non-freezing kinds. The conditional model is ready for it (S0b gave
 every kind kind-specific rows); the selector is not.
+
+### 42.4 H5 EXECUTED — vocabulary widened to 12, dynamics rerun on zone-joe
+
+`exotype-kinds` widened from 4 to 12. The score-cache and genotype-transition-cache
+in self_tuning.clj now iterate all 12, so cell-decision can select any kind including
+the non-freezing :odd53. pattern_eig's patterns rebuilt from predict :derived for
+all 12 kinds.
+
+**Pure-function argmin** over 9 observations, 12 candidates: `{odd53 4, even1 5}`.
+**:odd53 is now the plurality co-winner** — S36.1's claim confirmed: the objective
+prefers :odd53 when it can see it. (It was tied with :even1 at 5/9, and :even1 won
+the trajectory.)
+
+**Trajectory evaluation** on zone-joe, 40 seeds, width 80, 300 steps:
+
+| blend | activity | geno-div | geno-rules | frozen | exo-kinds | damage | sd |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.00 | 0.6712 | 0.0328 | 2.6 | 0.9963 | 1.0 | 4.7 | 4.9 |
+| 0.10 | 0.6794 | 0.0291 | 2.3 | 0.9981 | 1.0 | 5.2 | 5.5 |
+| 0.25 | 0.6775 | 0.0344 | 2.8 | 0.9947 | 1.0 | 4.1 | 5.2 |
+| 0.50 | 0.6700 | 0.0325 | 2.6 | 0.9953 | 1.0 | 4.2 | 5.2 |
+| 0.75 | 0.6775 | 0.0353 | 2.8 | 0.9944 | 1.0 | 4.7 | 5.3 |
+
+Exotype distribution: **all 80 cells converge to :even1 by t=300** at every blend
+level. Activity is higher than under :collapser (0.67 vs 0.63) but still frozen
+(0.995+). Damage reach 4-5.
+
+**Diagnosis:** the vocabulary widening changed WHICH monoculture wins (:even1
+instead of :collapser), but did not fix the freeze. :even1 has 2 absorbing bytes
+(freeze time t1/2 = 40, per S31) while :collapser has 4 (t1/2 = 20), so the freeze
+is slower but still total by t=300.
+
+**:odd53 (0 absorbing, never froze in 400/400 seeds at S31) wins 4 of 9 in the
+pure-function argmin but loses to :even1 in the trajectory.** The reason: the
+self-tuning lambda adapts toward low hunger, and :even1's conditional model
+promises lower hunger than :odd53. The objective's conatus channel drives it toward
+whichever kind promises the most stasis, even when that kind freezes.
+
+**This is the tension N2b was designed to address:** the objective selects for low
+hunger (stasis), which selects freezing kinds. An endogenous perturbation source
+(apoptosis/clock) would counteract this by injecting variation that the stasis-
+seeking objective cannot supply on its own. S4/S10 in the search register test
+this directly.
+
+Gates: clj-kondo 0 errors, parens 0, 58 tests / 999 assertions / 0 failures.
