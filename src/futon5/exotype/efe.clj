@@ -19,7 +19,8 @@
    `:conatus` is the hunger channel's KL against low hunger.  `:ambiguity` is
    the entropy of all four predicted observation channels.  These contributions
    remain separately switchable and visible in every score."
-  (:require [futon5.exotype.grid :as grid]))
+  (:require [futon5.exotype.grid :as grid]
+            [futon5.exotype.selection :as selection]))
 
 (def efe-arms
   [:efe-full :efe-risk-only :efe-ambiguity-only :efe-no-conatus])
@@ -39,7 +40,7 @@
 
 (def preferences
   "C is local: conservative own-rule change and, load-bearingly, low hunger."
-  {:rule-change 0.15 :hunger 0.05})
+  selection/preference-targets)
 
 (def ^:private epsilon 1.0e-9)
 

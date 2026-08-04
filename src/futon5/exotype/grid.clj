@@ -6,6 +6,7 @@
    neighbourhood ordering before use. Policies read only the cell, its two
    neighbours, and the current local phenotype neighbourhood."
   (:require [futon5.ca.core :as ca]
+            [futon5.exotype.selection :as selection]
             [futon5.xenotype.generator :as gen]))
 
 (def exotype-kinds [:builder :collapser :chaos :identity])
@@ -132,33 +133,72 @@
               (str (nth phenotype (mod (inc index) width)))
               (ca/bits-for (str (nth genotype index))))))))
 
+(defn- expressed-grid
+  [genotype exotypes transfer-fraction blend-strength seed time]
+  (let [width (count genotype)]
+    (mapv (fn [index sigil exotype]
+            (apply-exotype-blend
+             (nth genotype (mod (dec index) width))
+             sigil
+             (nth genotype (mod (inc index) width))
+             exotype transfer-fraction blend-strength
+             (+ (long seed) (* (long time) width) index)))
+          (range width) genotype exotypes)))
+
 (defn step
   "Advance phenotype, genotype, and exotype grids synchronously."
-  [{:keys [genotype phenotype exotypes arm seed time transfer-fraction blend-strength]
-    :or {seed 0 time 0 transfer-fraction 0.0 blend-strength 0.0}
+  [{:keys [genotype phenotype exotypes arm seed time transfer-fraction blend-strength
+           selection-strength fitness-kind write-back? expressed previous-expressed
+           selection-window]
+    :or {seed 0 time 0 transfer-fraction 0.0 blend-strength 0.0
+         selection-strength 0.0 fitness-kind :preferences write-back? true}
     :as state}]
-  (let [width (count genotype)
+  (let [selection-family? (or (contains? state :selection-strength)
+                              (contains? state :fitness-kind)
+                              (contains? state :write-back?)
+                              (false? write-back?))
+        behaviour-rules (if selection-family? (or expressed genotype) genotype)
+        selection-result
+        (when selection-family?
+          (selection/advance
+           {:genotypes genotype
+            :expressed behaviour-rules
+            :previous-expressed (or previous-expressed behaviour-rules)
+            :phenotype phenotype
+            :window selection-window
+            :fitness-kind fitness-kind
+            :selection-strength (if write-back? 0.0 selection-strength)
+            :draw-seed (bit-xor (+ (long seed) (* (long time) (count genotype)))
+                                0xC0FFEE)}))
+        heritable-base (if (and selection-family? (false? write-back?))
+                         (:genotype selection-result)
+                         genotype)
+        next-expressed (expressed-grid heritable-base exotypes transfer-fraction
+                                       blend-strength seed time)
+        next-genotype (if (and selection-family? (false? write-back?))
+                        heritable-base
+                        next-expressed)
         advanced
         {:arm arm
          :seed seed
          :time (inc time)
-         :phenotype (phenotype-step genotype phenotype)
-         :genotype
-         (mapv (fn [index sigil exotype]
-                 (apply-exotype-blend
-                  (nth genotype (mod (dec index) width))
-                  sigil
-                  (nth genotype (mod (inc index) width))
-                  exotype transfer-fraction blend-strength
-                  (+ (long seed) (* (long time) width) index)))
-               (range width) genotype exotypes)
+         :phenotype (phenotype-step behaviour-rules phenotype)
+         :genotype next-genotype
          :exotypes (transmit arm exotypes phenotype)}]
     (cond-> advanced
       (contains? state :transfer-fraction)
       (assoc :transfer-fraction transfer-fraction)
 
       (contains? state :blend-strength)
-      (assoc :blend-strength blend-strength))))
+      (assoc :blend-strength blend-strength)
+
+      selection-family?
+      (assoc :selection-strength selection-strength
+             :fitness-kind fitness-kind
+             :write-back? write-back?
+             :expressed next-expressed
+             :previous-expressed behaviour-rules
+             :selection-window (:window selection-result)))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))

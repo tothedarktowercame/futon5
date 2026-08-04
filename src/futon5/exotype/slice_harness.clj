@@ -10,6 +10,7 @@
             [futon5.ca.core :as ca]
             [futon5.exotype.grid :as grid]
             [futon5.exotype.pattern-eig :as pattern]
+            [futon5.exotype.selection :as selection]
             [futon5.mmca.render :as render]))
 
 (defn initial-state [config arm seed]
@@ -29,7 +30,16 @@
         (assoc :transfer-fraction (:transfer-fraction config))
 
         (contains? config :blend-strength)
-        (assoc :blend-strength (:blend-strength config))))))
+        (assoc :blend-strength (:blend-strength config))
+
+        (some #(contains? config %)
+              [:selection-strength :fitness-kind :write-back?])
+        (assoc :selection-strength (double (get config :selection-strength 0.0))
+               :fitness-kind (get config :fitness-kind :preferences)
+               :write-back? (get config :write-back? true)
+               :expressed genotype
+               :previous-expressed genotype
+               :selection-window (selection/empty-window width))))))
 
 (defn mean [xs] (/ (reduce + 0.0 xs) (double (count xs))))
 

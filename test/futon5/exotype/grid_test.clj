@@ -4,7 +4,8 @@
             [clojure.test :refer [deftest is testing]]
             [futon5.ca.core :as ca]
             [futon5.exotype.slice-harness :as harness]
-            [futon5.exotype.grid :as grid]))
+            [futon5.exotype.grid :as grid]
+            [futon5.exotype.selection :as selection]))
 
 (deftest fixed-and-local-transmission-policies
   (let [exotypes [:builder :builder :chaos :identity]
@@ -36,7 +37,8 @@
   (let [config {:width 8 :steps 12 :lambda 0.55 :mu 0.1 :tau 0.3
                 :prevalence-radius 1 :eig-model :legacy :eig-coefficient 0.0
                 :damage-steps 5 :checkpoints [0 12] :transfer-fraction 0.0
-                :blend-strength 0.0}
+                :blend-strength 0.0 :selection-strength 0.0
+                :fitness-kind :preferences :write-back? true}
         expected (str/trim-newline
                   (slurp (io/resource "futon5/exotype/grid_q0_baseline.edn")))
         actual (pr-str (harness/seed-run config :next-C 17))]
@@ -76,3 +78,38 @@
     (let [result (grid/apply-exotype own right exotype 1.0 9)
           distance #(harness/difference (ca/bits-for result) (ca/bits-for %))]
       (is (= 1 (distance right))))))
+
+(defn- baldwin-state []
+  {:arm :heterogeneous-fixed
+   :seed 29
+   :time 0
+   :genotype (vec (repeat 8 (ca/sigil-for "11001100")))
+   :phenotype "01010101"
+   :exotypes (vec (repeat 8 :chaos))
+   :selection-strength 0.0
+   :fitness-kind :preferences
+   :write-back? false})
+
+(deftest baldwin-expression-is-real-but-never-written-back
+  (let [state (baldwin-state)
+        advanced (grid/step state)]
+    (testing "without selection, no genotype changes"
+      (is (= (:genotype state) (:genotype advanced))))
+    (testing "the exotype still changes transient expression"
+      (is (not= (:expressed advanced) (:genotype advanced))))
+    (testing "the next phenotype reads the current transient expression"
+      (let [witness (assoc advanced :phenotype "00000011")
+            next-step (grid/step witness)
+            counterfactual (grid/step (assoc witness :expressed (:genotype witness)))]
+        (is (not= (:phenotype next-step) (:phenotype counterfactual)))))))
+
+(deftest baldwin-genotype-assignment-is-routed-only-through-selection
+  (let [sentinel (vec (repeat 8 (ca/sigil-for "11111111")))]
+    (with-redefs [selection/advance
+                  (fn [_]
+                    {:genotype sentinel
+                     :window (selection/empty-window 8)
+                     :selected? true})]
+      (let [advanced (grid/step (assoc (baldwin-state) :selection-strength 1.0))]
+        (is (= sentinel (:genotype advanced)))
+        (is (not= sentinel (:expressed advanced)))))))
