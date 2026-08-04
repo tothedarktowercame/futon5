@@ -127,9 +127,40 @@
 
 (defmacro with-seed
   "Run BODY with this namespace's draws seeded from SEED.
-   Makes the CA dynamics reproducible: same seed => identical trajectory."
+   Makes the CA dynamics reproducible: same seed => identical trajectory.
+
+   *** HAZARD: the FIRST draw is a smooth function of SEED. ***
+   `java.util.Random` sets its state to (seed XOR 0x5DEECE66D) and the first
+   output is one LCG step from there, so ADJACENT SEEDS GIVE THE SAME FIRST
+   DRAW. If SEED is arithmetic on coordinates (e.g. base + time*width + index)
+   and only one or two draws are taken, every cell draws alike and the field
+   moves in lockstep -- while every marginal still looks uniform, so the usual
+   'is my RNG uniform?' check passes. This went undetected across twelve slices
+   (TN-baldwin-reboot.md 2). Use `with-mixed-seed` for per-cell seeding."
   [seed & body]
   `(binding [*rng* (java.util.Random. (long ~seed))] ~@body))
+
+(def ^:private splitmix-gamma (Long/parseUnsignedLong "9E3779B97F4A7C15" 16))
+(def ^:private splitmix-m1 (Long/parseUnsignedLong "BF58476D1CE4E5B9" 16))
+(def ^:private splitmix-m2 (Long/parseUnsignedLong "94D049BB133111EB" 16))
+
+(defn mix-seed
+  "Avalanche-mix SEED (SplitMix64 finalizer) so that arithmetically adjacent
+   seeds give unrelated streams. Pure: the result is a function of SEED alone,
+   so per-cell addressability -- and therefore resumability and `:workers`
+   parallelism -- is preserved."
+  ^long [seed]
+  (let [z (unchecked-add (long seed) splitmix-gamma)
+        z (unchecked-multiply (bit-xor z (unsigned-bit-shift-right z 30)) splitmix-m1)
+        z (unchecked-multiply (bit-xor z (unsigned-bit-shift-right z 27)) splitmix-m2)]
+    (bit-xor z (unsigned-bit-shift-right z 31))))
+
+(defmacro with-mixed-seed
+  "`with-seed` on `(mix-seed SEED)`. Use this wherever SEED is an arithmetic
+   function of coordinates and only a few draws are taken -- see the hazard
+   noted on `with-seed`."
+  [seed & body]
+  `(with-seed (mix-seed ~seed) ~@body))
 
 (defn random-sigil []
   (:sigil (rnd-nth (sigil-entries))))

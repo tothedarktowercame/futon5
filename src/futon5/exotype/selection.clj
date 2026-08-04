@@ -81,7 +81,7 @@
     (let [width (count genotypes)]
       (mapv
        (fn [index]
-         (ca/with-seed (+ (long draw-seed) index)
+         (ca/with-mixed-seed (+ (long draw-seed) index)
            (let [neighbour-index (mod (+ index (if (< (ca/rnd) 0.5) -1 1)) width)
                  advantage (- (double (nth fitness neighbour-index))
                               (double (nth fitness index)))

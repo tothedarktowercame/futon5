@@ -11,7 +11,8 @@
    through the same scored policy relation as every present kind.  MU enters
    nowhere except the habit-mass floor.  The implementation is stateless and
    reads only the current circular local neighbourhood."
-  (:require [futon5.exotype.efe :as efe]
+  (:require [futon5.ca.core :as ca]
+            [futon5.exotype.efe :as efe]
             [futon5.exotype.grid :as grid]
             [futon5.exotype.prevalence :as prevalence]))
 
@@ -68,7 +69,10 @@
                      (* 1000003 (long (or time 0)))
                      (* 9176 (long (count exotypes)))
                      (long index))]
-    (.nextDouble (java.util.Random. draw-seed))))
+    ;; mix-seed: per-cell stride 1 -- see prevalence/draw-for and
+    ;; TN-baldwin-reboot 2. Same formula as prevalence, so the two remain
+    ;; deliberately coupled; only the spatial degeneracy is removed.
+    (.nextDouble (java.util.Random. (ca/mix-seed draw-seed)))))
 
 (def ^:private cached-score
   ;; The frozen generative model reads a finite local observation. Caching its

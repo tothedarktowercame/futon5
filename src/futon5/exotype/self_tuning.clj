@@ -55,11 +55,19 @@
     (< value target) (- step-size)
     :else 0.0))
 
-(defn- random-direction [{:keys [seed time]} index]
+(defn- random-direction
+  "NB deliberately NOT `ca/mix-seed`-wrapped. The per-cell stride here is 9176,
+   not 1, and at that separation the raw first draws are already independent
+   (measured: 2.00 of 2 distinct outcomes per step, versus 1.06 at stride 1).
+   Mixing would change the trajectory for no correctness gain. TN-baldwin-reboot 2."
+  [{:keys [seed time]} index]
   (let [draw-seed (+ (long (or seed 0))
                      (* 1000003 (long (or time 0)))
                      (* 9176 (long index))
                      44119)]
+    ;; rng-audit:raw-ok -- stride 9176 between cells, measured independent
+    ;; (2.00 of 2 distinct outcomes per step); mixing would move a trajectory
+    ;; for no correctness gain. Enforced by exotype/invariants-test.
     (if (< (.nextDouble (java.util.Random. draw-seed)) 0.5) -1.0 1.0)))
 
 (defn next-lambda
@@ -126,8 +134,12 @@
 (defn- genotype-step [{:keys [genotype exotypes seed time]}]
   (let [width (count genotype)]
     (mapv (fn [index sigil exotype]
+            ;; Must mirror grid/apply-exotype exactly: this is a cached
+            ;; re-implementation of the same draw, and it carried its own copy of
+            ;; the first-draw defect (TN-baldwin-reboot.md 2). ca/mix-seed here
+            ;; is what keeps the two paths identical.
             (let [draw-seed (+ (long seed) (* (long time) width) index)
-                  k (.nextInt (java.util.Random. draw-seed) 8)]
+                  k (.nextInt (java.util.Random. (ca/mix-seed draw-seed)) 8)]
               (get-in @genotype-transition-cache [(str sigil) exotype k])))
           (range width) genotype exotypes)))
 

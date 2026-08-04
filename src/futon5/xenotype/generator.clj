@@ -731,7 +731,28 @@
 
 (defn- rule-permute
   "One application: copy ¬(response to a random neighbourhood) into the response of
-   the neighbourhood σ maps it to. `sigma` maps neighbourhood -> neighbourhood."
+   the neighbourhood σ maps it to. `sigma` maps neighbourhood -> neighbourhood.
+
+   GROUND TRUTH FOR THIS FUNCTION: `holes/F-what-the-propagator-actually-does.md`.
+   That note is a measured description of exactly this operator and, until
+   2026-08-04, nothing in `src/` pointed at it -- so three experiment slices
+   independently rediscovered its contents (TN-baldwin-reboot.md 19). Two of its
+   results bear directly on any change here, and both are pinned by
+   `futon5.exotype.invariants-test`:
+
+   1. A FIXED POINT OF SIGMA IS AN UNCONDITIONAL FLIP. When σ(k)=k this writes
+      ¬bit[k] into position k, so the byte always changes. `:identity` is nothing
+      but fixed points and is therefore the MOST disruptive propagator, not the
+      least -- the defect that `efe/fixed-model` carried for months. The
+      distribution-free floor is `fix(σ)/8`; see `rule-change-rate` below.
+
+   2. EVERY PERMUTATION WRITES EACH POSITION 1/8 OF THE TIME. The 2015 Emacs bug
+      this operator generalises does NOT: its map is k -> max(k-1,0), which writes
+      position 0 twice and position 7 never (measured 24.9% / 0.000%). It is not
+      injective, hence not a permutation, hence NOT a member of the 8! family --
+      and Figure 8's mechanism depends on precisely that non-injectivity, so no σ
+      here can reproduce it. Do not describe this family as a generalisation of
+      the bug (draft7.tex, `The 2015 Example`)."
   [rule-bits sigma]
   (let [k (ca/rnd-int 8)
         src (nth ca/truth-table-3 k)
@@ -741,6 +762,37 @@
     (if (neg? di)
       rule-bits
       (str (subs rule-bits 0 di) v (subs rule-bits (inc di))))))
+
+(defn sigma-positional
+  "The positional map `rule-permute` actually applies: k -> the index in
+   `ca/truth-table-3` of the neighbourhood SIGMA sends `truth-table-3[k]` to.
+   Returns -1 where SIGMA's image is not addressable, which `rule-permute`
+   treats as a no-op."
+  [sigma]
+  (let [table (vec ca/truth-table-3)]
+    (mapv (fn [k]
+            (.indexOf ^java.util.List table (get sigma (nth table k) (nth table k))))
+          (range 8))))
+
+(defn rule-change-rate
+  "P(one application of the propagator changes the rule), over uniformly
+   distributed rule bytes, DERIVED from SIGMA rather than declared.
+
+   `rule-permute` writes NOT bit[k] into position sigma(k), so the byte changes
+   exactly when bit[sigma(k)] = bit[k]. A FIXED POINT of sigma therefore flips
+   unconditionally -- which is why `:identity`, all eight positions fixed, is the
+   most disruptive propagator in the family rather than the least. Unaddressable
+   positions are no-ops. Hence over uniform bytes
+
+     rate = (1/8) * sum_k [ 1 if sigma(k)=k ; 1/2 if addressable ; 0 otherwise ].
+
+   The identity respects a distribution-free floor: rate >= fix(sigma)/8 for ANY
+   byte distribution. A measured rate below that floor is measuring something
+   else. See TN-baldwin-reboot.md 15."
+  [sigma]
+  (/ (reduce + (map (fn [k di] (cond (= di k) 1.0 (neg? di) 0.0 :else 0.5))
+                    (range 8) (sigma-positional sigma)))
+     8.0))
 
 (defn- local-condition
   "Evaluate a named local predicate over the per-cell context. This is what a

@@ -4,7 +4,8 @@
    E is read from the current exotype grid: a candidate exotype's prior is its
    prevalence in the cell's circular radius-r neighbourhood.  No counter,
    history, decay register, or other cell-local state is introduced."
-  (:require [futon5.exotype.efe :as efe]
+  (:require [futon5.ca.core :as ca]
+            [futon5.exotype.efe :as efe]
             [futon5.exotype.grid :as grid]))
 
 (def default-radius 1)
@@ -61,7 +62,9 @@
                      (* 1000003 (long (or time 0)))
                      (* 9176 (long width))
                      (long index))]
-    (.nextDouble (java.util.Random. draw-seed))))
+    ;; mix-seed: the per-cell stride here is 1, so raw seeds give every cell the
+    ;; same first draw (measured 1.06 distinct outcomes of 2). TN-baldwin-reboot 2.
+    (.nextDouble (java.util.Random. (ca/mix-seed draw-seed)))))
 
 (defn- sample-candidate [candidates probabilities draw]
   (loop [index 0

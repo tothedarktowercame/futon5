@@ -6,7 +6,8 @@
    the entropy of current claim-confirmation outcomes among nearby holders of
    the candidate pattern.  Risk compares the predicted resulting context with
    that candidate's own NEXT claim, rather than with one global preference."
-  (:require [futon5.exotype.efe :as efe]
+  (:require [futon5.ca.core :as ca]
+            [futon5.exotype.efe :as efe]
             [futon5.exotype.grid :as grid]
             [futon5.exotype.policy-expansion :as expansion]
             [futon5.exotype.prevalence :as prevalence]))
@@ -147,10 +148,12 @@
                      :eig (contains? #{:next-C-plus-eig :eig-only} arm)})))
 
 (defn- draw-for [{:keys [seed time exotypes]} index]
+  ;; mix-seed: per-cell stride 1 -- see prevalence/draw-for, TN-baldwin-reboot 2.
   (.nextDouble
    (java.util.Random.
-    (+ (long (or seed 0)) (* 1000003 (long (or time 0)))
-       (* 9176 (long (count exotypes))) (long index)))))
+    (ca/mix-seed
+     (+ (long (or seed 0)) (* 1000003 (long (or time 0)))
+        (* 9176 (long (count exotypes))) (long index))))))
 
 (defn cell-decision
   "Score the kind-expanded policy set. Baseline delegates to the committed

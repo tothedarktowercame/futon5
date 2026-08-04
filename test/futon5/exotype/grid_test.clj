@@ -26,13 +26,35 @@
         (is (= (grid/step state) (grid/step state)))))))
 
 (deftest vocabulary-is-neighbourhood-converted
-  (is (= #{:builder :collapser :chaos :identity}
-         (set (keys grid/propagators))))
+  (testing "the DEFAULT vocabulary is still the original four"
+    (is (= [:builder :collapser :chaos :identity] grid/exotype-kinds)))
+  (testing "propagators also carries the P2 probe kinds, which are NOT default"
+    (is (= #{:builder :collapser :chaos :identity
+             :even4 :even8 :even1 :odd53           ; absorbing axis (16/8/2/0)
+             :fix2 :fix3 :fix4 :fix6}              ; rate axis (fix 2,3,4,6)
+           (set (keys grid/propagators)))))
   (let [neighbourhoods #{"000" "001" "010" "100" "011" "101" "110" "111"}]
     (is (every? #(and (= neighbourhoods (set (keys %)))
                       (= neighbourhoods (set (vals %))))
                 (vals grid/propagators)))))
 
+;; PROVENANCE: grid_q0_baseline.edn was REGENERATED 2026-08-04 when the per-cell
+;; seeding defect was fixed (N2, TN-baldwin-reboot.md 2 and 13). This is a DRIFT
+;; guard, not a claim that the old values were right; the draws changed on purpose
+;; and by approval, so the fixture had to move with them. What changed in this
+;; 8-cell/12-step run:
+;;   exotypes at t=12  {:chaos 8}       -> {:identity 8}
+;;   changed-cells     13               -> 10
+;;   phenotype-activity 0.3854          -> 0.4375
+;;   genotype-rule-count 7              -> 8
+;;   damage {:phenotype 2}              -> {:phenotype 0}
+;; Do NOT read the chaos->identity flip as a general result: 8 cells, 12 steps,
+;; one seed. It is a fixture, not a measurement.
+;;
+;; REGENERATED AGAIN 2026-08-04 when the DERIVED conditional model became
+;; `predict`'s default (TN-baldwin-reboot.md 29). The EFE path selects different
+;; exotypes under a model that is no longer worse-than-constant, so the run
+;; legitimately differs. Same caveat: this is a fixture, not a measurement.
 (deftest zero-transfer-reproduces-stored-run-byte-identically
   (let [config {:width 8 :steps 12 :lambda 0.55 :mu 0.1 :tau 0.3
                 :prevalence-radius 1 :eig-model :legacy :eig-coefficient 0.0
