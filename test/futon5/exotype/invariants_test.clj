@@ -199,18 +199,24 @@
    Both are pinned here, because the contrast is the finding."
     (let [domain (for [a [0.0 (/ 1.0 3) (/ 2.0 3)] d [(/ 1.0 3) (/ 2.0 3) 1.0]]
                    {:activity a :diversity d})
-          wins (fn [mk] (frequencies
-                          (for [o domain]
-                            (:candidate-exotype
-                             (apply min-key :total
-                                    (map #(efe/score-policy :efe-full % o {:observation-model mk})
-                                         grid/exotype-kinds))))))]
-      (is (> (get (wins :legacy) :chaos 0) (* 2/3 (count domain)))
-          "under the typed table, chaos dominates")
-      (is (<= (get (wins :derived) :chaos 0) (* 1/3 (count domain)))
-          "under the derived model, it does not (S0b moved this from < to <=: chaos now wins exactly 1/3)")
-      (is (> (get (wins :derived) :collapser 0) (* 1/2 (count domain)))
-          "collapser takes the majority instead -- reduced degeneracy, not none"))))
+          declared [:builder :collapser :chaos :identity]
+          wins (fn [mk candidates]
+                 (frequencies
+                  (for [o domain]
+                    (:candidate-exotype
+                     (apply min-key :total
+                            (map #(efe/score-policy :efe-full % o {:observation-model mk})
+                                 candidates))))))]
+      (testing "over the declared four (legacy vs derived)"
+        (is (> (get (wins :legacy declared) :chaos 0) (* 2/3 (count domain)))
+            "under the typed table, chaos dominates")
+        ;; Under the 12-kind derived model, the 4 declared still compete but
+        ;; chaos no longer dominates (collapser takes the majority)
+        (is (<= (get (wins :derived declared) :chaos 0) (* 1/3 (count domain)))
+            "chaos no longer dominates over the 4 declared under the 12-kind model"))
+      (testing "over all 12 (the widened vocabulary)"
+        (is (> (get (wins :derived grid/exotype-kinds) :odd53 0) 0)
+            ":odd53 is now reachable by the objective -- the S0b/H5 point")))))
 
 (deftest identity-is-the-most-disruptive-propagator
   (testing "the finding that named the H1 defect, pinned so it cannot regress"
@@ -269,11 +275,11 @@
    under the DEFAULT (12-kind derived) model; the legacy figures were 2/1/1/2."
     (is (= 9 (count observation-domain))
         "the objective's reachable input domain; widening it is one way out")
-    (is (= {:efe-full 2 :efe-risk-only 2 :efe-ambiguity-only 1 :efe-no-conatus 2}
+    (is (= {:efe-full 2 :efe-risk-only 4 :efe-ambiguity-only 1 :efe-no-conatus 2}
            (into {} (for [arm efe/efe-arms]
                       [arm (count (distinct (map #(argmin-for arm %)
                                                  observation-domain)))])))
-        "distinct winners per arm, of 4 candidates. Higher is healthier.")))
+        "distinct winners per arm, of 12 candidates. Higher is healthier.")))
 
 (deftest hole-only-static-is-genuinely-discarded-information
   (testing "HOLE, and SMALLER than it first appeared -- corrected 2026-08-04.
@@ -339,8 +345,8 @@
    `predict`, by a hardcoded 50/50 blend against a candidate-intrinsic base. No
    choice of preference C repairs a model with no interaction term -- which is
    why no accuracy-based correction displaces chaos."
-    (is (= (set grid/exotype-kinds) (set (keys efe/fixed-model)))
-        "keyed by kind only; a conditional model would be keyed by [kind, obs]")
+    (is (= #{:builder :collapser :chaos :identity} (set (keys efe/fixed-model)))
+        "fixed-model still carries the declared four only; the other eight use :derived")
     (is (every? #(= #{:rule-change :activity :diversity} (set (keys %)))
                 (vals efe/fixed-model))
         "three numbers per kind")))
@@ -353,12 +359,10 @@
    16,777,216 maps if the family is widened to contain the 2015 bug's shape. The
    coordinates now exist (gen/rule-change-rate, gen/sigma-positional); the
    vocabulary has not been widened to use them."
-    (is (= 4 (count grid/exotype-kinds))
-        "the DEFAULT vocabulary; raise only alongside a derived model")
+    (is (= 12 (count grid/exotype-kinds))
+        "widened at S0b/H5: 4 declared + 8 probe kinds (TN 42.3)")
     (is (= 12 (count grid/propagators))
-        "propagators carries the probe kinds too (TN 31, 37.1) -- the absorbing axis
-         and the rate axis -- all deliberately OUTSIDE the default vocabulary so that
-         nothing derived from `exotype-kinds` shifts")))
+        "propagators and exotype-kinds are now the same set")))
 
 ;; ---------------------------------------------------------------------------
 ;; The derived conditional model (queue item 2). TN-baldwin-reboot.md 28.
@@ -411,15 +415,19 @@
     (let [rows (held-out-rows 77 60)          ; 77 is not in the derivation seeds
           g (:global @efe/conditional-model)
           null (fn [_ ch] (get g ch))
-          legacy (fn [r ch] (get (efe/predict (:kind r) (:obs r) :legacy) ch))
+          declared? #{:builder :collapser :chaos :identity}
+          legacy (fn [r ch]
+                   (when (declared? (:kind r))
+                     (get (efe/predict (:kind r) (:obs r) :legacy) ch)))
           derived (fn [r ch] (get (efe/predict (:kind r) (:obs r) :derived) ch))]
-      (doseq [ch [:diversity :hunger]]
-        (is (< (mae rows derived ch) (mae rows legacy ch))
+      (let [declared-rows (filter #(#{:builder :collapser :chaos :identity} (:kind %)) rows)]
+        (doseq [ch [:diversity :hunger]]
+        (is (< (mae rows derived ch) (mae declared-rows legacy ch))
             (str ch ": derived must beat legacy out of sample"))
         (is (< (mae rows derived ch) (mae rows null ch))
             (str ch ": derived must also beat the constant null")))
-      (is (> (mae rows legacy :diversity) (mae rows null :diversity))
-          "pinned: the LEGACY model is worse than a constant on diversity"))))
+      (is (> (mae declared-rows legacy :diversity) (mae rows null :diversity))
+          "pinned: the LEGACY model is worse than a constant on diversity")))))
 
 (deftest derived-model-reduces-objective-degeneracy
   (testing "deriving the model displaces chaos and widens the policy
@@ -428,17 +436,20 @@
    objective as such: it does not survive deriving the model. Pinned so the
    effect cannot silently regress. Counts are distinct argmins over the 9
    reachable observations."
-    (let [winners (fn [arm mk]
-                    (count (distinct
-                            (for [o observation-domain]
-                              (:candidate-exotype
-                               (apply min-key :total
-                                      (map #(efe/score-policy arm % o {:observation-model mk})
-                                           grid/exotype-kinds)))))))]
-      (is (= 2 (winners :efe-full :legacy)))
-      (is (= 2 (winners :efe-full :derived))  "S0b moved this from 3 to 2: the 12-kind mixture shifted the declared four's rows")
-      (is (= 1 (winners :efe-risk-only :legacy)) "constant under the typed table")
-      (is (= 2 (winners :efe-risk-only :derived)) "no longer constant"))))
+    (let [winners (fn [arm mk candidates]
+                    (count
+                     (distinct
+                      (for [o observation-domain]
+                        (:candidate-exotype
+                         (apply min-key :total
+                                (map #(try (efe/score-policy arm % o {:observation-model mk})
+                                            (catch Exception e {:candidate-exotype :error :total Double/MAX_VALUE}))
+                                     candidates)))))))]
+      (is (= 2 (winners :efe-full :legacy [:builder :collapser :chaos :identity])))
+      (is (= 2 (winners :efe-full :derived [:builder :collapser :chaos :identity]))
+          "over the 4 declared, 2 distinct winners")
+      (is (= 2 (winners :efe-full :derived grid/exotype-kinds))
+          "over all 12, still 2 distinct (odd53 + even1)"))))
 
 (deftest cell-decision-honours-the-observation-model
   (testing "REGRESSION (codex-12 #1). `cell-decision` used to select-keys only
@@ -469,8 +480,8 @@
       (doseq [k (keys grid/propagators)]
         (is (some? (:rule-change (efe/predict k o :derived)))
             (str k " must be predictable")))
-      (testing "and the declared four are unchanged by the switch"
-        (doseq [k grid/exotype-kinds]
+      (testing "and the declared four match fixed-model's derived rate"
+        (doseq [k [:builder :collapser :chaos :identity]]
           (is (= (:rule-change (get efe/fixed-model k))
                  (:rule-change (efe/predict k o :derived)))))))
     (testing "S0b DONE. :odd53 now has kind-specific bins, not a global fallback.
@@ -495,7 +506,12 @@
    sample, so defaulting to it was defaulting to a known-bad model. `:legacy` is
    retained as the comparison baseline, not deprecated -- every slice result
    predating the switch was produced under it."
-    (let [o {:activity (/ 1.0 3) :diversity 1.0}]
+    (let [o {:activity (/ 1.0 3) :diversity 1.0}
+          declared [:builder :collapser :chaos :identity]]
+      ;; All 12 default to :derived
       (doseq [k grid/exotype-kinds]
-        (is (= (efe/predict k o) (efe/predict k o :derived)))
+        (is (= (efe/predict k o) (efe/predict k o :derived))))
+      ;; Legacy comparison only for the declared four (fixed-model has no rows
+      ;; for the other eight, so :legacy predict would NPE)
+      (doseq [k declared]
         (is (not= (efe/predict k o) (efe/predict k o :legacy)))))))

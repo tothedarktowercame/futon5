@@ -15,17 +15,17 @@
 (def arms [:baseline :next-C :next-C-plus-eig :eig-only])
 
 (def patterns
-  "Minimal pattern content. NEXT uses the existing observation ABI; hunger is
-   derived from the pattern's rule-change and activity claims exactly as in
-   `efe/predict`."
+  "Minimal pattern content. S0b/H5: built from predict :derived for all 12 kinds
+   rather than from fixed-model (which only has the declared four). Hunger is
+   derived from the prediction exactly as in efe/predict."
   (into {}
-        (for [[kind {:keys [rule-change activity diversity]}] efe/fixed-model]
+        (for [kind grid/exotype-kinds
+              :let [p (efe/predict kind {:activity 0.0 :diversity 1.0} :derived)]]
           [kind {:kind kind
-                 :next {:rule-change rule-change
-                        :activity activity
-                        :diversity diversity
-                        :hunger (* (- 1.0 rule-change)
-                                   (- 1.0 activity))}}])))
+                 :next {:rule-change (:rule-change p)
+                        :activity (:activity p)
+                        :diversity (:diversity p)
+                        :hunger (:hunger p)}}])))
 
 (def ^:private epsilon 1.0e-9)
 (def confirmation-log-likelihood-floor (Math/log 0.5))

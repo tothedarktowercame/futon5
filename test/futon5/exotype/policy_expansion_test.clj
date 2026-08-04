@@ -15,7 +15,7 @@
 
 (deftest policy-space-is-hold-plus-every-kind
   (let [policies (expansion/policy-set (state 0.1) 0)]
-    (is (= 5 (count policies)))
+    (is (= 13 (count policies)))
     (is (= :hold (:policy (first policies))))
     (is (= (set grid/exotype-kinds)
            (set (map :kind (rest policies)))))))

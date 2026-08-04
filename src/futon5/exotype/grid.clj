@@ -9,7 +9,18 @@
             [futon5.exotype.selection :as selection]
             [futon5.xenotype.generator :as gen]))
 
-(def exotype-kinds [:builder :collapser :chaos :identity])
+(def exotype-kinds
+  "The selectable vocabulary. Widened from 4 to 12 at S0b/H5 (TN-baldwin-reboot.md
+  42.3): the EFE dynamics converged to :collapser because the score-cache only
+  iterated over the four declared kinds, so the objective could never select
+  the non-freezing kinds. All 12 now have kind-specific rows in the conditional
+  model (S0b, 42.2).
+
+  The original four come first to preserve ordering for any code that indexes
+  positionally. The eight additions are the P2 probe kinds: the absorbing axis
+  (even4/even8/even1) and the rate axis (odd53/fix2/fix3/fix4/fix6)."
+  [:builder :collapser :chaos :identity
+   :even4 :even8 :even1 :odd53 :fix2 :fix3 :fix4 :fix6])
 (def arms [:uniform-fixed :heterogeneous-fixed :conformist :boring-triggered])
 
 (def ^:private elisp-table

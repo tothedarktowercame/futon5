@@ -26,8 +26,10 @@
         (is (= (grid/step state) (grid/step state)))))))
 
 (deftest vocabulary-is-neighbourhood-converted
-  (testing "the DEFAULT vocabulary is still the original four"
-    (is (= [:builder :collapser :chaos :identity] grid/exotype-kinds)))
+  (testing "the vocabulary is now all 12 kinds (S0b/H5 widening, TN 42.3)"
+    (is (= [:builder :collapser :chaos :identity
+            :even4 :even8 :even1 :odd53 :fix2 :fix3 :fix4 :fix6]
+           grid/exotype-kinds)))
   (testing "propagators also carries the P2 probe kinds, which are NOT default"
     (is (= #{:builder :collapser :chaos :identity
              :even4 :even8 :even1 :odd53           ; absorbing axis (16/8/2/0)
