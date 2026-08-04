@@ -2894,3 +2894,49 @@ widened-vocabulary run would actually present. This is Joe's call (D-adjacent), 
 determines whether 36.1's "odd53 wins" survives the vocabulary widening it was arguing for.
 
 **Gates:** clj-kondo 0/0, parens 0, 58 tests / 807 assertions / 0 failures.
+
+### 42.3 S0b trajectory evaluation on zone-joe — the dynamics confirm the argmin
+
+40 seeds, width 80, 300 steps. EFE-driven dynamics (:efe-full arm,
+:hunger-coupled self-tuning), 12-kind conditional model as default. Damage reach
+= Hamming distance at t=100 after single-cell phenotype flip.
+
+| blend | activity | geno-div | geno-rules | frozen | exo-kinds | damage | sd |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.00 | 0.6263 | 0.0500 | 4.0 | 1.0000 | 1.0 | 5.5 | 5.7 |
+| 0.10 | 0.6231 | 0.0513 | 4.1 | 0.9997 | 1.0 | 4.8 | 4.9 |
+| 0.25 | 0.6144 | 0.0509 | 4.1 | 1.0000 | 1.0 | 5.7 | 4.7 |
+| 0.50 | 0.6331 | 0.0500 | 4.0 | 1.0000 | 1.0 | 4.3 | 4.8 |
+| 0.75 | 0.6269 | 0.0500 | 4.0 | 1.0000 | 1.0 | 4.5 | 4.7 |
+
+Exotype distribution: **every seed, every blend, all 80 cells converge to
+:collapser by t=300.** Distinct exotypes = 1.0, frozen fraction = 1.0.
+
+**The dynamics confirm the pure-function argmin.** The 12-kind conditional
+model's argmin over the 4-kind vocabulary picked :collapser in 6 of 9 bins
+(42.2); the trajectory reaches the same endpoint — :collapser everywhere —
+from every seed and every blend level. Damage reach is 4-6 cells (ECA scale:
+barely above frozen rule 204's 1.0, well below rule 90's 8.0). The system is
+dynamically dead.
+
+**This is not a defect of the 12-kind model specifically.** The 4-kind derived
+model also selected :collapser in 6 of 9 bins (28.3), and :collapser freezes
+100% of cells by t=200 (32.1). The 12-kind model changed WHICH bins collapser
+wins (builder lost 2 to chaos) but not the outcome: collapser still dominates,
+and collapser still freezes.
+
+**What the vocabulary widening does NOT fix:** the objective selects
+:collapser because collapser's conditional model promises low hunger (the
+load-bearing channel), and once selected it freezes the field. Widening the
+derivation vocabulary to 12 kinds does not change this, because the score-cache
+in self_tuning.clj still iterates over grid/exotype-kinds (the four declared)
+— so even with the 12-kind resource shipped, the EFE dynamics can only choose
+among the four. The conditional model changed the ROWS for those four, but
+:collapser's rows still win.
+
+**Implication for the register:** the vocabulary must be widened IN THE
+SELECTABLE SET (the score-cache and exotype-kinds), not just in the derivation,
+for :odd53 to be choosable in dynamics. That is H5 / S0's next step: make
+exotype-kinds carry the extended vocabulary so the objective can actually
+select the non-freezing kinds. The conditional model is ready for it (S0b gave
+every kind kind-specific rows); the selector is not.
