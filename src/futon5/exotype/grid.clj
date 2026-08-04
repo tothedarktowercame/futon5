@@ -70,21 +70,21 @@
 
 (defn apply-exotype
   "Apply EXOTYPE to a local rule. At transfer fraction Q, the rule source is
-   chosen uniformly from the two immediate neighbours with probability Q;
-   otherwise it remains the cell's own rule. The three-argument arity is the
-   byte-compatible legacy path."
+   taken from the fixed offset +1 neighbour with probability Q; otherwise it
+   remains the cell's own rule. The three-argument arity is the byte-compatible
+   legacy path."
   ([sigil exotype draw-seed]
    (ca/with-seed draw-seed
      (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
                                        (get propagators exotype)))))
-  ([sigil left-sigil right-sigil exotype q draw-seed]
+  ([sigil neighbour-sigil exotype q draw-seed]
    (when-not (<= 0.0 (double q) 1.0)
      (throw (ex-info "transfer fraction must be in [0,1]" {:transfer-fraction q})))
    (if (zero? (double q))
      (apply-exotype sigil exotype draw-seed)
      (ca/with-seed draw-seed
        (let [source (if (< (ca/rnd) (double q))
-                      (ca/rnd-nth [left-sigil right-sigil])
+                      neighbour-sigil
                       sigil)]
          (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str source))
                                            (get propagators exotype))))))))
@@ -113,7 +113,6 @@
          :genotype
          (mapv (fn [index sigil exotype]
                  (apply-exotype sigil
-                                (nth genotype (mod (dec index) width))
                                 (nth genotype (mod (inc index) width))
                                 exotype transfer-fraction
                                 (+ (long seed) (* (long time) width) index)))

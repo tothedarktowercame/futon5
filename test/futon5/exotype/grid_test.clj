@@ -41,10 +41,10 @@
         actual (pr-str (harness/seed-run config :next-C 17))]
     (is (= expected actual))))
 
-(deftest transfer-reads-only-immediate-neighbours
-  (let [own "甘" left "轧" right "示" exotype :identity]
+(deftest transfer-reads-fixed-offset-plus-one-neighbour
+  (let [own "甘" right "示" exotype :identity]
     (is (= (grid/apply-exotype own exotype 9)
-           (grid/apply-exotype own left right exotype 0.0 9)))
-    (let [result (grid/apply-exotype own left right exotype 1.0 9)
+           (grid/apply-exotype own right exotype 0.0 9)))
+    (let [result (grid/apply-exotype own right exotype 1.0 9)
           distance #(harness/difference (ca/bits-for result) (ca/bits-for %))]
-      (is (= 1 (min (distance left) (distance right)))))))
+      (is (= 1 (distance right))))))
