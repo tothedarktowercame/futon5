@@ -255,3 +255,73 @@ two corrected a mechanism I had mis-specified, this one identified a missing cau
 prerequisite that neither the strategy note nor the paper's own phrasing made explicit. It
 refused to build a formally-conformant but causally inert arm, which is the right call and
 the reason the instruction to push back is worth repeating in every handoff.
+
+---
+
+## 9. Layer reading (Joe, 2026-08-04): expression belongs to the exotype
+
+Recorded **before** the convergence results land, so that X damage is not reinterpreted
+after it is seen.
+
+### One layer, not four
+
+The §8 architecture introduced a transient `:expressed` rule and it was described as a
+fourth layer. That is an implementation artefact, not the theory. **The exotype is not the
+label — it is the apparatus of expression.** `:builder` is a token; what it *is* is the
+propagator it applies. The expressed rule is not an independent stratum sitting between
+genotype and phenotype, it is the exotype's effect on the genotype.
+
+**The layer count stays at three.** The exotype layer has internal structure.
+
+### The structure that matters: transmissible token vs local realisation
+
+The exotype layer splits along a line the rest of the design turns on:
+
+| aspect | transmissible? | how produced |
+|---|---|---|
+| **kind** (`:builder`, `:chaos`, …) | **yes** — `transmit` moves it between neighbours | inherited horizontally from the phenotype field |
+| **expressed rule** | **no** | recomputed locally each step from the kind plus the local genotype neighbourhood |
+
+A portable token with a local realisation that depends on the substrate it lands in. This
+is why, in the walkthrough, cell B copies A's genotype while keeping its own `:chaos` and
+then expresses a rule *neither cell ever ran*: not a quirk of the trace, but the layer
+behaving as a cultural layer should.
+
+### The Lamarckian problem, restated
+
+Better than "we added a layer": **the layer boundary never moved. What changed is whether
+the exotype layer's output is stored downward into the heritable layer.**
+
+```
+Lamarckian:  exotype layer output → stored into genotype      (direct transcription)
+Baldwin:     exotype layer output → phenotype only            (no transcription)
+```
+
+This is closer to the paper's own phrase — "the heritable layer follows without direct
+transcription" — than the four-layer framing was.
+
+### Measurement consequence: X damage is currently incomplete
+
+`slice-harness/damage` perturbs `:exotypes`, the **kind vector**, so **X damage counts kind
+flips only**. Under this reading, a perturbation that changes the expressed rule without
+changing any kind is exotype damage that is not being counted.
+
+This may explain why X damage has been small all session — 0–1.5 in the slice12 Baldwin
+preflight against P damage running to 29.
+
+**Decision: keep them separable as measured quantities while treating them as one
+theoretical layer.** The reason is double-counting, not ontology: the expressed rule is a
+*joint* function of kind and local genotype neighbourhood, so an expression-damage figure
+would partly re-measure genotype damage. Reporting them merged would make X damage
+uninterpretable.
+
+So: **one layer, two observables**, and any claim about "the exotype layer" must say which
+observable it rests on. Claims resting on X damage as currently measured are claims about
+**kind stability**, not about the exotype layer as a whole.
+
+### Naming
+
+`:expressed` sitting beside `:exotypes` in the state map is a storage detail, not a claim.
+Renaming to `:exotype-expression` would make the theory legible in the code without
+touching behaviour. Not urgent; noted so the code does not quietly teach the four-layer
+reading to whoever reads it next.
