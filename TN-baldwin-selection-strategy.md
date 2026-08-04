@@ -197,3 +197,61 @@ correction came from a subagent instructed that pushing back was wanted, and it 
 fourth wasted scan.
 
 **Before anything in section 5 is built, its falsifier in that section should be run first.**
+
+---
+
+## 8. Design correction (codex-7, 2026-08-04): the substrate has no expression layer
+
+The design in §4 was incomplete, and the gap is causal rather than cosmetic.
+
+In the current code the only path from exotype to anything measurable is:
+
+```
+exotype → apply-exotype → own genotype → phenotype → fitness
+```
+
+Verified: `apply-exotype-blend` is called only at `grid.clj:148`, to construct the next
+`:genotype`; `phenotype-step` reads the genotype. **Disabling write-back therefore severs
+every route from exotype to fitness.** The exotype becomes causally inert and the resulting
+"Baldwin arm" would be ordinary selection on phenotype — formally separable, biologically
+fake.
+
+**Expression IS transcription in this substrate.** That is the deeper reason it
+"instantiates the Lamarckian arm alone": not merely that write-back exists, but that there
+is no other way for acquired state to matter. The paper names the missing ingredient as a
+selective filter; that presupposes plasticity can alter what selection sees *without being
+inherited*, which requires a transient expressed layer the substrate does not have.
+
+**So the missing ingredient is two things, not one:** a transient expressed rule, and
+selection.
+
+### Corrected architecture
+
+```
+expressed := apply-exotype(genotype, exotype)     ; transient, recomputed each step
+phenotype := phenotype-step(expressed, phenotype) ; behaviour runs on the EXPRESSED rule
+exotype   := transmit(...)                        ; plastic, acquired, unchanged
+
+Lamarckian arm:  genotype := expressed                    ; direct transcription
+Baldwin arm:     genotype := selection(neighbour genotypes, fitness)
+                                                          ; expressed is never stored
+```
+
+The arms differ by **whether the expressed rule is stored**. Same expression machinery,
+same selection step, one line apart — which satisfies the paper's requirement that "both
+arms would then be expressible in one family" more exactly than the §4 design did.
+
+### Consequent decision: what `:rule-change` observes
+
+Preference fitness must observe **change in the expressed rule**, not change in the
+heritable genotype. Observing heritable change would make fitness partly self-referential,
+since selection is precisely what changes the genotype. Fitness should score what a cell
+*does*, not what was done to it.
+
+### Note on process
+
+This is the third correct pushback from codex-7 in one session and the deepest: the first
+two corrected a mechanism I had mis-specified, this one identified a missing causal
+prerequisite that neither the strategy note nor the paper's own phrasing made explicit. It
+refused to build a formally-conformant but causally inert arm, which is the right call and
+the reason the instruction to push back is worth repeating in every handoff.
