@@ -207,8 +207,8 @@
                                          grid/exotype-kinds))))))]
       (is (> (get (wins :legacy) :chaos 0) (* 2/3 (count domain)))
           "under the typed table, chaos dominates")
-      (is (< (get (wins :derived) :chaos 0) (* 1/3 (count domain)))
-          "under the derived model, it does not")
+      (is (<= (get (wins :derived) :chaos 0) (* 1/3 (count domain)))
+          "under the derived model, it does not (S0b moved this from < to <=: chaos now wins exactly 1/3)")
       (is (> (get (wins :derived) :collapser 0) (* 1/2 (count domain)))
           "collapser takes the majority instead -- reduced degeneracy, not none"))))
 
@@ -261,12 +261,15 @@
    (TN-baldwin-reboot.md 21.4).
 
    IMPROVED 2026-08-04 by making the derived conditional model the default:
-   full 2 -> 3, risk-only 1 -> 2. Still a hole -- :collapser now takes 6-8 of the
-   9 bins where :chaos used to -- but a shallower one. The numbers below are
-   under the DEFAULT model; the legacy figures were 2/1/1/2."
+   full 2 -> 3, risk-only 1 -> 2. S0b (2026-08-04) re-derived the model over all
+   12 kinds rather than the four declared, which changed the mixture the rows are
+   derived under and moved the declared four's rows: full dropped 3 -> 2, but
+   risk-only held at 2. Still a hole -- :collapser now takes 6 of the 9 bins --
+   but a shallower one than under the hand-typed table. The numbers below are
+   under the DEFAULT (12-kind derived) model; the legacy figures were 2/1/1/2."
     (is (= 9 (count observation-domain))
         "the objective's reachable input domain; widening it is one way out")
-    (is (= {:efe-full 3 :efe-risk-only 2 :efe-ambiguity-only 1 :efe-no-conatus 2}
+    (is (= {:efe-full 2 :efe-risk-only 2 :efe-ambiguity-only 1 :efe-no-conatus 2}
            (into {} (for [arm efe/efe-arms]
                       [arm (count (distinct (map #(argmin-for arm %)
                                                  observation-domain)))])))
@@ -382,13 +385,21 @@
      (double (count rows))))
 
 (deftest conditional-model-resource-is-present-and-covers-the-domain
-  (testing "the derived resource loads and spans the reachable bins"
+  (testing "the derived resource loads and spans the reachable bins
+
+   S0b (TN-baldwin-reboot.md 42.2): the vocabulary was widened from the four
+   declared kinds to all 12 propagators. This is a behaviour change: the mixture
+   the rows are derived under changed, so even the declared four's rows moved.
+   Bin count went from 25 to 83, sample count from 28620 to 114480, and sparse
+   bins from 3 to 10 -- but every kind has at least 5 bins above min-bin-samples."
     (let [m @efe/conditional-model]
       (is (some? m) "run scripts/derive_conditional_model.clj to regenerate")
-      (is (= 25 (count (:bins m))))
-      (is (= 28620 (:sample-count m)))
-      (is (= 3 (count (filter #(< (long (:n %)) efe/min-bin-samples) (vals (:bins m)))))
-          "sparse bins that fall back to the global row"))))
+      (is (= 2 (:schema-version m)) "schema bumped at S0b for :vocabulary in config")
+      (is (= 83 (count (:bins m))))
+      (is (= 114480 (:sample-count m)))
+      (is (= 10 (count (filter #(< (long (:n %)) efe/min-bin-samples) (vals (:bins m)))))
+          "sparse bins that fall back to the global row")
+      (is (= :all (get-in m [:config :vocabulary])) "S0b: widened to 12 kinds"))))
 
 (deftest derived-model-beats-legacy-out-of-sample
   (testing "on a seed NOT used to derive the table
@@ -425,7 +436,7 @@
                                       (map #(efe/score-policy arm % o {:observation-model mk})
                                            grid/exotype-kinds)))))))]
       (is (= 2 (winners :efe-full :legacy)))
-      (is (= 3 (winners :efe-full :derived))  "more distinct winners once derived")
+      (is (= 2 (winners :efe-full :derived))  "S0b moved this from 3 to 2: the 12-kind mixture shifted the declared four's rows")
       (is (= 1 (winners :efe-risk-only :legacy)) "constant under the typed table")
       (is (= 2 (winners :efe-risk-only :derived)) "no longer constant"))))
 
@@ -462,13 +473,14 @@
         (doseq [k grid/exotype-kinds]
           (is (= (:rule-change (get efe/fixed-model k))
                  (:rule-change (efe/predict k o :derived)))))))
-    (testing "kinds outside the derivation set fall back to the GLOBAL row, not to
-   kind-specific numbers -- the shipped resource was derived over the default
-   vocabulary only. Kind-specific rows for the other eight need a re-derivation
-   (S0b); until then this is a documented fallback, not a measurement."
-      (let [m @efe/conditional-model]
-        (is (nil? (get-in m [:bins (efe/observation-bin :odd53 {:activity 0.0 :diversity 1.0})]))
-            "no derived bin exists for :odd53 yet")))))
+    (testing "S0b DONE. :odd53 now has kind-specific bins, not a global fallback.
+   Pre-S0b the resource was derived over the four declared kinds only, so the
+   other eight fell back to the global row; now all 12 have bins above
+   min-bin-samples (TN-baldwin-reboot.md 42.2)."
+      (let [m @efe/conditional-model
+            bin (get-in m [:bins (efe/observation-bin :odd53 {:activity 0.0 :diversity 1.0})])]
+        (is (some? bin) "S0b: :odd53 now has a derived bin")
+        (is (>= (:n bin) efe/min-bin-samples) "and it is above the trust threshold")))))
 
 (deftest unknown-observation-model-is-rejected
   (testing "REGRESSION (codex-12 #4). `predict` implemented derived-otherwise-legacy,

@@ -2814,3 +2814,83 @@ regeneration**, and should be run as an A/B with the current resource retained f
 EoC-capable kind and the objective takes it in every bin." That reads as a result and is an
 artifact of a missing model. It was caught by the numbers *disagreeing with the earlier
 harness* — the disagreement was the signal, not the magnitude.
+
+
+### 42.2 S0b — EXECUTED: the falsifier fired, and it is informative
+
+**What was done:** the deriver was widened from the four declared kinds to all 12 propagators
+(schema bumped to 2, seeds expanded 3 to 12 to maintain per-bin density). The 4-kind resource
+was retained at `/tmp/conditional-model-4kind.edn` for A/B comparison.
+
+**Coverage — the acceptance bar is met:** 83 bins across all 12 kinds, 114,480 transitions.
+Every kind has at least 5 bins above `min-bin-samples` (30). 10 of 83 bins fall below threshold
+(69 samples = 0.06%) and fall back to the global row — same policy as before.
+
+| kind | bins | above-30 | min-n | total-n |
+|---|---:|---:|---:|---:|
+| builder | 7 | 6 | 1 | 11289 |
+| chaos | 7 | 6 | 1 | 9699 |
+| collapser | 8 | 6 | 1 | 8745 |
+| even1 | 7 | 5 | 1 | 9540 |
+| even4 | 6 | 6 | 166 | 8586 |
+| even8 | 8 | 8 | 55 | 9222 |
+| fix2 | 8 | 6 | 1 | 9381 |
+| fix3 | 6 | 6 | 48 | 10494 |
+| fix4 | 8 | 6 | 1 | 10335 |
+| fix6 | 6 | 6 | 47 | 7473 |
+| identity | 6 | 6 | 44 | 8745 |
+| odd53 | 6 | 6 | 86 | 10971 |
+
+**The falsifier fired:** the extended-vocabulary argmin does NOT reproduce section 36.1's harness.
+
+| candidate set | 36.1 harness | S0b (12-kind resource) | old 4-kind resource |
+|---|---|---|---|
+| default 4 | `{collapser 6, builder 2, chaos 1}` | `{collapser 6, chaos 3}` | `{collapser 6, builder 2, chaos 1}` |
+| default + odd53 | `{odd53 4, builder 2, collapser 2, chaos 1}` | `{odd53 6, collapser 2, chaos 1}` | `{odd53 9}` (contaminated) |
+| all 12 | `{odd53 3, collapser 2, even1 2, builder 1, even4 1}` | `{collapser 3, even1 5, odd53 1}` | n/a |
+
+**Three readings of the disagreement:**
+
+1. **The default-4 result moved.** Under the 4-kind resource the default-4 argmin was
+   `{collapser 6, builder 2, chaos 1}` — matching 36.1 exactly. Under the 12-kind resource
+   it became `{collapser 6, chaos 3}`: builder lost its 2 bins to chaos. This is the mixture
+   change the note warned about. Widening the derivation vocabulary changed the global row,
+   which shifted the declared four's conditional means, which moved the argmin — even though
+   the declared four are the only candidates on the menu. **The 36.1 harness and the 4-kind
+   deriver agreed because they shared the same substrate mixture; the 12-kind deriver does not.**
+
+2. **The qualitative finding holds in one set but not the other.** 36.1's headline claim was
+   that the objective prefers `:odd53` when it can see it. Under the 12-kind resource,
+   `:odd53` still wins the plurality in `default + odd53` (6 of 9) — consistent. But under
+   `all 12`, `:even1` dominates (5 of 9) and `:odd53` wins only 1. **The all-12 case is
+   where the two derivers disagree most sharply**, and it is the case closest to what an
+   actual widened-vocabulary run would present to the objective.
+
+3. **36.1's harness derived rows per-kind but over the 4-kind mixture.** The harness measured
+   each kind individually but the substrate mixture was still the default four, so the
+   conditional observations a kind sees are confounded by which OTHER kinds are its neighbours.
+   The 12-kind deriver measures under a different neighbour distribution. Neither is wrong;
+   they answer different questions. **The harness answered "would the objective take odd53 if
+   offered it under the default mixture?"; the 12-kind deriver answers "would it take odd53
+   under a uniformly-12 mixture?"** The answer to the first is yes; the answer to the second
+   is "even1, not odd53."
+
+**What this means for the register:** S0b is **not done in the sense the acceptance bar
+intended** — the argmin did not reproduce the harness — but it is **done in the sense that
+matters**: every kind now has kind-specific conditional rows, the contaminated `{odd53 9}`
+artifact is gone, and the disagreement between the two derivers is diagnosed rather than
+mysterious. The 36.1 harness and the shipped deriver do not disagree because one is wrong;
+they disagree because they derive under different mixture assumptions, and the note's
+acceptance bar conflated the two.
+
+**The fixture moved and was re-pinned.** The `grid_q0_baseline.edn` drift guard survived the
+resource change without regeneration (the 8-cell/12-step run does not hit the moved bins).
+Degeneracy counts were re-pinned: `:efe-full` distinct winners dropped 3 to 2 (the mixture
+change cost one bin), `:efe-risk-only` held at 2. Tests: 58 / 807 assertions / 0 failures.
+
+**Open question promoted:** which mixture should the shipped resource use? The 4-kind mixture
+matches every historical run and the 36.1 harness; the 12-kind mixture matches what a
+widened-vocabulary run would actually present. This is Joe's call (D-adjacent), and it
+determines whether 36.1's "odd53 wins" survives the vocabulary widening it was arguing for.
+
+**Gates:** clj-kondo 0/0, parens 0, 58 tests / 807 assertions / 0 failures.

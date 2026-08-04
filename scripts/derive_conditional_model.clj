@@ -25,14 +25,39 @@
 
 (def config
   "Frozen. Changing any of this changes the derived model, so it is recorded in
-   the resource and pinned by test."
-  {:seeds [11 22 33] :width 60 :steps 160 :channels [:activity :diversity :hunger]})
+   the resource and pinned by test.
+
+   S0b (TN-baldwin-reboot.md 42.1): :vocabulary was widened from the default
+   :declared (the four exotype-kinds) to :all (all 12 propagators). This is a
+   BEHAVIOUR CHANGE: the mixture the rows are derived under changes, so even the
+   four declared kinds' rows may move. The 4-kind resource is retained at
+   /tmp/conditional-model-4kind.edn for A/B comparison.
+
+   :seeds was expanded from [11 22 33] to twelve to maintain per-bin density:
+   12 kinds x up to 9 observation bins = 108 bins, and at 3 seeds x 60 cells x
+   160 steps = 28800 transitions that is ~267/bin on average -- adequate, but
+   sparse bins (rare activity/diversity pairs for uncommon kinds) benefit from
+   the fourfold increase."
+  {:seeds [11 22 33 44 55 66 77 88 99 111 222 333]
+   :width 60 :steps 160 :channels [:activity :diversity :hunger]
+   :vocabulary :all})
+
+(defn- vocabulary-kinds
+  "Which exotypes to draw from for the derivation grid. :declared is the original
+   four (exotype-kinds); :all is every key in propagators. The deriver must NOT
+   call grid/initial-grid, because that hardcodes exotype-kinds and would ignore
+   the widening -- it builds the grid directly."
+  []
+  (case (:vocabulary config)
+    :declared grid/exotype-kinds
+    :all (keys grid/propagators)))
 
 (defn- transitions [seed]
   (let [w (:width config)
+        kinds (vocabulary-kinds)
         st (ca/with-seed seed
              {:arm :heterogeneous-fixed :seed seed :time 0
-              :exotypes (grid/initial-grid :heterogeneous-fixed w)
+              :exotypes (vec (repeatedly w #(ca/rnd-nth kinds)))
               :genotype (vec (ca/random-sigil-string w))
               :phenotype (ca/random-phenotype-string w)})]
     (loop [s (grid/step st) t 1 acc []]
@@ -51,8 +76,9 @@
 
 (def schema-version
   "Bump when the shape of the emitted map changes, so a stale artifact is
-   detectable from the artifact alone (codex-12 #5)."
-  1)
+   detectable from the artifact alone (codex-12 #5). Bumped to 2 at S0b: the
+   config now carries :vocabulary, and the resource spans 12 kinds not 4."
+  2)
 
 (defn- source-fingerprint
   "SHA-256 over the three files that determine the output: this generator, the
@@ -89,6 +115,7 @@
     (io/make-parents path)
     (spit path (with-out-str (pp/pprint model)))
     (println (format "wrote %s" path))
+    (println (format "  vocabulary: %s (%d kinds)" (:vocabulary config) (count (vocabulary-kinds))))
     (println (format "  %d transitions -> %d bins" (:sample-count model) (count (:bins model))))
     (println (format "  smallest bin: n=%d" (apply min (map :n (vals (:bins model))))))))
 
