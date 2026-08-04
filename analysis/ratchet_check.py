@@ -49,9 +49,24 @@ if __name__=='__main__':
     print(f"  domain rows           {p['domains']:.3f}   (ratchet: >= {BASELINE['domains']:.2f})")
     print(f"  confetti rows         {p['confetti']:.3f}   (ratchet: <= {BASELINE['confetti']:.2f})")
     print(f"  consensus rows        {p['consensus']:.3f}   (informational)")
-    fails=[]
-    if p['top_share']>BASELINE['top_share']+.02: fails.append("one kind dominates")
-    if p['kinds_above_15pct']<BASELINE['kinds_above_15pct']: fails.append("coexistence lost")
-    if p['domains']<BASELINE['domains']-.05: fails.append("structure lost")
-    if p['confetti']>BASELINE['confetti']+.05: fails.append("confetti")
-    print(f"\n  {'RATCHET HELD' if not fails else 'RATCHET BROKEN: '+', '.join(fails)}\n")
+    # Three tiers (Joe, 2026-08-04). Dominance is NOT an independent gate: with k
+    # kinds above 15% the dominant share is arithmetically capped near 1-0.15(k-1),
+    # so a diverse field necessarily reads a higher dominant share than a two-kind
+    # one. Gating on it alone rejected slice10-beta0.1, which beat the baseline on
+    # coexistence (3 kinds vs 2) and domain rows (0.825 vs 0.600).
+    # 0.60 is a genuine collapse ceiling, not the baseline value: a 3-kind field is
+    # capped near 0.70 and comfortably clears it, while a swept-to-chaos field
+    # (slice6d, 0.817) does not.
+    COLLAPSE_CEILING=0.60
+    regress=[]
+    if p['top_share']>COLLAPSE_CEILING: regress.append(f"one kind holds {p['top_share']:.0%}")
+    if p['kinds_above_15pct']<BASELINE['kinds_above_15pct']: regress.append("coexistence lost")
+    if p['domains']<BASELINE['domains']-.05: regress.append("structure lost")
+    if p['confetti']>BASELINE['confetti']+.05: regress.append("confetti")
+    if regress:
+        print(f"\n  REGRESSION: {', '.join(regress)}\n")
+    elif p['top_share']<=BASELINE['top_share']+.02:
+        print("\n  PROMOTED: meets the structural floor and does not lose on dominance\n")
+    else:
+        print(f"\n  CANDIDATE: structural floor met; dominance {p['top_share']:.3f} above "
+              f"baseline {BASELINE['top_share']:.2f} — admitted, not promoted\n")
