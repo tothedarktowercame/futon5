@@ -15,6 +15,9 @@ inherited improvement behind.
 
 Companions:
 
+- [`TN-baldwin-experiment-guidance.md`](TN-baldwin-experiment-guidance.md), what the
+  revised argument library now requires of a preregistration, and the suggested
+  experiment order — start there if you are building the next round;
 - [`TN-baldwin-reconstructed.md`](TN-baldwin-reconstructed.md), the historical 2014
   mechanism and replay;
 - [`TN-exotype-placement.md`](TN-exotype-placement.md), the Part III causal gate and

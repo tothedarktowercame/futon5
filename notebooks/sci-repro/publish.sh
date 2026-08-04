@@ -41,6 +41,9 @@ DESC = {
         '(C4) with no-mutation control and random-replacement null, popcount-class '
         'frequencies and flagged-rule patch lifetimes (C5), and first-bit-only '
         'mutation on coupled runs with Rule-0/128 occupancy (C6).',
+    'mmca_supplement1': 'Supplement 1 to <em>Rule-Rewriting Cellular Automata '
+        'and the Edge of Chaos</em>: the twelve empirical findings, rendered '
+        'from the same canonical source as the journal-ready PDF.',
 }
 items = []
 for f in nbs:

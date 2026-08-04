@@ -4,6 +4,14 @@
 the propagators actually do... they produce pretty pictures when applied to CAs. But if
 they were applied to something else, they might produce very different results."*
 
+**Read-by (added 2026-08-04):** between this note's commit (2026-07-16) and 2026-08-04 it
+was cited by **no file in the repository**, while `M-formal-patterns` was chartered the day
+after it and ran twelve slices. Slices 8, 10 and 12 each independently rediscovered a fact
+recorded below, each at the cost of a full dispatch/park/review round-trip. See
+`TN-baldwin-reboot.md` §1 and `holes/M-formal-patterns.md` "Substrate ground truth" for the
+gate that now points here. **§5 (the bug is not a permutation) is still unactioned** and is
+upstream of every exotype slice.
+
 **Bottom line:** the "pretty pictures" are not the propagator's doing and not the CA's
 doing. The Figure-8 genotype dynamics is **autonomous** — it never reads the phenotype —
 and it reproduces the 42/170 attractor **15/15 with no CA at all**. Separately: **the

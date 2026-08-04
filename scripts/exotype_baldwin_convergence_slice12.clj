@@ -42,8 +42,21 @@
          :previous-expressed genotype))
 
 (defn- calibrated-phenotype
-  "Burn in the seeded phenotype for t*=60 under the exact ECA rule. Identity
-   exotypes and write-back preserve the uniform genotype during calibration."
+  "Burn in the seeded phenotype for t*=60, then keep ONLY the phenotype.
+
+   WARNING (measured 2026-08-04, TN-baldwin-reboot.md §5): the previous docstring
+   claimed `:identity` exotypes and write-back preserve the uniform genotype here.
+   They do not. `:identity` is the MOST disruptive propagator in the family --
+   every position is a fixed point of sigma, and a fixed point writes NOT bit[k]
+   into position k, i.e. an unconditional flip -- so it changes the genotype on
+   100% of applications. Measured over these 60 steps, from both seeded rules:
+   0/80 cells still hold the seeded rule, 9 distinct genotypes, mean Hamming
+   distance 1.00 of 8 bits.
+
+   So this burn-in is NOT run under the exact ECA rule; it is run under a
+   lockstep random walk starting there. The genotype is re-seeded afterwards, so
+   only the phenotype carries the drift forward -- but the ordered/disordered
+   contrast this function exists to establish does not mean what it appears to."
   [state genotype]
   (let [identity-grid (vec (repeat (:width config) :identity))
         calibration-state

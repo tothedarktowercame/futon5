@@ -92,6 +92,50 @@ Balance is the exact condition for coherent joint commitment.
 
 ---
 
+## ❄ FROZEN 2026-08-04 — no new slices until the reboot register closes
+
+**No findings, no sweeps, no experiments.** Scope is restricted to the eight registered
+items in `TN-baldwin-reboot.md` §10 (N1–N4, H1–H4) until they are discharged. A new
+observation does not open a new thread: it is evidence for a registered item, or it is
+parked in §12 with a home. **Do not dispatch a slice while this notice stands.**
+
+N1 is decided (§11): the 2015 bug is *promoted*, not retracted — it becomes a short warm-up
+section before Part I, because working out how it actually worked was the route to
+everything else. What gets deleted is the claim that the permutation family generalises it.
+
+## Substrate ground truth — READ BEFORE DISPATCHING (added 2026-08-04)
+
+The propagator's *measured* behaviour is not what the mission's prose, the paper, or
+`efe/fixed-model` assume. Two documents hold the ground truth:
+
+- **`holes/F-what-the-propagator-actually-does.md`** (2026-07-16) — the genotype layer is
+  autonomous and never reads the phenotype; its only variation source is the propagator;
+  the actual Emacs bug is `k ↦ max(k-1,0)`, **non-injective, and therefore not in the S₈
+  family the census enumerates**.
+- **`TN-baldwin-reboot.md`** (2026-08-04) — the per-cell RNG draws are spatially
+  degenerate (all cells act in lockstep); `:identity` is the *most* disruptive propagator,
+  not the least; the Baldwin arm's genotype update is copy-only from a size-1 set.
+
+Between 2026-07-17 and 2026-08-04 the first of these was cited by no file in the
+repository, and slices 8, 10 and 12 each independently rediscovered a fact it already
+records — each at the cost of a full dispatch/park/review round-trip.
+
+**Gate G1:** every exotype handoff packet must cite these two documents and state which of
+their measured facts the design depends on. The design step is where this check belongs;
+by review time the run has already happened.
+
+**Gate G2:** any arm claiming to evolve a layer must name that layer's **variation** source
+and its **selection** source separately. If either is "none", the arm is inert before it runs.
+
+**Gate G3:** before reporting a measured rate, compute the mechanism's floor and ceiling and
+check the number lies between them. Two reported results have failed this.
+
+**Gate G4:** a handoff reporting a test gate must name the namespaces it ran, not only the
+counts. Slice 12 reported "exotype suite: 38 tests, 120 assertions"; the full surface is
+57 tests / 1260 assertions. A count cannot reveal what was omitted.
+
+---
+
 ## Slices (handoffs)
 
 **S0 — DERIVE the pattern graph (with Joe; logic model, no code).**
