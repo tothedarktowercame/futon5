@@ -325,3 +325,57 @@ observable it rests on. Claims resting on X damage as currently measured are cla
 Renaming to `:exotype-expression` would make the theory legible in the code without
 touching behaviour. Not urgent; noted so the code does not quietly teach the four-layer
 reading to whoever reads it next.
+
+---
+
+## 10. Void experiment, and the missing half of evolution (2026-08-04)
+
+The slice12 two-start run returned a negative that turned out not to be a result.
+
+**What happened.** Baldwin populations retained exactly their one seeded rule in 32/32 runs;
+0/16 paired runs differed between the two fitnesses; G damage was 0.75–1.00. The genotype
+never moved. "Final reach tracks initial condition" is therefore trivially true and carries
+no information about regulation. codex-7's verdict — "structurally void, not merely
+underpowered" — is correct.
+
+**Two causes, the second deeper.**
+
+1. The starts were seeded with a *single* rule uniformly (204 / 30), so neighbour-copy
+   selection had no heritable variation to act on.
+2. **There is no genotype mutation anywhere in this substrate.** `mu` acts in
+   `policy_expansion` and `pattern_eig` on the *exotype kind*; `policy_expansion` states it
+   explicitly — "innovation is not a mutation branch". So:
+
+| arm | genotype variation source |
+|---|---|
+| Lamarckian | the propagator's bit-flips, via write-back |
+| **Baldwin (as specified)** | **none** |
+
+Section 5 specified that on the Baldwin arm the genotype changes ONLY by neighbour-copying.
+That is **selection without variation, which is inert by construction** — even with mixed
+seeding it could only sort standing variation, fixate, and freeze. The specification was
+wrong, not the implementation.
+
+**The correction.** Evolution is variation plus selection. Random genotype mutation is
+**not** transcription — it copies nothing acquired into the heritable layer — so it
+preserves the Baldwin invariant while making the arm capable of anything at all. Each arm
+then carries the variation source proper to it:
+
+- **Lamarckian**: variation from expression, inherited by transcription.
+- **Baldwin**: variation from mutation, inherited by selection.
+
+That is the biological contrast rather than a confound. The revised invariant is:
+
+> On the Baldwin arm the genotype changes by selection and by random mutation, and **never
+> by transcription from the expressed rule**.
+
+**Seeding must also supply standing variation.** An "ordered start" becomes a *population*
+sampled from rules of low Langton lambda, a "disordered start" a population of high lambda —
+which gives both a regime contrast and heritable variation from step 0.
+
+**Method note.** This is the second time a specification of mine was internally coherent and
+causally empty — the first being the Baldwin arm with no expression layer (section 8). Both
+were caught by an agent instructed to refuse rather than comply, and both would have
+produced clean-looking tables of meaningless numbers. The generalisable check: before
+running, ask what the mechanism under test could *possibly* do, and verify that at least one
+path exists by which it could do it.
