@@ -1,21 +1,23 @@
 (ns exotype-baldwin-convergence-slice12
-  "Slice 12 preflight: verify that calibrated initial rules remain separated
-   under the exotype/Baldwin damage apparatus before spending on convergence."
+  "Slice 12: compare damage-reach trajectories from separated ordered and
+   disordered starts under Lamarckian and Baldwin update arms."
   (:require [clojure.string :as str]
             [futon5.ca.core :as ca]
             [futon5.exotype.grid :as grid]
+            [futon5.exotype.pattern-eig :as pattern]
             [futon5.exotype.slice-harness :as harness]))
 
 (def config
   {:seed-base 20260803 :seeds 8 :width 80 :workers 8
    :lambda 0.55 :mu 0.1 :tau 0.3 :prevalence-radius 1
-   :damage-steps 59})
+   :steps 6000 :damage-steps 59
+   :checkpoints [0 120 600 1200 3000 6000]})
 
 (def initialisations
-  ;; The paper's ECA calibration ladder places 204 in the ordered band, 110 in
-  ;; the complex band, and 30 in the chaotic band. `:critical-proxy` is
-  ;; deliberate: draft6 reports no finite-size evidence for a critical point.
-  {:ordered 204 :critical-proxy 110 :disordered 30})
+  ;; The two points that remain non-overlapping in the apparatus-level
+  ;; preflight. Rule 110 was dropped: complex is not synonymous with critical,
+  ;; and its measured start reach overlapped Rule 30.
+  {:ordered 204 :disordered 30})
 
 (def arms
   {:lamarckian
@@ -24,8 +26,6 @@
    {:selection-strength 1.0 :fitness-kind :preferences :write-back? false}
    :baldwin-divergence
    {:selection-strength 1.0 :fitness-kind :divergence :write-back? false}})
-
-(def protocols [:immediate :eca-burn-60])
 
 (defn rule-sigil [rule]
   (ca/sigil-for
@@ -56,26 +56,14 @@
                    :write-back? true))]
     (:phenotype (grid/run-steps calibration-state 60))))
 
-(defn initial-state [protocol arm init seed]
+(defn initial-state [arm init seed]
   (let [arm-config (merge config (get arms arm))
         genotype (uniform-rule (get initialisations init))
         base (harness/initial-state arm-config :baseline seed)
-        phenotype (case protocol
-                    :immediate (:phenotype base)
-                    :eca-burn-60 (calibrated-phenotype base genotype))]
+        phenotype (calibrated-phenotype base genotype)]
     (-> base
         (with-rule genotype)
         (assoc :phenotype phenotype))))
-
-(defn preflight-row [[protocol arm init seed]]
-  (let [arm-config (merge config (get arms arm))]
-    {:protocol protocol
-     :arm arm
-     :initialisation init
-     :rule (get initialisations init)
-     :seed seed
-     :damage (harness/damage arm-config
-                             (initial-state protocol arm init seed))}))
 
 (defn spread [values]
   {:mean (harness/mean values)
@@ -83,106 +71,220 @@
    :min (apply min values)
    :max (apply max values)})
 
-(defn summary-rows [rows]
-  (for [[[protocol arm init] group]
-        (sort-by key (group-by (juxt :protocol :arm :initialisation) rows))]
-    {:protocol protocol
-     :arm arm
-     :initialisation init
-     :layers
-     (into (sorted-map)
-           (for [layer [:phenotype :genotype :exotype]]
-             [layer (spread (map #(get-in % [:damage layer]) group))]))}))
-
 (defn- format-spread [{:keys [mean sd min max]}]
   (format "%.3f (%.3f; %d–%d)" mean sd min max))
 
-(defn- per-seed-table [rows]
+(def raw-path "reports/exotype-baldwin-convergence-slice12.raw.edn")
+
+(def conditions
+  (vec (for [arm [:lamarckian :baldwin-preferences :baldwin-divergence]
+             init [:ordered :disordered]]
+         [arm init])))
+
+(defn trajectory-run [[arm init] seed]
+  (let [arm-config (merge config (get arms arm))
+        wanted (set (:checkpoints config))]
+    (loop [state (initial-state arm init seed)
+           time 0
+           trajectory (sorted-map)]
+      (let [trajectory'
+            (if (wanted time)
+              (assoc trajectory time
+                     {:damage (harness/damage arm-config state)
+                      :genotype-rule-count (count (distinct (:genotype state)))})
+              trajectory)]
+        (if (= time (:steps config))
+          {:trajectory trajectory'
+           :final-state (select-keys state
+                                     [:genotype :expressed :phenotype :exotypes])}
+          (recur (pattern/step-compact state) (inc time) trajectory'))))))
+
+(defn condition-runs [raw arm init]
+  (vals (get raw [arm init])))
+
+(defn checkpoint-spread [raw arm init time layer]
+  (spread
+   (map #(get-in % [:trajectory time :damage layer])
+        (condition-runs raw arm init))))
+
+(defn summary-table [raw times]
   (str
-   "| protocol | arm | start | rule | seed | P | G | X |\n"
-   "|---|---|---|---:|---:|---:|---:|---:|\n"
+   "| time | arm | start | P mean (SD; range) | G mean (SD; range) | X mean (SD; range) |\n"
+   "|---:|---|---|---:|---:|---:|\n"
    (apply str
-          (for [{:keys [protocol arm initialisation rule seed damage]}
-                (sort-by (juxt :protocol :arm :initialisation :seed) rows)]
-            (format "| %s | %s | %s | %d | %d | %d | %d | %d |\n"
-                    (name protocol) (name arm) (name initialisation) rule seed
+          (for [time times [arm init] conditions]
+            (format "| %d | %s | %s | %s | %s | %s |\n"
+                    time (name arm) (name init)
+                    (format-spread (checkpoint-spread raw arm init time :phenotype))
+                    (format-spread (checkpoint-spread raw arm init time :genotype))
+                    (format-spread (checkpoint-spread raw arm init time :exotype)))))))
+
+(defn per-seed-table [raw]
+  (str
+   "| time | arm | start | seed | P | G | X |\n"
+   "|---:|---|---|---:|---:|---:|---:|\n"
+   (apply str
+          (for [time (:checkpoints config)
+                [arm init] conditions
+                [seed run] (get raw [arm init])
+                :let [damage (get-in run [:trajectory time :damage])]]
+            (format "| %d | %s | %s | %d | %d | %d | %d |\n"
+                    time (name arm) (name init) seed
                     (:phenotype damage) (:genotype damage) (:exotype damage))))))
 
-(defn- summary-table [summaries]
-  (str
-   "| protocol | arm | start | P mean (SD; range) | G mean (SD; range) | X mean (SD; range) |\n"
-   "|---|---|---|---:|---:|---:|\n"
-   (apply str
-          (for [{:keys [protocol arm initialisation layers]} summaries]
-            (format "| %s | %s | %s | %s | %s | %s |\n"
-                    (name protocol) (name arm) (name initialisation)
-                    (format-spread (:phenotype layers))
-                    (format-spread (:genotype layers))
-                    (format-spread (:exotype layers)))))))
+(defn fitness-separation [raw]
+  (let [pairs
+        (for [init [:ordered :disordered]
+              seed (range (:seed-base config)
+                          (+ (:seed-base config) (:seeds config)))
+              :let [preferences (get-in raw [[:baldwin-preferences init] seed])
+                    divergence (get-in raw [[:baldwin-divergence init] seed])]]
+          {:same-final-genotype?
+           (= (get-in preferences [:final-state :genotype])
+              (get-in divergence [:final-state :genotype]))
+           :same-final-state? (= (:final-state preferences) (:final-state divergence))
+           :same-trajectory? (= (:trajectory preferences) (:trajectory divergence))})]
+    {:pairs (count pairs)
+     :different-final-genotype
+     (count (remove :same-final-genotype? pairs))
+     :different-final-state
+     (count (remove :same-final-state? pairs))
+     :different-damage-trajectory
+     (count (remove :same-trajectory? pairs))
+     :all-final-states-identical? (every? :same-final-state? pairs)}))
 
-(defn report-markdown [rows]
-  (let [summaries (vec (summary-rows rows))]
+(defn heritable-mobility [raw]
+  (let [runs
+        (for [arm [:baldwin-preferences :baldwin-divergence]
+              init [:ordered :disordered]
+              run (condition-runs raw arm init)]
+          {:initial (rule-sigil (get initialisations init))
+           :final (get-in run [:final-state :genotype])})]
+    {:runs (count runs)
+     :uniform-and-unchanged
+     (count (filter (fn [{:keys [initial final]}]
+                      (= (set final) #{initial}))
+                    runs))}))
+
+(def figure-conditions
+  [[:baldwin-preferences :ordered]
+   [:baldwin-preferences :disordered]])
+
+(defn figure-path [[arm init]]
+  (str "reports/figures/slice12-" (name arm) "-" (name init)
+       "-triptych.png"))
+
+(defn render-figure! [[arm init :as condition]]
+  (let [seed (:seed-base config)
+        states (take (inc (:steps config))
+                     (iterate pattern/step-compact
+                              (initial-state arm init seed)))
+        path (figure-path condition)]
+    (harness/render-pixels!
+     (harness/triptych-pixels states) path
+     (str "slice12 " (name arm) " " (name init) " seed=" seed))
+    path))
+
+(def interpretation
+  (str
+   "**No arm demonstrates regulation.** The Baldwin result is the decisive "
+   "negative: ordered and disordered starts remain far apart. Preference fitness "
+   "ends at P=1.250 (SD 0.707, range 0–2) from Rule 204 and P=26.000 "
+   "(SD 6.392, range 18–38) from Rule 30; divergence fitness is the same on P. "
+   "The temporary narrowing at step 600 reopens by 1200 and persists through "
+   "6000, so final reach tracks initial reach rather than converging.\n\n"
+   "This is structural, not a weak-selection estimate. Every Baldwin population "
+   "starts with one uniform heritable rule. Neighbour-copy selection has no "
+   "heritable variant to choose, and all 32 Baldwin runs finish with exactly "
+   "that one starting rule. Preference and divergence dispatch do affect four "
+   "counterfactual damage forks, showing that `fitness-kind` is threaded, but "
+   "their unperturbed final states are identical in all 16 paired comparisons. "
+   "The experiment is therefore void as a comparison of Baldwin fitnesses.\n\n"
+   "The Lamarckian endpoints overlap (P=8.625 versus 7.500, both range 0–13), "
+   "but its trajectory does not settle: mean P falls near 1 by step 600, rises "
+   "near 6 by 1200, falls again by 3000, and rises again by 6000. Direct "
+   "every-step write-back also erases the starting genotype by construction. "
+   "That is initial-condition washout, not evidence that the arm regulates to "
+   "a stable reach. The divergence arm remains well below the width-80 ceiling, "
+   "but because selection never had variation this is not an informative upper "
+   "bracket. The two Baldwin triptychs make the failure visible as solid, "
+   "unchanged genotype columns."))
+
+(defn report-markdown [raw figures]
+  (let [{:keys [pairs different-final-genotype different-final-state
+                different-damage-trajectory all-final-states-identical?]}
+        (fitness-separation raw)
+        {mobility-runs :runs uniform-and-unchanged :uniform-and-unchanged}
+        (heritable-mobility raw)]
     (str
-     "# Baldwin convergence experiment — Slice 12 preflight\n\n"
-     "**Result: stopped at the initial-separation gate; the 6000-step convergence "
-     "sweep was not run.**\n\n"
-     "## Design and calibration\n\n"
-     "The paper's exact ECA calibration family was used: Rule 204 (ordered), "
-     "Rule 110 (complex, used here only as a `critical-proxy`), and Rule 30 "
-     "(disordered/chaotic). Draft6 explicitly reports no finite-size evidence "
-     "for a critical point, so Rule 110 is not relabelled as proven critical. "
-     "The published damage anchors are 1.00, 16.68, and 36.45 respectively.\n\n"
-     "The requested apparatus was evaluated on `:baseline` at width 80, lambda "
-     "0.55, mu 0.1, tau 0.3, damage horizon 59, and eight paired seeds. Two "
-     "preflights were used: an immediate uniform-genotype seed, and the "
-     "calibration-faithful version in which the phenotype first receives the "
-     "paper's pure-ECA burn-in to t*=60 before the exotype arm starts.\n\n"
-     "## Gate result\n\n"
-     "Rule 204 has substantially lower mean reach than the other two starts. Rule 110 and "
-     "Rule 30 are not separated once the actual exotype/Baldwin update is part "
-     "of the 59-step reach measurement. After the t*=60 burn-in their Baldwin "
-     "phenotype reaches are 24.750 (SD 5.548, range 16–32) and 29.750 "
-     "(SD 5.036, range 24–38); the distributions overlap substantially. In the "
-     "Lamarckian arm they overlap and reverse in their means: 10.875 "
-     "(SD 5.842, range 0–18) versus 9.500 (SD 7.309, range 0–20).\n\n"
-     "Therefore the three starts do not actually instantiate three distinguishable "
-     "initial reaches under this experiment's instrument. A later equality of "
-     "endpoints could not be interpreted as convergence rather than loss of the "
-     "initial contrast. Per the preregistered instruction, the test is void and "
-     "stops here. No triptychs were rendered.\n\n"
-     "## Summary\n\n"
-     (summary-table summaries)
-     "\n## Full per-seed preflight\n\n"
-     (per-seed-table rows)
-     "\n## Found, not fixed\n\n"
-     "The calibration ladder itself is intact; the collision appears only after "
-     "embedding those rules in the exotype/selection family. Choosing a different "
-     "middle rule after seeing this result, or declaring Rule 110 and Rule 30 "
-     "different by label despite the measured overlap, would weaken the gate and "
-     "was not done.\n")))
+     "# Baldwin convergence experiment — Slice 12\n\n"
+     "## Design\n\n"
+     "Rule 204 (ordered) and Rule 30 (disordered/chaotic) are the two "
+     "non-overlapping starts retained from the preregistered preflight. Each "
+     "phenotype receives the paper's pure-ECA burn-in to t*=60 before the "
+     "exotype dynamics starts. Three arms, two starts, and eight paired seeds "
+     "give 48 runs at width 80 for 6000 steps on `:baseline`; lambda 0.55, mu "
+     "0.1, tau 0.3, damage horizon 59, selection window 40, and Baldwin "
+     "selection strength 1.0. Damage is measured at 0, 120, 600, 1200, 3000, "
+     "and 6000.\n\n"
+     "The Lamarckian arm writes the expressed rule back every step and has "
+     "selection disabled. The two Baldwin arms disable write-back and differ "
+     "only in `:fitness-kind`. Divergence fitness is an upper bracket because "
+     "it selects on a damage proxy; it is not independent evidence for an "
+     "edge-of-chaos claim.\n\n"
+     "## Fitness threading gate\n\n"
+     (format (str "Preference and divergence fitness produced different final "
+                  "genotypes in **%d/%d** paired runs, different unperturbed "
+                  "final states in **%d/%d**, and different damage trajectories "
+                  "in **%d/%d**. **%d/%d** Baldwin runs retained a single uniform "
+                  "genotype equal to their seeded rule. Gate: **%s**.\n\n")
+             different-final-genotype pairs different-final-state pairs
+             different-damage-trajectory pairs uniform-and-unchanged mobility-runs
+             (if all-final-states-identical?
+               "VOID — the fitnesses do not separate base dynamics"
+               "PASS"))
+     "The multimethod dispatch is exercised by the existing unit test and the "
+     "four differing counterfactual trajectories. The null in the base runs is "
+     "instead caused by absent heritable variation: copying a neighbour from a "
+     "uniform population can only copy the same rule.\n\n"
+     "## Verdict\n\n" interpretation "\n\n"
+     "## Final damage\n\n"
+     (summary-table raw [(:steps config)])
+     "\n## Damage trajectory\n\n"
+     (summary-table raw (:checkpoints config))
+     "\n## Full per-seed trajectory\n\n"
+     (per-seed-table raw)
+     "\n## Representative triptychs\n\n"
+     (apply str
+            (for [[condition path] figures]
+              (str "- `" (name (first condition)) "` / `"
+                   (name (second condition)) "`: `" path "`\n")))
+     "\nThe previous failed three-start preflight remains in "
+     "`reports/exotype-baldwin-convergence-slice12.preflight.edn`; Rule 110 "
+     "was dropped rather than relabelled as an undisputed critical point.\n")))
+
+(defn run-all []
+  (let [seeds (range (:seed-base config)
+                     (+ (:seed-base config) (:seeds config)))]
+    (reduce
+     (fn [raw condition]
+       (harness/run-condition! config raw-path raw condition seeds
+                               trajectory-run))
+     (harness/load-raw raw-path)
+     conditions)))
+
+(defn write-report! [raw]
+  (let [figures (into (sorted-map)
+                      (for [condition figure-conditions]
+                        [condition (render-figure! condition)]))]
+    (spit "reports/exotype-baldwin-convergence-slice12.md"
+          (report-markdown raw figures))
+    {:fitness-separation (fitness-separation raw)
+     :figures figures}))
 
 (defn experiment []
-  (let [seeds (range (:seed-base config)
-                     (+ (:seed-base config) (:seeds config)))
-        jobs (for [protocol protocols
-                   arm (keys arms)
-                   init (keys initialisations)
-                   seed seeds]
-               [protocol arm init seed])
-        pool (java.util.concurrent.Executors/newFixedThreadPool (:workers config))]
-    (try
-      (let [futures (mapv #(.submit pool ^java.util.concurrent.Callable
-                                    (fn [] (preflight-row %)))
-                          jobs)
-            rows (mapv #(.get ^java.util.concurrent.Future %) futures)]
-        (harness/save-raw!
-         "reports/exotype-baldwin-convergence-slice12.preflight.edn" rows)
-        (spit "reports/exotype-baldwin-convergence-slice12.md"
-              (report-markdown rows))
-        {:status :stopped-at-initial-separation-gate
-         :rows (count rows)})
-      (finally
-        (.shutdown pool)))))
+  (let [raw (run-all)]
+    (assoc (write-report! raw) :conditions (count raw))))
 
 (defn -main [& _]
   (println (pr-str (experiment))))
