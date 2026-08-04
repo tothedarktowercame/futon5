@@ -26,7 +26,10 @@
         :phenotype (apply str (repeatedly width #(if (< (ca/rnd) 0.5) \0 \1)))
         :exotypes (grid/initial-grid :heterogeneous-fixed width)}
         (contains? config :transfer-fraction)
-        (assoc :transfer-fraction (:transfer-fraction config))))))
+        (assoc :transfer-fraction (:transfer-fraction config))
+
+        (contains? config :blend-strength)
+        (assoc :blend-strength (:blend-strength config))))))
 
 (defn mean [xs] (/ (reduce + 0.0 xs) (double (count xs))))
 
