@@ -1,0 +1,89 @@
+% Draft subsection for Part III, to follow \subsection{Diagnosing a negative result}
+% in draft6.tex. Status 2026-08-02: numbers are from PILOT/discovery data
+% (environment seeds 901--903); the registered confirmation has NOT been run and the
+% registration is held at :design-review-hold. Nothing here should be stated as a
+% confirmed result until that changes.
+
+\subsection{Running the diagnostic}
+\label{sec:diagnostic-run}
+
+The diagnostic of the previous subsection was run against an evolved genome that
+produced no certificate. Its purpose is narrow, and worth restating plainly before
+the numbers: it does not search, it does not exhibit a path, and it cannot
+establish assimilation. It asks one question at a time, at a single locus, about a
+genome that already exists.
+
+The design is a panel of sixteen loci, stratified by position and by endpoint
+density, each evaluated under six conditions. Two conditions leave the inherited
+rule in place, free to rewrite or held. Two install a rule that an earlier
+endpoint-mapping run recommended for that locus, again free or held. One installs a
+rule matched to the recommended one in Hamming distance but not recommended, held.
+The last takes the recommended rule, holds it, and evaluates it on rewrite tapes
+that played no part in building the map. Each condition is scored on the band score
+of \secref{sec:endogenous-gain}, paired across environment seed, rewrite tape and
+evaluation site.
+
+The three cases of the previous subsection map onto contrasts among these
+conditions. Whether \emph{any} static rule preserves function at a locus is read
+from the held conditions against threshold. Whether the difficulty is that mutation
+cannot prepare the allele is read from the recommended rule against the inherited
+one, both held. Whether an assimilation step was simply available and not taken is
+read from the inherited rule held against the same rule left plastic.
+
+On the pilot panel the third case fires. Holding the inherited allele does not cost
+function: mean band rises from $0.181$ plastic to $0.196$ held. The inherited rule
+therefore already carries its behaviour without within-evaluation rewriting at these
+loci, which by the previous subsection is a statement about the search rather than
+about the substrate --- an assimilation step was accessible and was not taken.
+
+The second case fires as well, and more strongly. The recommended rule beats the
+inherited one by $0.031$ in mean band when both are held ($0.227$ against $0.196$),
+and beats a Hamming-matched unrecommended rule by $0.031$ ($0.227$ against $0.196$).
+The same ordering appears without holding, at $0.219$ against $0.181$. So the
+endpoint map is carrying real information about which rule belongs at a locus, and
+that information is visible whether or not the locus is frozen. Held on rewrite
+tapes it never saw, the recommended rule retains $0.223$, so the map is not an
+artefact of the tapes it was built from.
+
+Two remarks on what these numbers do \emph{not} say.
+
+First, the effect of holding is an order of magnitude smaller than the effect of
+content ($0.015$ against $0.031$), and it does not discriminate between rules: a
+held unrecommended rule performs as well as a held inherited one ($0.196$ in both
+cases). The apparatus is detecting that some rules are better than others, not that
+freezing is what makes them work.
+
+Second, and against the natural reading of the certificate, realized rewriting is
+\emph{not} a usable secondary signal here. Counting rule changes actually made, a
+held arm does less rewriting than its plastic counterpart by $132$ and $121$ changes
+respectively, against a ceiling of $120$ --- the number of steps in an evaluation,
+and hence the most that freezing a single locus can remove. The reduction is
+therefore almost exactly the held locus's own rewrites and nothing further; a held
+arm satisfies ``did less work'' by construction, at any rule, including one chosen
+to be bad. A criterion combining preserved function with reduced work would be met
+tautologically at this intervention scale, and the same objection applies to any
+cost term that is a capacity rather than a record of work performed.
+
+That second remark bears directly on \eqref{eq:selectable}. Writing fitness as
+$\mathrm{perf} - c\,\mathrm{dep}$ makes the cost term flat in behaviour whenever
+$\mathrm{dep}$ is a fraction over unheld loci: holding one locus of $W$ then shifts
+fitness by a constant $c/W$ regardless of what the held rule does. At the scale of a
+single-locus intervention that constant is small in absolute terms and decisive in
+relative ones, because it applies identically to every paired comparison and so
+resolves every near-tie in the same direction. Contrasts computed on
+$\mathrm{fit}_c$ can consequently report a uniform advantage for holding that
+survives no restatement on $\mathrm{perf}$ alone. The remedy is not a different $c$;
+it is to decide the comparison on the behavioural score and to report work
+separately, which is what is done above. We record this because the failure is
+invisible in the trajectory, is not detected by any invariant of
+\secref{sec:apparatus}, and was found only by recomputing the same contrasts on the
+score's components.
+
+The panel is a diagnostic and is treated as discovery data. Its sixteen loci are
+also its inferential units: a within-locus sign rule collapses more than a thousand
+paired evaluations per condition into sixteen decisions, and a mean difference of
+$0.031$ that is plainly present in the pooled data need not clear a familywise
+threshold stated over those sixteen. Whether the effects reported here survive as
+registered results is a question for a confirmation run on held-out environment
+seeds, under a criterion stated on the behavioural score, and that run has not been
+performed.

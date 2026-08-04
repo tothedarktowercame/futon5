@@ -14,6 +14,23 @@
 \usepackage[style=apa,backend=biber]{biblatex}
 \addbibresource{refs.bib}
 \usepackage{nameref}
+
+% ===================== REVISION MARKUP (draft6) =====================
+% Marks claims affected by the 2026-07-27 tint-vs-LCS audit.
+% Evidence: mmca-clj/holes/tint-vs-lcs-findings.md
+\usepackage{soul}
+\definecolor{markArtifact}{RGB}{255,148,148}
+\definecolor{markInherit}{RGB}{255,226,130}
+\definecolor{markWeak}{RGB}{178,214,255}
+\newcommand{\artifact}[1]{{\sethlcolor{markArtifact}\hl{#1}}}
+\newcommand{\inherit}[1]{{\sethlcolor{markInherit}\hl{#1}}}
+\newcommand{\weakclaim}[1]{{\sethlcolor{markWeak}\hl{#1}}}
+\newcommand{\flagged}[3]{%
+  \par\vspace{3pt}\noindent
+  \colorbox{#1}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{%
+    \footnotesize\textbf{#2}\ #3}}%
+  \par\vspace{3pt}}
+% ====================================================================
 \hypersetup{
   hidelinks,
   pdftitle={Rule-Rewriting Cellular Automata and the Edges of Chaos},
@@ -101,10 +118,10 @@ Within the wrap-rotation subfamily, coprime rotations sustain high diversity
 while the other nontrivial rotations collapse in the runs tested. A finite-size
 scan finds a broad, drifting crossover rather than evidence of a sharpening
 critical point. Filamentary boundaries show elevated genotype rewriting and,
-against shuffled and mask-matched nulls, carry directed transport and local
-combining that are both elevated in an intermediate band of a sampled synthetic
-order--chaos family; under strong noise the transport ceases to be specific to
-the filaments. Temporal braids and a phenotype-reading
+\artifact{against shuffled and mask-matched nulls, carry directed transport and
+local combining that are both elevated in an intermediate band of a sampled
+synthetic order--chaos family; under strong noise the transport ceases to be
+specific to the filaments.} Temporal braids and a phenotype-reading
 construction provide two reproducible ways to sustain structure beyond the
 bare operator.}
 \keywords{cellular automata, rule evolution, Langton's lambda,
@@ -124,6 +141,37 @@ exhaustive classification, domain walls}
 
 \begin{document}
 \maketitle
+
+\begin{tcolorbox}[colback=white,colframe=black!55,title={\textbf{DRAFT 6 --- REVISION MARKUP, NOT FOR CIRCULATION}}]
+\footnotesize
+Claims affected by the tint-vs-LCS audit of 2026-07-27 are marked in place.
+Evidence: \texttt{mmca-clj/holes/tint-vs-lcs-findings.md}; comparison in
+\texttt{scripts/tint\_vs\_lcs\_compare.py}.
+\smallskip
+
+\noindent\artifact{RED --- known artifact.} The transport/combining measure is
+local transfer entropy computed on the thresholded activity field
+\mbox{$\mathrm{act}=(\mathrm{smooth}>0.35)$}, while the filament mask is the
+\emph{gradient of that same field}. The mask therefore marks exactly the cells
+where \mbox{$\mathrm{act}$} changes, and transfer entropy on a binary field is
+near zero except where it changes (\mbox{$+0.8934$} on changed cells against
+\mbox{$+0.0080$} elsewhere). Holding the mask at $0.35$ and moving only the
+measure's threshold to $0.30$ collapses the filament-specific score from
+\mbox{$+0.0885$} to \mbox{$+0.0007$}; with mask and measure matched the score
+reappears at every threshold and grows monotonically with it (\mbox{$+0.065$} at
+$0.25$ to \mbox{$+0.173$} at $0.50$). All three nulls displace the mask off the
+change-cells, so none of them can detect this.
+\smallskip
+
+\noindent\inherit{AMBER --- inherits the compromised measure.} Comparisons
+\emph{across} the sweep. Not void by construction, since an artifact of constant
+form could still vary with $q$, but they must be re-derived under a measure that
+does not share a threshold with the mask.
+\smallskip
+
+\noindent\weakclaim{BLUE --- underpowered or exploratory.} Already acknowledged
+in the text; surfaced here so the revision pass sees them together.
+\end{tcolorbox}
 
 \section{Two Edges}
 \label{sec:intro}
@@ -166,15 +214,15 @@ Tinting the genotype by activity resolves the field into coexisting
 low- and high-activity domains, and the boundaries between those
 domains trace fractal-like filamentary walls through spacetime.  We
 observe that these walls are where the genotype is rewritten fastest,
-and---against a size-matched null, a geometry-preserving shift null,
-and a cross-seed null---they carry directed transport that a
-filament-shaped region placed anywhere else does not.  This edge is
+\artifact{and---against a size-matched null, a geometry-preserving shift
+null, and a cross-seed null---they carry directed transport that a
+filament-shaped region placed anywhere else does not.}  This edge is
 topographical: a feature of the picture rather than a critical point
 for the parameter.
 
-Indeed, the spatial walls carry the most transport when the global
-parameter sits in an intermediate band.  They lose their specificity
-when noise dissolves the domains that define them.  A parameter-space
+\artifact{Indeed, the spatial walls carry the most transport when the global
+parameter sits in an intermediate band.  They lose their specificity when noise
+dissolves the domains that define them.}  A parameter-space
 region in which physical-space boundaries become computationally
 active is a two-level claim, and neither level states it alone.
 
@@ -1101,8 +1149,8 @@ $32$ individual fields), so the wall---where ordered abuts chaotic---is
 consistently more rewritten than the chaotic interior, though not universally
 more than the ordered one. The walls are not compositionally special (no rule
 class enriched; Rule~110 is, if anything, depleted), so the distinction is
-dynamical rather than a difference in rule composition. The interface analysis
-is exploratory: it uses a handful of seeds and a fixed-boundary variant, and
+dynamical rather than a difference in rule composition. \weakclaim{The interface analysis is exploratory: it uses a handful of seeds
+and a fixed-boundary variant,} and
 the denser river boundary ($D\approx1.8$ versus $1.5$--$1.7$) is an unmatched
 comparison that does not establish an effect of genotype--phenotype coupling.
 Whether rewriting transports or combines information \emph{along} the walls is
@@ -1217,9 +1265,14 @@ operator to $39\%$ under strong noise (Figure~\ref{fig:eoc-compute}c), at which
 point it is no longer a wall, and any on-filament mean drifts toward the field
 mean for reasons that have nothing to do with transport. The null for this is a
 \emph{mask-matched} draw: the same number of cells, taken anywhere in the
-field. We report the difference from that draw and call it \emph{filament-specific}
-transport or combining; it is zero when the filament is no better than an
-arbitrary set of cells of the same size, and negative when it is worse.
+field. \artifact{We report the difference from that draw and call it
+filament-specific transport or combining; it is zero when the filament is no
+better than an arbitrary set of cells of the same size, and negative when it is
+worse.}
+\flagged{markArtifact}{ARTIFACT.}{The mask is the gradient of the same
+thresholded field the transfer entropy is computed on, so a non-zero
+filament-specific score is guaranteed by construction. See the banner on the
+title page.}
 
 A size-matched draw preserves the filament's extent but not its shape, so we
 also ran two nulls that preserve its geometry. The first circularly translates
@@ -1253,6 +1306,9 @@ transfer entropy is therefore comparable only across fields of similar and
 non-degenerate activity density---which is the concrete content of what earlier
 drafts recorded as a ``sparsity effect''.
 
+\flagged{markArtifact}{ARTIFACT.}{Every filament-specific number in this
+paragraph rests on the circular mask/measure construction and does not survive
+decoupling the two thresholds.}
 Within these bounds the bare operator's filaments transport. Over the eight
 seeds of the $q=1$ sweep column, on-filament transfer entropy is
 $+0.158 \pm 0.005$ bits against a shuffled surrogate of $+0.002$
@@ -1333,6 +1389,9 @@ independent, seeded stochastic rule-flip applied to the genotype each step
 $q=1,\,p=0$. Figure~\ref{fig:eoc-compute} reports both filament-specific
 measures across this family.
 
+\flagged{markInherit}{INHERITS THE MEASURE.}{A comparison \emph{across} $q$ at
+fixed threshold, so not void by construction, but it inherits the compromised
+measure and must be re-derived before it can be claimed.}
 \begin{observation}[label={obs:eoc-compute}]{Transport and combining are elevated together in a transitional band}
 Averaged over eight seeds per point, both filament-specific measures rise out of
 the ordered regime, are elevated across an intermediate band of blend fractions
@@ -1448,10 +1507,16 @@ caveat recorded with it---the tint is a statistic of rule space, so equal-tint
 neighbourhoods need not behave alike. The mapping above is therefore a reading
 aid rather than a derivation. A properly computational-mechanical treatment of
 this substrate---domains defined by predictive equivalence over the joint
-genotype--phenotype configuration, particles as their boundaries---would settle
-in a principled way what \secref{sec:eoc-compute} approaches with a
-single-estimator proxy, and is the natural next instrument rather than
+genotype--phenotype configuration, particles as their boundaries---would settle in a principled way what \secref{sec:eoc-compute} approaches
+with a single-estimator proxy, and is the natural next instrument rather than
 something attempted here.
+\flagged{markArtifact}{UNDERSTATES.}{``Single-estimator proxy'' is now too mild.
+The measure and the mask are derived from the same thresholded field, so this is
+a circularity rather than a question of estimator choice. A first attempt at the
+principled treatment was run (6 seeds, W=64, T=120): it agrees with the tint at
+chance level ($\kappa = 0.008$) and shows no filament-specific transport
+($+0.004$ against the size-matched null). That reconstruction selected depth and
+tolerance at the edge of its search grid, so it is not yet decisive on its own.}
 
 \section{Limits}
 \label{sec:limits}

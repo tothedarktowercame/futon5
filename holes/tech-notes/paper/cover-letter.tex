@@ -1,0 +1,63 @@
+\documentclass[11pt]{letter}
+
+\usepackage[american]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[hidelinks]{hyperref}
+\usepackage[margin=1in]{geometry}
+
+\signature{Joseph Corneli}
+\address{%
+Oxford Brookes University\\
+Oxford OX3 0BP, United Kingdom\\
+\href{mailto:jcorneli@brookes.ac.uk}{jcorneli@brookes.ac.uk}}
+
+\begin{document}
+
+\begin{letter}{%
+Editors-in-Chief\\
+\textit{Artificial Life}\\
+MIT Press}
+
+\opening{Dear Editors-in-Chief,}
+
+Please consider the manuscript ``A New Family of Operators on Cellular
+Automata'' for publication as an Article in \textit{Artificial Life}.
+
+The manuscript fits the journal's scope by introducing and characterising a
+finite family of artificial life-like systems in which cellular-automaton rules
+are themselves spatially distributed, rewritten objects. It combines an exact
+classification of all \(8!=40{,}320\) permutation-propagators with an exhaustive
+computational census of their coupled genotype/phenotype dynamics. The central
+result is that fixed rules exist exactly for all-even cycle structures, occur
+with a closed-form multiplicity, and are necessarily balanced at Langton
+activity \(\lambda=1/2\). The empirical component then distinguishes this
+fixed-point structure from finite-run dynamical persistence and explores
+temporal and phenotype-coupled constructions that sustain structure.
+
+The work should be of interest to readers studying cellular automata,
+self-modifying systems, rule evolution, and edge-of-chaos hypotheses. Its exact
+results are machine-checked in Lean, while the numerical data, implementation,
+tests, and complete figure-reproduction workflow are publicly available at the
+immutable commits cited in the manuscript.
+
+This manuscript is substantially unique, has not been published in this form,
+and is not under consideration elsewhere. A 2015 arXiv paper by Corneli and
+Maclean, cited and discussed in the manuscript, reported the historical
+experiment from which the present operator family was reconstructed; the
+submitted Article supplies a new definition, exhaustive classification,
+formal proofs, full census, and new empirical results.
+
+In accordance with the journal's generative-AI policy, the manuscript includes
+a prominent disclosure. Anthropic Claude Opus~4.8 and OpenAI Codex coding
+agents assisted with manuscript editing, software implementation, test
+construction, and adversarial checks in a human-supervised workflow. I reviewed
+the resulting prose and code, reran the reported computations and formal
+checks, and accept full responsibility for the submission.
+
+Thank you for considering the manuscript.
+
+\closing{Sincerely,}
+
+\end{letter}
+\end{document}
