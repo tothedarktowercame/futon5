@@ -30,10 +30,11 @@
     (is (= [:builder :collapser :chaos :identity
             :even4 :even8 :even1 :odd53 :fix2 :fix3 :fix4 :fix6]
            grid/exotype-kinds)))
-  (testing "propagators also carries the P2 probe kinds, which are NOT default"
+  (testing "propagators also carries the P2 probe kinds and E0b controls (NOT default)"
     (is (= #{:builder :collapser :chaos :identity
              :even4 :even8 :even1 :odd53           ; absorbing axis (16/8/2/0)
-             :fix2 :fix3 :fix4 :fix6}              ; rate axis (fix 2,3,4,6)
+             :fix2 :fix3 :fix4 :fix6              ; rate axis (fix 2,3,4,6)
+             :even44 :odd332}                     ; E0b cycle-type controls (4,4) and (3,3,2)
            (set (keys grid/propagators)))))
   (let [neighbourhoods #{"000" "001" "010" "100" "011" "101" "110" "111"}]
     (is (every? #(and (= neighbourhoods (set (keys %)))
@@ -52,6 +53,13 @@
 ;;   damage {:phenotype 2}              -> {:phenotype 0}
 ;; Do NOT read the chaos->identity flip as a general result: 8 cells, 12 steps,
 ;; one seed. It is a fixture, not a measurement.
+;;
+;; REGENERATED A THIRD TIME 2026-08-04 when the conditional model was re-derived over
+;; all 14 propagators (TN-baldwin-reboot.md 56). Only :changed-steps (6 -> 7) and
+;; :changed-cells (11 -> 12) moved; checkpoints, entropy, autocorrelation, activity,
+;; rule count and all three damage figures are byte-identical. A small, localised shift
+;; is what a modest change in the prediction rows should produce, and seeing the rest
+;; hold still is the check that it was modest.
 ;;
 ;; REGENERATED AGAIN 2026-08-04 when the DERIVED conditional model became
 ;; `predict`'s default (TN-baldwin-reboot.md 29). The EFE path selects different

@@ -275,7 +275,12 @@
    under the DEFAULT (12-kind derived) model; the legacy figures were 2/1/1/2."
     (is (= 9 (count observation-domain))
         "the objective's reachable input domain; widening it is one way out")
-    (is (= {:efe-full 2 :efe-risk-only 4 :efe-ambiguity-only 1 :efe-no-conatus 2}
+    ;; UPDATED TN 56: re-deriving the conditional model over all 14 propagators moved
+    ;; :efe-full 2 -> 4 and :efe-no-conatus 2 -> 4. Both are IMPROVEMENTS -- more distinct
+    ;; argmins over the same 9 observations is less degenerate. The two ablated arms are
+    ;; unchanged, which is the expected signature: :efe-risk-only scores on rate alone and
+    ;; :efe-ambiguity-only on entropy alone, and neither reads the bins that got richer.
+    (is (= {:efe-full 4 :efe-risk-only 4 :efe-ambiguity-only 1 :efe-no-conatus 4}
            (into {} (for [arm efe/efe-arms]
                       [arm (count (distinct (map #(argmin-for arm %)
                                                  observation-domain)))])))
@@ -360,9 +365,9 @@
    coordinates now exist (gen/rule-change-rate, gen/sigma-positional); the
    vocabulary has not been widened to use them."
     (is (= 12 (count grid/exotype-kinds))
-        "widened at S0b/H5: 4 declared + 8 probe kinds (TN 42.3)")
-    (is (= 12 (count grid/propagators))
-        "propagators and exotype-kinds are now the same set")))
+        "widened at S0b/H5: 4 declared + 8 probe kinds (TN 42.3). E0b added 2 cycle-type controls.")
+    (is (= 14 (count grid/propagators))
+        "12 in exotype-kinds + 2 E0b controls (:even44, :odd332) not in the selectable set")))
 
 ;; ---------------------------------------------------------------------------
 ;; The derived conditional model (queue item 2). TN-baldwin-reboot.md 28.
@@ -399,9 +404,9 @@
     (let [m @efe/conditional-model]
       (is (some? m) "run scripts/derive_conditional_model.clj to regenerate")
       (is (= 2 (:schema-version m)) "schema bumped at S0b for :vocabulary in config")
-      (is (= 83 (count (:bins m))))
+      (is (= 101 (count (:bins m))))
       (is (= 114480 (:sample-count m)))
-      (is (= 10 (count (filter #(< (long (:n %)) efe/min-bin-samples) (vals (:bins m)))))
+      (is (= 16 (count (filter #(< (long (:n %)) efe/min-bin-samples) (vals (:bins m)))))
           "sparse bins that fall back to the global row")
       (is (= :all (get-in m [:config :vocabulary])) "S0b: widened to 12 kinds"))))
 
@@ -448,7 +453,9 @@
       (is (= 2 (winners :efe-full :legacy [:builder :collapser :chaos :identity])))
       (is (= 2 (winners :efe-full :derived [:builder :collapser :chaos :identity]))
           "over the 4 declared, 2 distinct winners")
-      (is (= 2 (winners :efe-full :derived grid/exotype-kinds))
+      ;; 2 -> 4 when the model was re-derived over all 14 propagators (TN 56):
+      ;; a richer, better-covered model discriminates MORE, not less.
+      (is (= 4 (winners :efe-full :derived grid/exotype-kinds))
           "over all 12, still 2 distinct (odd53 + even1)"))))
 
 (deftest cell-decision-honours-the-observation-model
@@ -515,3 +522,149 @@
       ;; for the other eight, so :legacy predict would NPE)
       (doseq [k declared]
         (is (not= (efe/predict k o) (efe/predict k o :legacy)))))))
+
+;; ---------------------------------------------------------------------------
+;; Every propagator's DECLARED coordinates, asserted against computed ones.
+;; TN-baldwin-reboot.md 49.5.
+
+(def declared-coordinates
+  "cycle type, fix(sigma), rate, absorbing-byte count -- as claimed by each
+   propagator's comment in `grid/propagators`. Any hand-built sigma that does not
+   match what its own comment says fails here."
+  {:identity  [[1 1 1 1 1 1 1 1] 8 1.0000  0]
+   :builder   [[3 1 1 1 1 1]     5 0.8125  0]
+   :fix6      [[2 1 1 1 1 1 1]   6 0.8750  0]
+   :fix4      [[4 1 1 1 1]       4 0.7500  0]
+   :fix3      [[5 1 1 1]         3 0.6875  0]
+   :fix2      [[6 1 1]           2 0.6250  0]
+   :chaos     [[4 3 1]           1 0.5625  0]
+   :collapser [[6 2]             0 0.5000  4]
+   :even44    [[4 4]             0 0.5000  4]
+   :even1     [[8]               0 0.5000  2]
+   :even8     [[4 2 2]           0 0.5000  8]
+   :even4     [[2 2 2 2]         0 0.5000 16]
+   :odd53     [[5 3]             0 0.5000  0]
+   :odd332    [[3 3 2]           0 0.5000  0]})
+
+(defn- cycle-type [positional]
+  (let [seen (atom #{})]
+    (vec (sort > (remove nil?
+                         (for [i (range 8)]
+                           (when-not (@seen i)
+                             (loop [j i n 0]
+                               (if (@seen j) n
+                                   (do (swap! seen conj j)
+                                       (recur (nth positional j) (inc n)))))))))))) 
+
+(defn- absorbing-count
+  "Bytes the propagator cannot change. `rule-permute` changes the byte at k iff
+   bit[sigma(k)] == bit[k], so a byte is absorbing iff bit[sigma(k)] != bit[k] for
+   EVERY k -- bits must DIFFER around each cycle, which is possible iff every cycle
+   is even. Note the direction: a common error is to read this as forcing bits
+   EQUAL, which inverts it and yields 2^(#cycles) for odd cycle types that in fact
+   admit nothing."
+  [sigma]
+  (let [pos (gen/sigma-positional sigma)
+        bit (fn [b i] (bit-and (bit-shift-right b (- 7 i)) 1))]
+    (count (filter (fn [b] (every? #(not= (bit b (nth pos %)) (bit b %)) (range 8)))
+                   (range 256)))))
+
+(deftest propagator-coordinates-match-their-declarations
+  (testing "hand-built permutations are error-prone and two were wrong on 2026-08-04
+
+   `:fix2` was written as a 7-cycle when (6,1,1) was intended, and `:odd332` as
+   (3,2,1,1,1) when (3,3,2) was intended. Both were caught by printing coordinates
+   rather than by reading the digit string. A task instruction to print them is not
+   a gate -- it relies on someone running it and acting on a mismatch. This is."
+    (is (= (set (keys declared-coordinates)) (set (keys grid/propagators)))
+        "every propagator must have declared coordinates, and vice versa")
+    (doseq [[kind [cyc fix rate absorbing]] declared-coordinates]
+      (let [sigma (get grid/propagators kind)
+            pos (gen/sigma-positional sigma)]
+        (is (= cyc (cycle-type pos)) (str kind " cycle type"))
+        (is (= fix (count (filter true? (map = (range 8) pos)))) (str kind " fix"))
+        (is (< (Math/abs (- (double rate) (gen/rule-change-rate sigma))) 1e-9)
+            (str kind " rate"))
+        (is (= absorbing (absorbing-count sigma)) (str kind " absorbing count"))))))
+
+(deftest absorbing-bytes-exist-iff-every-cycle-is-even
+  (testing "the structural law behind the table above, over the whole vocabulary
+
+   Count is 2^(#cycles) when every cycle is even and 0 otherwise. An odd cycle makes
+   the absorbing set EMPTY -- and, per the walker/parity argument, unreachable."
+    (doseq [[kind sigma] grid/propagators]
+      (let [cyc (cycle-type (gen/sigma-positional sigma))
+            expected (if (every? even? cyc) (long (Math/pow 2 (count cyc))) 0)]
+        (is (= expected (absorbing-count sigma))
+            (str kind " " cyc))))))
+
+(deftest apply-probability-defaults-to-inert-and-scales-the-rate
+  (testing "rate modulation (TN-baldwin-reboot.md 51) must not move anything by default
+
+   Every sigma has rate >= 0.5 while the risk target is 0.15, so the target is
+   unsatisfiable and `risk` degenerates from a preference into a monotone penalty on
+   fix(sigma). Since fix(sigma)=0 is exactly the condition for absorbing rules to
+   exist, that penalty is an instruction to pick a kind that can halt. Scaling the
+   predicted rate by p makes the target reachable."
+    (let [o {:activity (/ 1.0 3) :diversity (/ 2.0 3)}]
+      (testing "absent, and at p=1.0, the score is unchanged"
+        (doseq [k grid/exotype-kinds]
+          (is (= (:total (efe/score-policy :efe-full k o))
+                 (:total (efe/score-policy :efe-full k o {:apply-probability 1.0}))))))
+      (testing "p scales the predicted rate exactly"
+        (doseq [k grid/exotype-kinds
+                p [0.5 0.3 0.1]]
+          (is (< (Math/abs (- (* p (:rule-change (efe/predict k o)))
+                              (:rule-change (:prediction (efe/score-policy
+                                                          :efe-full k o
+                                                          {:apply-probability p})))))
+                 1e-12)
+              (str k " at p=" p))))
+      (testing "and cell-decision forwards it, like :observation-model"
+        (let [state {:genotype (vec (ca/random-sigil-string 8))
+                     :phenotype (ca/random-phenotype-string 8)
+                     :exotypes (vec (repeat 8 :chaos))
+                     :previous-genotype (vec (ca/random-sigil-string 8))}
+              totals (fn [s] (mapv :total (:candidates (efe/cell-decision :efe-full s 3))))]
+          (is (not= (totals state) (totals (assoc state :apply-probability 0.2)))
+              "a state carrying :apply-probability must score differently"))))))
+
+(deftest every-propagator-is-covered-by-the-derived-model
+  (testing "REGRESSION (TN-baldwin-reboot.md 56). A kind with no derived rows used to
+   fall back to the GLOBAL row silently, so every uncovered kind scored identically on
+   all channels except rate. That corrupted two experiments on 2026-08-04 before it was
+   noticed, both times producing a plausible-looking argmin distribution. Coverage is
+   now asserted, and a miss now throws."
+    (is (= (set (keys grid/propagators)) (efe/covered-kinds))
+        "every propagator must have rows; re-derive the model after adding one")
+    (is (thrown? clojure.lang.ExceptionInfo
+                 (efe/predict :definitely-not-a-propagator
+                              {:activity 0.0 :diversity 1.0} :derived))
+        "an uncovered kind must raise, not silently take the global row")))
+
+(deftest trajectory-driver-honours-the-scoring-options
+  (testing "REGRESSION (TN-baldwin-reboot.md 57, found by codex-7). `self-tuning`
+   keeps its own score cache, built once at DEFAULT options. It was consulted
+   unconditionally, so a state asking for `:apply-probability` got the cached
+   default and the option was silently inert through the trajectory driver -- while
+   `efe/cell-decision` honoured it. Every trajectory-level comparison of a
+   cache-shaping option was therefore invalid. Fixing `efe/cell-decision` alone
+   (40.2 #1) did NOT fix this path, and the regression test written then did not
+   cover it."
+    (let [run (fn [opts seed]
+                (let [w 24
+                      base (ca/with-seed seed
+                             (merge {:arm :efe-full :seed seed :time 0
+                                     :exotypes (grid/initial-grid :heterogeneous-fixed w)
+                                     :genotype (vec (ca/random-sigil-string w))
+                                     :phenotype (ca/random-phenotype-string w)
+                                     :lambdas (vec (repeat w 0.5))
+                                     :self-tuning-arm :hunger-coupled
+                                     :lambda-step-size 0.0
+                                     :hunger-target (:hunger efe/preferences)}
+                                    opts))]
+                  (:exotypes (nth (iterate tuning/step base) 40))))]
+      (is (not= (run {} 42) (run {:apply-probability 0.15} 42))
+          ":apply-probability must reach the trajectory driver, not just score-policy")
+      (is (= (run {} 42) (run {:observation-model :derived} 42))
+          "asking for the default explicitly must be a no-op"))))

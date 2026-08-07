@@ -88,7 +88,21 @@
    :fix4 (gen/positional-sigma->neighbourhood-sigma
           (positional "12304567") elisp-table)    ; (4,1,1,1,1)     rate 0.7500
    :fix6 (gen/positional-sigma->neighbourhood-sigma
-          (positional "10234567") elisp-table)})  ; (2,1,1,1,1,1,1) rate 0.8750
+          (positional "10234567") elisp-table)  ; (2,1,1,1,1,1,1) rate 0.8750
+
+   ;; --- E0b: cycle-type controls (claude-14, 2026-08-04) ---------------------
+   ;; NOT in `exotype-kinds`. These break the rank-correlation between absorbing
+   ;; count and max cycle length among the all-even types, and give :odd53 a
+   ;; matched non-halting replicate.
+   :even44 (gen/positional-sigma->neighbourhood-sigma
+            (positional "12305674") elisp-table)  ; (4,4)     rate 0.5000  4 immune bytes
+   ;; "12034576" was wrong here (claude-14 review, 2026-08-04): it gives
+   ;; 3->3, 4->4, 5->5, i.e. cycle type (3,2,1,1,1), fix 3, rate 0.6875 -- which
+   ;; is NOT a matched control for :odd53 and would have contaminated any
+   ;; experiment using it. Second hand-built permutation to come out wrong today
+   ;; (see :fix2, 37.1). Printing the coordinates is what catches these.
+   :odd332 (gen/positional-sigma->neighbourhood-sigma
+            (positional "12045376") elisp-table)})  ; (3,3,2)   rate 0.5000  0 immune bytes
 
 (defn boring?
   "The three-bit circular phenotype neighbourhood is uniform."

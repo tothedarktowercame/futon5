@@ -21,7 +21,9 @@
    remain separately switchable and visible in every score."
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [futon5.exotype.chain-risk :as chain-risk]
             [futon5.exotype.grid :as grid]
+            [futon5.exotype.policy-epistemic :as policy-epistemic]
             [futon5.exotype.selection :as selection]
             [futon5.xenotype.generator :as gen]))
 
@@ -200,6 +202,19 @@
      :diversity next-diversity
      :hunger next-hunger}))
 
+(defn covered-kinds
+  "Exotypes for which the derived model actually has rows."
+  []
+  (set (map first (keys (:bins @conditional-model)))))
+
+(defn kind-has-bins?
+  "Does the derived model cover KIND at all? Distinct from a per-bin miss, which is
+   a legitimate sparse-data fallback to the global row (see `min-bin-samples`).
+   A kind with NO bins anywhere is a coverage defect: it would score identically to
+   every other uncovered kind on all channels except rate."
+  [kind]
+  (contains? (covered-kinds) kind))
+
 (defn predict
   "Apply the model to CANDIDATE-EXOTYPE and a local observation.
 
@@ -222,7 +237,11 @@
      (throw (ex-info "unknown observation model" {:model-kind model-kind
                                                   :known #{:legacy :derived}})))
    (if (= :derived model-kind)
-     (let [m (or @conditional-model
+     (let [_ (when-not (kind-has-bins? candidate-exotype)
+               (throw (ex-info "no derived rows for this exotype; re-derive the conditional model"
+                               {:exotype candidate-exotype
+                                :covered (sort (covered-kinds))})))
+           m (or @conditional-model
                  (throw (ex-info "conditional model resource missing; run scripts/derive_conditional_model.clj"
                                  {:regenerate "scripts/derive_conditional_model.clj"})))
            candidate (get-in m [:bins (observation-bin candidate-exotype observation)])
@@ -236,6 +255,13 @@
        ;; propagators (36.1 had to score them through an ad-hoc harness).
        ;; Identical for the declared four, since `fixed-model` derives the same
        ;; value the same way.
+       ;; LOUD FALLBACK GUARD (TN-baldwin-reboot.md 56). A kind with no derived bin
+       ;; used to fall back to the global row SILENTLY, which made every uncovered
+       ;; kind score identically on everything except rate. That silently corrupted
+       ;; two experiments on 2026-08-04 (49.1, 51.1) before it was noticed. A bin
+       ;; miss for a kind with NO bins at all is now an error, not a default;
+       ;; per-bin misses for a covered kind remain a legitimate sparse-data
+       ;; fallback, which is what `min-bin-samples` is for.
        {:rule-change (gen/rule-change-rate (get grid/propagators candidate-exotype))
         :activity (:activity row)
         :diversity (:diversity row)
@@ -251,7 +277,27 @@
    `:lambda` weights conatus; arm-derived defaults preserve Slice 2 exactly.
    `:rule-change-preference` is a diagnostic override and never changes C.
    `:observation-model` selects `:derived` (default) or `:legacy`; see `predict`.
-   `cell-decision` forwards it, so trajectory-level comparisons honour it."
+   `cell-decision` forwards it, so trajectory-level comparisons honour it.
+
+   `:apply-probability` p (default 1.0) scales the predicted rule-change rate to
+   `p * rate(sigma)`, modelling a propagator applied only with probability p.
+
+   `:epistemic-coefficient` (default 0) rewards the caller-supplied
+   policy-specific `:epistemic-value`. `:adoption-bonus` is the deliberately
+   non-specific matched-churn control and applies equally to either adoption
+   policy. Both are subtracted because lower scores win.
+
+   WHY THIS EXISTS (TN-baldwin-reboot.md 51). Every sigma has rate >= 0.5, while
+   the risk target is 0.15. An unsatisfiable target is not a preference, it is a
+   gradient: risk can only ever say `lower`, which makes it a monotone penalty on
+   fix(sigma) -- and fix(sigma) = 0 is exactly the condition for absorbing rules to
+   exist. So the objective's only targeted term is an instruction to pick a kind
+   that can halt. Scaling by p makes 0.15 reachable and the preference INTERIOR.
+
+   Note the corollary: fix > 0 means sigma has a 1-cycle, which is odd, so a kind
+   with fix > 0 has NO absorbing rules and cannot halt. If a reachable target moves
+   the argmin off fix = 0, it moves it onto a kind that cannot halt -- the halting
+   problem and the unsatisfiable-target problem are the same problem."
   ([arm candidate-exotype observation]
    (score-policy arm candidate-exotype observation {}))
   ([arm candidate-exotype observation opts]
@@ -262,23 +308,41 @@
          rule-change-preference
          (double (get opts :rule-change-preference
                       (:rule-change preferences)))
-         prediction (predict candidate-exotype observation
-                             (get opts :observation-model :derived))
-         risk (bernoulli-kl (:rule-change prediction)
-                            rule-change-preference)
+         apply-probability (double (get opts :apply-probability 1.0))
+         raw-prediction (predict candidate-exotype observation
+                                 (get opts :observation-model :derived))
+         prediction (if (== 1.0 apply-probability)
+                      raw-prediction
+                      (update raw-prediction :rule-change * apply-probability))
+         risk (double (get opts :risk-value
+                           (bernoulli-kl (:rule-change prediction)
+                                        rule-change-preference)))
          ambiguity (reduce + (map bernoulli-entropy (vals prediction)))
          conatus (bernoulli-kl (:hunger prediction) (:hunger preferences))
+         epistemic-value (double (get opts :epistemic-value 0.0))
+         epistemic-coefficient (double (get opts :epistemic-coefficient 0.0))
+         epistemic (* (- epistemic-coefficient) epistemic-value)
+         adoption-bonus (double (get opts :adoption-bonus 0.0))
+         churn (if (:adoption? opts) (- adoption-bonus) 0.0)
          total (+ (if risk? risk 0.0)
                   (if ambiguity? ambiguity 0.0)
-                  (* lambda conatus))]
-     {:candidate-exotype candidate-exotype
-      :prediction prediction
-      :risk risk
-      :ambiguity ambiguity
-      :conatus conatus
-      :lambda lambda
-      :total total
-      :enabled {:risk risk? :ambiguity ambiguity? :conatus conatus?}})))
+                  (* lambda conatus)
+                  epistemic
+                  churn)]
+     (cond-> {:candidate-exotype candidate-exotype
+              :prediction prediction
+              :risk risk
+              :ambiguity ambiguity
+              :conatus conatus
+              :lambda lambda
+              :total total
+              :enabled {:risk risk? :ambiguity ambiguity? :conatus conatus?}}
+       (or (contains? opts :epistemic-coefficient)
+           (contains? opts :epistemic-value))
+       (assoc :epistemic-value epistemic-value :epistemic epistemic)
+       (or (contains? opts :adoption-bonus)
+           (contains? opts :adoption?))
+       (assoc :churn churn)))))
 
 (defn cell-decision
   "Choose hold/left/right by minimum G; exact ties prefer hold, then left."
@@ -292,13 +356,29 @@
         ;; requesting :legacy silently executed :derived, so every trajectory-level
         ;; legacy comparison through cell-decision/transmit/step was invalid while
         ;; direct predict/score-policy comparisons looked correct. (codex-12 #1.)
-        score-options (select-keys state [:lambda :rule-change-preference :observation-model])
+        score-options (select-keys state [:lambda :rule-change-preference
+                                          :observation-model :apply-probability
+                                          :epistemic-coefficient :adoption-bonus])
+        own-exotype (nth (:exotypes state) index)
+        own-byte (when (:chain-risk? state)
+                   (chain-risk/byte-of (nth (:genotype state) index)))
         candidates (mapv (fn [{:keys [source] :as policy}]
-                           (merge policy
-                                  (score-policy arm
-                                                (nth (:exotypes state) source)
-                                                observation
-                                                score-options)))
+                           (let [candidate (nth (:exotypes state) source)]
+                             (merge policy
+                                    (score-policy
+                                     arm candidate observation
+                                     (cond-> score-options
+                                       (:chain-risk? state)
+                                       (assoc :risk-value
+                                              (chain-risk/risk candidate own-byte))
+                                       (contains? state :epistemic-coefficient)
+                                       (assoc :epistemic-value
+                                              (policy-epistemic/pair-value
+                                               own-exotype candidate))
+                                       (contains? state :adoption-bonus)
+                                       (assoc :adoption?
+                                              (and (not= source index)
+                                                   (not= candidate own-exotype))))))))
                          sources)
         winner (first (sort-by :total candidates))]
     {:index index
@@ -327,7 +407,17 @@
                    :efe-decisions decisions)
       (contains? state :lambda) (assoc :lambda (:lambda state))
       (contains? state :rule-change-preference)
-      (assoc :rule-change-preference (:rule-change-preference state)))))
+      (assoc :rule-change-preference (:rule-change-preference state))
+      (contains? state :observation-model)
+      (assoc :observation-model (:observation-model state))
+      (contains? state :apply-probability)
+      (assoc :apply-probability (:apply-probability state))
+      (contains? state :epistemic-coefficient)
+      (assoc :epistemic-coefficient (:epistemic-coefficient state))
+      (contains? state :adoption-bonus)
+      (assoc :adoption-bonus (:adoption-bonus state))
+      (contains? state :chain-risk?)
+      (assoc :chain-risk? (boolean (:chain-risk? state))))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))

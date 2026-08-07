@@ -14,10 +14,27 @@
 
      arm         cycle type   rate     absorbing bytes
      :odd53      (5,3)        0.5000    0   <- control, odd cycles
+     :odd332     (3,3,2)      0.5000    0   <- REPLICATE of the control (E0b)
      :even1      (8)          0.5000    2
+     :even44     (4,4)        0.5000    4   <- BREAKS the collinearity (E0b)
      :collapser  (6,2)        0.5000    4   <- the one already in the vocabulary
      :even8      (4,2,2)      0.5000    8
      :even4      (2,2,2,2)    0.5000   16
+
+   EXTENDED 2026-08-04 (TN-baldwin-reboot.md 49.7). The original five arms had
+   absorbing count and MAXIMUM CYCLE LENGTH perfectly rank-correlated (16,8,4,2
+   against 2,4,6,8), so no measurement on them could say which drove halting, and
+   the apparent law t-half x absorbing = 80 was fitted on collinear points.
+   :even44 has the SAME absorbing count as :collapser and a different max cycle
+   length, so it separates them. :odd332 is a second zero-absorbing kind, so the
+   never-halts result no longer rests on a single sigma.
+
+   ADDITIONAL PREREGISTERED PREDICTIONS:
+   P3 :odd332 never halts, replicating :odd53. Falsifier: it halts -> the parity
+      argument (odd cycle => absorbing set unreachable) is wrong.
+   P4 :even44 halts FASTER than :collapser despite equal absorbing count, i.e. the
+      t-half x absorbing = 80 law breaks. Falsifier: they agree within noise -> the
+      law survives its first real test and absorbing count is the sole driver.
 
    PREDICTION: time-to-freeze decreases monotonically in absorbing count, and
    `:odd53` never freezes.
@@ -46,7 +63,7 @@
             [futon5.xenotype.generator :as gen]))
 
 (def config
-  {:arms [:odd53 :even1 :collapser :even8 :even4]
+  {:arms [:odd53 :odd332 :even1 :even44 :collapser :even8 :even4]
    :seeds 400 :seed-base 20260804 :width 80 :steps 300
    :checkpoints [0 1 2 3 5 10 15 20 30 40 60 100 200 300]
    :control-bytes 20000})

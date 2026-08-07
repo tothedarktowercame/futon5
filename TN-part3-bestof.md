@@ -87,6 +87,87 @@ Its sharpest consequence is a fact the generative model cannot represent: `(2,2,
 `(5,3)` never froze while the absorbing kinds froze completely, with half-time falling
 40 → 20 → 10 → 5 as absorbing count doubles 2 → 4 → 8 → 16.
 
+## 4b. What the extra layers buy — the fixed-rule control
+
+Joe's reading of the best-of figure: *a lively rule layer keeps a phenotype alive that would
+otherwise die.* Tested against the only control that isolates it — **the same rules, held
+fixed.** Identical initial conditions, identical rules at t=0; the only difference is whether
+the rule layer is allowed to evolve.
+
+| | damage reach at t=100 |
+|---|---:|
+| **three-layer system (rules evolve)** | **26.2** |
+| same rules, held fixed | **2.8** |
+| *(ECA rule 204, frozen)* | *1.0* |
+| *(ECA rule 54)* | *32.8* |
+
+**A 9× difference attributable entirely to the rule layer evolving.** Held fixed, this rule
+field sits just above the frozen anchor — it is dynamically dead. Allowed to evolve, the same
+rules land inside the class-IV band.
+
+That is the sharpest available answer to *what do the extra layers buy?*, and it does not
+depend on any of the search results: it is a within-configuration control.
+
+### 4b.1 A diagnostic pair worth keeping
+
+The two configurations dissociate activity from criticality, cleanly and in opposite
+directions:
+
+| | phenotype activity at t=2000 | damage reach |
+|---|---:|---:|
+| three-layer | **0.065** | **26.2** |
+| fixed rules | **0.323** | **2.8** |
+
+The fixed-rule field is **five times as active and nine times less sensitive**. High activity
+with no propagation is noise; low activity with propagation is localised structure. Measuring
+"how much is changing" would have ranked these exactly backwards — and did, on the first pass.
+
+**Scope.** This is one configuration (`:boring-triggered`, no-absorbing vocabulary, blend 0.75)
+at one width and horizon, 24 seeds. It shows the layers matter *here*; it does not establish a
+general law, and the fixed-rule control is a control, not a competitor anyone proposed.
+
+## 4c. Dead initial conditions are carried to the class-IV band
+
+The control in §4b compares evolving rules against the same rules held fixed. A stronger test:
+start every cell at a rule that is **provably dead**, and ask whether the layered system revives
+it. 16 seeds, same configuration, t = 100.
+
+| initial rule field | layered | same rules held FIXED |
+|---|---:|---:|
+| random | **25.5** | 2.9 |
+| all rule 204 | **16.1** | 1.0 |
+| all rule 0 | **17.5** | **0.0** |
+| all rule 255 | **19.8** | **0.0** |
+
+Rules 0 and 255 held fixed annihilate a perturbation **immediately** — reach exactly 0.0, the
+floor of the scale. Rule 204 held fixed preserves the flipped cell and spreads nothing — 1.0,
+the frozen anchor. These are not merely quiet initial conditions; they are the deadest points
+available.
+
+**Under the layered system the same initial conditions reach 16–20 — inside the class-IV band**
+(rule 90 → 8.0, rule 54 → 32.8).
+
+### 4c.1 The mechanism is escape, not resuscitation
+
+By t = 100 the field holds **68–85 distinct rules** from a uniform start, and **fewer than 2
+cells of 201** still carry the initial rule. So the layered system does not keep the dead rule
+alive — it **destroys it**, diversifying the field until the resulting heterogeneous population
+is class IV. The right claim is therefore about the basin, not about the rule:
+
+> The layered system's dynamics carries dead initial conditions into the class-IV band. It does
+> not sustain a dead rule; it escapes it.
+
+That distinction matters for how this is written up: "bringing the dead to life" is accurate
+about the *field*, and wrong about the *rule*.
+
+### 4c.2 Limits
+
+- Revived fields reach **16–20**, consistently **below** the random-start 25.5. Dead starts are
+  carried into the band but not as far into it, and that gap is unexplained.
+- 16 seeds, means only — **no dispersion reported**, so "consistently" describes the ordering of
+  means, not a tested separation.
+- One configuration, one width, one horizon.
+
 ## 5. Honest limits
 
 - **Reach is a single scalar at one horizon.** t=100, width 201. It orders the cells; it does
