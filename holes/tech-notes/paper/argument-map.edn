@@ -1,0 +1,317 @@
+;; Standoff argument map for draft8.tex.
+;;
+;; Each unit of the paper is tagged with the thesis points from intro.edn that it
+;; serves, and given a verdict from ONE test:
+;;
+;;     :counterfactual -- name the conclusion that fails if this unit is removed.
+;;
+;; A unit with no such conclusion is not "bad"; it is not part of THIS argument.
+;; That distinction is the whole point of the map (cf. mmca/verified-but-idle-link).
+;;
+;; Verdicts:
+;;   :load-bearing  a stated conclusion fails without it
+;;   :supporting    no conclusion fails, but it supplies definitions or scope a
+;;                  load-bearing unit needs
+;;   :compress      the conclusion it serves needs far less than it currently spends
+;;   :relocate      sound work, serving an argument this paper does not make
+;;   :cut           neither serves the argument nor is referenced
+
+{:thesis-source "intro.edn"
+
+ :points [:object :parameter-reading :dynamical-reading :currency
+          :endogenous :from-inside :scope :roadmap]
+
+ :units
+ [;; ---------------------------------------------------------------- Part I
+  {:id :sec/example-2015 :part "The Permutation Core" :kind :section
+   :title "The 2015 Example"
+   :serves [:object]
+   :claim "The originating example is a non-bijective writing outside the permutation core."
+   :counterfactual "None. The intro's :object point already states this, and fig:fig2pair
+                    is what the reader needs."
+   :verdict :compress
+   :note "A section for provenance. The figure earns its place; the surrounding
+          narrative is told twice."}
+
+  {:id :sec/object :part "The Permutation Core" :kind :section
+   :title "The Object"
+   :serves [:object]
+   :claim "Definition of the two-layer substrate, displayed-position indexing, and
+           Equation (1) defining P_sigma."
+   :counterfactual "Everything. Equation (1) is referenced throughout, including by
+                    Part III's exotype transition."
+   :verdict :load-bearing}
+
+  {:id :sec/classification :part "The Permutation Core" :kind :section
+   :title "The Classification"
+   :serves [:parameter-reading]
+   :claim "Fixed rules exist iff every cycle of sigma is even; an all-even sigma with k
+           cycles has 2^k of them."
+   :counterfactual "The lambda=1/2 result has no domain to quantify over. :parameter-reading
+                    fails."
+   :verdict :load-bearing}
+
+  {:id :sec/balance :part "The Permutation Core" :kind :section
+   :title "Every Fixed Point Is Balanced"
+   :serves [:parameter-reading]
+   :claim "Every fixed rule of every operator in the family has lambda = 1/2."
+   :counterfactual "The paper's central negative -- that the classical coordinate cannot
+                    discriminate -- is unproved. This is the load-bearing theorem of Part I."
+   :verdict :load-bearing}
+
+  {:id :sub/dead-genotype :part "The Permutation Core" :kind :subsection
+   :title "A dead genotype can carry a live phenotype"
+   :serves [:object :dynamical-reading]
+   :claim "Genotype aliveness and phenotype aliveness are separable properties."
+   :counterfactual "Part III's persistence criterion would be ambiguous about which layer
+                    it measures. Establishes the distinction the whole paper relies on."
+   :verdict :load-bearing}
+
+  {:id :sec/census :part "The Permutation Core" :kind :section
+   :title "The Census"
+   :serves [:parameter-reading]
+   :claim "All odd-cycle operators remain genotype-alive; every all-even cycle type
+           contains both sustaining and collapsing members."
+   :counterfactual "The transition from :parameter-reading to :dynamical-reading loses its
+                    ground. The census is what shows that exact fixed-point structure does
+                    NOT determine dynamical fate -- odd-cycle operators all live, all-even
+                    types split -- which is why a dynamical measurement is needed at all."
+   :verdict :load-bearing
+   :revised-by "codex-5, 2026-08-07"
+   :note "PREVIOUSLY :supporting, on the reasoning that the access thesis does not use the
+          parity dichotomy. That was wrong, and inconsistent: :sec/not-attractors makes the
+          same algebra-does-not-determine-dynamics point and was marked load-bearing.
+          The census is the exhaustive version of it. The defect was in intro.edn, which
+          asserts the second reading without grounding the move to it; the repair is to
+          the introduction, not to the census. Also not removal-safe: fig:parity is
+          referenced from :sec/not-attractors (draft8:736)."}
+
+  {:id :sub/rotate-plus-2 :part "The Permutation Core" :kind :subsection
+   :title "A prospective test: reduced rotate+2"
+   :serves []
+   :claim "One operator's behaviour under a reduced protocol."
+   :counterfactual "Nothing fails formally, but it is the paper's only evidence that a
+                    prediction was made BEFORE the check rather than after."
+   :verdict :load-bearing
+   :revised-by "codex-5, 2026-08-07"
+   :note "PREVIOUSLY :compress. 127 words. The space gain is negligible against the
+          credibility of showing the test was not wholly retrospective."}
+
+  {:id :sec/not-attractors :part "The Permutation Core" :kind :section
+   :title "Fixed Points Are Not Attractors"
+   :serves [:parameter-reading]
+   :claim "Fixed-point existence does not determine attraction."
+   :counterfactual "Without it, lambda=1/2 at the fixed points would suggest the dynamics
+                    sit there. Closes the gap between the algebra and the dynamics."
+   :verdict :load-bearing}
+
+  {:id :sub/braiding :part "The Permutation Core" :kind :subsection
+   :title "Constructive control by temporal schedules"
+   :serves [:dynamical-reading]
+   :claim "Alternation sustains diversity; supplies the construction the intro's causal
+           measurement is applied to."
+   :counterfactual "The intro's :dynamical-reading point cites this construction by name
+                    (\\secref{sec:braiding}). Removing it breaks that claim."
+   :verdict :load-bearing}
+
+  {:id :sec/metrics-limits :part "The Permutation Core" :kind :section
+   :title "Limits of the Tested Distance and Complexity Measures"
+   :serves [:scope]
+   :claim "The tested distance and complexity measures do not separate the regimes."
+   :counterfactual "The move to a causal measure would look unmotivated."
+   :verdict :supporting}
+
+  {:id :sec/parameter-test :part "The Permutation Core" :kind :section
+   :title "A Parameter-Space Test"
+   :serves [:parameter-reading]
+   :claim "The propagator-fraction scan gives a broad crossover, not a critical point."
+   :counterfactual "The intro's claim that the parameter-space reading is closed off rests
+                    on this plus the balance theorem."
+   :verdict :load-bearing}
+
+  ;; --------------------------------------------------------------- Part II
+  {:id :sec/feedback-construction :part "Beyond the Permutation Core" :kind :section
+   :title "A Feedback-Coupled Construction"
+   :serves [:currency]
+   :claim "Defines the river construction: a permutation-propagator composed with a
+           phenotype-reading step."
+   :counterfactual "Nothing in Part II or Part III has an object."
+   :verdict :load-bearing}
+
+  {:id :sec/causal :part "Beyond the Permutation Core" :kind :section
+   :title "A Causal Measure"
+   :serves [:dynamical-reading :currency]
+   :claim "Damage reach, calibrated against reference rules; feedback roughly doubles it
+           against a matched control."
+   :counterfactual "The dynamical reading has no instrument and the doubling claim no
+                    ground. Also supplies the calibration Part III's first half uses."
+   :verdict :load-bearing}
+
+  {:id :sub/gain :part "Beyond the Permutation Core" :kind :subsection
+   :title "The coupling as a dial"
+   :serves [:currency]
+   :claim "Reach is monotone in the gain; the frozen field matches marginals and spatial
+           structure so only currency varies."
+   :counterfactual "The word 'currency' in the thesis has no referent. THIS IS THE UNIT
+                    THAT DEFINES THE PAPER'S COORDINATE."
+   :verdict :load-bearing}
+
+  {:id :sub/diversity-axis :part "Beyond the Permutation Core" :kind :subsection
+   :title "Diversity and conservative transport"
+   :serves [:currency]
+   :claim "Transport, not sustained diversity, controls reach -- the diversity test."
+   :counterfactual "The thesis's 'and no other tested coordinate' clause fails. This is the
+                    only unit that RULES OUT a rival coordinate rather than supporting the
+                    chosen one."
+   :verdict :load-bearing}
+
+  {:id :sub/what-coupling-supplies :part "Beyond the Permutation Core" :kind :subsection
+   :title "What the coupling supplies"
+   :serves [:currency :scope]
+   :claim "Per cell and step, the live phenotype context selects a DIFFERENT rule than a
+           frozen context would in 73.1% of cell-steps (76.8% against no context), over
+           four seeds. First-match over four candidates puts uninformative re-selection at
+           about 75%, so a frozen context carries almost no information about the live
+           answer."
+   :counterfactual "The currency claim loses its per-step mechanism. This is the only unit
+                    establishing that the live read is DETERMINATIVE rather than a
+                    tiebreak, and therefore that no phenotype-blind rule could encode a
+                    common case in its place."
+   :verdict :load-bearing
+   :revised-by "claude-14 on review of codex-5, 2026-08-07"
+   :note "PREVIOUSLY :compress by us ('nothing; it restates') and :CUT by codex-5. Both
+          wrong, and wrong the same way: neither of us read the passage. It is not a
+          restatement -- it carries a measurement WITH ITS OWN CHANCE BASELINE (73.1%
+          against an uninformative 75%), which is a null comparison found nowhere else in
+          the paper. The numbers 73.1 and 76.8 occur only here (verified). Cutting it
+          would remove the only per-step evidence that the coupling is not redundant.
+          Lesson: a unit that LOOKS like summary prose can carry the argument's only
+          null."}
+
+  ;; -------------------------------------------------------------- Part III
+  {:id :sec/endogenous-gain :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "An Endogenous Gain"
+   :serves [:endogenous]
+   :claim "A blind gate reproduces the dial exactly; a phenotype-reading gate exceeds it;
+           a frozen gate matched in width and statistics does not."
+   :counterfactual "The thesis's 'recovers it from a construction that sets the coupling
+                    for itself' fails. The frozen-gate control is the load-bearing part."
+   :verdict :load-bearing
+   :note "Already compressed from three sections to one. The width-gradient analysis
+          inside it is the remaining compressible material -- superseded by the frozen
+          control, and the paper states the gradient is not decomposed."}
+
+  {:id :sec/gate-to-operator :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "From Gate to Operator"
+   :serves [:from-inside]
+   :claim "The gate chooses when an operator fires, not which."
+   :counterfactual "The two halves of Part III would abut without a stated relation."
+   :verdict :supporting}
+
+  {:id :sec/exotype-question :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "The Question This Part Does Not Answer"
+   :serves [:from-inside :scope]
+   :claim "Whether the construction can locate the regime itself is not settled here."
+   :counterfactual "The three examples would read as the output of a working search."
+   :verdict :load-bearing}
+
+  {:id :sec/the-layer :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "The Layer"
+   :serves [:from-inside]
+   :claim "The exotype transition is one elementary write with sigma read from the cell;
+           78.7% of novel-genotype events arrive by this path."
+   :counterfactual "Part III's object is undefined."
+   :verdict :load-bearing}
+
+  {:id :sec/vocabulary :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "The Vocabulary Is Twelve of Forty Thousand"
+   :serves [:scope]
+   :claim "Twelve of 8! operators, hand-picked; Part I's 2^k predicts each one's immune
+           byte count."
+   :counterfactual "The scope sentence '12 of 40,320, chosen for unrecorded reasons' is
+                    load-bearing. The 2^k agreement is NOT: no conclusion depends on it
+                    (this is why the Figure 1 edge was withdrawn)."
+   :verdict :compress
+   :note "A fourteen-row table now supports a one-sentence scope claim. Keep the sentence
+          and the fact that the vocabulary is drawn from Part I's family; the table and
+          the 2^k column are decoration. Pattern: mmca/verified-but-idle-link."}
+
+  {:id :sec/what-varies :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "What Varies, and What Does Not"
+   :serves [:scope]
+   :claim "Every dynamical result sits at one point of a 40,320-member design space."
+   :counterfactual "The paper would overclaim generality for Part III."
+   :verdict :load-bearing}
+
+  {:id :sec/three-examples :part "Endogenous Coupling and Exotypes" :kind :section
+   :title "Three Examples"
+   :serves [:from-inside]
+   :claim "Configurations separated by persistence; the objective ranks them inverted;
+           the parameters do not determine which phase wins."
+   :counterfactual "The thesis's from-inside clause has no result. Contains the paper's
+                    only appearance-versus-survival measurement."
+   :verdict :load-bearing}
+
+  ;; ------------------------------------------------------------ Discussion
+  {:id :sec/apparatus :part "Discussion" :kind :section
+   :title "Specifying an Experiment Before Running It"
+   :serves []
+   :claim "How to specify a selection experiment for genetic assimilation before running
+           it: certificates over genome paths, per-locus holding, a scalar cost, and six
+           implementation invariants."
+   :counterfactual "NOTHING. No conclusion anywhere in the paper depends on it."
+   :verdict :relocated
+   :relocated-to "supplement5.tex (Supplement 5: Apparatus), 2026-08-07"
+   :evidence {:words 1255 :lines 142
+              :vocabulary-hits {:currency 0 :causal-reach 0 :exotype 0 :persistence 0
+                                :absorbing 0 :propagator 0
+                                :locus 11 :held 7 :genome 6 :selection 6 :fitness 4}
+              :labels-referenced-elsewhere 0}
+   :note "This is apparatus for a Baldwin-style assimilation experiment the paper does
+          not run. Its own vocabulary is disjoint from the paper's: zero occurrences of
+          every term the argument uses, and its two labels (sec:apparatus, eq:selectable)
+          are referenced nowhere. It is sound work and the largest single non-contributor
+          in the document -- roughly four pages. It belongs with the selection experiment
+          it was written for, not here."}
+
+  {:id :sec/limits :part "Discussion" :kind :section
+   :title "Limits"
+   :serves [:scope]
+   :claim "Per-part scope statements, seed counts, and what is not established."
+   :counterfactual "Every claim in the paper becomes unbounded."
+   :verdict :load-bearing}
+
+  {:id :sec/conclusion :part "Discussion" :kind :section
+   :title "Conclusion"
+   :serves [:object :parameter-reading :currency :endogenous :from-inside :scope]
+   :claim "Restates each part's results with its scope."
+   :counterfactual "Nothing fails, but it is where the parts are kept separate."
+   :verdict :load-bearing
+   :note "Should be re-checked against intro.edn once cuts land: it currently describes
+          the parts as connected 'motivationally rather than deductively', which the
+          access thesis supersedes."}]
+
+ ;; -------------------------------------------------------------------------
+ :summary
+ {:reviewed-by "codex-5 (job invoke-1786118542388-232-35141c57), 2026-08-07"
+  :load-bearing 21
+  :supporting 2
+  :compress 2
+  :relocate 1
+  :cut 0
+
+  :largest-single-recovery
+  {:unit :sec/apparatus :words 1255 :approx-pages 4
+   :reason "serves no point of the thesis; referenced by nothing"}
+
+  :open-scope-decision
+  {:unit :sec/census
+   :question "The parity dichotomy is a real result about the core and is not a step in
+              the access argument. Either state it as a second, smaller claim in the
+              introduction, or move it to a supplement. It should not remain a
+              load-bearing-looking section that the thesis does not use."}
+
+  :note "No unit is marked :cut. Everything in the paper is sound; the question the map
+         answers is which argument each unit belongs to. One section belongs to another
+         paper, five spend more than their conclusion needs, and one is a second claim
+         that the introduction does not currently admit to making."}}

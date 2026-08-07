@@ -1,0 +1,190 @@
+;; Introduction, as a nested argument structure.
+;;
+;; Rendered to intro-generated.tex by scripts/render_intro.clj.  The prose here IS
+;; the introduction: rendering concatenates it, it does not paraphrase.  Each :point
+;; is a paragraph; its :subpoints are the sentences that carry it, in order.
+;;
+;; Constraint (Joe, 2026-08-07): the paper presents ONE argument.  Every point below
+;; must be a step in establishing :thesis, not a separate topic.  No addressing the
+;; reader, no signposting, no warnings.
+;;
+;; REVISION 2026-08-07 (Joe): the section was titled "Two Readings" and the paper
+;; makes THREE distinct uses of the phrase.  The thesis also claimed the edge of chaos
+;; is "fixed by" current access -- which draft8:1119 explicitly disclaims ("It is not a
+;; regime coordinate ... we make no such classification").  The damage-reach axis does
+;; not order by Wolfram class: class III brackets it at BOTH ends, rule 90 at 8.00 and
+;; rule 30 at 37.50, with class IV 54 and 110 between.  The three senses are now named
+;; in :three-senses, and each is settled in its own point.
+
+{:section {:title "Three Senses of the Edge of Chaos"
+           :label "sec:intro"}
+
+ ;; Rendered as the opening paragraph.  It is the claim every point below serves.
+ :thesis
+ "In a cellular automaton whose cells carry rules as well as states, how far a perturbation
+  travels is governed by how much of what the rewriting layer reads is causally current, and
+  not by any parameter of the rules themselves. This paper establishes that coordinate by
+  measurement from outside the system, recovers it from a construction that sets its own
+  coupling, and then poses the same constraint from inside, where it becomes a limit on what
+  the system can regulate: a controller can act only on what it can compute about itself."
+
+ :points
+ [{:id :object
+   :point "The object of study is a finite family of rule-rewriting operators admitting exact
+           classification rather than sampling."
+   :subpoints
+   ["A permutation $\\sig$ of the eight truth-table positions of an elementary rule defines an
+     operator $P_\\sig$ that rewrites a rule by negating the bits $\\sig$ names; there are
+     $8! = 40{,}320$ such operators, and they form the bijective core of the $8^8$ possible
+     writings."
+    "The family was reached by accident. In 2015, working on a different problem, we built a
+     cellular automaton whose cells carried rules rather than states
+     \\parencite{corneli2015search}; a programming error connected with one example generated
+     spacetime diagrams reminiscent of edge-of-chaos behaviour in classical CAs, and how that
+     example recovered the behaviour remained open. That example, recreated in
+     Figure~\\ref{fig:fig2pair}, is a non-bijective writing outside the core; locating it
+     placed the core itself in view."]}
+
+  {:id :three-senses
+   :point "``The edge of chaos'' names three different things in this literature, and this
+           paper reaches a different verdict on each."
+   :subpoints
+   ["The first is a \\emph{location in parameter space}: a value of a tunable control
+     parameter at which the dynamics sit between order and disorder
+     \\parencite{langton1990computation}. The second is a \\emph{regime}: a class of
+     behaviour, in the sense in which a cellular automaton is called class~IV rather than
+     class~III. The third is a \\emph{phenomenon}: frozen and moving structure coexisting in
+     one lattice, neither absorbing the other, which is what makes such systems recognisable
+     on sight before any measurement is taken."
+    "We close off the first inside this family, decline the second on the evidence available,
+     and exhibit the third. What replaces the first is not a regime classifier but a causal
+     measurement---how far a single-cell perturbation travels---which the rest of this paper
+     shows is governed by the currency of the rewriting layer's access to the state it
+     rewrites."]}
+
+  {:id :parameter-reading
+   :point "The parameter-space sense is closed off inside this family, by a theorem and by a scan."
+   :subpoints
+   ["Our classification lands on the classical value from an unexpected direction---every
+     fixed rule of every operator in the family is balanced, with Langton activity
+     $\\lambda = 1/2$, exactly the value the classical picture associates with the transition.
+     A coordinate that takes one value across every fixed point cannot discriminate among
+     them."
+    "The parity dichotomy then shows that the algebra does not settle the dynamics either: all
+     odd-cycle operators remain genotype-alive, while every all-even cycle type contains both
+     sustaining and collapsing members, so knowing an operator's fixed-point structure does not
+     tell one what it does. Searching the Meta Cellular Automaton (MetaCA) for a critical
+     transition does not produce one (\\suppfindingref{6}): the dynamics show a broad, drifting
+     crossover and no critical point of that sort at all."]}
+
+  {:id :dynamical-reading
+   :point "What replaces it measures causal propagation, and is deliberately not a regime classifier."
+   :subpoints
+   ["The substitute requires no parameter sweep and no choice of where to draw a region---only
+     a perturbation and a clock. Flipping a single cell and tracking the divergence against an
+     otherwise identical run, on a scale calibrated against elementary rules of undisputed
+     behaviour, places the phenotype-reading construction of \\secref{sec:braiding} between
+     rules $90$ and $54$, below rule $110$ and far below rule $30$, while frozen rules return
+     exactly zero (\\secref{sec:causal})."
+    "That scale separates systems that propagate a perturbation from those that do not, and
+     the separation is sharp. It does not classify regime, and we make no such claim from it:
+     class~III rules bracket its range at both ends---rule $90$ at $8.00$ and rule $30$ at
+     $37.50$---with the class~IV rules $54$ and $110$ between them, so a position on the axis
+     is not a Wolfram class. Intervals on it are named below for the reference rules that
+     bound them, and assert nothing about the systems inside them."]}
+
+  {:id :currency
+   :point "On that measurement, what governs propagation is the currency of the rewriting
+           layer's access, and no other tested coordinate."
+   :subpoints
+   ["The live phenotype-to-genotype coupling is what places the construction where it sits:
+     cutting that single edge, with seed, tape and construction otherwise identical, roughly
+     halves how far a perturbation reaches. The coupling is moreover a dial rather than a
+     switch. Its gain interpolates between a genotype that reads only an ancestral phenotype
+     and one that reads the currently acquired state, and because the ancestral field is
+     itself a real phenotype, marginal statistics and spatial structure are matched at every
+     setting; only currency varies. Reach follows it smoothly, while a control matched in rule
+     mobility but blind to the phenotype does not move."
+    "Pursued far enough, the same measurement rejects a tempting substitute. Across seven
+     mechanisms causal reach initially appears to rise and then fall with sustained genotype
+     diversity, but the descending observations obtain high diversity only through mutation
+     or by holding rules still. A conservative eighth construction prescribes the genotype
+     measure and transports it by local bijective exchanges, sustaining causal amplification
+     across the full $32$--$256$ rule range: exchange rate, not diversity alone, controls
+     reach (\\secref{sec:diversity-axis})."
+    "Across $\\lambda$, propagator fraction, sustained rule diversity, mutation rate, refuge
+     probability, niche width and rule mobility, causal reach stays low. Blend strength alone
+     moves it (\\suppfindingref{10}). The coordinate that governs is therefore not a
+     truth-table parameter but how much of what the genotype reads is causally current."]}
+
+  {:id :endogenous
+   :point "The same coordinate is recovered when the coupling is made a function of the lattice
+           rather than a setting."
+   :subpoints
+   ["A composition whose condition is blind to the phenotype reproduces the dial, linear in its
+     duty cycle, so conditional composition is not by itself a new mechanism. A composition
+     whose condition reads the phenotype exceeds that line, by margins growing with the width
+     of the neighbourhood read."
+    "An otherwise identical gate reading a phenotype frozen at the moment of perturbation does
+     not exceed it, and in every tested pair falls slightly below, though the two share width,
+     spatial statistics and firing rate. Current information is thus necessary for the
+     departure; how much of the width gradient it accounts for is not decomposed here. The
+     coordinate of the preceding paragraph is reached a second time, from a construction
+     sharing none of its dials."]}
+
+  {:id :from-inside
+   :point "Posed from inside the system, access becomes a limit on what can be regulated, and
+           the third sense of the phrase is what survives that limit."
+   :subpoints
+   ["Those measurements are made from outside. The corresponding question from inside is
+     whether the construction can locate such a regime using only quantities available to it
+     as it runs. Part~III removes the last element held fixed---the rewriting operator, which
+     becomes a property of the cell rather than of the run---and searches the resulting
+     parameter space."
+    "The constraint that governs the dynamics governs the search as well. Causal reach is
+     computed by forking a run and perturbing a twin; it is available to the experimenter and
+     never to the system, and a controller cannot regulate on it. Across the same sweep,
+     internal observables predict an intrinsic objective at held-out $R^2 = 0.73$ and a
+     twin-run objective at $0.02$. The loop is closable, and not on the measure that
+     identified the coordinate."
+    "The objective supplied to the search fails for a second reason. It reads a fixed window
+     and scores how structured the output looks; the behaviour that separates these
+     configurations occurs outside that window. Its two maxima are a configuration that
+     survives and one that freezes permanently, and it ranks the second above the first."
+    "What survives that critique is the third sense of the phrase, because it is a property of
+     a trajectory rather than of its appearance: whether the sheet reaches a state it does not
+     leave again before the run ends. Three configurations are separated by it. In one, live regions overrun frozen
+     ones; in a second, the reverse happens and the lattice stops changing at a locatable step;
+     in a third, neither outcome obtains for as long as the run can be afforded, with frozen
+     regions still turning over after ten thousand steps. That third configuration is the
+     phenomenon the 2015 example was recognised by. It is exhibited here, not located by any
+     coordinate, and no self-driving search was achieved."]}
+
+  {:id :scope
+   :point "The scope of each claim differs, and the parts are not interchangeable."
+   :subpoints
+   ["The exact results hold for the entire $8!$ core. The causal measurement covers one
+     principal construction at one lattice width over six seeds, and no comparable causal
+     census of either the $8!$ or $8^8$ family is attempted here. The configurations of
+     Part~III sit at one point of a $40{,}320$-member design space of rewriting operators,
+     and no experiment varies that choice."
+    "Part~I's scan and Part~III's boundary concern different objects on different axes---
+     genotype aliveness under a propagator fraction, and phenotype persistence under a
+     selection parameter---and neither bears on the other. Nothing in Part~III establishes a
+     critical point, and at the two points tested we have evidence against one."
+    "Supplement~4 reports a separate exploratory analysis of coexisting spatial domains and
+     documents a boundary-transport statistic withdrawn after a circularity check; neither is
+     used to support any claim here. Supplement~5 documents the search apparatus and its
+     negative results."]}
+
+  {:id :roadmap
+   :point "The division of labour follows the argument."
+   :subpoints
+   ["Part~I classifies the permutation-propagators, surveys their spatial dynamics, and tests
+     the parameter-space sense. Part~II drops the restriction to a single
+     permutation-propagator and measures causal propagation in update architectures built on
+     the same genotype--phenotype substrate. Part~III removes our hand from the coupling twice:
+     first the condition under which an operator fires becomes a function of the lattice, then
+     the operator itself becomes a property of the cell, and the phenomenological sense of the
+     phrase appears there. Figure~\\ref{fig:map} maps that division and marks where the scope
+     boundary falls."]}]}
