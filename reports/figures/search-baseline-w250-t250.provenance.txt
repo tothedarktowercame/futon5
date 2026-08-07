@@ -1,0 +1,49 @@
+Figure : search-baseline-w250-t250.png
+Date   : 2026-08-05
+Script : the search experiment's configuration (scripts/exotype_search.clj, :random start,
+         arm :hunger-coupled) rendered via futon5.mmca.render/render-history-phenotype.
+
+Configuration -- exactly the arm C cell of the search experiment (TN-baldwin-reboot.md 77-78)
+  width               250
+  steps               250
+  seed                20260805
+  blend-action?       true          <- the FOURTH, rule-writing action (TN 72, 74)
+  epistemic-coefficient 0.2         <- interruption optimum, kappa in [0.1,0.5] (TN 75)
+  blend-strength      0.0           <- stochastic blending OFF; blending is POLICY-controlled
+  apply-probability   1.0
+  self-tuning-arm     :hunger-coupled
+  lambda-step-size    0.0003        <- the only step that avoids lambda saturation (TN 77.2)
+  initial lambda      0.55
+  exotypes            (grid/initial-grid :heterogeneous-fixed 250), 12-kind vocabulary
+
+Panels: LEFT = genotype (rule per cell, colour-coded); RIGHT = phenotype. Time runs downward.
+
+State at t=250
+  distinct rules      115 of 256
+  exotype kinds       {:chaos 96, :odd53 154}   -- both NON-halting (zero absorbing rules)
+  winning policies    {:adopt-left 119, :adopt-right 39, :blend 65, :hold 27}
+                      -- the blend action wins 65/250 = 26% of cells
+  mean lambda         0.6245 (from 0.55; not saturated)
+
+DAMAGE REACH -- MEASURED 2026-08-05, 24 seeds, t=100, all anchors re-measured at THIS width
+so the comparison is like-for-like:
+
+  rule 204 (frozen)         1.0 +- 0.0
+  rule 90                   8.0 +- 0.0
+  rule 54                  36.0 +- 2.4
+  rule 110                 38.0 +- 2.6
+  rule 30 (chaotic)        60.9 +- 1.2
+  ---------------------------------------------
+  THIS CONFIGURATION, burn-in 0    63.5 +- 3.3
+  THIS CONFIGURATION, burn-in 250  69.5 +- 1.5
+
+*** THIS CONFIGURATION IS CHAOTIC, NOT CLASS IV. ***
+
+It sits AT or ABOVE the rule-30 chaotic anchor, and moves further above it with burn-in
+(69.5 +- 1.5 vs 60.9 +- 1.2 -- separated). The class-IV band here is 36-38.
+
+The figure LOOKS structured -- irregular lateral structure in the genotype panel, coherent
+domains in the phenotype panel -- and the number says chaos. Do not cite this figure as
+evidence of edge-of-chaos dynamics. The best-of configuration (a DIFFERENT system:
+:boring-triggered arm, stochastic blending 0.75, no policy selection) measured 26.2 at
+width 201 and is the one inside the band.

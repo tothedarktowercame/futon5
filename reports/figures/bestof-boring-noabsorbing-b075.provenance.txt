@@ -1,0 +1,28 @@
+Figure : bestof-boring-noabsorbing-b075.png
+Commit : def461e879db37b3befcf8455a624270f4a5d2c2
+Date   : 2026-08-04
+Script : scripts/exotype_bestof_search.clj (numbers) + render/render-history-phenotype (figure)
+
+Configuration
+  arm              :boring-triggered      (phenotype-reading feedback loop closed)
+  vocabulary       :no-absorbing = [:odd53 :chaos :fix2 :fix3 :fix4 :builder :fix6 :identity]
+  blend-strength   0.75
+  width            201
+  figure seed      20260804
+  figure steps     220
+  damage measure   single-cell phenotype flip, differing cells at t=100, 24 seeds
+
+Result
+  reach 26.2 +/- 9.1  -- between ECA rule 90 (8.0) and rule 54 (32.8), inside the class-IV band.
+
+Reproduction check at this commit (same 24 seeds as the original run):
+  boring-triggered / no-absorbing / 0.75  -> 26.2   (recorded 26.2)
+  boring-triggered / no-absorbing / 0.25  -> 23.8   (recorded 23.8)
+  boring-triggered / default4     / 0.50  -> 17.6   (recorded 17.6)
+  heterogeneous-fixed / default4  / 0.00  ->  4.5   (recorded  4.5)
+
+Why the numbers are invariant to the S0b rework, structurally and not just empirically:
+  grid.clj does not require futon5.exotype.efe, so grid/step never consults the
+  conditional model; and the best-of harness supplies :exotypes explicitly rather
+  than via initial-grid, so widening exotype-kinds from 4 to 12 cannot reach it.
+  The empirical check above confirms it to the decimal.

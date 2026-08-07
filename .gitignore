@@ -21,3 +21,8 @@ data/nonstarter.db
 *.fls
 *.toc
 .clj-kondo/
+
+# Bulk run output, never tracked: raw generator/phenotype dumps and remote run
+# reports. Curated results and figures live in reports/, which IS tracked.
+figs/
+reports-remote/

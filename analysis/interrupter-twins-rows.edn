@@ -1,0 +1,3744 @@
+[{:seed 2026084300,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084302,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084303,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084304,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084305,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 0.3,
+  :arm :off,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084300,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.0125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 6}},
+    60
+    {:phe {:mass 5, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 6}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 8, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    60
+    {:phe {:mass 4, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}}}}}
+ {:seed 2026084302,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 1, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 1, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 1, :half-width 0},
+     :gen {:mass 2, :half-width 2}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084303,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084304,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 12},
+     :exo {:mass 4, :half-width 11},
+     :gen {:mass 5, :half-width 10}},
+    60
+    {:phe {:mass 6, :half-width 9},
+     :exo {:mass 2, :half-width 7},
+     :gen {:mass 11, :half-width 12}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 1,
+   :sample-violations [[33 31]],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 5, :half-width 8},
+     :exo {:mass 1, :half-width 5},
+     :gen {:mass 1, :half-width 6}},
+    60
+    {:phe {:mass 4, :half-width 8},
+     :exo {:mass 3, :half-width 3},
+     :gen {:mass 4, :half-width 5}}}}}
+ {:seed 2026084305,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.0375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 0.3,
+  :arm :epistemic,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 2, :half-width 1},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 11, :half-width 6},
+     :exo {:mass 4, :half-width 5},
+     :gen {:mass 8, :half-width 4}},
+    60
+    {:phe {:mass 9, :half-width 13},
+     :exo {:mass 2, :half-width 5},
+     :gen {:mass 8, :half-width 4}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 2, :half-width 1},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 10, :half-width 6},
+     :exo {:mass 4, :half-width 5},
+     :gen {:mass 10, :half-width 6}},
+    60
+    {:phe {:mass 15, :half-width 14},
+     :exo {:mass 6, :half-width 17},
+     :gen {:mass 17, :half-width 15}}}},
+  :pheno-blend
+  {:violations 2,
+   :sample-violations [[45 28] [46 40]],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 4}},
+    30
+    {:phe {:mass 3, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 5, :half-width 5}},
+    60
+    {:phe {:mass 12, :half-width 10},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 5, :half-width 5}}}}}
+ {:seed 2026084300,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084302,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 4, :half-width 3},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}},
+    60
+    {:phe {:mass 8, :half-width 11},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084303,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 10},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084304,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 5, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084305,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 0.3,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 4, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084300,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.1,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 7, :half-width 5},
+     :gen {:mass 5, :half-width 4}},
+    30
+    {:phe {:mass 15, :half-width 14},
+     :exo {:mass 24, :half-width 13},
+     :gen {:mass 21, :half-width 13}},
+    60
+    {:phe {:mass 19, :half-width 27},
+     :exo {:mass 28, :half-width 15},
+     :gen {:mass 32, :half-width 16}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.1875,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 5, :half-width 7},
+     :gen {:mass 5, :half-width 6}},
+    30
+    {:phe {:mass 13, :half-width 11},
+     :exo {:mass 8, :half-width 10},
+     :gen {:mass 16, :half-width 11}},
+    60
+    {:phe {:mass 18, :half-width 16},
+     :exo {:mass 8, :half-width 18},
+     :gen {:mass 20, :half-width 18}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 5, :half-width 4},
+     :gen {:mass 2, :half-width 4}},
+    30
+    {:phe {:mass 7, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 5, :half-width 5}},
+    60
+    {:phe {:mass 9, :half-width 16},
+     :exo {:mass 10, :half-width 18},
+     :gen {:mass 15, :half-width 18}}}},
+  :pheno-blend
+  {:violations 3,
+   :sample-violations [[37 4] [49 28] [52 51]],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 7},
+     :exo {:mass 5, :half-width 5},
+     :gen {:mass 4, :half-width 4}},
+    30
+    {:phe {:mass 11, :half-width 13},
+     :exo {:mass 4, :half-width 8},
+     :gen {:mass 11, :half-width 9}},
+    60
+    {:phe {:mass 18, :half-width 20},
+     :exo {:mass 5, :half-width 17},
+     :gen {:mass 20, :half-width 12}}}}}
+ {:seed 2026084302,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.275,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 6},
+     :exo {:mass 10, :half-width 5},
+     :gen {:mass 8, :half-width 4}},
+    30
+    {:phe {:mass 9, :half-width 13},
+     :exo {:mass 16, :half-width 9},
+     :gen {:mass 19, :half-width 9}},
+    60
+    {:phe {:mass 22, :half-width 18},
+     :exo {:mass 24, :half-width 15},
+     :gen {:mass 26, :half-width 15}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 2}},
+    30
+    {:phe {:mass 8, :half-width 13},
+     :exo {:mass 2, :half-width 7},
+     :gen {:mass 4, :half-width 10}},
+    60
+    {:phe {:mass 16, :half-width 15},
+     :exo {:mass 2, :half-width 15},
+     :gen {:mass 6, :half-width 15}}}},
+  :pheno-blend
+  {:violations 2,
+   :sample-violations [[32 54] [33 51]],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 5},
+     :exo {:mass 4, :half-width 7},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 7, :half-width 6},
+     :exo {:mass 15, :half-width 15},
+     :gen {:mass 17, :half-width 12}},
+    60
+    {:phe {:mass 22, :half-width 23},
+     :exo {:mass 10, :half-width 25},
+     :gen {:mass 30, :half-width 24}}}}}
+ {:seed 2026084303,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.2625,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 5, :half-width 4},
+     :gen {:mass 8, :half-width 4}},
+    30
+    {:phe {:mass 12, :half-width 14},
+     :exo {:mass 10, :half-width 12},
+     :gen {:mass 14, :half-width 12}},
+    60
+    {:phe {:mass 20, :half-width 26},
+     :exo {:mass 26, :half-width 26},
+     :gen {:mass 34, :half-width 27}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 9, :half-width 16},
+     :exo {:mass 3, :half-width 16},
+     :gen {:mass 1, :half-width 15}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 6, :half-width 13},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 15, :half-width 17},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084304,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.1375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 4, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 8, :half-width 9},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 4, :half-width 4}},
+    30
+    {:phe {:mass 5, :half-width 11},
+     :exo {:mass 2, :half-width 5},
+     :gen {:mass 8, :half-width 5}},
+    60
+    {:phe {:mass 6, :half-width 10},
+     :exo {:mass 1, :half-width 3},
+     :gen {:mass 7, :half-width 6}}}},
+  :pheno-blend
+  {:violations 4,
+   :sample-violations [[34 51] [35 32] [42 6] [43 9]],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 7, :half-width 4}},
+    30
+    {:phe {:mass 10, :half-width 15},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 8, :half-width 5}},
+    60
+    {:phe {:mass 17, :half-width 20},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 10, :half-width 6}}}}}
+ {:seed 2026084305,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.2375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 4}},
+    30
+    {:phe {:mass 14, :half-width 11},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 2, :half-width 4}},
+    60
+    {:phe {:mass 14, :half-width 18},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.2625,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 5},
+     :exo {:mass 5, :half-width 3},
+     :gen {:mass 4, :half-width 4}},
+    30
+    {:phe {:mass 10, :half-width 12},
+     :exo {:mass 13, :half-width 17},
+     :gen {:mass 16, :half-width 16}},
+    60
+    {:phe {:mass 12, :half-width 12},
+     :exo {:mass 9, :half-width 12},
+     :gen {:mass 20, :half-width 19}}}},
+  :pheno-blend
+  {:violations 2,
+   :sample-violations [[43 36] [52 59]],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 6},
+     :exo {:mass 4, :half-width 4},
+     :gen {:mass 6, :half-width 7}},
+    30
+    {:phe {:mass 6, :half-width 4},
+     :exo {:mass 3, :half-width 4},
+     :gen {:mass 8, :half-width 6}},
+    60
+    {:phe {:mass 11, :half-width 15},
+     :exo {:mass 3, :half-width 12},
+     :gen {:mass 11, :half-width 12}}}}}
+ {:seed 2026084307,
+  :p 0.6,
+  :arm :off,
+  :sensitivity 0.175,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 4, :half-width 3},
+     :gen {:mass 2, :half-width 1}},
+    60
+    {:phe {:mass 11, :half-width 12},
+     :exo {:mass 10, :half-width 11},
+     :gen {:mass 16, :half-width 11}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 6},
+     :exo {:mass 3, :half-width 5},
+     :gen {:mass 1, :half-width 5}},
+    30
+    {:phe {:mass 4, :half-width 2},
+     :exo {:mass 8, :half-width 5},
+     :gen {:mass 9, :half-width 7}},
+    60
+    {:phe {:mass 11, :half-width 10},
+     :exo {:mass 10, :half-width 9},
+     :gen {:mass 17, :half-width 10}}}},
+  :pheno-blend
+  {:violations 3,
+   :sample-violations [[27 51] [32 32] [55 53]],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 6},
+     :exo {:mass 2, :half-width 4},
+     :gen {:mass 1, :half-width 5}},
+    30
+    {:phe {:mass 5, :half-width 5},
+     :exo {:mass 11, :half-width 7},
+     :gen {:mass 11, :half-width 7}},
+    60
+    {:phe {:mass 17, :half-width 17},
+     :exo {:mass 14, :half-width 16},
+     :gen {:mass 26, :half-width 14}}}}}
+ {:seed 2026084300,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 5, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 10, :half-width 14},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 6, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084302,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 3, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    60
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 6, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084303,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 7, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 2, :half-width 15},
+     :exo {:mass 1, :half-width 16},
+     :gen {:mass 2, :half-width 16}}}}}
+ {:seed 2026084304,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 4},
+     :exo {:mass 7, :half-width 6},
+     :gen {:mass 4, :half-width 4}},
+    30
+    {:phe {:mass 5, :half-width 5},
+     :exo {:mass 7, :half-width 6},
+     :gen {:mass 8, :half-width 6}},
+    60
+    {:phe {:mass 9, :half-width 10},
+     :exo {:mass 7, :half-width 6},
+     :gen {:mass 8, :half-width 6}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084305,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 0.6,
+  :arm :epistemic,
+  :sensitivity 0.0125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 5, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084300,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 9, :half-width 12},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 6, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 10, :half-width 15},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 1, :half-width 10},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 5, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084302,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 8},
+     :exo {:mass 6, :half-width 8},
+     :gen {:mass 9, :half-width 7}},
+    30
+    {:phe {:mass 10, :half-width 20},
+     :exo {:mass 13, :half-width 22},
+     :gen {:mass 21, :half-width 20}},
+    60
+    {:phe {:mass 15, :half-width 29},
+     :exo {:mass 18, :half-width 30},
+     :gen {:mass 29, :half-width 28}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 11},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 2, :half-width 14},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084303,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084304,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 2},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}},
+    60
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 10},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084305,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.075,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 2, :half-width 2},
+     :gen {:mass 2, :half-width 2}},
+    30
+    {:phe {:mass 4, :half-width 5},
+     :exo {:mass 2, :half-width 4},
+     :gen {:mass 3, :half-width 2}},
+    60
+    {:phe {:mass 6, :half-width 4},
+     :exo {:mass 3, :half-width 4},
+     :gen {:mass 6, :half-width 5}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 0.6,
+  :arm :matched-churn,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 5, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 5, :half-width 5}},
+    60
+    {:phe {:mass 6, :half-width 5},
+     :exo {:mass 3, :half-width 5},
+     :gen {:mass 6, :half-width 5}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 3},
+     :exo {:mass 1, :half-width 5},
+     :gen {:mass 6, :half-width 5}},
+    60
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 1, :half-width 7},
+     :gen {:mass 9, :half-width 8}}}},
+  :pheno-blend
+  {:violations 3,
+   :sample-violations [[37 49] [38 47] [47 36]],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 7, :half-width 5},
+     :exo {:mass 1, :half-width 5},
+     :gen {:mass 5, :half-width 3}},
+    60
+    {:phe {:mass 14, :half-width 14},
+     :exo {:mass 5, :half-width 15},
+     :gen {:mass 14, :half-width 14}}}}}
+ {:seed 2026084300,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.0625,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 2, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    60
+    {:phe {:mass 9, :half-width 6},
+     :exo {:mass 1, :half-width 2},
+     :gen {:mass 1, :half-width 1}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.05,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 1, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 1,
+   :sample-violations [[40 56]],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 12, :half-width 14},
+     :exo {:mass 6, :half-width 9},
+     :gen {:mass 9, :half-width 9}}}}}
+ {:seed 2026084302,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.325,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 5},
+     :exo {:mass 6, :half-width 7},
+     :gen {:mass 4, :half-width 5}},
+    30
+    {:phe {:mass 17, :half-width 12},
+     :exo {:mass 9, :half-width 15},
+     :gen {:mass 22, :half-width 15}},
+    60
+    {:phe {:mass 22, :half-width 30},
+     :exo {:mass 32, :half-width 29},
+     :gen {:mass 45, :half-width 29}}}},
+  :pheno-blend
+  {:violations 7,
+   :sample-violations [[32 51] [33 50] [34 45] [35 44] [36 42]],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 7},
+     :exo {:mass 4, :half-width 5},
+     :gen {:mass 4, :half-width 4}},
+    30
+    {:phe {:mass 9, :half-width 13},
+     :exo {:mass 8, :half-width 13},
+     :gen {:mass 15, :half-width 14}},
+    60
+    {:phe {:mass 14, :half-width 19},
+     :exo {:mass 18, :half-width 20},
+     :gen {:mass 27, :half-width 17}}}}}
+ {:seed 2026084303,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.2875,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 6},
+     :exo {:mass 2, :half-width 3},
+     :gen {:mass 4, :half-width 4}},
+    30
+    {:phe {:mass 5, :half-width 13},
+     :exo {:mass 4, :half-width 13},
+     :gen {:mass 6, :half-width 3}},
+    60
+    {:phe {:mass 13, :half-width 12},
+     :exo {:mass 15, :half-width 15},
+     :gen {:mass 22, :half-width 15}}}},
+  :pheno-blend
+  {:violations 12,
+   :sample-violations [[31 45] [32 42] [33 40] [34 35] [35 33]],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 3, :half-width 2}},
+    30
+    {:phe {:mass 6, :half-width 10},
+     :exo {:mass 2, :half-width 4},
+     :gen {:mass 8, :half-width 7}},
+    60
+    {:phe {:mass 22, :half-width 32},
+     :exo {:mass 13, :half-width 33},
+     :gen {:mass 26, :half-width 33}}}}}
+ {:seed 2026084304,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.1125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 2, :half-width 1}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 1, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084305,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.3375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 6},
+     :exo {:mass 7, :half-width 6},
+     :gen {:mass 6, :half-width 6}},
+    30
+    {:phe {:mass 11, :half-width 9},
+     :exo {:mass 10, :half-width 8},
+     :gen {:mass 17, :half-width 10}},
+    60
+    {:phe {:mass 12, :half-width 15},
+     :exo {:mass 25, :half-width 17},
+     :gen {:mass 29, :half-width 14}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 5},
+     :exo {:mass 7, :half-width 6},
+     :gen {:mass 6, :half-width 6}},
+    30
+    {:phe {:mass 7, :half-width 8},
+     :exo {:mass 5, :half-width 8},
+     :gen {:mass 12, :half-width 7}},
+    60
+    {:phe {:mass 14, :half-width 11},
+     :exo {:mass 16, :half-width 11},
+     :gen {:mass 27, :half-width 15}}}},
+  :pheno-blend
+  {:violations 4,
+   :sample-violations [[26 51] [36 9] [58 53] [59 54]],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 4, :half-width 3},
+     :gen {:mass 6, :half-width 4}},
+    30
+    {:phe {:mass 7, :half-width 9},
+     :exo {:mass 8, :half-width 10},
+     :gen {:mass 14, :half-width 8}},
+    60
+    {:phe {:mass 19, :half-width 20},
+     :exo {:mass 15, :half-width 18},
+     :gen {:mass 33, :half-width 19}}}}}
+ {:seed 2026084306,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.0875,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 7, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 14, :half-width 22},
+     :exo {:mass 8, :half-width 23},
+     :gen {:mass 8, :half-width 23}}}},
+  :pheno-blend
+  {:violations 12,
+   :sample-violations [[26 44] [27 36] [28 35] [29 30] [30 29]],
+   :cones
+   {10
+    {:phe {:mass 8, :half-width 6},
+     :exo {:mass 1, :half-width 4},
+     :gen {:mass 1, :half-width 5}},
+    30
+    {:phe {:mass 13, :half-width 12},
+     :exo {:mass 4, :half-width 8},
+     :gen {:mass 11, :half-width 10}},
+    60
+    {:phe {:mass 23, :half-width 26},
+     :exo {:mass 18, :half-width 26},
+     :gen {:mass 30, :half-width 26}}}}}
+ {:seed 2026084307,
+  :p 1.0,
+  :arm :off,
+  :sensitivity 0.0375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 9, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 7, :half-width 9},
+     :exo {:mass 1, :half-width 9},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 8, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 5, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084300,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 2},
+     :exo {:mass 2, :half-width 3},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 6, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 10, :half-width 13},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.0375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 7, :half-width 9},
+     :exo {:mass 1, :half-width 1},
+     :gen {:mass 2, :half-width 5}},
+    60
+    {:phe {:mass 7, :half-width 15},
+     :exo {:mass 1, :half-width 13},
+     :gen {:mass 4, :half-width 13}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 9, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 8, :half-width 13},
+     :exo {:mass 1, :half-width 8},
+     :gen {:mass 4, :half-width 14}},
+    60
+    {:phe {:mass 16, :half-width 32},
+     :exo {:mass 6, :half-width 24},
+     :gen {:mass 7, :half-width 25}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084302,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.0125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 2}},
+    30
+    {:phe {:mass 4, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 2}},
+    60
+    {:phe {:mass 11, :half-width 12},
+     :exo {:mass 1, :half-width 3},
+     :gen {:mass 3, :half-width 3}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 6, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 8, :half-width 5},
+     :exo {:mass 1, :half-width 3},
+     :gen {:mass 1, :half-width 3}}}},
+  :pheno-blend
+  {:violations 4,
+   :sample-violations [[41 33] [42 36] [43 42] [44 56]],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 2, :half-width 4}},
+    30
+    {:phe {:mass 6, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 3, :half-width 6}},
+    60
+    {:phe {:mass 11, :half-width 12},
+     :exo {:mass 4, :half-width 12},
+     :gen {:mass 10, :half-width 12}}}}}
+ {:seed 2026084303,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.0125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 1, :half-width 4},
+     :gen {:mass 2, :half-width 4}},
+    60
+    {:phe {:mass 6, :half-width 8},
+     :exo {:mass 2, :half-width 5},
+     :gen {:mass 4, :half-width 5}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 10, :half-width 16},
+     :exo {:mass 8, :half-width 16},
+     :gen {:mass 10, :half-width 16}},
+    60
+    {:phe {:mass 37, :half-width 31},
+     :exo {:mass 9, :half-width 16},
+     :gen {:mass 13, :half-width 15}}}},
+  :pheno-blend
+  {:violations 7,
+   :sample-violations [[28 51] [30 36] [31 35] [32 30] [33 29]],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 8},
+     :exo {:mass 2, :half-width 6},
+     :gen {:mass 3, :half-width 7}},
+    60
+    {:phe {:mass 9, :half-width 9},
+     :exo {:mass 2, :half-width 5},
+     :gen {:mass 7, :half-width 11}}}}}
+ {:seed 2026084304,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.0125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 3, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 4, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084305,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 6,
+   :sample-violations [[38 52] [39 49] [41 20] [42 17] [44 13]],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 1},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 5, :half-width 5}},
+    60
+    {:phe {:mass 5, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 6, :half-width 4}}}}}
+ {:seed 2026084306,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.025,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 2},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 13, :half-width 14},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 6}},
+    60
+    {:phe {:mass 21, :half-width 15},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 4, :half-width 10}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 1.0,
+  :arm :epistemic,
+  :sensitivity 0.0125,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 7,
+   :sample-violations [[35 18] [36 16] [37 13] [40 17] [41 22]],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 2}},
+    30
+    {:phe {:mass 3, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 8, :half-width 5}},
+    60
+    {:phe {:mass 7, :half-width 5},
+     :exo {:mass 5, :half-width 8},
+     :gen {:mass 8, :half-width 7}}}}}
+ {:seed 2026084300,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 4},
+     :exo {:mass 6, :half-width 8},
+     :gen {:mass 5, :half-width 5}},
+    30
+    {:phe {:mass 6, :half-width 7},
+     :exo {:mass 6, :half-width 6},
+     :gen {:mass 9, :half-width 8}},
+    60
+    {:phe {:mass 15, :half-width 10},
+     :exo {:mass 6, :half-width 6},
+     :gen {:mass 9, :half-width 8}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084301,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 8, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 1}},
+    30
+    {:phe {:mass 7, :half-width 15},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 13, :half-width 23},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 2, :half-width 20}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 2, :half-width 2}},
+    30
+    {:phe {:mass 5, :half-width 15},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 2}},
+    60
+    {:phe {:mass 13, :half-width 23},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 4, :half-width 20}}}},
+  :pheno-blend
+  {:violations 10,
+   :sample-violations [[23 40] [26 39] [29 18] [34 24] [35 18]],
+   :cones
+   {10
+    {:phe {:mass 7, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 3, :half-width 4}},
+    30
+    {:phe {:mass 12, :half-width 15},
+     :exo {:mass 7, :half-width 12},
+     :gen {:mass 8, :half-width 12}},
+    60
+    {:phe {:mass 12, :half-width 14},
+     :exo {:mass 14, :half-width 18},
+     :gen {:mass 25, :half-width 17}}}}}
+ {:seed 2026084302,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 3, :half-width 10},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084303,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084304,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 2, :half-width 4},
+     :exo {:mass 2, :half-width 2},
+     :gen {:mass 2, :half-width 2}},
+    30
+    {:phe {:mass 6, :half-width 5},
+     :exo {:mass 3, :half-width 2},
+     :gen {:mass 4, :half-width 7}},
+    60
+    {:phe {:mass 7, :half-width 16},
+     :exo {:mass 4, :half-width 3},
+     :gen {:mass 4, :half-width 2}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 1, :half-width 4},
+     :exo {:mass 2, :half-width 2},
+     :gen {:mass 3, :half-width 3}},
+    30
+    {:phe {:mass 5, :half-width 4},
+     :exo {:mass 3, :half-width 2},
+     :gen {:mass 4, :half-width 7}},
+    60
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 4, :half-width 3},
+     :gen {:mass 4, :half-width 2}}}},
+  :pheno-blend
+  {:violations 8,
+   :sample-violations [[18 49] [32 54] [33 53] [34 51] [35 50]],
+   :cones
+   {10
+    {:phe {:mass 6, :half-width 7},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 9, :half-width 17},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 2, :half-width 2}},
+    60
+    {:phe {:mass 23, :half-width 31},
+     :exo {:mass 3, :half-width 18},
+     :gen {:mass 22, :half-width 28}}}}}
+ {:seed 2026084305,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 4, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 4, :half-width 9},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084306,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    30
+    {:phe {:mass 1, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 1, :half-width 0}},
+    60
+    {:phe {:mass 3, :half-width 3},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 5, :half-width 5},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 8, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 15, :half-width 20},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 6},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 8, :half-width 8},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 7, :half-width 15},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}}}
+ {:seed 2026084307,
+  :p 1.0,
+  :arm :matched-churn,
+  :sensitivity 0.0375,
+  :sigma
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno
+  {:violations 0,
+   :sample-violations [],
+   :cones
+   {10
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    30
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}},
+    60
+    {:phe {:mass 0, :half-width 0},
+     :exo {:mass 0, :half-width 0},
+     :gen {:mass 0, :half-width 0}}}},
+  :pheno-blend
+  {:violations 3,
+   :sample-violations [[33 45] [41 15] [44 9]],
+   :cones
+   {10
+    {:phe {:mass 3, :half-width 4},
+     :exo {:mass 1, :half-width 3},
+     :gen {:mass 3, :half-width 4}},
+    30
+    {:phe {:mass 12, :half-width 15},
+     :exo {:mass 1, :half-width 5},
+     :gen {:mass 2, :half-width 5}},
+    60
+    {:phe {:mass 11, :half-width 15},
+     :exo {:mass 7, :half-width 14},
+     :gen {:mass 17, :half-width 14}}}}}]
