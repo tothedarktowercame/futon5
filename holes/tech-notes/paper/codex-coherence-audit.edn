@@ -1,0 +1,464 @@
+;; Independent writing-coherence audit, 2026-08-08.
+;;
+;; Scope: sentence-level, new-reader audit of the abstract in draft9.tex and
+;; all of intro-v2-generated.tex; lower-intensity sweep of the remaining prose
+;; and titles in draft9.tex and part3-exotype-v9.tex. The prior file
+;; coherence-annotations.edn was deliberately not read.
+;;
+;; Existing patterns were taken from all 23 entries in
+;; futon3/library/writing-coherence/. This audit adds three patterns:
+;;
+;; :codex/insider-compression
+;; A syntactically compact claim whose omitted subjects, mechanisms, or
+;; referents can be reconstructed only by someone who already knows the paper.
+;; Unlike ordinary technical compression, it cannot be decoded from adjacent
+;; definitions. Test: can a domain-adjacent reader paraphrase it before reading
+;; the section it summarizes?
+;;
+;; :codex/unglossed-coinage
+;; A project-private word or metaphorical technical label (for example
+;; "currency", "river", "ridge", "valley", or "exotype") used before a plain
+;; description establishes its referent and measurable meaning. Test: could
+;; two reasonable new readers assign materially different meanings to it?
+;;
+;; :codex/colourful-register
+;; Figurative or dramatic wording where a literal statement is available and
+;; would preserve the claim more precisely. The failure is not metaphor itself,
+;; but metaphor carrying mechanism, scope, or result classification.
+
+{:audit {:date "2026-08-08"
+         :audience "A technically literate reader who has never seen this project"
+         :priority [:abstract :introduction :titles :remaining-prose]
+         :dry-intro-title "Causal State Information Governs Perturbation Spread, but Local Control Does Not Find the Coexisting Regime"}
+ :annotations
+ [{:id 1
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "A permutation $\\sig$ of the eight displayed truth-table\npositions defines an operator $P_\\sig$ on those rules by\n$\\bit{\\sig(p)} := \\lnot\\,\\bit{p}$; the resulting family of $8! = 40{,}320$\npermutation-propagators is exactly classified."
+   :pattern :writing-coherence/plain-language-thesis
+   :severity :major
+   :note "The second abstract sentence introduces displayed positions, an unexplained assignment convention, and the coined class name before giving a plain account of the operation. A new reader cannot yet tell what is permuted, what is negated, or what 'classified' covers."
+   :suggest "We study 40,320 rule-rewriting operators. Each operator rearranges the eight outputs of a binary cellular-automaton rule and flips every output bit; we classify all operators in this finite family."}
+
+  {:id 2
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "$P_\\sig$ has a fixed rule exactly when\nevery cycle of $\\sig$ is even, an all-even permutation with $k$ cycles has $2^k$ of\nthem, and every fixed rule is balanced, with Langton activity $\\lambda = 1/2$."
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :moderate
+   :note "The abstract uses 'balanced' and 'Langton activity' before explaining that balance means four of eight outputs are active. The theorem is legible only to a reader already carrying the paper's vocabulary."
+   :suggest "An operator has an unchanged rule exactly when every permutation cycle has even length. If there are k cycles, it has 2^k unchanged rules, and each such rule has four active outputs out of eight (Langton's activity parameter lambda equals 1/2)."}
+
+  {:id 3
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "A\ncoordinate taking one value across every fixed point cannot discriminate among them,\nand a finite-size scan finds a broad crossover rather than a critical point, so the\nclassical parameter-space reading of the edge of chaos is closed off inside this\nfamily."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "'Coordinate', 'broad crossover', 'critical point', 'parameter-space reading', and 'closed off' compress several distinct arguments into one sentence. A new reader cannot tell which coordinate is meant or what observation rejects which interpretation."
+   :suggest "Because lambda equals 1/2 for every unchanged rule, it cannot distinguish their behavior. A separate finite-size scan also shows no sharpening transition over the tested range. These results provide no parameter value that identifies an edge-of-chaos transition in this operator family."}
+
+  {:id 4
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "We substitute a causal measurement---how far a single-cell perturbation\ntravels---and find it governed by how much of what the genotype reads is causally\ncurrent: cutting the phenotype-to-genotype edge roughly halves reach, a gain varying\nonly currency moves it smoothly, and constructions blind to the phenotype do not move."
+   :pattern :codex/unglossed-coinage
+   :severity :major
+   :note "The sentence defines the outcome measure but not 'causally current', 'currency', 'gain', or what it means for constructions not to move. 'Currency' carries the central causal claim before it has a measurable definition."
+   :suggest "We instead measure how far the effect of flipping one cell spreads. Reach is larger when rule updates use the current cell-state field: removing that input roughly halves reach, and gradually replacing current state information with a frozen reference reduces reach smoothly. Architectures that never read cell states remain at low reach."}
+
+  {:id 5
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "Making the coupling endogenous recovers the same coordinate."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "Neither 'endogenous' nor 'recovers the same coordinate' identifies what the system computes, what is measured, or what agreement was observed. The sentence is not meaningful standalone in an abstract."
+   :suggest "When the lattice itself determines when rule updates occur, predicates that read the current state field again produce greater perturbation reach than matched predicates that read a frozen field."}
+
+  {:id 6
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "Posed from inside, the\nsearch question closes negatively: the local evidence a cell would need decays faster\nthan it accumulates at any decision rate, and the coexisting regime is the substrate's\ndefault condition, threatened only by the optimizing selection layer itself."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "The final abstract sentence relies on unexplained viewpoint language ('from inside'), closure language, 'local evidence', 'coexisting regime', 'substrate', and 'selection layer'. It withholds the actual experiment and result at the paper's highest-leverage position."
+   :suggest "Individual cells cannot reliably choose between rewriting operators from their recent local observations: the local state changes before enough evidence accumulates. Moreover, mixed active and stable regions persist when the selection policy is removed; the absorbing outcomes are produced by that policy rather than avoided by it."}
+
+  {:id 7
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "\\section{Currency Governs Propagation, and the Regime Needs No Finding}"
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "The title requires paper-internal meanings for 'currency', 'propagation', 'the regime', and 'finding'. Even the operator, who knows the work, reported that it was impenetrable."
+   :suggest "\\section{Causal State Information Governs Perturbation Spread, but Local Control Does Not Find the Coexisting Regime}"}
+
+  {:id 8
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The first has a measured answer --- the causal currency of the rule layer's read of the state layer."
+   :pattern :codex/unglossed-coinage
+   :severity :major
+   :note "'Causal currency' is the thesis term but is neither standard nor defined. 'The rule layer's read of the state layer' also presupposes the architecture before the introduction has described it."
+   :suggest "Perturbations spread farther when rule updates use current cell-state information rather than a frozen or absent state input."}
+
+  {:id 9
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The second closes negatively, in a way that dissolves its premise."
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "The sentence announces a dramatic logical reversal without naming either the negative result or the premise. It asks the reader to admire the shape of an argument not yet stated."
+   :suggest "The system cannot select this operating condition from local observations, and the condition already persists when the optimizing selection policy is removed."}
+
+  {:id 10
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The substrate is a two-layer lattice acted on by an exactly classifiable family of rule-rewriting operators."
+   :pattern :writing-coherence/plain-language-thesis
+   :severity :moderate
+   :note "'Substrate', 'lattice', and 'rule-rewriting operator' arrive together as unexplained abstractions. The following sentence contains the explanation and should lead."
+   :suggest "Each lattice cell stores both a binary state and an eight-bit update rule; local operators rewrite those rules while the automaton runs."}
+
+  {:id 11
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The family was reached by accident: in 2015 a programming error produced spacetime diagrams in which frozen and moving structure persist together, neither absorbing the other --- the visual signature by which the edge of chaos is recognised \\parencite{corneli2015search}."
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :moderate
+   :note "'Frozen', 'moving', 'absorbing', and 'edge of chaos' are used as if they formed an agreed operational test, but the sentence supplies only a visual signature. A new reader cannot tell how these states were measured."
+   :suggest "A 2015 programming error produced diagrams containing both regions that stopped changing and regions that continued changing throughout the observed run. That coexistence motivated the present study; later sections define and measure it explicitly."}
+
+  {:id 12
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "This paper is what that example becomes when it is placed inside a family large enough to enumerate."
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "The transformation metaphor does not state the paper's action or contribution."
+   :suggest "We generalize that example to a finite family of 40,320 operators that can be enumerated and classified exactly."}
+
+  {:id 13
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The first finding is exact and negative: the classical parameter-space reading of the edge of chaos is closed off inside this family."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "The sentence makes its strongest introductory claim through 'reading' and 'closed off', neither of which names the tested parameter or result."
+   :suggest "The standard activity parameter cannot locate an edge-of-chaos transition in this family: every unchanged rule has the same value, lambda = 1/2."}
+
+  {:id 14
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The algebra does not settle the dynamics either --- operators of identical cycle type reach opposite fates --- and a finite-size scan across the tested control parameter shows a broad crossover that never sharpens: no critical point."
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :moderate
+   :note "'Opposite fates', 'broad crossover', 'sharpens', and 'critical point' are unexplained result labels. The reader has not been told what outcome constitutes either fate or what finite-size sharpening would mean."
+   :suggest "Cycle structure also does not determine whether the rule field remains diverse or collapses. In a finite-size scan, the transition region did not narrow as lattice size increased, so the tested range provides no evidence of a critical point."}
+
+  {:id 15
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "What replaces the parameter is a causal measurement, and on it a single tested coordinate governs: how much of what the rule layer reads is causally current."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "'Coordinate governs' and 'causally current' conceal the intervention behind abstract nouns. The sentence should name the manipulated input and measured effect."
+   :suggest "We instead measure the distance reached by a one-cell perturbation. In the tested architectures, that distance depends on whether rule updates read the current state field or an outdated reference."}
+
+  {:id 16
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "Cutting the phenotype-to-genotype edge roughly halves reach; a gain dial that varies only currency --- the stale field being itself a real phenotype, so spatial statistics are matched at every setting --- moves reach smoothly; and sustained rule diversity, mutation, refuges, niches and rule mobility leave it unmoved, a conservative-transport control showing that diversity itself is inert."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "This sentence fuses three experiments and introduces 'gain dial', 'currency', 'stale field', 'refuges', 'niches', 'mobility', and 'conservative transport' without definitions. The final 'diversity is inert' also over-compresses a qualified result."
+   :suggest "Removing the state-to-rule input roughly halves perturbation reach. Replacing an increasing fraction of current state inputs with a frozen state field reduces reach smoothly while preserving the field's spatial statistics. Separate controls show that changing rule diversity alone has little effect at fixed transport rate."}
+
+  {:id 17
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The coordinate is then re-derived endogenously."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "The sentence does not identify the coordinate, the endogenous mechanism, or what constitutes a re-derivation."
+   :suggest "A second experiment lets the lattice determine locally when rewriting occurs and again compares predicates that read current, frozen, or no state information."}
+
+  {:id 18
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "A condition blind to the phenotype reproduces the dial exactly; a condition reading the live phenotype exceeds it; and an identical condition reading a stale phenotype of matched width, spatial statistics and firing rate falls below it in every tested pair."
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :major
+   :note "'Condition', 'dial', 'live', 'stale', 'width', and 'firing rate' refer to apparatus not yet introduced. The comparison is important but cannot be reconstructed cold."
+   :suggest "At the same update frequency, a predicate that ignores cell states matches the prescribed-rate baseline. A predicate using current states produces greater reach, while the same predicate applied to a frozen state field produces less reach in every matched comparison."}
+
+  {:id 19
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "Currency, not correlation."
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "This slogan depends entirely on the paper's private meaning of currency and does not state what was held constant or manipulated."
+   :suggest "Current causal information, rather than matched spatial correlation, accounts for the difference in reach."}
+
+  {:id 20
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The second question --- can the system find its own regime? --- closes negatively, and the closure dissolves the question's premise."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "'Its own regime', 'closes', and 'dissolves the premise' provide no operational account of the search or the result."
+   :suggest "The system cannot reliably select the coexisting active-and-frozen behavior from local observations; moreover, that behavior already persists when the optimizing selection policy is absent."}
+
+  {:id 21
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The coexistence regime the 2015 example displayed exists in this substrate and an external bisection over the selection policy's precision locates it."
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :major
+   :note "The sentence introduces the central Part III experiment through four undefined terms: coexistence regime, substrate, external bisection, and policy precision."
+   :suggest "The model can sustain both changing and locally stable regions. We located examples by externally varying a parameter that controls how deterministically the selection policy chooses an operator."}
+
+  {:id 22
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "But it does not need finding: with the optimizing policy removed, the substrate coexists by default from every start tested, and the absorbing states the search navigated between are artifacts of that policy at high precision."
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "'Does not need finding', 'coexists by default', 'absorbing states', and 'artifacts of policy' compress the decisive control into search metaphors."
+   :suggest "In the control with the selection policy removed, mixed active and stable regions persisted from every tested initial state. The fully active or fully frozen outcomes occurred only when the high-precision policy was present."}
+
+  {:id 23
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "Nor can it be found from inside: the local evidence a cell would need decays faster than it accumulates at every decision rate, boundary-directed adoption accelerates the very freeze it was built to fight, and undirected noise prevents absorption without ever reproducing the regime."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "Three separate negative experiments are fused into one sentence using viewpoint language and undefined intervention labels. A new reader cannot identify the evidence, decision, boundary rule, or measured regime."
+   :suggest "Local observations do not rank rewriting operators reliably because neighborhood state changes before a useful observation window has accumulated. Copying operators from phase boundaries makes freezing occur earlier. Random operator changes prevent complete absorption but produce only a fragmented mixture, not the measured coexistence pattern."}
+
+  {:id 24
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "The system never needed to find the edge of chaos; it needed its controller not to push it off."
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "The closing image is memorable but replaces the literal causal result with a spatial metaphor. 'Edge of chaos' is not the measured axis here, and 'push it off' does not name the policy-induced absorption."
+   :suggest "The uncontrolled substrate already sustains coexistence; the optimizing controller creates the absorbing outcomes it was intended to avoid."}
+
+  {:id 25
+   :file "holes/tech-notes/paper/intro-v2-generated.tex"
+   :quote "Part~III carries the second: the regime, the ridge between the phase that wins and the phase that loses, the external search that located the valley between them, and the measurements that close the endogenous question."
+   :pattern :codex/unglossed-coinage
+   :severity :major
+   :note "Regime, ridge, winning phase, valley, external search, and endogenous question are all paper-internal labels. None is defined in this introduction, so the roadmap cannot orient a new reader."
+   :suggest "Part III studies a local operator-selection policy. It compares parameter regions that become fully active or fully frozen, reports intermediate long-lived mixtures found by an external parameter search, and tests whether cells could select or preserve such mixtures using local information."}
+
+  {:id 26
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "The truth table is thereby itself an eight-cell automaton whose\nwiring is $\\sig$ and whose update is Boolean negation --- an automaton inside\nthe automaton."
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "'An automaton inside the automaton' adds a recursive image without helping the reader distinguish the eight rule outputs from spatial cells."
+   :suggest "Equivalently, the eight truth-table outputs form an eight-node Boolean network: sigma specifies the wiring, and each update negates the copied bit."}
+
+  {:id 27
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "Every one has\n$\\lambda = 1/2$ (Theorem~2), so the observed terminal\npopulation is a cast of \\emph{distinct} rules---distinct truth tables---sharing\na \\emph{single} activity."
+   :pattern :codex/colourful-register
+   :severity :minor
+   :note "'A cast' personifies rules and slightly obscures the population-level statement."
+   :suggest "Every surviving rule has lambda = 1/2, so distinct terminal truth tables share the same activity value."}
+
+  {:id 28
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "its residual is a hunt on a single\nunsettleable position rather than a pair of fixed points."
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "'A hunt' and 'unsettleable' dramatize a precise dynamical distinction without stating it directly."
+   :suggest "its two-rule residual instead results from repeated changes at one position that has no fixed value."}
+
+  {:id 29
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "\\subsection{A dead genotype can carry a live phenotype}"
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "The title is claim-bearing but 'dead' and 'live' are metaphorical classifications whose operational meanings are not in the title."
+   :suggest "\\subsection{A fixed rule field can support changing cell states}"}
+
+  {:id 30
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "Collapse is therefore not\nmerely a loss of diversity but a fall onto this particular $70$-rule balanced\nshell at $\\lambda = 1/2$."
+   :pattern :codex/unglossed-coinage
+   :severity :moderate
+   :note "'Fall onto a shell' imports geometric language after defining only a set of rules. The literal set-membership claim is clearer."
+   :suggest "Thus, when the rule field collapses, its surviving rules belong to the 70 balanced rules with lambda = 1/2; collapse is more specific than a generic loss of diversity."}
+
+  {:id 31
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "which tenant a\nrandom field actually reaches is set by the basins, not by the construction: we\naimed at $54$ and the dynamics preferred $105$."
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "Tenant, aimed, and preferred anthropomorphize a basin-selection result."
+   :suggest "which fixed rule a random initial field reaches depends on its basin of attraction: the operator was constructed to include Rule 54, but the observed field converged to Rule 105."}
+
+  {:id 32
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "\\subsection{Two collapsing operators braid into a living field}"
+   :pattern :codex/unglossed-coinage
+   :severity :moderate
+   :note "'Braid' and 'living field' are project terms at title position. The title does not say that the operators alternate in time or that 'living' means sustained rule change."
+   :suggest "\\subsection{Alternating two individually collapsing operators sustains rule-field activity}"}
+
+  {:id 33
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "treat diversity as a dial to be turned rather than a property a run happens to\nhave."
+   :pattern :codex/colourful-register
+   :severity :minor
+   :note "The dial metaphor is unnecessary once the periodic schedule and mixing fraction have been stated."
+   :suggest "treat sustained diversity as a controlled variable rather than an incidental outcome."}
+
+  {:id 34
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "\\caption{\\textbf{A larger river spacetime plate.}"
+   :pattern :codex/unglossed-coinage
+   :severity :moderate
+   :note "'River' is a private name and the caption title does not describe the construction to a reader encountering the figure independently."
+   :suggest "\\caption{\\textbf{A phenotype-conditioned rule-rewriting run.}"}
+
+  {:id 35
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "For\nthe river it is the \\emph{currency} of the phenotype bits the genotype reads:"
+   :pattern :codex/unglossed-coinage
+   :severity :moderate
+   :note "This is where currency finally receives an operational definition, but the metaphor remains the grammatical definition and arrives hundreds of lines after carrying the abstract and introduction."
+   :suggest "For the phenotype-conditioned construction, gain is the probability that a rule update reads the current phenotype rather than a frozen reference:"}
+
+  {:id 36
+   :file "holes/tech-notes/paper/draft9.tex"
+   :quote "Transport is concave and buys most of its reach early; the river is convex, with"
+   :pattern :codex/colourful-register
+   :severity :minor
+   :note "'Buys reach' mixes economic metaphor with the already metaphorical river label."
+   :suggest "The transport curve is concave, so most of its increase in reach occurs at low gain; the phenotype-conditioned curve is convex, with"}
+
+  {:id 37
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\part{Endogenous Coupling and Exotypes}"
+   :pattern :writing-coherence/plain-language-thesis
+   :severity :major
+   :note "Both substantive terms require definitions that appear only in the body. The part title is not independently legible in the table of contents."
+   :suggest "\\part{When the Lattice Chooses Its Update Timing and Rewriting Operator}"}
+
+  {:id 38
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\section{A Gate Reading the Live Phenotype Exceeds Its Own Dial}"
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "Gate, live phenotype, exceeds, and dial encode apparatus and baseline details unavailable from the title alone."
+   :suggest "\\section{Current State Information Produces Greater Reach Than Matched Update Frequency}"}
+
+  {:id 39
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "A blind conditional composition is therefore \\emph{exactly}\na gain dial, its duty cycle playing the role $\\gamma$ plays in\n\\secref{sec:gain}."
+   :pattern :codex/insider-compression
+   :severity :moderate
+   :note "Conditional composition, blind, gain dial, duty cycle, and gamma all appear in the inference sentence. The literal equivalence is simpler than its apparatus vocabulary."
+   :suggest "When the predicate ignores cell states, perturbation reach is determined almost entirely by the measured fraction of steps on which transport is applied."}
+
+  {:id 40
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "Firing a chaotic\noperator less often, in the right places, spreads damage further than firing it\nalways."
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "'In the right places' substitutes evaluative color for the measured condition: places selected from current phenotype neighborhoods."
+   :suggest "Applying the high-reach transport operator only where a current-phenotype predicate holds produces greater perturbation reach than applying it at every site."}
+
+  {:id 41
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "An endogenous gain does not escape the causal currency of what the\ngenotype reads; it re-derives it."
+   :pattern :codex/unglossed-coinage
+   :severity :major
+   :note "The central inference is expressed entirely in the paper's two compressed terms, 'endogenous gain' and 'causal currency', plus the unexplained metaphor 'escape'."
+   :suggest "Allowing the lattice to determine update timing does not remove the importance of current information: predicates reading current states outperform matched predicates reading frozen states."}
+
+  {:id 42
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\section{The Gate Chooses When; the Exotype Chooses Which}"
+   :pattern :codex/unglossed-coinage
+   :severity :major
+   :note "The contrast is structurally useful, but neither gate nor exotype is defined in the title. In particular, 'which' has no object."
+   :suggest "\\section{Predicates Set Update Timing; Cells Carry the Rewriting Operator}"}
+
+  {:id 43
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\section{The Regime Is the Default; Nothing Local Finds or Holds It}"
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "'The regime', default, local, finds, and holds all require the preceding research history. The title does not identify the coexistence property, controller, or local information constraint."
+   :suggest "\\section{Coexistence Persists Without Selection, and Local Observations Cannot Select or Preserve It}"}
+
+  {:id 44
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "The question decomposes into a search half and a holding half, and\nboth close."
+   :pattern :codex/insider-compression
+   :severity :major
+   :note "'Search', 'holding', and 'close' name argumentative roles rather than the two empirical claims."
+   :suggest "Two tests are required: whether cells can identify the desired operator from local data, and whether a local intervention can preserve coexistence. Both tests fail in the measured configurations."}
+
+  {:id 45
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\emph{The holding half closes against a sharper surprise}"
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "This run-in heading announces surprise and closure rather than the result that boundary-directed copying accelerates freezing."
+   :suggest "\\emph{Boundary-directed operator copying accelerates freezing.}"}
+
+  {:id 46
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "Undirected rule noise keeps this lattice alive.\nIt does not keep it anywhere."
+   :pattern :codex/colourful-register
+   :severity :moderate
+   :note "'Alive' and 'anywhere' make a rhythmic close but do not state that noise prevents absorption while failing to reproduce the target domain-size distribution."
+   :suggest "Random rule changes prevent complete absorption, but the resulting state has much smaller frozen domains than the target coexistence configuration."}
+
+  {:id 47
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\emph{What remains is the fact that dissolves the question's premise.}"
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "The run-in heading withholds the decisive control result in favor of a dramatic description of its argumentative effect."
+   :suggest "\\emph{Without the selection policy, coexistence persists from every tested start.}"}
+
+  {:id 48
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "The\nsystem never needed to find the edge of chaos. It needed its controller not\nto push it off, and nothing strictly local in the substrate knows the\ndifference---not to find the regime, and not, except by undirected noise that\npreserves a coarser imitation of it, to hold it."
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "This paragraph close stacks finding, pushing, knowing, imitation, and holding metaphors. The exact control and intervention results become hard to recover."
+   :suggest "The uncontrolled substrate already sustains coexistence, whereas the high-precision selection policy produces absorption. Local observations do not reliably distinguish operators, boundary-directed copying accelerates freezing, and random changes preserve only a more fragmented mixture."}
+
+  {:id 49
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\section{Three Fates: One Phase Wins, the Other Wins, or Neither Does}"
+   :pattern :codex/unglossed-coinage
+   :severity :moderate
+   :note "'Fates', 'phase', and 'wins' anthropomorphize three trajectory outcomes before frozen and live are operationally defined in the following paragraph."
+   :suggest "\\section{Three Observed Outcomes: Active, Frozen, and Persistent Coexistence}"}
+
+  {:id 50
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\subsection{Below the ridge, the live phase eats every frozen domain}"
+   :pattern :codex/colourful-register
+   :severity :major
+   :note "The title combines an undefined geometric location with predation language. The measurable claim is domain shrinkage to zero at low policy precision."
+   :suggest "\\subsection{At low policy precision, frozen domains shrink and disappear}"}
+
+  {:id 51
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\subsection{Above it, the frozen phase absorbs the lattice}"
+   :pattern :codex/unglossed-coinage
+   :severity :moderate
+   :note "'Above it' depends on the prior ridge metaphor, and 'phase absorbs' hides the operational outcome that the entire configuration stops changing."
+   :suggest "\\subsection{At high policy precision, the lattice reaches a fixed configuration}"}
+
+  {:id 52
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "\\subsection{In the valley, neither wins for ten thousand steps}"
+   :pattern :codex/unglossed-coinage
+   :severity :major
+   :note "Valley and winning require the search-objective map and phase metaphor. The title should state the parameter region and persistence observation."
+   :suggest "\\subsection{At intermediate precision, active and frozen regions coexist for 10,000 steps}"}
+
+  {:id 53
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "so\nno region coarsens into a permanent continent within the observed horizon."
+   :pattern :codex/colourful-register
+   :severity :minor
+   :note "'Permanent continent' is vivid but adds no information beyond the measured maximum component size and finite horizon."
+   :suggest "so no frozen component grows into a persistent macroscopic domain within the observed horizon."}
+
+  {:id 54
+   :file "holes/tech-notes/paper/part3-exotype-v9.tex"
+   :quote "Realisation-to-realisation variance dominating a parameter's effect is what a\ncritical region looks like, and we report it as that rather than as a regime."
+   :pattern :writing-coherence/plain-language-thesis
+   :severity :moderate
+   :note "The sentence treats 'critical region' and 'regime' as self-explanatory contrasting classifications, but the next sentences admit that no critical point is established."
+   :suggest "Outcomes vary more between seeds than between the tested parameter values. We therefore report an unstable transition region, not a parameter-defined persistent regime or a demonstrated critical point."}]}
