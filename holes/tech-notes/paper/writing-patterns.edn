@@ -1,0 +1,146 @@
+;; writing-patterns.edn — the paper's house style as executable patterns.
+;; Each entry is one rewrite rule with a REAL exemplar from this paper's own
+;; revision history. Two sources: :house = established by operator ruling
+;; during the 2026-08-08/09 passes; :captured = extracted from a Joe edit
+;; during proofing (the de-AI-ifying loop; see PATTERNS.md).
+;;
+;; Schema per pattern:
+;;   :id        kebab keyword
+;;   :status    :house | :candidate | :retired
+;;   :trigger   what to look for (greppable cues or a described smell)
+;;   :before    verbatim exemplar as it stood
+;;   :after     verbatim exemplar as ruled
+;;   :rule      the transformation, stated generally
+;;   :why       one line
+;;   :source    where the ruling happened
+
+{:updated "2026-08-09"
+ :patterns
+ [{:id :timeless-register
+   :status :house
+   :trigger "narrative past tense about the writing/research process; 'initially',
+             'we then realised', 'reason not recorded', dates in body prose"
+   :before "seven months of exploration in this substrate family before the
+            selection layer existed encountered nothing resembling the valley
+            configuration"
+   :after "its scope is thirty runs, two geometries, and one vocabulary of
+           twelve operators; it is not a claim about rule-rewriting lattices
+           generally"
+   :rule "State what is and what was measured; never narrate the project's
+          history in the paper's voice."
+   :why "Elapsed time and process anecdotes are not assessable evidence."
+   :source "part3 probes pass, ruling 2026-08-09"}
+
+  {:id :no-self-narration
+   :status :house
+   :trigger "'we retain', 'we avoid the phrase', 'we do not claim' used to
+             manage the reader rather than scope a result; sentences about the
+             paper rather than the system"
+   :before "A reader should therefore not expect Part~II's causal coordinate
+            to explain Part~III's outcomes, and the paper never asks it to."
+   :after "(sentence deleted; the seam statement already carries it)"
+   :rule "Say the fact once; never add a sentence telling the reader how to
+          read the fact."
+   :why "Editorial self-narration is noise after the claim is stated."
+   :source "scope-seam paragraph, ruling 2026-08-09 ('tying themselves in
+            knots to state a negative fact, why bother')"}
+
+  {:id :state-the-positive
+   :status :house
+   :trigger "claims of the form 'X without Y' / 'does not reproduce' /
+             'fails to' where what actually happens is known and describable"
+   :before "undirected noise prevents freezing without reproducing the found
+            configuration's structure"
+   :after "what it holds looks different: a foam of small frozen islands amid
+           changing surroundings, against the extended frozen and changing
+           regions of the found configuration; the measured difference is
+           frozen fraction, 0.3 against 0.08"
+   :rule "Replace a negative claim with a description of what each state IS,
+          plus the measured difference."
+   :why "Negatives hide the phenomenon; the foam was more interesting than
+         the non-reproduction."
+   :source "Fork 4 ruling 2026-08-09 ('states a negative... what that
+            structure actually *is*')"}
+
+  {:id :concrete-operation
+   :status :house
+   :trigger "nominalizations and insider metaphors standing in for an
+             operation: 'consumed an axis', 'cuts the currency', named
+             constructions used before body-prose definition"
+   :before "It cuts the \\emph{currency} of the read, not the read."
+   :after "the difference is when each frozen field is captured: the ablated
+           control freezes each branch's phenotype at the fork, so the
+           perturbed branch's frozen field contains the flip; the gamma-dial
+           reads a reference field identical in both branches"
+   :rule "Unpack every compressed phrase into the operation it names, with
+          its parameters, before (or instead of) using the compression."
+   :why "A reader cannot reconstruct referents the section never supplies."
+   :source "part2 audit + codex proposals, applied 2026-08-09"}
+
+  {:id :measured-scope
+   :status :house
+   :trigger "'no X exists', 'cannot', 'did not become', universal negatives
+             whose evidence is a finite test set"
+   :before "The search did not become autonomous"
+   :after "The search was not endogenous---the apparatus varied the
+           parameters and scored the runs from outside"
+   :rule "Scope every negative to what was tested, and name the axis on which
+          the thing failed rather than a vaguer stronger one."
+   :why "'We found no X' survives review; 'there is no X' invites refutation
+         (and Droste 2013 later refuted the unscoped reading)."
+   :source "rulings 2026-08-08/09, incl. 'not endogenous' and 'no tested
+            local quantity'"}
+
+  {:id :titles-are-claims
+   :status :house
+   :trigger "section titles that name territory ('Related Constructions',
+             'Analysis', 'Discussion of X')"
+   :before "\\section{Related Constructions}"
+   :after "\\section{Related Work: A New Operator Family Among Familiar
+           Phenomena}"
+   :rule "Every numbered section title states the section's claim. Part
+          titles may name objects (The Permutation Core; Exotypes)."
+   :why "The TOC carries the argument."
+   :source "memory paper-toc-carries-argument; fork-5 rulings"}
+
+  {:id :name-before-use
+   :status :house
+   :trigger "a term first appearing in a caption or later section: check
+             river, ridge, dwell, foam, exotype, pinned, arm"
+   :before "(the river defined only inside a figure caption; 'the ridge'
+            first appearing in a caption)"
+   :after "body prose defines the operation and names it before any caption
+           or later section uses it"
+   :rule "Define and name every construct in body prose at first use;
+          captions may repeat but never introduce."
+   :why "Captions are read out of order; prose is the contract."
+   :source "part2/part3 audits, applied 2026-08-09"}
+
+  {:id :anchor-numbers
+   :status :house
+   :trigger "a threshold or constant appearing exactly once with no stated
+             provenance (the '135' test: grep any bare number in a claim)"
+   :before "fields can remain mobile and propagate damage at effective
+            diversities well above $135$ without mutation"
+   :after "at sustained diversities above $135$ distinct rules---the highest
+           diversity any mechanism of the original survey reaches without
+           replacement mutation or a held genotype (Figure 11, grey band;
+           Supplement 1, Box 12)"
+   :rule "Every number in a claim names its referent and its source; verify
+          the referent against the data, not against memory."
+   :why "Joe's check found the audit's own gloss of 135 was wrong; the data
+         said something sharper."
+   :source "Fork 2 ruling 2026-08-09"}
+
+  {:id :evidence-carries-inspiration
+   :status :house
+   :trigger "a result that exists because a specific work suggested the
+             design, stated without that work's citation"
+   :before "A one-sided rule (write only into long-settled cells) holds a
+            mixed state..."
+   :after "A one-sided rule in the design class of \\textcite{droste2013analytical}
+           ---write only into long-settled cells---holds a mixed state..."
+   :rule "When the literature directed the experiment, the sentence reporting
+          it cites the direction."
+   :why "Provenance is part of the finding."
+   :source "outline 1.3.5/1.3.6 ruling 2026-08-09"}]}
