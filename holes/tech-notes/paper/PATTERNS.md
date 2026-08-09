@@ -45,6 +45,35 @@ cost of one diff read — the leverage the 69 pages need. And the asymmetry
 is the right one: taste is expensive and stays human; application is cheap
 and doesn't.
 
+## The interactive channel (sketched 2026-08-09, build later)
+
+Git diffs capture the *edit*; a highlight-and-speak channel captures the
+*intent at the moment of noticing* — richer, and faster to iterate than
+commit-diff-extract. Prior art exists and worked:
+`futon3c/holes/missions/M-smart-emacs-cursor.md` (the spoken mission loop,
+2026-06-11: voice → Whisper → text → agent → cursor choreography), voice
+input live at `futon0/contrib/voice-typing.el`, routing in
+`futon3c/scripts/voice-route/`. That ran against the legacy CLI; the
+pipeline is surface-agnostic enough to port.
+
+Port to the tufte-HTML surface (127.0.0.1:8129/draft9-tufte.html):
+- a small JS layer: on text selection + hotkey, capture
+  `window.getSelection()` plus the nearest anchored element id, and POST
+  `{selection, anchor-id, note}` to a local receiver that appends to
+  `paper/edit-notes.jsonl`;
+- the note is typed or spoken (reuse the Whisper pipeline; the transcription
+  lands in the same POST);
+- selection → tex-source mapping needs no new machinery: the
+  verbatim-greps-once discipline applies to prose selections exactly as to
+  OLD blocks, and the anchor id narrows the search when a phrase repeats.
+The extraction pass then consumes `edit-notes.jsonl` alongside (or instead
+of) git diffs; everything downstream — :candidate entries, promotion by
+ruling, per-pattern sweeps — is unchanged. Emacs-as-surface is the same
+loop with region-highlight in place of browser selection, per
+M-smart-emacs-cursor's revival notes (it stalled when dispatched for
+autonomous building; it is inherently interactive — build it WITH the
+operator at the keyboard).
+
 ## Practical notes
 
 - Sweeps should run per-pattern, not per-file, so each proposal batch is
