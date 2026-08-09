@@ -1,0 +1,40 @@
+# -*- mode: Perl -*-
+# csquotes -> LaTeXML stub.
+#
+# Rationale: LaTeXML ships a csquotes binding, but line 25 of it does
+#   InputDefinitions('csquotes', type => 'sty', noltxml => 1);
+# i.e. it deliberately reads the REAL csquotes.sty, which loads expl3, which
+# LaTeXML 0.8.8 cannot interpret -- it dies inside expl3-code.tex around line
+# 35560 ("Negative argument for \prg_replicate:nn"). That single cascade is
+# what kills the whole conversion.
+#
+# This paper loads csquotes only because biblatex conventionally asks for it,
+# and uses none of its commands (verified: 0 occurrences of \enquote and
+# friends across the paper and all supplements). So we shadow the stock
+# binding with a self-contained one that never touches the real .sty.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DeclareOption(undef, sub { });    # swallow autostyle, german=guillemets, etc.
+
+# Typographic quotes, defined natively so no real source is read.
+# Starred form must be declared as OptionalMatch:*, not a bare '*'.
+DefMacro('\enquote OptionalMatch:* {}', '\lq\lq #2\rq\rq');
+DefMacro('\foreignquote{}{}',  '\lq\lq #2\rq\rq');
+DefMacro('\hyphenquote{}{}',   '\lq\lq #2\rq\rq');
+DefMacro('\textquote[]{}',     '\lq\lq #2\rq\rq');
+DefMacro('\foreigntextquote{}[]{}', '\lq\lq #3\rq\rq');
+DefMacro('\blockquote[]{}',    '\par #2\par');
+DefMacro('\foreignblockquote{}[]{}', '\par #3\par');
+
+# Configuration commands: accept and discard.
+DefMacro('\MakeOuterQuote{}',   '');
+DefMacro('\MakeInnerQuote{}',   '');
+DefMacro('\MakeAutoQuote{}{}',  '');
+DefMacro('\SetBlockThreshold{}', '');
+DefMacro('\setquotestyle[]{}',  '');
+DefMacro('\DeclareQuoteStyle{}{}{}{}{}', '');
+
+1;

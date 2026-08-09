@@ -1,0 +1,76 @@
+# -*- mode: Perl -*-
+# paperboxes -- project-specific binding for this paper's typed tcolorboxes.
+#
+# The paper defines seven typed boxes in its preamble by wrapping tcolorbox in
+# \NewDocumentEnvironment. Those definitions are drawing instructions (colours,
+# rules, corner radii) wrapped around a counter and a title. HTML wants the
+# semantics, not the drawing, so rather than emulate tcolorbox we define the
+# seven environments directly as LaTeXML theorem-like blocks: real counter,
+# real title, real label so \ref and \autoref resolve.
+#
+# Preload this (--preload=paperboxes.sty) so the definitions exist before the
+# document's own \NewDocumentEnvironment calls; our xparse stub then leaves
+# already-defined environments alone.
+#
+# Invocation forms in the sources:
+#   \begin{theorem}[label={thm:parity}]            ... no title argument
+#   \begin{definition}[label={def:river}]{River}   ... title argument
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+# $env      environment name as used in the sources
+# $heading  word shown before the number
+# $hastitle whether a mandatory {title} argument follows the options
+sub DefPaperBox {
+  my ($env, $heading, $hastitle) = @_;
+  my $counter = 'paperbox' . $env;
+  NewCounter($counter, 'document', idprefix => 'pb' . substr($env, 0, 3));
+  DefMacroI(T_CS('\the' . $counter), undef, '\arabic{' . $counter . '}');
+
+  my $title = "<ltx:title class='ltx_title ltx_runin'>$heading #refnum"
+    . ($hastitle ? ': #2' : '') . '</ltx:title>';
+  my $proto = "{$env} OptionalKeyVals" . ($hastitle ? ' {}' : '');
+
+  DefEnvironment($proto,
+    "<ltx:theorem xml:id='#id' labels='#labels' refnum='#refnum'"
+      . " class='ltx_theorem paperbox paperbox-$env'>"
+      . $title
+      . '#body'
+      . '</ltx:theorem>',
+    properties => sub {
+      my ($stomach, $keyvals) = @_;
+      my %props = RefStepCounter($counter);
+      # RefStepCounter in LaTeXML 0.8.8 returns only 'tags' and 'id' -- NOT
+      # 'refnum' (see sub RefStepCounter in Package.pm). Without setting it
+      # ourselves the title renders as "Definition : Title" with no number.
+      # The counter has already been stepped, so \the<counter> is current.
+      $props{refnum} = DigestText(T_CS('\the' . $counter));
+      # Honour [label={...}] so cross-references into the boxes resolve.
+      if ($keyvals) {
+        my $label = $keyvals->getValue('label');
+        $props{labels} = 'LABEL:' . ToString($label) if defined $label; }
+      return %props; });
+  return; }
+
+#            environment           heading              title arg?
+DefPaperBox('theorem',          'Theorem',           0);
+DefPaperBox('corollary',        'Corollary',         0);
+DefPaperBox('definition',       'Definition',        1);
+DefPaperBox('proposition',      'Proposition',       1);
+DefPaperBox('observation',      'Observation',       1);
+DefPaperBox('empiricalfinding', 'Empirical finding', 1);
+DefPaperBox('workedexample',    'Worked example',    1);
+
+# \ContinuedFloat (caption/subcaption) renumbers a float that is split across
+# pages. HTML floats are not split, so continuing one is a no-op.
+DefMacro('\ContinuedFloat', '');
+
+# Folding is a print-compression device (suppress a box body to save pages).
+# On the web there are no pages, so a folded box simply shows its content.
+DefMacro('\foldmark',        '');
+DefMacro('\paperboxfoldtrue',  '');
+DefMacro('\paperboxfoldfalse', '');
+
+1;

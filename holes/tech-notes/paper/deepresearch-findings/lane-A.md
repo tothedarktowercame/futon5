@@ -1,0 +1,344 @@
+# Lane A — Rule-rewriting operators as first-class objects
+
+Researcher: claude subagent, 2026-08-08. Brief:
+`/home/joe/code/futon5/holes/tech-notes/paper/deepresearch-related-work-brief.md`
+
+## Verdict on the paper's claim
+
+**The claim survives, but it must be narrowed to survive cleanly.**
+
+What I could NOT find, after searching across the physics / ALife / CS vocabularies
+(structurally dynamic CA, self-modifying CA, rule-changing CA, non-uniform CA, adaptive
+CA, programmable CA, graph-rewriting automata, group actions on rule space, evolution in
+rule space):
+
+- No prior work that takes a **group-theoretic family of maps rule-table → rule-table**,
+  **enumerates it exhaustively**, applies it **as the update law of a running lattice**,
+  and **derives the fixed-point structure of the operator** (our "every cycle of sigma
+  even" criterion) as a theorem. Every near neighbour breaks at least one of those four
+  conjuncts, usually two.
+
+What DOES exist, and what the Related Work must therefore concede:
+
+1. **Exhaustively classified transformations of ECA rule space already exist** — Cattaneo,
+   Formenti, Margara & Mauri (1997) do exactly the "enumerate a family of rule-space maps
+   and give exact cardinalities of the induced quotient sets" move, including a "double
+   permutation" construction. Their maps are *static conjugacies* (they classify rules into
+   dynamically-equivalent orbits), not *operators iterated on a live lattice*. This is the
+   single closest formal neighbour and the paper should cite and distinguish it explicitly.
+   If a reviewer knows one thing in this space, it is likely this or Li & Packard.
+2. **Rule-as-part-of-state, locally adapted, is not new** — Khajehabdollahi et al. (ALIFE
+   2023) concatenate rule parameters onto the cell state and update them locally. See the
+   contradiction flag below: their *local* variant self-tunes an Ising lattice to its
+   critical temperature, which is a positive of exactly the kind Part III reports as absent.
+3. **Per-cell heterogeneous rules under local update** is a 30-year-old genre (Sipper's
+   non-uniform CA / cellular programming). The exotype layer in Part III is a
+   *deterministic operator* version of that, not the first per-cell-rule lattice.
+4. **The recency test**: the most recent comprehensive CA taxonomy (Rollier et al., CNSNS
+   2024) has five families — asynchronous, stochastic, multi-state, extended-neighbourhood,
+   non-uniform — and no category for rules rewritten by an operator during evolution. Its
+   non-uniform section covers spatial and temporal rule *heterogeneity* (predetermined
+   assignments), not rule *modification*. That is the cleanest citable evidence that the
+   niche is genuinely unoccupied, and it is a stronger move than asserting the gap.
+
+Also worth knowing (no citation needed, but a reviewer may raise it): the Part I result
+"every fixed rule has lambda = 1/2" is, at the Boolean-function level, the general form of
+the elementary fact that a **self-dual** (equivalently self-anti-dual) Boolean function is
+balanced — anti-invariance under a permutation pairs truth-table positions with opposite
+values along each cycle, which forces even cycles and weight 4. Nothing in the searched
+literature states the permutation-generalised version, but the paper should not present the
+balance consequence as surprising; the surprise is that it makes the *edge-of-chaos
+coordinate* degenerate, which is the novel part.
+
+Searched and empty (audited negatives): "metamorphic cellular automata"; CA whose rule
+evolves by a deterministic map on the rule table; "8!"/"40320" operator families on rule
+space; rule fields copied between neighbours as a two-layer fast-state / slow-rule system;
+group actions combining permutation *and* negation of truth-table positions (the literature
+group is reflection x state-complement, order 4 — already covered by svozil2025symmetries).
+
+---
+
+## Items
+
+### A1. Cattaneo, Formenti, Margara & Mauri (1997) — Transformations of the 1D CA rule space
+
+- **Citation**: G. Cattaneo, E. Formenti, L. Margara, G. Mauri, "Transformations of the
+  one-dimensional cellular automata rule space", *Parallel Computing* 23(11):1593–1611, 1997.
+- **Identifier**: DOI 10.1016/S0167-8191(97)00076-8
+- **URL seen**: https://webusers.i3s.unice.fr/~formenti/publications/ (author's own
+  publication list, entry [R1]); DOI resolved via https://doi.org/10.1016/S0167-8191(97)00076-8
+  → https://linkinghub.elsevier.com/retrieve/pii/S0167819197000768, matching the
+  ScienceDirect article page for this title.
+- **What it does**: Introduces the notion of *double permutation* to study particular classes
+  of transformations of the one-dimensional CA rule space. The classes are characterised by
+  which metrical, language-theoretic and dynamical properties they preserve, each class
+  inducing an equivalence relation on rule space; the paper gives **exact cardinalities of
+  the quotient sets** generated by those relations.
+- **Relevance**: Part I — this is the closest existing instance of "an enumerated,
+  exactly classified family of rule-space transformations", and the Related Work must
+  distinguish it: their transformations are static conjugacies used to *partition* rule
+  space, applied once, with no notion of iterating an operator on a live lattice and hence
+  no fixed-rule / cycle-parity structure.
+- **Tier**: must-cite. **Contradicts**: no (near-miss on the "enumerated + classified" half
+  of the claim; leaves the "operator on a running system + derived fixed points" half intact).
+- **Verification**: seen-on-page. Caveat: I could not load the ScienceDirect abstract itself
+  (403); the citation is taken from Formenti's own publication page and the DOI redirect
+  target's PII matches. Page numbers 1593–1611 confirmed on the author page.
+
+### A2. Khajehabdollahi, Giannakakis, Buendía, Martius & Levina (2023) — Locally adaptive CA
+
+- **Citation**: S. Khajehabdollahi, E. Giannakakis, V. Buendía, G. Martius, A. Levina,
+  "Locally adaptive cellular automata for goal-oriented self-organization", *ALIFE 2023:
+  Proceedings of the Artificial Life Conference*, MIT Press; arXiv:2306.07067.
+- **Identifier**: arXiv:2306.07067 (DOI 10.48550/arXiv.2306.07067)
+- **URL seen**: https://arxiv.org/abs/2306.07067 and https://arxiv.org/html/2306.07067
+- **What it does**: Defines a class of adaptive CA in which the update rule is coupled to
+  itself and to the system state locally, by **concatenating the cell state sigma_i(t) with
+  the parameters theta_i(t) of that cell's local update rule** — i.e. the rule is carried in
+  the state, exactly the genotype/phenotype split of our model. Two demonstrations: a
+  self-organising Ising model that reaches and holds its critical temperature, and plastic
+  (rate and spiking) neural networks.
+- **Relevance**: both Part II and Part III — it is the modern construction closest to ours
+  (rule parameters in the cell state, updated as a function of the state field), and its
+  Ising result is a claimed *positive* where Part III reports a negative.
+- **Tier**: must-cite. **Contradicts**: **YES — flag loudly.**
+- **Contradiction note**: The paper's Ising model comes in two variants. The **global**
+  variant "updates the system's global temperature using global magnetization measurements".
+  The **local** variant has "each cell/spin site take a measurement of its nearest neighbors'
+  magnetization" and diffuses the local temperature parameter — and it still self-organises
+  to criticality. That is a *locally computable quantity that tunes an adaptive-rule lattice
+  to a critical point*, which is precisely the kind of thing Part III reports it could not
+  find. It does not literally refute Part III (different order parameter: thermal criticality
+  in an Ising lattice with a continuous temperature knob, versus holding changing/frozen
+  coexistence in ECA rule space with a discrete adoption rule; and our negative is scoped to
+  *tested* quantities in *our* system), but a referee who knows this paper will ask why our
+  local quantities fail where local-neighbourhood magnetisation succeeds. The honest answer
+  the paper can give — that their local knob is a continuous, conserved-ish diffusive
+  temperature whereas our adoption is high-precision and discrete, which is itself our
+  freezing artefact — should be written down rather than discovered in review.
+- **Verification**: seen-on-page (abstract + HTML full text, Ising section).
+
+### A3. Rollier, Zielinski, Daly, Bruno & Baetens (2024) — A comprehensive taxonomy of CA
+
+- **Citation**: M. Rollier, K. M. C. Zielinski, A. J. Daly, O. M. Bruno, J. M. Baetens,
+  "A comprehensive taxonomy of cellular automata", *Communications in Nonlinear Science and
+  Numerical Simulation*, article 108362, 2024; arXiv:2401.08408.
+- **Identifier**: DOI 10.1016/j.cnsns.2024.108362 (arXiv:2401.08408)
+- **URL seen**: https://arxiv.org/abs/2401.08408 and https://arxiv.org/html/2401.08408
+- **What it does**: A methodical survey organising CA into five families — asynchronous,
+  stochastic, multi-state, extended-neighbourhood, and non-uniform — each with a mathematical
+  definition, its variations, a **genotype/phenotype** analysis (genotype = information from
+  the model definition, e.g. the rule table and Langton's lambda; phenotype = information
+  from the simulation outcome, e.g. Wolfram classes, Lyapunov exponents) and applications.
+- **Relevance**: Part I / framing — two uses. (i) It supplies the *established* genotype /
+  phenotype vocabulary for CA, which our model literally reifies (our genotype is a per-cell
+  runtime object, not a property of the model definition) — that is a one-sentence, high-value
+  contrast for the introduction. (ii) It is the citable instrument for the gap claim: the most
+  recent comprehensive taxonomy has no family for rules rewritten during evolution, and its
+  non-uniform family covers only spatial/temporal rule *heterogeneity* with predetermined
+  assignments.
+- **Tier**: must-cite. **Contradicts**: no — it supports the gap claim.
+- **Verification**: seen-on-page. Caveat: the arXiv abs page shows no journal-reference
+  string, only the related DOI; volume/pages beyond the article number 108362 not confirmed.
+
+### A4. Sipper (1996) — Co-evolving non-uniform cellular automata to perform computations
+
+- **Citation**: M. Sipper, "Co-evolving non-uniform cellular automata to perform computations",
+  *Physica D* 92(3–4):193–208, 1996.
+- **Identifier**: DOI 10.1016/0167-2789(95)00286-3
+- **URL seen**: https://doi.org/10.1016/0167-2789(95)00286-3 →
+  https://linkinghub.elsevier.com/retrieve/pii/0167278995002863 (PII matches the ScienceDirect
+  article page https://www.sciencedirect.com/science/article/abs/pii/0167278995002863 returned
+  for this exact title).
+- **What it does**: Cellular programming: a non-uniform CA in which **each cell holds its own
+  rule**, and rules are co-evolved by a *local* algorithm — fitness is computed per cell and
+  rules are exchanged with neighbours — rather than by a global GA over a single rule. For
+  radius r = 1 the evolved non-uniform CAs reach density-classification performance ~0.93–0.94
+  against a maximum of ~0.83 for any uniform CA.
+- **Relevance**: Part III — this is the reference genre for "per-cell rule, updated by a local
+  selection rule with neighbour exchange". Our exotype layer differs in that the thing
+  inherited between neighbours is a *rule-rewriting operator*, not the rule itself, and the
+  selection rule is a fixed deterministic optimiser rather than an evolutionary search for an
+  externally specified task; but the Related Work cannot claim per-cell heritable rules as new.
+- **Tier**: must-cite. **Contradicts**: no.
+- **Verification**: seen-on-page (DOI redirect + search-returned article page); I could not
+  load the ScienceDirect abstract text itself (403), so the abstract wording above is from the
+  search index and Sipper's own summary of the work, not quoted from the publisher page.
+
+### A5. Ilachinski & Halpern (1987) — Structurally dynamic cellular automata
+
+- **Citation**: A. Ilachinski, P. Halpern, "Structurally dynamic cellular automata",
+  *Complex Systems* 1(3):503–527, 1987.
+- **Identifier**: none (Complex Systems has no DOI for this issue)
+- **URL seen**: https://www.complex-systems.com/abstracts/v01_i03_a07/
+- **What it does**: "A new kind of cellular automaton (CA) model is introduced in which binary
+  value-configurations and the (conventionally quiescent) underlying topological structure are
+  dynamically coupled. Topology alterations are defined by local transition rules analogous to
+  the value functions studied in conventional CA models defined on fixed lattices." Reports
+  growth, decay, periodicity and relaxation to states of stable effective dimensionality.
+- **Relevance**: Part I / framing — the canonical prior "the CA rewrites part of itself while
+  running" construction, and the one a reviewer will name first. Distinguish along a clean
+  axis: SDCA rewrite the **substrate** (which cells are neighbours) and leave the local
+  function fixed; we rewrite the **local function** and leave the substrate fixed. Both are
+  two-layer systems with a fast state process on a slowly self-modifying layer; SDCA's coupling
+  rules are a small hand-specified family, not an exhaustively classified group with derived
+  fixed points.
+- **Tier**: must-cite. **Contradicts**: no.
+- **Verification**: seen-on-page (abstract read verbatim from the publisher abstract page;
+  fetched with certificate verification relaxed, as complex-systems.com presents an incomplete
+  chain).
+
+### A6. Tomita, Murata & Kurokawa (2007) — Self-description on graph-rewriting automata
+
+- **Citation**: K. Tomita, S. Murata, H. Kurokawa, "Self-description for construction and
+  computation on graph-rewriting automata", *Artificial Life* 13(4):383–396, 2007.
+- **Identifier**: DOI 10.1162/artl.2007.13.4.383
+- **URL seen**: https://pubmed.ncbi.nlm.nih.gov/17716018/
+- **What it does**: Graph-rewriting automata extend CA from a fixed lattice to a dynamic graph
+  with local graph-rewriting rules, so structural change and state transition are simultaneous.
+  This paper adds **self-description**: a "metanode" structure that **embeds the rule set inside
+  the graph**, giving "universal graph-rewriting automata that can serve as a model of systems
+  that maintain themselves through replication and modification". Elsewhere in this line the
+  authors construct rule sets three ways — hand-coding, evolutionary generation, and
+  **exhaustive search**.
+- **Relevance**: Part I / framing — this is the strongest representative of the von Neumann
+  self-modification lineage that actually makes the rule set a manipulable object inside the
+  system rather than an external parameter. Differentiator: the rewriting there is a
+  *construction/replication* mechanism aimed at universality, with the rule set treated as data
+  to be copied and edited, not as the argument of a classified family of algebraic operators
+  with a fixed-point theorem.
+- **Tier**: enriches. **Contradicts**: no.
+- **Verification**: seen-on-page (PubMed record: title, authors, journal, volume, issue, pages,
+  year, DOI, abstract).
+
+### A7. Li & Packard (1990) — The structure of the elementary cellular automata rule space
+
+- **Citation**: W. Li, N. Packard, "The structure of the elementary cellular automata rule
+  space", *Complex Systems* 4(3):281–297, 1990.
+- **Identifier**: none (Complex Systems, no DOI)
+- **URL seen**: https://www.complex-systems.com/abstracts/v04_i03_a03/
+- **What it does**: Treats the 256-rule ECA space as a *space* with structure: computes the
+  probability that a rule is "connected to" (one truth-table bit away from) another rule of the
+  same behavioural class (intra-class 0.3–0.5) versus a different class, showing strong
+  clustering of similar behaviour; and separately groups rules by mean-field description into
+  nonlinear / linear / inversely linear clusters according to the "hot bits" of the rule table.
+- **Relevance**: Part I — the prior art for "operators acting on truth-table positions,
+  applied exhaustively across all 256 rules". Their operator family is the eight single-bit
+  flips (the rule-space hypercube); ours is the 8! permutations-with-negation. Useful both as
+  the precedent to build outward from and as the contrast that shows the group-theoretic family
+  is a genuine step up: single-bit flips have no interesting fixed-point structure, an S_8
+  action does.
+- **Tier**: enriches. **Contradicts**: no.
+- **Verification**: seen-on-page (abstract read verbatim; same certificate caveat as A5).
+
+### A8. Miszczak (2023) — Rule switching mechanisms in the Game of Life
+
+- **Citation**: J. A. Miszczak, "Rule switching mechanisms in the Game of Life with synchronous
+  and asynchronous updating policy", *Physica Scripta* 98:115210, 2023; arXiv:2310.05979.
+- **Identifier**: arXiv:2310.05979
+- **URL seen**: https://arxiv.org/abs/2310.05979
+- **What it does**: An extended Game of Life "with the dynamical process governing the rule
+  selection at each step" — i.e. the rule in force is itself the output of a dynamical process
+  — studied under synchronous and asynchronous updating, showing that the synchronisation
+  policy controls a stability/growth trade-off.
+- **Relevance**: Part I / framing — evidence that "the rule is a dynamical variable" is a live
+  contemporary idea, so the paper should not claim the *idea* is new; but the switching process
+  here selects among a handful of named rules by a stochastic/dynamical schedule, with no
+  enumeration or classification of the switching maps and no fixed-point analysis. Cite as the
+  most recent instance of the genre being differentiated.
+- **Tier**: enriches. **Contradicts**: no.
+- **Verification**: seen-on-page for title/author/date/abstract framing; the journal reference
+  (Physica Scripta 98, 115210, 2023) was reported by the abs page but I did not confirm a
+  publisher DOI, so the BibTeX below carries no DOI.
+
+---
+
+## BibTeX
+
+```bibtex
+@article{cattaneo1997transformations,
+  author  = {Cattaneo, Gianpiero and Formenti, Enrico and Margara, Luciano and Mauri, Giancarlo},
+  title   = {Transformations of the one-dimensional cellular automata rule space},
+  journal = {Parallel Computing},
+  volume  = {23},
+  number  = {11},
+  pages   = {1593--1611},
+  year    = {1997},
+  doi     = {10.1016/S0167-8191(97)00076-8}
+}
+
+@inproceedings{khajehabdollahi2023locally,
+  author    = {Khajehabdollahi, Sina and Giannakakis, Emmanouil and Buend{\'\i}a, Victor
+               and Martius, Georg and Levina, Anna},
+  title     = {Locally adaptive cellular automata for goal-oriented self-organization},
+  booktitle = {ALIFE 2023: Proceedings of the Artificial Life Conference},
+  publisher = {MIT Press},
+  year      = {2023},
+  note      = {arXiv:2306.07067},
+  doi       = {10.48550/arXiv.2306.07067}
+}
+
+@article{rollier2024taxonomy,
+  author  = {Rollier, Michiel and Zielinski, Kallil M. C. and Daly, Aisling J.
+             and Bruno, Odemir M. and Baetens, Jan M.},
+  title   = {A comprehensive taxonomy of cellular automata},
+  journal = {Communications in Nonlinear Science and Numerical Simulation},
+  pages   = {108362},
+  year    = {2024},
+  doi     = {10.1016/j.cnsns.2024.108362},
+  note    = {arXiv:2401.08408}
+}
+
+@article{sipper1996coevolving,
+  author  = {Sipper, Moshe},
+  title   = {Co-evolving non-uniform cellular automata to perform computations},
+  journal = {Physica D},
+  volume  = {92},
+  number  = {3--4},
+  pages   = {193--208},
+  year    = {1996},
+  doi     = {10.1016/0167-2789(95)00286-3}
+}
+
+@article{ilachinski1987structurally,
+  author  = {Ilachinski, Andrew and Halpern, Paul},
+  title   = {Structurally dynamic cellular automata},
+  journal = {Complex Systems},
+  volume  = {1},
+  number  = {3},
+  pages   = {503--527},
+  year    = {1987}
+}
+
+@article{tomita2007selfdescription,
+  author  = {Tomita, Kohji and Murata, Satoshi and Kurokawa, Haruhisa},
+  title   = {Self-description for construction and computation on graph-rewriting automata},
+  journal = {Artificial Life},
+  volume  = {13},
+  number  = {4},
+  pages   = {383--396},
+  year    = {2007},
+  doi     = {10.1162/artl.2007.13.4.383}
+}
+
+@article{lipackard1990structure,
+  author  = {Li, Wentian and Packard, Norman},
+  title   = {The structure of the elementary cellular automata rule space},
+  journal = {Complex Systems},
+  volume  = {4},
+  number  = {3},
+  pages   = {281--297},
+  year    = {1990}
+}
+
+@article{miszczak2023ruleswitching,
+  author  = {Miszczak, Jaros{\l}aw Adam},
+  title   = {Rule switching mechanisms in the {Game of Life} with synchronous
+             and asynchronous updating policy},
+  journal = {Physica Scripta},
+  volume  = {98},
+  pages   = {115210},
+  year    = {2023},
+  note    = {arXiv:2310.05979}
+}
+```

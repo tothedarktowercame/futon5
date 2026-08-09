@@ -1,0 +1,90 @@
+# -*- mode: Perl -*-
+# biblatex -> LaTeXML binding.
+#
+# Rationale: LaTeXML ships NO biblatex binding, so it would read the real
+# biblatex.sty. We instead map biblatex's citation commands onto natbib's,
+# which LaTeXML implements natively (no InputDefinitions, no expl3).
+#
+#   \parencite  ->  \citep   ("(Author, year)")
+#   \textcite   ->  \citet   ("Author (year)")
+#
+# The optional-argument conventions line up: biblatex's single optional arg is
+# a postnote, and natbib with one optional arg also reads it as the postnote,
+# so \textcite[Problem~5.34(c)]{key} survives the trip intact.
+#
+# The bibliography itself is resolved at the latexmlpost stage from a
+# LaTeXML-converted refs.bib; the biber .bbl is NOT usable here because it is
+# in biblatex's internal \entry{} format, which needs biblatex's own macro
+# machinery to render.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DeclareOption(undef, sub { });    # swallow style=apa, backend=biber, etc.
+
+RequirePackage('natbib');
+
+# --- resource tracking ------------------------------------------------------
+# \addbibresource{refs.bib} records the basename so \printbibliography can
+# emit the equivalent \bibliography{refs}.
+DefPrimitive('\addbibresource[]{}', sub {
+    my ($stomach, $opt, $arg) = @_;
+    my $name = ToString($arg);
+    $name =~ s/\.bib$//;
+    my $seen = LookupValue('BIBLATEX_RESOURCES') || [];
+    push(@$seen, $name);
+    AssignValue('BIBLATEX_RESOURCES' => $seen, 'global');
+    return; });
+DefPrimitive('\addglobalbib[]{}', undef);
+DefPrimitive('\addsectionbib[]{}', undef);
+
+DefMacro('\printbibliography[]', sub {
+    my $seen  = LookupValue('BIBLATEX_RESOURCES') || [];
+    my $files = join(',', @$seen) || 'refs';
+    return (T_CS('\bibliography'), T_BEGIN, Explode($files), T_END); });
+
+DefMacro('\printbibheading[]',  '');
+DefMacro('\printshorthands[]',  '');
+
+# --- citation commands ------------------------------------------------------
+# Forwarding must REBUILD the brackets. Interpolating an optional argument as
+# '#2' in a replacement string yields its *content* without the surrounding
+# [ ], so '\citet#1#2#3{#4}' turned \textcite[Problem~5.34(c)]{stanley...}
+# into "\citet Problem~5.34(c){stanley...}", and natbib then read the bare 'P'
+# as the citation key. Emit the delimiters explicitly instead.
+#
+# Optional-argument semantics line up between the two packages: biblatex's
+# single optional argument is the postnote, and natbib also reads a lone
+# optional as the postnote, so a one-argument call forwards unchanged.
+sub forward_cite {
+  my ($target) = @_;
+  return sub {
+    my ($gullet, $star, $pre, $post, $keys) = @_;
+    my @out = (T_CS($target));
+    push(@out, T_OTHER('*')) if $star;
+    foreach my $opt (grep { defined } ($pre, $post)) {
+      push(@out, T_OTHER('['), $opt->unlist, T_OTHER(']')); }
+    push(@out, T_BEGIN, $keys->unlist, T_END);
+    return @out; }; }
+
+DefMacro('\parencite  OptionalMatch:* [][] Semiverbatim', forward_cite('\\citep'));
+DefMacro('\textcite   OptionalMatch:* [][] Semiverbatim', forward_cite('\\citet'));
+DefMacro('\autocite   OptionalMatch:* [][] Semiverbatim', forward_cite('\\citep'));
+DefMacro('\smartcite  OptionalMatch:* [][] Semiverbatim', forward_cite('\\citep'));
+DefMacro('\citetitle  OptionalMatch:* [][] Semiverbatim', forward_cite('\\citep'));
+DefMacro('\fullcite   OptionalMatch:* [][] Semiverbatim', forward_cite('\\citep'));
+DefMacro('\citeyear   OptionalMatch:* [][] Semiverbatim', forward_cite('\\citeyearpar'));
+DefMacro('\citeauthor OptionalMatch:* [][] Semiverbatim', forward_cite('\\citeauthor'));
+DefMacro('\supercite Semiverbatim',                       '\citep{#1}');
+DefMacro('\nocite Semiverbatim',                          '');
+
+# Formatting hooks: accept and discard.
+DefMacro('\DeclareLanguageMapping{}{}', '');
+DefMacro('\DeclareFieldFormat[]{}{}',   '');
+DefMacro('\DeclareNameAlias{}{}',       '');
+DefMacro('\AtEveryBibitem{}',           '');
+DefMacro('\defbibheading{}[]{}',        '');
+DefMacro('\ExecuteBibliographyOptions[]{}', '');
+
+1;

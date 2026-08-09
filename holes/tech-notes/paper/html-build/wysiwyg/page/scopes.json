@@ -1,0 +1,20 @@
+{
+  "generated-by": "make-scope-table.py (M-latex-wysiwyg S1)",
+  "page": "draft9.html",
+  "src-dir": "/home/joe/code/futon5/holes/tech-notes/paper",
+  "files": [
+    "draft9.tex",
+    "intro-v2-generated.tex",
+    "part3-exotype-v9.tex",
+    "draft9.bbl"
+  ],
+  "anchor-count": 2404,
+  "source-sha": {
+    "draft9.tex": "1c107f68f3a76b7e",
+    "intro-v2-generated.tex": "4598edf1c395ebee",
+    "part3-exotype-v9.tex": "ef52cbe18030265a",
+    "draft9.bbl": "3a0dc00d5253f2d6"
+  },
+  "confidence": {},
+  "notes": []
+}

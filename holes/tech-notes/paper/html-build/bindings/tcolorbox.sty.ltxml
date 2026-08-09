@@ -1,0 +1,47 @@
+# -*- mode: Perl -*-
+# tcolorbox -> LaTeXML stub.
+#
+# Rationale: LaTeXML's stock tcolorbox binding does
+#   RequirePackage('expl3'); RequirePackage('xparse');
+#   InputDefinitions('tcolorbox', type => 'sty', noltxml => 1);
+# so it reads the real (expl3-based) tcolorbox.sty and dies in expl3-code.tex.
+#
+# tcolorbox's job is to *draw boxes*. In HTML we want the semantics the boxes
+# carry, not the drawing, so this stub swallows all the geometry keys and the
+# \newtcolorbox declarations. The paper's typed environments (theorem,
+# definition, empirical finding, ...) are given real markup by the companion
+# paperboxes binding instead.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DeclareOption(undef, sub { });    # 'most', 'many', 'skins', ...
+
+RequirePackage('xcolor');
+# The real tcolorbox loads tikz, and the paper calls \usetikzlibrary directly
+# (and has one tikzpicture). LaTeXML's stock tikz binding is safe -- verified
+# in isolation: converts clean in ~16s with no expl3 involvement.
+RequirePackage('tikz');
+
+# Box-geometry configuration: accept and discard.
+DefPrimitive('\tcbset{}',            undef);
+DefPrimitive('\tcbuselibrary{}',     undef);
+DefPrimitive('\tcolorboxenvironment{}{}', undef);
+DefPrimitive('\newtcbox[]{}[][]{}',  undef);
+
+# \newtcolorbox[init]{name}[nargs][default]{settings}
+# Declares a box environment. We record nothing: the paper wraps each of these
+# in a \NewDocumentEnvironment, and paperboxes supplies the real markup.
+DefPrimitive('\newtcolorbox[]{}[][]{}',   undef);
+DefPrimitive('\renewtcolorbox[]{}[][]{}', undef);
+
+DefMacro('\thetcbcounter', '');
+DefMacro('\tcblower',      '');
+DefMacro('\tcbline',       '');
+
+# Generic fallback for a raw \begin{tcolorbox}...\end{tcolorbox}.
+DefEnvironment('{tcolorbox} OptionalKeyVals',
+  "<ltx:para class='ltx_tcolorbox'>#body</ltx:para>");
+
+1;

@@ -12,3 +12,7 @@ main.pdf
 *.synctex.gz
 draft.pdf
 *.fff
+draft8a.tex
+intro-generated-a.tex
+part3-exotype-a.tex
+wysiwyg-edits.jsonl

@@ -1,0 +1,14 @@
+# -*- mode: Perl -*-
+# needspace -> LaTeXML stub. No binding ships with LaTeXML, and \needspace is
+# a pure page-breaking hint with no meaning in reflowable HTML. (The paper
+# loads it but never calls it; this exists so the real .sty is never read.)
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DeclareOption(undef, sub { });
+DefMacro('\needspace{}', '');
+DefMacro('\Needspace OptionalMatch:* {}', '');
+
+1;

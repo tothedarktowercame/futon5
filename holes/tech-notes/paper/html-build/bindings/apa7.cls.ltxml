@@ -1,0 +1,85 @@
+# -*- mode: Perl -*-
+# apa7 -> LaTeXML binding.
+#
+# Rationale: LaTeXML ships no apa7 binding, so it falls back to reading the
+# real apa7.cls, which cascades into interpreting expl3-code.tex in Perl and
+# dies (~line 35560). For HTML output apa7 is, semantically, article plus APA
+# frontmatter -- the rest of apa7 is print page layout, which HTML discards
+# anyway. So we map it onto article and supply only the frontmatter commands.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+# ---------------------------------------------------------------- options --
+# apa7 modes and knobs. All are print-layout concerns; accept and ignore.
+foreach my $opt (qw(man jou doc stu
+  10pt 11pt 12pt
+  floatsintext nofloatsintext
+  donotrepeattitle noextraspace
+  helv times mathnormal
+  draftall draftfirst draftmarks
+  a4paper letterpaper
+  biblatex natbib apacite
+  longtable babel)) {
+  DeclareOption($opt, undef); }
+# Anything unrecognised: hand to article rather than erroring out.
+DeclareOption(undef, sub {
+    PassOptions('article', 'cls', ToString(Digest(T_CS('\CurrentOption')))); });
+
+LoadClass('article', withoptions => 1);
+RequirePackage('hyperref');    # apa7 loads hyperref itself; \texorpdfstring et al.
+# \NewDocumentEnvironment is a kernel command in current LaTeX, so the paper
+# never \usepackage{xparse} -- but LaTeXML 0.8.8's kernel lacks it. Pull in our
+# xparse stub here so those definitions resolve.
+RequirePackage('xparse');
+
+# ----------------------------------------------------------- frontmatter --
+# \shorttitle is the running head; the closest ltx: analogue is toctitle.
+DefMacro('\shorttitle{}', '\@add@frontmatter{ltx:toctitle}{#1}');
+
+# NOTE (limitation): apa7 accepts a comma-separated list in \authorsnames and a
+# brace-group list in \authorsaffiliations. Brace-aware splitting is fiddly at
+# binding level and this paper has a single author, so we emit one creator and
+# attach the affiliation block whole. Multi-author apa7 docs will render all
+# names in one <creator> -- correct-looking, but not separately marked up.
+DefMacro('\authorsnames{}',
+  '\@add@frontmatter{ltx:creator}[role=author]{\@personname{#1}}');
+DefMacro('\authorsaffiliations{}',
+  '\@add@to@frontmatter{ltx:creator}{\lx@@@contact{affiliation}{#1}}');
+
+# apa7's \note is the author note (corresponding-author block).
+DefMacro('\note{}',     '\@add@frontmatter{ltx:note}[role=authornote]{#1}');
+DefMacro('\keywords{}', '\@add@frontmatter{ltx:keywords}{#1}');
+
+# apa7's older single-author spelling. Supplement 5 calls \affiliation{} with
+# an EMPTY argument, so guard against emitting an empty contact element --
+# that produced a stray <resource> sibling and failed RelaxNG validation.
+DefMacro('\affiliation{}', sub {
+    my ($gullet, $arg) = @_;
+    return () unless ToString($arg) =~ /\S/;
+    return Invocation(T_CS('\@add@to@frontmatter'),
+      Tokens(Explode('ltx:creator')),
+      Tokens(Invocation(T_CS('\lx@@@contact'),
+          Tokens(Explode('affiliation')), $arg)->unlist))->unlist; });
+
+# apa7 provides these; harmless no-ops for HTML.
+DefMacro('\authorsnote{}',   '\@add@frontmatter{ltx:note}[role=authornote]{#1}');
+DefMacro('\leftheader{}',    '');
+DefMacro('\course{}',        '');
+DefMacro('\professor{}',     '');
+DefMacro('\duedate{}',       '');
+DefMacro('\addORCIDlink{}{}', '#1');
+
+# -------------------------------------------------------------- etoolbox --
+# The source patches apa7's \maketitle for title-page spacing, with a
+# \PackageError failure branch. Under LaTeXML \maketitle is article's, so the
+# patch cannot match and the error would abort the run. These patches are
+# purely print page-layout, so the correct HTML behaviour is to skip them
+# silently and take the success branch. Defined here so it is in force for the
+# document preamble even if etoolbox is never loaded.
+DefMacro('\patchcmd{}{}{}{}{}',      '#4');
+DefMacro('\apptocmd{}{}{}{}',        '#3');
+DefMacro('\pretocmd{}{}{}{}',        '#3');
+
+1;

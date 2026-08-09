@@ -1,0 +1,7 @@
+# Generated output — rebuild with ./build-site-oxide.sh
+site/
+site-oxide/
+xml/
+xml-oxide/
+oxide/
+*.latexml.log

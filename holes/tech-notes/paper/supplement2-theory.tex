@@ -1,5 +1,6 @@
 \documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
 
+\usepackage{latexml}  % \iflatexml: true under LaTeXML/oxide, false under pdflatex
 \usepackage[american]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath,amssymb}
@@ -41,7 +42,20 @@ hand. The main paper states each result in prose where it is used and points
 here for the statement, the proof, and the arithmetic.}
 
 % --- typed-box environments, carried from draft6.tex (never folded here) ---
+% Typed boxes are tcolorboxes (TikZ drawings); a converter would render them
+% as fixed-geometry SVG rather than text. Define semantic equivalents instead.
+% NB: \newif must sit outside the guard -- TeX counts \if tokens when skipping.
 \newif\ifpaperboxfold
+\iflatexml
+  \input{html-boxes}
+  \NewHTMLBox{workedexample}{Worked example}{1}
+  \NewHTMLBox{theorem}{Theorem}{0}
+  \NewHTMLBox{definition}{Definition}{1}
+  \NewHTMLBox{corollary}{Corollary}{0}
+  \NewHTMLBox{proposition}{Proposition}{1}
+  \NewHTMLBox{empiricalfinding}{Empirical finding}{1}
+  \NewHTMLBox{observation}{Observation}{1}
+\else
 \tcbset{%
   fold/.code={%
     \paperboxfoldfalse
@@ -130,12 +144,6 @@ here for the statement, the proof, and the arithmetic.}
     \ifpaperboxfold\else#3\fi
   \end{empiricalfindingframe}}{}
 
-% Empirical findings live canonically in the literate notebook submitted as
-% Supplement 1. Keep only stable, compact pointers in the narrative.
-\newcommand{\suppfindingref}[1]{Supplement~1, Box~#1}
-\newcommand{\suppfinding}[2]{%
-  \par\smallskip\noindent\emph{\suppfindingref{#1}: #2.}\par\smallskip}
-
 % Observations (teal): consequences/remarks pulled out of definitions and prose.
 \newtcolorbox[auto counter]{observationframe}[2][]{%
   enhanced, breakable, colback=teal!7, colframe=teal!55!black,
@@ -146,6 +154,14 @@ here for the statement, the proof, and the arithmetic.}
   \begin{observationframe}[#1]{#2}%
     \ifpaperboxfold\else#3\fi
   \end{observationframe}}{}
+\fi
+
+% Empirical findings live canonically in the literate notebook submitted as
+% Supplement 1. Keep only stable, compact pointers in the narrative.
+\newcommand{\suppfindingref}[1]{Supplement~1, Box~#1}
+\newcommand{\suppfinding}[2]{%
+  \par\smallskip\noindent\emph{\suppfindingref{#1}: #2.}\par\smallskip}
+
 
 
 \newcommand{\secref}[1]{\emph{\nameref{#1}}}

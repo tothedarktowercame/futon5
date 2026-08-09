@@ -1,5 +1,6 @@
 \documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
 
+\usepackage{latexml}  % \iflatexml: true under LaTeXML/oxide, false under pdflatex
 \usepackage[american]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath,amssymb}
@@ -23,6 +24,14 @@
 % Cross-reference a finding box by its label (tcolorbox auto counter supplies the number).
 \newcommand{\findref}[1]{Box~\ref{#1}}
 
+% Typed boxes are tcolorboxes (TikZ drawings); a converter would render them
+% as fixed-geometry SVG rather than text. Define semantic equivalents instead.
+% NB: \newif must sit outside the guard -- TeX counts \if tokens when skipping.
+\newif\ifpaperboxfold
+\iflatexml
+  \input{html-boxes}
+  \NewHTMLBox{empiricalfinding}{Box}{1}
+\else
 \newtcolorbox[auto counter]{empiricalfinding}[2][]{%
   enhanced,
   breakable,
@@ -37,6 +46,7 @@
   fonttitle=\bfseries,
   title={Box~\thetcbcounter: #2},
   #1}
+\fi
 
 \title{Supplement 1: Empirical Findings Notebook}
 \shorttitle{Empirical Findings Notebook}

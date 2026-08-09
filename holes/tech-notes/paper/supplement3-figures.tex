@@ -1,5 +1,6 @@
 \documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
 
+\usepackage{latexml}  % \iflatexml: true under LaTeXML/oxide, false under pdflatex
 \usepackage[american]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath,amssymb}
@@ -23,6 +24,14 @@
 % Cross-reference a finding box by its label (tcolorbox auto counter supplies the number).
 \newcommand{\findref}[1]{Box~\ref{#1}}
 
+% Typed boxes are tcolorboxes (TikZ drawings); a converter would render them
+% as fixed-geometry SVG rather than text. Define semantic equivalents instead.
+% NB: \newif must sit outside the guard -- TeX counts \if tokens when skipping.
+\newif\ifpaperboxfold
+\iflatexml
+  \input{html-boxes}
+  \NewHTMLBox{empiricalfinding}{Box}{1}
+\else
 \newtcolorbox[auto counter]{empiricalfinding}[2][]{%
   enhanced,
   breakable,
@@ -37,6 +46,7 @@
   fonttitle=\bfseries,
   title={Box~\thetcbcounter: #2},
   #1}
+\fi
 
 \title{Supplement 3: Additional Figures}
 \shorttitle{Additional Figures}
@@ -63,7 +73,10 @@ Two survey galleries referred to from the main paper. Each shows a family of run
 glance rather than carrying an argument on its own: the first sweeps the rotation
 offsets that Part~I classifies, the second shows the spacetime fields behind the
 diversity mechanisms of Part~II. They are collected here so the main narrative is not
-interrupted by four full pages of plates.
+interrupted by four full pages of plates. Figures~S3.3--S3.7 are measurement
+figures relocated from the main paper's ninth draft: the rotation-population
+curve, the two-4-cycle contrast, the diversity-control schedule, and the two
+damage-sweep panels whose result the main text's placement figure carries.
 
 \begin{figure}[tbp]
 \centering
@@ -122,6 +135,71 @@ the dial. The unoutlined braid-plus-blend control at bottom right propagates
 population makes the distinction visible as a family resemblance rather than a
 single selected contrast: these are genuine failure modes of their respective
 mechanisms, not evidence for suppression by high diversity.}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/lambda_analogue.pdf}
+\caption{A population observable: distinct rules in the field over time, for
+the wrap rotations (two seeds each). All begin at $\approx 70$; the four
+8-cycles, $\gcd(\text{offset},8)=1$ (offset $\pm 1$ and $\pm 3$, green), keep a
+large diverse population, while offset $\pm 2$ and $\pm 4$ (grey) collapse to one
+or two rules. This makes quantitative, on the runs shown, the difference visible
+by eye in Figure~S3.1 of this supplement. The main paper's parity-dichotomy figure gives the corresponding
+without-blend comparison for offsets $+1$ and $+2$: the former remains active at
+lower diversity over that run, while the latter settles onto its four fixed
+rules.}
+\label{fig:lambda}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/two4cycle.pdf}
+\caption{\textbf{Cycle structure does not determine aliveness.} Two operators of
+identical cycle type---both two 4-cycles---with opposite fate. Left,
+$[6\,7\,0\,2\,1\,4\,3\,5]$ sustains a live genotype and phenotype; it is the
+standard-Wolfram-order form of the historical offset$+2$ operator (its
+conjugate). Right, the Wolfram-order rotation offset$+2=[2\,3\,4\,5\,6\,7\,0\,1]$
+has the same two-4-cycle structure yet collapses to a dead genotype and a frozen
+phenotype. Same cycle type, opposite outcome: the specific permutation, not its
+cycle type alone, decides. A full census of the 40320 operators confirms the
+two-4-cycle class splits between sustaining and collapsing.}
+\label{fig:two4cycle}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/knob.pdf}
+\caption{\textbf{A diversity-control schedule.} Periodic 12-step schedules mix
+the sustaining offset-$+1$ operator $\sigma^1$ with the collapsing offset-$+2$
+operator $\sigma^2$. Mean late-window distinct-rule diversity (five seeds) rises
+from $1.0$ with no $\sigma^1$ steps to a high-diversity plateau once its fraction
+reaches roughly $0.4$. The three fields show fractions $0.25$, $0.50$, and $1.0$
+at the same representative seed.}
+\label{fig:knob}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.94\linewidth]{figures/river_perturbation.pdf}
+\caption{\textbf{Damage from a single phenotype flip.}
+Live construction against its matched control, $L=80$, $t^{*}=60$, swept over all
+$80$ sites; mass and spread at a sequence of horizons $dt$.}
+\label{fig:river-perturbation}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.94\linewidth]{figures/river_centroid.pdf}
+\caption{\textbf{Damage width and centroid displacement.} \textbf{(a)}~damage width against $dt$,
+log--log, with ballistic and diffusive references; \textbf{(b)}~centroid
+displacement; \textbf{(c)}~a single cone with the centroid track overlaid. The
+packet disperses while its centroid stays near the perturbation site. We do not
+read this as excluding particle-like transport: under the same protocol rule
+$110$, whose gliders support universal computation, gives $dt^{0.68}$ and
+$dt^{0.73}$, so a random single-site perturbation does not produce a
+fixed-width translating packet even where gliders certainly exist.}
+\label{fig:river-centroid}
 \end{figure}
 
 \end{document}

@@ -1,0 +1,6 @@
+{
+  "name": "latex-wysiwyg-s1",
+  "private": true,
+  "description": "M-latex-wysiwyg slice S1 e2e gate",
+  "devDependencies": { "@playwright/test": "^1.62.1" }
+}

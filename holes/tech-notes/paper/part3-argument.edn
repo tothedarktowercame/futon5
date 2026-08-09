@@ -1,0 +1,180 @@
+;; Standoff argument map for Part III (part3-exotype-v9.tex, state of 2026-08-08).
+;; Audited against draft9.tex (Part II context: perturbation reach, reading gate)
+;; and supplement5.tex. Quotes are verbatim substrings of part3-exotype-v9.tex
+;; (grep -F each). "part-opening" is the unnumbered text between \part and the
+;; first \section; figure captions are counted as paragraphs where they carry
+;; argument.
+
+{:part "III"
+ :claim "Once the rewriting operator becomes per-cell, neighbour-transmitted state, the lattice realises all three outcomes (live wins, frozen wins, coexistence) separated by a bisectable boundary in precision, but no tested locally computable quantity can find or hold the coexistence, and the absorbing frozen endpoints are created by the adoption policy at high precision, not by the lattice underneath."
+ :sections
+ [{:title "Exotypes (part opening)" :label "part:endogenous"
+   :claim "The part's move is that the operator becomes a property of the cell, and its four findings are: three outcomes at the tested parameters, no local quantity finds the third, the protective intervention backfires while noise merely prevents freezing, and the frozen endpoints are an effect of the adoption rule."
+   :title-matches-claim false
+   :paragraphs
+   [{:n 1 :opening "In Part~II the gain of the phenotype-to-genotype"
+     :role :transition
+     :note "Hands off from Part II's reading gate (firing endogenous, operator still run-level) to the part's move: operator becomes per-cell; correct and sufficient."}
+    {:n 2 :opening "Its findings, in order. When the operator"
+     :role :states-claim
+     :note "Findings roadmap in discovery order; internally consistent with the sections (thirty control runs = 6 + 24), but one clause overclaims relative to the closure section's hedge (see violations)."}]
+   :violations
+   [{:quote "the changing phase eliminates the frozen phase"
+     :kind :opaque-compression
+     :suggest "frozen/live is defined only in the Three Outcomes section (fifteen-step criterion); at this first use add a half-clause gloss, e.g. 'the changing phase (regions still updating) eliminates the frozen phase (regions whose phenotypes have stopped changing)'."}
+    {:quote "reproducing the found configuration's structure"
+     :kind :scope-creep
+     :suggest "The closure section twice declines exactly this claim ('Whether that state differs from the valley configuration in structure is not settled by the statistics we computed'; 'the uncontrolled state has not been shown to match the found configuration in structure'). Align the summary with the hedge: e.g. 'prevents freezing while holding a far higher frozen fraction than the found configuration' (whether the structure matches is stated as unsettled)."}]}
+
+  {:title "The Gate Sets the Timing of Rewrites; the Exotype Sets Their Content" :label "sec:exotype-intro"
+   :claim "The Part II gate made when rewriting fires endogenous but left which operator fires a run-level property; removing that restriction poses the part's question -- whether the lattice can find its own operating point from runtime-available quantities -- which perturbation reach, requiring a forked twin, cannot answer."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "The gate of \\secref{sec:endogenous-gain} chooses when"
+     :role :transition
+     :note "States the when/which distinction that the title claims; but its closing move duplicates the part opening (see violations)."}
+    {:n 2 :opening "Whether such a lattice can find its own"
+     :role :states-claim
+     :note "Poses the research question the final section closes, and pre-empts the obvious objection (why not use reach?) with the fork/twin argument -- machinery genuinely needed downstream."}]
+   :violations
+   [{:quote "This part removes that restriction"
+     :kind :redundant
+     :suggest "Duplicated framing left by the restructuring: the part opening already made this exact move ('This part takes the remaining step: the operator itself becomes a property of the cell'). Keep the when/which distinction here, and either cut the restatement of the per-cell move ('This part removes that restriction. Each cell carries its own propagator...') down to the vocabulary sentence, or trim the part opening's paragraph 1 to a bare hand-off."}]}
+
+  {:title "The Exotype Is a Structured Mutation Operator" :label "sec:exotype-layer"
+   :claim "The exotype is a per-cell propagator assignment whose transition is the familiar elementary write of Part I applied one coordinate at a time, making it a structured (address-biased), always-on, heritable mutation operator, with a twelve-member vocabulary exactly audited by the Part I theorem."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "An exotype is a per-cell assignment of"
+     :role :machinery
+     :note "Defines the exotype; correctly isolates what is new (the assignment) from what is not (the operator family)."}
+    {:n 2 :opening "The transition is one elementary write. At"
+     :role :machinery
+     :note "The write equation plus its continuity with sec:object and Part I's spatial experiments; needed for every result downstream."}
+    {:n 3 :opening "Three properties matter for what follows. The"
+     :role :evidence
+     :note "Argues the title's claim directly: structured (read/write addresses differ), ordinary-path (fires every step), heritable (persists and transmits) -- the Baldwin hook."}
+    {:n 4 :opening "The implemented vocabulary is twelve named members"
+     :role :calibration
+     :note "Audits the vocabulary against the theorem and argues the twelve span the design space; defers the small-sample boundary to sec:limits rather than re-arguing it. The two \\phantomsection labels (sec:exotype-vocabulary, sec:exotype-scope) are residue of deleted sections; harmless since nothing references them, but they can be dropped."}]
+   :violations []}
+
+  {:title "Three Outcomes: The Changing Phase Wins, the Frozen Phase Wins, or Neither Does" :label "sec:exotype-examples"
+   :claim "On the L-shaped ridge the search mapped, three configurations exist -- live eliminates frozen at low precision, frozen absorbs the lattice at high precision, and both persist for ten thousand steps in between -- separated by a bisectable boundary in beta, ranked wrongly by the search's own short-window objective, with the intermediate outcome decided by the draw rather than the parameters."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "Supplement~5 records a search over two parameters"
+     :role :machinery
+     :note "Provenance of the examples (external, interactively operated search), the ridge map that organises the section's arm/valley vocabulary, and the section's stakes (targets exist; findability deferred to the closure section)."}
+    {:n 2 :opening "All three are measured the same way"
+     :role :calibration
+     :note "Defines frozen/live/absorbing as single-trajectory properties independent of the search's criterion; the definitional anchor for the whole part."}
+    {:n 3 :opening "At low beta the lattice is live"
+     :role :evidence
+     :note "First outcome: frozen fraction settles at 0.040 through 3000 steps across the low-beta group, no absorbing state."}
+    {:n 4 :opening "The mechanism is not that frozen regions"
+     :role :evidence
+     :note "Mechanism for the first outcome: constant domain count with collapsing width identifies boundary retreat and excludes interior dissolution."}
+    {:n 5 :opening "At high beta and low kappa the"
+     :role :evidence
+     :note "Second outcome: fragmentation-then-merger narrative ending in byte-identical rows at density 0.500 -- frozen, not blank."}
+    {:n 6 :opening "The second seed absorbs at t ="
+     :role :calibration
+     :note "Seed-robust outcome, non-robust timing; calibrates which differences between neighbouring beta carry information."}
+    {:n 7 :opening "The two arms of the ridge. Left:"
+     :role :evidence
+     :note "(Caption, fig:exo-bifurcation.) Shows the two arms separating early and never crossing; 'ridge' is licensed by paragraph 1's definition."}
+    {:n 8 :opening "The two are the same kind of"
+     :role :evidence
+     :note "The objective's inversion: perfect and inverted separation -- every absorbing configuration outscored every persisting one."}
+    {:n 9 :opening "Between the two arms the objective falls"
+     :role :evidence
+     :note "Bisection locating the boundary: beta 12/14/16 absorb, 8/10 do not."}
+    {:n 10 :opening "At beta = 8, kappa = 0.1, one realisation"
+     :role :evidence
+     :note "Third outcome: coexistence sustained past t = 9500 with fine-grained, continuously turning-over frozen phase; no coarsening continent."}
+    {:n 11 :opening "beta = 8, kappa = 0.1, both layers. Coherent"
+     :role :evidence
+     :note "(Caption, fig:exo-lavalamp.) Adds genotype-layer evidence (diversity sustained, monoculture gone by t ~ 500) that the coexistence is not a degenerate state."}
+    {:n 12 :opening "This configuration is the phenomenon in the"
+     :role :violation
+     :note "The paragraph's evidential half (objective ranks the target eighth of thirty-five, below both arms) belongs here, but its framing sentence points at a distinction the main text no longer makes (see violations)."}
+    {:n 13 :opening "The honest description of this region is"
+     :role :states-claim
+     :note "The subsection's claim, argued immediately: opposite outcomes at beta = 10 at fixed parameters; width confounded with horizon in the 1000-cell run, honestly noted."}
+    {:n 14 :opening "Realisation-to-realisation variance dominating a parameter's effect"
+     :role :calibration
+     :note "Fixes what the three examples do and do not establish: a bisectable boundary, no critical point; guards the claim's scope."}
+    {:n 15 :opening "The bisection in frozen/live coordinates, kappa ="
+     :role :calibration
+     :note "(Caption, fig:exo-bisection.) Threshold-sensitivity check on the fifteen-step frozen criterion."}
+    {:n 16 :opening "One methodological point generalises beyond these three"
+     :role :calibration
+     :note "Justifies persistence over the search's 250-step score: the separating behaviour occurs entirely outside the scoring window; dictates the section's measure."}]
+   :violations
+   [{:quote "policy precision $\\beta$ and the epistemic weight $\\kappa$"
+     :kind :opaque-compression
+     :suggest "The selection rule itself is never described in this part: what a cell's policy scores, what beta sharpens, and what 'epistemic' weighs cannot be reconstructed here (Supplement 5 has the two-line gloss: beta grades how sharply a policy is chosen from its score; kappa scales the information-seeking term against the goal-directed term). Import that gloss at this first use, and then delete the too-late parenthetical '(the selection policy's precision and epistemic weight)' in sec:exotype-question."}
+    {:quote "a runtime-computable pair of observables"
+     :kind :opaque-compression
+     :suggest "Neither the pair of observables nor the 'intrinsic objective' is named, so the parenthetical cannot be checked from this part; it exists only to serve sec:exotype-question's 'run-level detector result'. Either name the two observables and the objective, or move the parenthetical to sec:exotype-question where it is used."}
+    {:quote "region of non-zero persistence scores"
+     :kind :opaque-compression
+     :suggest "Terminology collision: the search's score is here called a 'persistence score', but paragraph 16's whole point is that the search scored a 250-step window and this section uses persistence INSTEAD of that score ('the section's use of persistence, rather than a short-window score'). Rename, e.g. 'the region of non-zero search scores' or 'non-zero values of the (250-step) objective'."}
+    {:quote "the phenomenon in the third sense"
+     :kind :opaque-compression
+     :suggest "Orphaned back-reference from the restructuring: no 'three senses' of the phenomenon are distinguished anywhere in the main text ('at the outset' resolves to nothing; draft9.tex distinguishes only 'the two readings' of the edge of chaos, line 776, and only supplement5.tex:61 speaks of a 'third sense' -- attributing it to the main text). Rewrite as e.g. 'This configuration is the third outcome announced at the head of this part---frozen and moving structure coexisting, neither absorbing the other', or restore a three-sense distinction at the outset it points to."}
+    {:quote "thirty-five-cell search of Supplement~5"
+     :kind :opaque-compression
+     :suggest "'Cell' here means a parameter-grid point, colliding with the lattice-cell sense used everywhere else in the part; and the count thirty-five first appears three paragraphs earlier as a bare 'eighth of thirty-five'. Say 'thirty-five-configuration parameter sweep' (and let 'eighth of thirty-five' refer forward or carry the gloss)."}]}
+
+  {:title "No Tested Local Quantity Finds Coexistence, and the Policy Creates the Absorbing States" :label "sec:exotype-question"
+   :claim "Both halves of the intro's question close negatively -- windowed local observation cannot rank operators (a timescale mismatch defeats every decision rate) and the natural local holding rule accelerates the freezing it targets while undirected noise works only as dose -- and a no-adoption control shows the absorbing states are created by the selection policy at high precision, not by the lattice."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "Four deterministic measurements close the question posed"
+     :role :states-claim
+     :note "Splits the question into search and holding and announces both close negatively; the four measurements are never individually enumerated, so the reader must map 'four' onto the following paragraphs themselves -- a one-clause enumeration would fix it."}
+    {:n 2 :opening "The search half was external. The search"
+     :role :evidence
+     :note "Closes the search half: none of the apparatus's operations is available to a cell, and the within-run substitute fails at every window length (peak 0.571, neighbour comparison under 0.540)."}
+    {:n 3 :opening "The mechanism is a timescale mismatch. The"
+     :role :evidence
+     :note "Explains the failure (decorrelation at ~6 steps vs discriminative window): fast fails by variance, slow by staleness; correctly fences off the run-level result."}
+    {:n 4 :opening "The holding half also closes, with a"
+     :role :evidence
+     :note "Closes the holding half with the reversal (boundary-directed copying freezes earlier by 297 steps), the noise variant vs scattered-writes yoke (placement carries nothing), the structure hedge, and the complementary boundary-targeted intervention (dose, not placement)."}
+    {:n 5 :opening "Two local interventions at the freezing arm."
+     :role :evidence
+     :note "(Caption, fig:interventions.) Carries the two-row intervention evidence; contains the part's only uses of 'dwell' and a dangling 'pinned seed' reference (see violations)."}
+    {:n 6 :opening "A control changes what the question presupposes."
+     :role :evidence
+     :note "The no-adoption control (30/30 runs neither freeze nor die), the level separation between the search tool and the rule it varied, and two honest scope boundaries."}]
+   :violations
+   [{:quote "operated on whole runs from outside (Supplement~5)"
+     :kind :redundant
+     :suggest "The search's externality is now established in sec:exotype-examples paragraph 1 ('The search was not endogenous---the apparatus varied the parameters and scored the runs from outside'); a seam from the recent expansion of that paragraph. Trim to a cross-reference and keep only the operational inventory this argument needs: 'The search that located the examples (Supplement~5) swept a thirty-five-cell grid...'."}
+    {:quote "unchanged for $w = 15$"
+     :kind :redundant
+     :suggest "Frozen was already defined in sec:exotype-examples ('unchanged for the preceding fifteen steps'); this re-definition (with a new symbol w) is a seam from when the closure material preceded the examples. Replace with a back-reference: 'the frozen field (the fifteen-step criterion of the previous section)'."}
+    {:quote "The run-level detector result"
+     :kind :opaque-compression
+     :suggest "'Detector' is never attached to its antecedent -- the 'runtime-computable pair of observables' parenthetical two sections back; the binding is left to the reader. Either use the same words ('the run-level result for the observable pair, R^2 = 0.73, is untouched') or name the detector at the parenthetical and reuse the name here."}
+    {:quote "(the selection policy's precision and"
+     :kind :redundant
+     :suggest "This gloss of beta and kappa arrives at their Nth use, redundant now that sec:exotype-examples names them at first use; a seam from the section reordering. Cut it here (the real definitional gloss belongs at first use -- see the sec:exotype-examples violation)."}
+    {:quote "indistinguishable from its randomly placed yoke"
+     :kind :opaque-compression
+     :suggest "'Yoke' (yoked-control jargon) is used here and as 'count-matched yoke' in the caption without introduction; the main text's own earlier phrasing is clearer. Write 'its count-matched random-placement control' in both places, or introduce 'yoked control' once."}
+    {:quote "write per dwell at such cells"
+     :kind :opaque-compression
+     :suggest "'Dwell' appears only in this caption (three times) and nowhere else in the paper or supplements; the reader cannot recover that it is the intervention's trigger interval, nor what 'dwell 15--25' measures (steps spent in a uniform/boundary condition?). Define it at first use in the caption or, better, in the holding paragraph of the main text."}
+    {:quote "the pinned seed of Figure"
+     :kind :opaque-compression
+     :suggest "Nothing in fig:exo-bisection or its caption marks any seed as 'pinned'; the reference dangles. Name the run concretely ('the beta = 16 run of Figure~\\ref{fig:exo-bisection}, seed as there') or drop 'pinned'."}
+    {:quote "uncontrolled arm at width $120$"
+     :kind :opaque-compression
+     :suggest "'Arm' silently shifts from ridge-arm to experiment-arm, and 'uncontrolled' is undefined -- the reader cannot reconstruct the design (six runs initial-condition-matched to the absorbing runs, plus twenty-four unmatched runs at width 120 = the part opening's thirty). Spell out the two groups in one clause."}
+    {:quote "seven months of exploration in this substrate family"
+     :kind :unsupported-digression
+     :suggest "Lab-notebook register in a paper otherwise timeless, and an elapsed-time figure carries no assessable evidential weight (what was explored, how systematically?). Cut, or replace with the substantive statement: the fixed-operator families surveyed in Parts I--II, which lack the selection layer, showed nothing resembling the valley configuration."}]}]}

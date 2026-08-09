@@ -1,5 +1,6 @@
 \documentclass[man,12pt,floatsintext,donotrepeattitle]{apa7}
 
+\usepackage{latexml}  % \iflatexml: true under LaTeXML/oxide, false under pdflatex
 \usepackage[american]{babel}
 \usepackage{csquotes}
 \usepackage{amsmath,amssymb}
@@ -38,6 +39,16 @@
 % Named distinctly: `definition' is a tcolorbox environment in the main
 % paper, and this file is \input into packet.tex under docmute.
 \newtheorem{scoredef}{Definition}
+% Typed boxes are tcolorboxes (TikZ drawings); a converter would render them
+% as fixed-geometry SVG rather than text. Define semantic equivalents instead.
+% NB: \newif must sit outside the guard -- TeX counts \if tokens when skipping.
+\newif\ifpaperboxfold
+\iflatexml
+  \input{html-boxes}
+  \NewHTMLBox{workedexample}{Worked example}{1}
+  \NewHTMLBox{empiricalfinding}{Empirical finding}{1}
+  \NewHTMLBox{observation}{Observation}{1}
+\else
 \newtcolorbox[auto counter]{workedexample}[2][]{%
   enhanced,
   breakable,
@@ -78,6 +89,7 @@
   enhanced, breakable, colback=teal!7, colframe=teal!55!black,
   boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm, top=1.5mm, bottom=1.5mm,
   fonttitle=\bfseries, title={Observation~\thetcbcounter: #2}, #1}
+\fi
 
 \title{Supplement 4: Exploratory Domain Analysis and a Withdrawn Statistic}
 \shorttitle{Rule-Rewriting Cellular Automata}
@@ -126,12 +138,15 @@ exhaustive classification, domain walls}
 % main text on page 2. In apa7 manuscript mode, suppress the page break that
 % normally separates the title page from the abstract; retain the following
 % page break before the main text.
+% See draft8.tex: print-only title-page patches, guarded for converters.
+\iflatexml\else
 \makeatletter
 \patchcmd{\maketitle}{\vspace*{4\baselineskip}}{\vspace*{\baselineskip}}%
   {}{\PackageError{draft5}{Could not compact title-page spacing}{}}
 \patchcmd{\maketitle}{\newpage}{\vspace{0pt}}%
   {}{\PackageError{draft5}{Could not place abstract on title page}{}}
 \makeatother
+\fi
 
 % Float numbers carry the supplement number so they are unambiguous both
 % standalone and when bound into packet.tex.

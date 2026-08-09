@@ -1,0 +1,161 @@
+{:part "II"
+ :claim "Measured by forking a run and flipping one cell, causal reach is governed by how much causally current phenotype information reaches the rule layer: a live phenotype-to-genotype read roughly doubles reach, a currency dial moves it smoothly and monotonically, sustained rule diversity is inert, and an independent gate construction recovers the same live > blind > frozen ordering."
+ :sections
+ [{:title "Beyond the Permutation Core: Feedback and Causal Propagation (part opening)"
+   :label "part:feedback"
+   :claim "Part II drops the single-operator restriction, keeps the lattice and rule semantics, and announces the finding: reach tracks the causal currency of the phenotype read while rule diversity is inert, and this neither classifies nor measures the permutation family."
+   :title-matches-claim false
+   :paragraphs
+   [{:n 1 :opening "This part establishes the paper's measurement and what"
+     :role :states-claim
+     :note "Dense but complete roadmap: names the instrument (fork-and-flip), the doubling, the frozen-copy dial, the null results for diversity/mutation/refuges/niches/mobility, the transport positive, and the closing gate recovery."}
+    {:n 2 :opening "Part~I's classified object and exhaustive census were the"
+     :role :transition
+     :note "Scopes Part II's objects (update architectures, not fixed writings) against Part I and disclaims any measurement of the family; the adjacent $8^8$ (component writings) vs $8!$ (classified family) sizes are both defined in Part I but land unglossed here and could trip a reader."}]
+   :violations
+   []}
+
+  {:title "A Construction That Reads Its Own Phenotype"
+   :label "sec:feedback-construction"
+   :claim "Composing the offset-+2 propagator with a phenotype-reading template construction sustains structured, reorganising phenotype for the length of the run, where the bare rotations collapse or cycle."
+   :title-matches-claim false
+   :paragraphs
+   [{:n 1 :opening "The next construction crosses that boundary by allowing"
+     :role :states-claim
+     :note "States the crossing (update reads live phenotype) and the observed outcome (sustained branching/merging domains); the construction itself is never described or named in body prose, only in the caption and a supplement pointer."}
+    {:n 2 :opening "A larger river spacetime plate. One pinned representative"
+     :role :evidence
+     :note "Caption fig:river: carries the section's only definition of the construction, in compressed insider form, and repeats the body's branch/merge sentence nearly verbatim; the closing contrast with collapsing bare rotations is the section's actual claim and appears only here."}]
+   :violations
+   [{:quote "A larger river spacetime plate."
+     :kind :opaque-compression
+     :suggest "\"Larger\" has no antecedent in the main text (no smaller river plate has been shown; the comparator lives in Supplement 3). Drop \"larger\" or name the comparator, e.g. \"A river spacetime plate at full width (cf. the survey panels of Figure S3.1)\"."}
+    {:quote "four-candidate, first-match template construction"
+     :kind :opaque-compression
+     :suggest "The central Part II construction is defined only inside a caption, and this phrase's referents (candidates for what? templates matched against what?) cannot be reconstructed from the section. Add two plain body sentences: what the four candidate templates are, what is matched against the phenotype, and what first-match means, before pointing to Definition 7."}]}
+
+  {:title "Feedback Roughly Doubles How Far a Flip Travels"
+   :label "sec:causal"
+   :claim "On an exact fork-and-flip damage measure calibrated against elementary rules, every construction that reads the phenotype out-propagates every matched blind control, and the river's live edge alone moves it from 5.51 to 12.97 — roughly a doubling."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "Two measures were tried before the causal one"
+     :role :machinery
+     :note "Motivates the instrument by showing the two field-summary alternatives collapse to diversity, which the section ahead shows is not the governing coordinate."}
+    {:n 2 :opening "A causal test also avoids a general problem"
+     :role :machinery
+     :note "Second motivation: region-drawn statistics invite circularity that no moving-region null can detect; perturbation avoids region-drawing entirely. Load-bearing later (the Supplement-4 withdrawal callback in sec:diversity-axis leans on this)."}
+    {:n 3 :opening "We run the phenotype-reading construction of"
+     :role :machinery
+     :note "The protocol: run to t*=60, fork, flip one bit, exact shared tape, matched feedback-off control with only the live edge cut."}
+    {:n 4 :opening "A glider carries a fixed-width packet at constant"
+     :role :calibration
+     :note "Justifies measuring reference values rather than assuming them (rule 110's gliders do not give a fixed packet under perturbation)."}
+    {:n 5 :opening "Figure~\\ref{fig:regime-placement} places every construction on that one"
+     :role :evidence
+     :note "The section's key result: the rows split cleanly by coupling; note it leans on \"the ungated transport controls\" before transport is defined (glossed inline as \"fully mobile and merely cannot see\", so survivable) and uses the name \"the river\" for the first time in prose."}
+    {:n 6 :opening "Every construction on one scale. Causal reach under"
+     :role :evidence
+     :note "Caption fig:regime-placement: restates the row split and pre-empts a Wolfram-class misreading of the shaded intervals."}
+    {:n 7 :opening "The same sweep also gives the growth of"
+     :role :calibration
+     :note "Disclaims inference from the cone/centroid exponents; honest boundary-drawing."}]
+   :violations
+   [{:quote "The river appears in both rows, at $12.97$ with its edge"
+     :kind :opaque-compression
+     :suggest "First prose use of the name \"the river\"; the name was introduced only via a caption title and a margin note, never in body text. Add a naming sentence in sec:feedback-construction (e.g. \"we call this composition the river\") so this reference resolves."}]}
+
+  {:title "Reach is monotone in the coupling gain"
+   :label "sec:gain"
+   :claim "In both phenotype-reading constructions the coupling is a quantity, not a switch, and causal reach rises monotonically with it — spanning an order of magnitude on the river's currency dial — though the two dials have opposite curvature."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "Treating that coupling as present or absent understates"
+     :role :states-claim
+     :note "States the upgrade from binary to graded coupling and the monotonicity claim."}
+    {:n 2 :opening "For conservative transport the gain is the phenotype-gated"
+     :role :machinery
+     :note "Defines both dials; the gamma/currency definition and the matched-statistics/anchoring argument are clean and are what sec:endogenous-gain later reuses."}
+    {:n 3 :opening "The $\\gamma = 0$ endpoint is $1.28$, not"
+     :role :evidence
+     :note "Reconciles the gamma=0 endpoint (1.28) with the ablated control (5.51), but the mechanism distinguishing the two frozen fields is compressed past reconstruction (see violation)."}
+    {:n 4 :opening "And the two dials have opposite curvature"
+     :role :evidence
+     :note "Concave vs convex shapes, the one-stale-read-in-eight cost, and an explicit refusal to generalise shape from two cases."}
+    {:n 5 :opening "Two couplings, dialled. Causal reach against coupling gain"
+     :role :evidence
+     :note "Caption fig:gain-curves: minimal, names the ungated control at matched mean swap probability."}]
+   :violations
+   [{:quote "contains the flip. It cuts the \\emph{currency}"
+     :kind :opaque-compression
+     :suggest "The currency/read antithesis hides the actual operation: the section never states when each frozen field is captured or why the ablated control's frozen field contains the flip while the gamma-dial's frozen reference does not (per-branch freeze at fork vs shared pre-fork reference). Rewrite with one sentence stating the capture time of each frozen field, then the 1.28-vs-5.51 contrast follows."}]}
+
+  {:title "Transport moves reach; diversity does not"
+   :label "sec:diversity-axis"
+   :claim "Conservative-transport runs form bands that are flat across the whole sustained-diversity axis but separated by an order of magnitude in transport rate, so sustained rule diversity does not govern causal reach; how the genotype measure is moved does."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "That $\\lambda$ cannot discriminate among the fixed"
+     :role :machinery
+     :note "Closes the last escape route for lambda (realized-dynamics version also sits near 1/2) and poses the section's question: diversity itself, or the mechanism sustaining it?"}
+    {:n 2 :opening "Our initial survey varied sustained diversity by seven"
+     :role :machinery
+     :note "The seven mechanisms and the coordinate discipline (diversity sustained through the response window, not at the fork)."}
+    {:n 3 :opening "Figure~\\ref{fig:diversity-axis} shows why the apparent optimum"
+     :role :evidence
+     :note "The section's key result; \"the apparent optimum\" arrives with a definite article before being described, but the next sentence supplies it (the rise-and-fall of the original configurations), so it is reconstructable in place."}
+    {:n 4 :opening "Causal reach against sustained genotype diversity. The original"
+     :role :evidence
+     :note "Caption fig:diversity-axis: repeats the body's flat-bands sentence nearly verbatim (across-a-band vs between-bands); self-contained-caption convention, but the duplication is word-for-word."}
+    {:n 5 :opening "Two cautions bound this result. First, the"
+     :role :calibration
+     :note "Bounds the result (different intervention scale; one transport law, one width, one horizon; existence not universality), but hangs its existence claim on an unanchored number (see violation)."}
+    {:n 6 :opening "The defensible conclusion is narrower and cleaner."
+     :role :states-claim
+     :note "The section's conclusion, correctly split: diversity describes Part I persistence, does not govern Part II reach, and the cross-mechanism coordinate is future work."}
+    {:n 7 :opening "What this scale does and does not license"
+     :role :calibration
+     :note "Scopes the reach scale itself (not a regime coordinate; class-III rules bracket the range) and restates the causal claim; sound content, but it scopes the whole instrument rather than the transport-vs-diversity argument and partly repeats the part opening (see violations)."}]
+   :violations
+   [{:quote "remain mobile and propagate damage at effective diversities well above $135$"
+     :kind :opaque-compression
+     :suggest "135 appears nowhere else in the paper; the reader cannot reconstruct what threshold it is (presumably the maximum sustained diversity any original-survey mechanism reached). State the referent inline or cite the supplement finding that establishes it."}
+    {:quote "What this scale does and does not license needs saying plainly."
+     :kind :belongs-elsewhere
+     :suggest "This paragraph scopes the reach scale as a whole (Wolfram-class disclaimer, the doubling claim, the withdrawn-measure contrast), not the transport-vs-diversity comparison this subsection argues. Move it to the end of sec:causal or make it a short closing passage of the section, after the diversity result."}
+    {:quote "It concerns the phenotype-coupled construction, not the bare operators;"
+     :kind :redundant
+     :suggest "The part opening already disclaims this (\"the results below neither classify nor measure the $8!$ family as a whole\"). Cut this sentence and the following clause, or reduce to a bare cross-reference."}]}
+
+  {:title "The live read is determinative, not a tiebreak"
+   :label nil
+   :claim "A frozen context predicts the live rule selection barely better than chance (73.1% disagreement against a 75% chance baseline), so the phenotype read determines the outcome rather than breaking ties — which is what the convex gain curve predicts."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "One measurement bounds how the convexity of"
+     :role :evidence
+     :note "Single tight measurement plus an explicit refusal to over-claim; \"the sixteen tested ones\" is a count established only in Supplement finding 8, not in the main text, but the sentence points there. Subsection has no \\label."}]
+   :violations
+   []}
+
+  {:title "A Gate Reading Current States Raises Reach; Reading a Frozen Field Lowers It"
+   :label "sec:endogenous-gain"
+   :claim "In a conditional composition of transport and holding, a phenotype-blind gate is exactly a duty-cycle gain dial (reach = 1.21 + 22.42 f), every current-reading gate exceeds that line, and every statistics-matched frozen gate falls below it — recovering causal currency as the operative coordinate from an independent construction."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "A \\emph{conditional composition} applies one operator where a"
+     :role :machinery
+     :note "Defines the gate, the fixed operator pair with their calibrated reaches, the firing fraction, and the carried-over fork disciplines."}
+    {:n 2 :opening "A gate firing at a prescribed rate, blind"
+     :role :evidence
+     :note "The blind line (R^2 = 0.993) identifies duty cycle with the gamma dial, then thirteen live agree-k/m gates all exceed it, the widest beating unit-rate transport while firing 63% of the time."}
+    {:n 3 :opening "Width, however, is also the spatial correlation length"
+     :role :evidence
+     :note "Raises the correlated-firing confound itself and kills it with the frozen-gate control: all seven frozen pairs fall below the blind line despite firing more often in six of seven. The part's closing three-way ordering."}
+    {:n 4 :opening "The frozen-gate control: currency, not correlation. Departure"
+     :role :evidence
+     :note "Caption fig:frozen-gate: restates the pairwise result; its final clause speaks about Part II from an external vantage although this figure is inside Part II (see violation)."}]
+   :violations
+   [{:quote "Part~II identifies, recovered here from a construction sharing none of"
+     :kind :belongs-elsewhere
+     :suggest "The caption refers to \"the coordinate Part~II identifies\" and \"Part~II's dials\" from outside, but this section is in Part II — a seam left from the section's earlier home. Rewrite as \"the coordinate the preceding sections identify, recovered from a construction sharing none of their dials\"."}]}]}

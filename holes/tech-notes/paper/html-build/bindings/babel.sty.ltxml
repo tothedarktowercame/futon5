@@ -1,0 +1,60 @@
+# -*- mode: Perl -*-
+# babel -> LaTeXML stub.
+#
+# Rationale: LaTeXML's stock babel binding reads the real babel.sty plus the
+# language .ldf files, and current babel breaks its Until:-style parsing --
+# the run dies on \bbl@tempe ("Missing argument Until:=") and then cascades
+# into a hundred "\def should not appear between \csname and \endcsname"
+# errors from the .ldf option machinery.
+#
+# For HTML, babel's contribution is a language tag; hyphenation and
+# print-typographic conventions are the browser's business. So we record the
+# language and provide the handful of user-facing commands.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+# Map babel language option names to BCP-47 tags for xml:lang.
+my %BABEL_LANG = (
+  american => 'en-US', USenglish => 'en-US', english   => 'en',
+  british  => 'en-GB', UKenglish => 'en-GB', canadian  => 'en-CA',
+  australian => 'en-AU', newzealand => 'en-NZ',
+  french   => 'fr',    german     => 'de',   ngerman   => 'de',
+  spanish  => 'es',    italian    => 'it',   portuguese => 'pt',
+  brazilian => 'pt-BR', dutch     => 'nl',   russian   => 'ru',
+  polish   => 'pl',    swedish    => 'sv',   danish    => 'da',
+  norsk    => 'no',    finnish    => 'fi',   greek     => 'el',
+  latin    => 'la',    czech      => 'cs',   catalan   => 'ca',
+);
+
+DeclareOption(undef, sub {
+    my $opt = ToString(Digest(T_CS('\CurrentOption')));
+    if (my $tag = $BABEL_LANG{$opt}) {
+      AssignValue('BABEL_LANGUAGE' => $tag, 'global');
+      # Tag the document root so the HTML carries xml:lang.
+      AssignMapping('DOCUMENT_LANGUAGE', $tag => 1); }
+    return; });
+
+DefMacro('\languagename', sub { Explode(LookupValue('BABEL_LANGUAGE') || 'en'); });
+
+DefPrimitive('\selectlanguage{}',        undef);
+DefPrimitive('\babeltags{}',             undef);
+DefPrimitive('\babelprovide[]{}',        undef);
+DefPrimitive('\languageattribute{}{}',   undef);
+DefPrimitive('\useshorthands{}',         undef);
+DefPrimitive('\defineshorthand{}{}',     undef);
+DefPrimitive('\shorthandon{}',           undef);
+DefPrimitive('\shorthandoff{}',          undef);
+DefPrimitive('\addto{}{}',               undef);
+
+# \foreignlanguage{lang}{text} -> keep the text, tagged.
+DefConstructor('\foreignlanguage{}{}',
+  "<ltx:text xml:lang='#lang'>#2</ltx:text>",
+  properties => sub { (lang => ($BABEL_LANG{ ToString($_[1]) } || ToString($_[1]))); });
+
+DefEnvironment('{otherlanguage} {}', '#body');
+DefEnvironment('{otherlanguage*} {}', '#body');
+DefMacro('\iflanguage{}{}{}', '#2');
+
+1;

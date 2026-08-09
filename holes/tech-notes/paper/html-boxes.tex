@@ -1,0 +1,72 @@
+% html-boxes.tex -- converter-side definitions of the paper's typed boxes.
+%
+% WHY: the print versions of these boxes are tcolorboxes, which are drawn with
+% TikZ. latexml-oxide converts TikZ faithfully -- by rendering it as SVG. That
+% turns 94% of Supplement 1 and 72% of Supplement 2 into fixed-geometry
+% pictures: they do not reflow, they do not scale to a narrow screen, and the
+% text inside them is not HTML.
+%
+% So under a converter we skip tcolorbox entirely and define the same
+% environments as ordinary theorem-like blocks. LaTeXML and oxide both emit
+% these as <div class="ltx_theorem ltx_theorem_NAME"> with a real title, a real
+% counter and a real anchor -- semantic HTML that reflows and can be styled.
+%
+% Input this from inside an \iflatexml branch, then declare the boxes the
+% document actually uses:
+%
+%     \iflatexml
+%       \input{html-boxes}
+%       \NewHTMLBox{definition}{Definition}{1}   % 1 = takes a {title} argument
+%       \NewHTMLBox{theorem}{Theorem}{0}         % 0 = no title argument
+%     \else
+%       ... the tcolorbox definitions ...
+%     \fi
+%
+% The [label={...}] option each box carries in the sources is honoured, so
+% \ref and \autoref into the boxes keep working.
+
+\usepackage{amsthm}
+\usepackage{keyval}
+
+% This file is \input, not a package, so `@` is not a letter here: everything
+% touching \define@key or \@empty must sit inside \makeatletter.
+\makeatletter
+
+% Option keys. Only `label` does anything; the rest are print-layout keys that
+% appear in the sources (fold, breakable=false) and must be absorbed silently.
+\define@key{htmlbox}{label}{\def\htmlboxlabel{#1}}
+\define@key{htmlbox}{fold}[]{}
+\define@key{htmlbox}{unfold}[]{}
+\define@key{htmlbox}{breakable}[]{}
+
+\newcommand{\htmlboxsetup}[1]{%
+  \def\htmlboxlabel{}%
+  \def\htmlbox@opts{#1}%
+  \ifx\htmlbox@opts\@empty\else\setkeys{htmlbox}{#1}\fi
+  \ifx\htmlboxlabel\@empty\else\expandafter\label\expandafter{\htmlboxlabel}\fi}
+\makeatother
+
+% \NewHTMLBox{envname}{Heading}{1 if it takes a mandatory {title}, else 0}
+\newcommand{\NewHTMLBox}[3]{%
+  % amsthm's default `plain' style italicises the body, which is wrong for
+  % findings and worked examples that are pages of prose. `definition' style
+  % keeps the body upright and only bolds the heading.
+  \theoremstyle{definition}%
+  \newtheorem{htmlbox#1}{#2}%
+  \ifnum#3=1\relax
+    \NewDocumentEnvironment{#1}{O{} m}%
+      {\begin{htmlbox#1}[##2]\htmlboxsetup{##1}}%
+      {\end{htmlbox#1}}%
+  \else
+    \NewDocumentEnvironment{#1}{O{}}%
+      {\begin{htmlbox#1}\htmlboxsetup{##1}}%
+      {\end{htmlbox#1}}%
+  \fi}
+
+% Present in the print branch; harmless no-ops here so stray uses do not break.
+\providecommand{\foldmark}{}
+\providecommand{\thetcbcounter}{}
+\makeatletter
+\@ifundefined{ifpaperboxfold}{\newif\ifpaperboxfold}{}
+\makeatother
+\endinput

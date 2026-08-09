@@ -1,0 +1,446 @@
+;; Standoff coherence annotations, full audit v2 (2026-08-08).
+;; Patterns: ~/code/futon3/library/writing-coherence/ (all 23 applied), plus
+;; the TOC-alone title principle (Joe, 2026-08-08) driving the meta-title set.
+;; Conventional titles deliberately not annotated: the three \part titles
+;; (territory names), Discussion, Limits, Conclusion, and both claim-shaped
+;; subsections (fixed-points-iff-even-cycles; dead-genotype-live-phenotype;
+;; fixed-bytes-2^k; The Vocabulary Is Twelve of Forty Thousand).
+;; Patterns verified clean: unearned-essentially (both "simply" hits are
+;; literal), scope-mush, hedged-lift, balanced-pair-padding, triad-inflation,
+;; citation-density, structural-style (Title Case sections / sentence-case
+;; subsections, consistent), plain-language-thesis, subheading-without-
+;; paragraph, meet-the-reader, name-what-you-drop (except Limits gap, #46),
+;; paraphrase-drift, throat-clearing-close (except #14), recursion (#52 info).
+;; Supplements NOT audited in this pass.
+;; Offsets are 0-based chars into the file at the recorded :chars size;
+;; any edit invalidates downstream offsets — re-anchor by :quote.
+{:audit {:date "2026-08-08"
+         :library "futon3/library/writing-coherence"
+         :files {"draft8.tex" {:chars 72354} "part3-exotype.tex" {:chars 27645} "intro-generated.tex" {:chars 11434}}}
+ :annotations
+ [
+  {:id 1
+   :file "intro-generated.tex"
+   :pattern :writing-coherence/stale-reference-after-restructure
+   :severity :major
+   :start 4071 :end 4130
+   :quote "the phenotype-reading construction of \\secref{sec:braiding}"
+   :note "The construction the causal measurement places is the river (Part II, sec:feedback-construction); sec:braiding is Part I's temporal-braid subsection, so the pointer renders as 'Constructive control by temporal schedules'. Predates today's restructures."
+   :suggest "Fix in intro.edn ([dynamical-reading]): \\secref{sec:feedback-construction}; re-render."}
+  {:id 2
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :moderate
+   :start 8761 :end 8792
+   :quote "an axis (the precision $\\beta$)"
+   :note "beta is glossed inline here but kappa first appears a paragraph later with no gloss; both are formally introduced only in Three Examples, two sections downstream of this use."
+   :suggest "Gloss kappa at first use ('the epistemic weight $\\kappa$'), or open the search-half with one sentence naming both as the selection rule's two parameters."}
+  {:id 3
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :moderate
+   :start 7052 :end 7080
+   :quote "a MetaCA carrying an exotype"
+   :note "'exotype layer' is used here before The Layer defines the term; the part-opening paragraph gestures at the idea but never says the word."
+   :suggest "Appositive at first use: 'an exotype layer---the per-cell operator assignment defined in \\secref{sec:exotype-layer}---'."}
+  {:id 4
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 25193 :end 25249
+   :quote "\\subsection{What these examples do and do not establish}"
+   :note "Shape-describing title; the section's own bolded load-bearing sentence is available."
+   :suggest "'The parameters do not determine which phase wins'."}
+  {:id 5
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 6692 :end 6731
+   :quote "\\section{The Question This Part Closes}"
+   :note "Names the act, not the claim; the reader must read on to learn which question and which way it closes."
+   :suggest "'The Regime Is the Default; Nothing Local Finds or Holds It'."}
+  {:id 6
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 17222 :end 17262
+   :quote "\\section{What Varies, and What Does Not}"
+   :note "Shape-describing title over the part's scope boundary."
+   :suggest "'Nothing Here Is Known to Generalise Across Propagators'."}
+  {:id 7
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-lede
+   :severity :minor
+   :start 22687 :end 22743
+   :quote "Two facts about this pair matter more than either alone."
+   :note "Announces shape before content; instance of the house enumerative-lede style."
+   :suggest "'The pair are the same kind of object, and the search objective ranks them the wrong way round.'"}
+  {:id 8
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-lede
+   :severity :minor
+   :start 14315 :end 14376
+   :quote "Three properties of this transition are worth stating because"
+   :note "Enumerative meta-lede; half-earns its keep by naming why the informal vocabulary misleads."
+   :suggest "Optional: open with property one, folding the vocabulary clause into it."}
+  {:id 9
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-lede
+   :severity :minor
+   :start 49316 :end 49362
+   :quote "Two readings of that result must be separated."
+   :note "Shape-announcing lede; the glider/dispersion contrast could open directly."
+   :suggest "'A glider carries a fixed-width packet; a conductive medium disperses; the damage centroid distinguishes them.'"}
+  {:id 10
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-lede
+   :severity :minor
+   :start 53249 :end 53309
+   :quote "Two consequences bear on the reading of \\secref{sec:causal}."
+   :note "Further instance of the enumerative-lede style; annotated for an honest count."
+   :suggest "If the style stays, keep; else lead with the gamma=0 endpoint fact."}
+  {:id 11
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/one-paragraph-per-typed-claim
+   :severity :moderate
+   :start 8675 :end 8731
+   :quote "\\emph{The search half is external, and quantifiably so.}"
+   :note "One paragraph fuses three typed claims: the external-bits ledger, the ranking failure, the timescale mechanism — separable measurements a reader will scan for separately."
+   :suggest "Split after '...never exceeds $0.540$.'"}
+  {:id 12
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/section-bridge-missing
+   :severity :moderate
+   :start 13118 :end 13177
+   :quote "An \\emph{exotype} is a per-cell assignment of a propagator."
+   :note "The Layer opens cold immediately after the closure verdict, at the exact joint where the part pivots from question to machinery."
+   :suggest "One bridging clause: 'The measurements above ran on the following machinery.'"}
+  {:id 13
+   :file "draft8.tex"
+   :pattern :writing-coherence/stale-reference-after-restructure
+   :severity :minor
+   :start 26787 :end 26839
+   :quote "the metric measures we tried do not separate the two"
+   :note "After the metrics-stub fold, this pointer renders '(A Causal Measure)' — right target, odd apposition for a claim about metric measures. Introduced by today's restructure."
+   :suggest "Reword: '(see the opening of \\secref{sec:causal})' or drop the parenthetical."}
+  {:id 14
+   :file "draft8.tex"
+   :pattern :writing-coherence/throat-clearing-close
+   :severity :minor
+   :start 29904 :end 29937
+   :quote "and is the natural next question."
+   :note "Section ends on authorial posture rather than its established claim."
+   :suggest "End at '...but \\emph{steering} a field onto a named rule is not.'"}
+  {:id 15
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 15911 :end 15931
+   :quote "\\section{The Object}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'An Operator That Rewrites Rules by Permutation'"}
+  {:id 16
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 20056 :end 20084
+   :quote "\\section{The Classification}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Fixed Rules Exist Exactly When Every Cycle Is Even' (its own first subsection already carries the claim; promote it)"}
+  {:id 17
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 21785 :end 21813
+   :quote "\\subsection{The closed form}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'All-even permutations are $105^2$ of $40{,}320$'"}
+  {:id 18
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 25144 :end 25200
+   :quote "\\subsection{The cast: which rules survive, and how many}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Many distinct survivors, one activity value'"}
+  {:id 19
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 23040 :end 23121
+   :quote "\\subsection{Every fixed point has \\texorpdfstring{$\\lambda = 1/2$}{lambda = 1/2}}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "Duplicates the parent section's claim one level down ('Every Fixed Point Is Balanced' directly above). Differentiate by content ('The parity argument, machine-checked') or drop the subsection break."}
+  {:id 20
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 30773 :end 30793
+   :quote "\\section{The Census}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Odd-Cycle Operators All Live; All-Even Types Split'"}
+  {:id 21
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 30814 :end 30871
+   :quote "\\subsection{The parity dichotomy in the spatial dynamics}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Fixed points make settling possible, not inevitable'"}
+  {:id 22
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 32441 :end 32519
+   :quote "\\subsection{A prospective test: reduced \\texorpdfstring{rotate$+2$}{rotate+2}}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'A prediction met: no fixed points, no die-off'"}
+  {:id 23
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 33276 :end 33324
+   :quote "\\subsection{The full census, tabulated by class}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Collapse grows with the number of cycles'"}
+  {:id 24
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 36902 :end 36957
+   :quote "\\subsection{Constructive control by temporal schedules}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Two collapsing operators braid into a living field'"}
+  {:id 25
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 40409 :end 40441
+   :quote "\\section{A Parameter-Space Test}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'A Broad Crossover and No Critical Point'"}
+  {:id 26
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :info
+   :start 43611 :end 43642
+   :quote "\\section{Related Constructions}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "Conventional related-work label; optional claim form: 'No Adjacent Genre Contains This Family'."}
+  {:id 27
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 45915 :end 45956
+   :quote "\\section{A Feedback-Coupled Construction}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'A Construction That Reads Its Own Phenotype'"}
+  {:id 28
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 47270 :end 47296
+   :quote "\\section{A Causal Measure}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Feedback Roughly Doubles How Far a Flip Travels'"}
+  {:id 29
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 52239 :end 52274
+   :quote "\\subsection{The coupling as a dial}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Reach is monotone in the coupling gain'"}
+  {:id 30
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 54461 :end 54510
+   :quote "\\subsection{Diversity and conservative transport}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Transport moves reach; diversity does not'"}
+  {:id 31
+   :file "draft8.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 59701 :end 59740
+   :quote "\\subsection{What the coupling supplies}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'The live read is determinative, not a tiebreak'"}
+  {:id 32
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 1650 :end 1678
+   :quote "\\section{An Endogenous Gain}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'A Gate Reading the Live Phenotype Exceeds Its Own Dial'"}
+  {:id 33
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 6141 :end 6172
+   :quote "\\section{From Gate to Operator}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'The Gate Chooses When; the Exotype Chooses Which' (from its own first sentence)"}
+  {:id 34
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 13071 :end 13090
+   :quote "\\section{The Layer}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'The Exotype Is a Structured Mutation Operator' (its own second bolded property)"}
+  {:id 35
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :moderate
+   :start 18924 :end 18948
+   :quote "\\section{Three Examples}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Three Fates: One Phase Wins, the Other Wins, or Neither Does'"}
+  {:id 36
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 19886 :end 19919
+   :quote "\\subsection{The ridge from below}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Below the ridge, the live phase eats every frozen domain'"}
+  {:id 37
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 20906 :end 20939
+   :quote "\\subsection{The ridge from above}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'Above it, the frozen phase absorbs the lattice'"}
+  {:id 38
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/meta-title
+   :severity :minor
+   :start 23244 :end 23282
+   :quote "\\subsection{The example in the valley}"
+   :note "TOC-alone principle (Joe, 2026-08-08): the argument should be readable from the section titles; this title labels its territory without stating its claim."
+   :suggest "'In the valley, neither wins for ten thousand steps'"}
+  {:id 39
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :major
+   :start 9420 :end 9442
+   :quote "the settled field at a"
+   :note "The paper's canonical term for the w=15 condition is 'frozen'/'live' (defined in Three Examples); the closure section and Figure~\\ref{fig:binv-rescue}'s caption say 'settled' — imported from the working notes' vocabulary. Four sites in this file (offsets of the others: see annotations 40-42). A reviewer meets two names for one concept."
+   :suggest "Canonicalise on frozen/live throughout the closure section and the caption; reserve 'settled' for nothing."}
+  {:id 40
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :minor
+   :start 10809 :end 10853
+   :quote "whose settled domains have median width $2$,"
+   :note "Second 'settled' site (see annotation 39)."
+   :suggest "'whose frozen domains have median width $2$'."}
+  {:id 41
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :minor
+   :start 11839 :end 11872
+   :quote "(median settled-domain width $2$)"
+   :note "Third 'settled' site, in the Figure caption (see annotation 39)."
+   :suggest "'(median frozen-domain width $2$)'."}
+  {:id 42
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :minor
+   :start 12347 :end 12380
+   :quote "settled fraction $0.083$--$0.145$"
+   :note "Fourth 'settled' site (see annotation 39)."
+   :suggest "'frozen fraction $0.083$--$0.145$'."}
+  {:id 43
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :moderate
+   :start 19470 :end 19551
+   :quote "Write a site as \\emph{frozen} at time $t$ if its phenotype has been unchanged for"
+   :note "The frozen/live definition arrives in Three Examples, two sections after the closure section has already used the concept load-bearingly (the $w = 15$ window, pure/mixed neighbourhoods, frozen fractions)."
+   :suggest "Move the definitional sentence (or a one-line version of it) ahead of the closure section, or open the closure with it."}
+  {:id 44
+   :file "draft8.tex"
+   :pattern :writing-coherence/stale-reference-after-restructure
+   :severity :moderate
+   :start 15364 :end 15448
+   :quote "violet edge closes the map --- the operator family re-enters as something the system"
+   :note "The argument map's Part III terminus is still 'Three examples ... the search objective ranks them inverted'; the part's new headline — the closure result — has no node, so the reader's roadmap ends one result short of the text."
+   :suggest "Add a closing node ('the question closes: the regime is the default; nothing local finds or holds it') below the Three-examples box, or note the closure in the caption."}
+  {:id 45
+   :file "draft8.tex"
+   :pattern :writing-coherence/name-what-you-drop
+   :severity :major
+   :start 63231 :end 63316
+   :quote "All persistence claims are bounded by the horizons actually run, and the width-$1000$"
+   :note "The Limits section does not cover the closure section's four measurements (six seeds, one width, single-write overrides, one beta for the intervention experiment; eight seeds and one geometry for the ranking/decorrelation measurements). The Conclusion now points here for all Part III sample sizes, so the gap is load-bearing."
+   :suggest "Add three sentences bounding the closure measurements alongside the existing Part III limits."}
+  {:id 46
+   :file "draft8.tex"
+   :pattern :writing-coherence/stale-reference-after-restructure
+   :severity :major
+   :start 70116 :end 70155
+   :quote "Every numerical result in this paper is"
+   :note "The reproducibility claim (one documented command, 307 artefacts, byte-identical) predates today's closure measurements and the two new figure panels, whose scripts are not in that pipeline. As written the claim now overstates."
+   :suggest "Either add the four measurement scripts and two figure scripts to the regeneration command, or scope the claim ('every numerical result through Part II and the search record...')."}
+  {:id 47
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :minor
+   :start 17447 :end 17526
+   :quote "were hand-picked, and the reason is not recorded. The eight additions were made"
+   :note "Near-verbatim repetition of the vocabulary section's 'The twelve were chosen by hand, and the reasons were not recorded' thirty lines earlier; the variation does no work."
+   :suggest "State once, in whichever section keeps the scope duty; cross-reference from the other."}
+  {:id 48
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :minor
+   :start 6902 :end 6947
+   :quote "damage reach, computed by forking the run and"
+   :note "The measure is 'causal reach' everywhere else in the paper; 'damage reach' appears only here."
+   :suggest "'causal reach, computed by forking the run and perturbing a twin'."}
+  {:id 49
+   :file "intro-generated.tex"
+   :pattern :writing-coherence/first-mention-undischarged
+   :severity :minor
+   :start 4871 :end 4957
+   :quote "The live phenotype-to-genotype coupling is what places the construction where it sits:"
+   :note "genotype/phenotype terminology first carries weight here; the intro has said 'rules as well as states' but never bound the biological terms to the layers."
+   :suggest "One appositive at first use in intro.edn: 'the live phenotype-to-genotype coupling (state layer read by rule layer)'."}
+  {:id 50
+   :file "draft8.tex"
+   :pattern :writing-coherence/one-paragraph-per-typed-claim
+   :severity :minor
+   :start 41388 :end 41441
+   :quote "Figure~\\ref{fig:phase} collects the four diagnostics."
+   :note "Four diagnostics, four panels, one paragraph; the prose-figure correspondence a scanning reader expects breaks at the paragraph level."
+   :suggest "One sentence-group per diagnostic, or a compact list."}
+  {:id 51
+   :file "draft8.tex"
+   :pattern :writing-coherence/missing-mechanism
+   :severity :minor
+   :start 36648 :end 36727
+   :quote "phenotype. Same cycle type, opposite outcome: the specific permutation, not its"
+   :note "The contrast is stated without its consequence-hinge: what the difference does (the algebra cannot classify dynamics; the census must) is left to the reader."
+   :suggest "Add the hinge: 'the consequence is that dynamical class cannot be read off the cycle type, which is what the census quantifies.'"}
+  {:id 52
+   :file "draft8.tex"
+   :pattern :writing-coherence/recursion-cheque
+   :severity :info
+   :start 17862 :end 17939
+   :quote "wiring is $\\sig$ and whose update is Boolean negation --- an automaton inside"
+   :note "The automaton-inside-the-automaton observation writes a small recursion cheque; arguably cashed by the alternating-colouring proof, which works on exactly that structure. No action needed if so read."
+   :suggest "Optionally add 'a structure the fixed-point proof uses directly' to cash it explicitly."}
+  {:id 53
+   :file "part3-exotype.tex"
+   :pattern :writing-coherence/cross-section-claim-drift
+   :severity :minor
+   :start 17837 :end 17917
+   :quote "Consequently every dynamical result reported below is measured at one point of a"
+   :note "The 12-of-40,320 scope statement appears here, in Limits, and in the intro's scope paragraph, in three wordings; the pattern calls for one canonical sentence reused verbatim."
+   :suggest "Pick this section's wording as canonical; make Limits and intro.edn quote it."}
+ ]}

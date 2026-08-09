@@ -1,0 +1,76 @@
+# -*- mode: Perl -*-
+# xparse -> LaTeXML stub.
+#
+# Rationale: LaTeXML's stock xparse binding does RequirePackage('expl3') and
+# reads the real xparse.sty, which lands in expl3-code.tex and dies (verified
+# in isolation: a 3-line document with nothing but \usepackage{xparse} hits
+# the same "Negative argument for \prg_replicate:nn" failure). LaTeXML 0.8.8's
+# kernel does not define \NewDocumentCommand either, so we implement the
+# subset of xparse this paper needs.
+#
+# Supported signature items: s  m  o  O{default}  b  +b  (and a leading '+').
+# Unsupported items are approximated by 'm', which is the least-bad guess.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DeclareOption(undef, sub { });
+
+# Translate an xparse signature into a LaTeXML prototype string.
+# Returns (prototype, is_body_terminated) where the latter is true if the
+# signature ends in a body argument (b / +b).
+sub xparse_proto {
+  my ($sig) = @_;
+  $sig =~ s/\+//g;                 # '+' only marks long/par-tolerant args
+  my @proto;
+  my $hasbody = 0;
+  while ($sig =~ /\G\s*(O\{([^}]*)\}|[smob])/gc) {
+    my ($item, $default) = ($1, $2);
+    if    ($item eq 's') { push(@proto, 'OptionalMatch:*'); }
+    elsif ($item eq 'm') { push(@proto, '{}'); }
+    elsif ($item eq 'o') { push(@proto, '[]'); }
+    elsif ($item eq 'b') { $hasbody = 1; }
+    else                 { push(@proto, '[Default:' . $default . ']'); } }
+  return (join(' ', @proto), $hasbody); }
+
+# --- \NewDocumentCommand and friends ---------------------------------------
+foreach my $cmd (qw(NewDocumentCommand RenewDocumentCommand
+  ProvideDocumentCommand DeclareDocumentCommand)) {
+  DefPrimitive('\\' . $cmd . '{}{}{}', sub {
+      my ($stomach, $cs, $sig, $body) = @_;
+      my ($proto) = xparse_proto(ToString($sig));
+      DefMacroI(ToString($cs), ($proto || undef), $body, scope => 'global');
+      return; }); }
+
+# --- \NewDocumentEnvironment and friends -----------------------------------
+# A signature ending in 'b' captures the environment body as an argument,
+# which LaTeXML has no direct analogue for. Rather than emulate that, we
+# render the environment as a semantic block and drop the user's begin/end
+# code -- the begin/end code in this paper is tcolorbox drawing instructions,
+# which HTML does not want anyway. Definitions supplied earlier (e.g. by our
+# paperboxes binding, which gives these environments real titles, counters and
+# labels) are left alone.
+foreach my $cmd (qw(NewDocumentEnvironment RenewDocumentEnvironment
+  ProvideDocumentEnvironment DeclareDocumentEnvironment)) {
+  DefPrimitive('\\' . $cmd . '{}{}{}{}', sub {
+      my ($stomach, $name, $sig, $begin, $end) = @_;
+      my $env = ToString($name);
+      return if LookupDefinition(T_CS('\begin{' . $env . '}'));    # already ours
+      my ($proto, $hasbody) = xparse_proto(ToString($sig));
+      DefEnvironmentI($env, ($proto || undef),
+        "<ltx:para class='ltx_$env'>#body</ltx:para>",
+        scope => 'global');
+      return; }); }
+
+DefMacro('\IfValueT{}{}',    '');
+DefMacro('\IfValueF{}{}',    '#2');
+DefMacro('\IfValueTF{}{}{}', '#3');
+DefMacro('\IfBooleanT{}{}',    '');
+DefMacro('\IfBooleanF{}{}',    '#2');
+DefMacro('\IfBooleanTF{}{}{}', '#3');
+DefMacro('\BooleanFalse', '');
+DefMacro('\BooleanTrue',  '');
+DefMacro('\NoValue',      '');
+
+1;

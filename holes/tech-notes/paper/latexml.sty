@@ -1,0 +1,14 @@
+% latexml.sty -- local stub so \iflatexml works under pdflatex too.
+%
+% LaTeXML (and latexml-oxide) ship their own binding for this package, which
+% sets \iflatexml TRUE. Real TeX has no such package, so this stub provides
+% the conditional set FALSE. That lets the sources guard print-only code:
+%
+%     \iflatexml\else  <print-only material>  \fi
+%
+% Nothing else belongs in here; the converters never read this file.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{latexml}[2026/08/08 iflatexml stub for real TeX engines]
+\newif\iflatexml
+\latexmlfalse
+\endinput

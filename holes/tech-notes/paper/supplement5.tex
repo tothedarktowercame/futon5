@@ -15,7 +15,7 @@
 \addbibresource{refs.bib}
 \hypersetup{
   hidelinks,
-  pdftitle={Supplement 5: Apparatus},
+  pdftitle={Supplement 4: Apparatus},
   pdfauthor={Joseph Corneli},
   pdfsubject={The search apparatus accompanying Rule-Rewriting Cellular Automata
     and the Edge of Chaos}
@@ -24,8 +24,8 @@
 \newcommand{\sig}{\sigma}
 \newcommand{\secref}[1]{\emph{\nameref{#1}}}
 
-\title{Supplement 5: Apparatus}
-\shorttitle{Supplement 5: Apparatus}
+\title{Supplement 4: Apparatus}
+\shorttitle{Supplement 4: Apparatus}
 \author{Joseph Corneli}
 \affiliation{}
 
@@ -57,8 +57,8 @@ only where the provenance of an example matters.
 It is documented in full for one reason: it did not do what it was built to do,
 and the specific ways in which it failed are reusable. The intended object was a
 system that adjusts its own operating point using only quantities it can compute at
-runtime, toward the coexistence of frozen and moving structure that the main text
-calls the third sense of the edge of chaos. What exists is a system that scores a
+runtime, toward the coexistence of frozen and moving structure that the main text's
+opening example shows---the edge of chaos as this project encounters it. What exists is a system that scores a
 parameter surface, moves over it under a learned surrogate, and reports where it
 went. The step from the second to the first was not taken, and
 \hyperref[supp:miner-negative]{the closing subsection} states precisely which
@@ -412,6 +412,42 @@ unchanged to a different architecture. Finally, the calibration used by the scor
 share dynamics with the constructions placed on it; boundary conditions that differ
 between a calibration and the objects it calibrates can reorder the reference rules
 themselves, and where that holds the resulting band assignments are not comparable.
+
+\subsection*{A screen that reframed the selection experiment}
+
+The conditions above were applied to the selection experiment they were written for,
+before any evolutionary arm was launched, and the first one failed. A Baldwin effect in
+the original framing requires a \emph{target}: something acquired by plasticity that the
+heritable layer could come to encode. Whether such a target exists is checkable in
+advance, and here it does not.
+
+A four-cell grid separates the two sources of variation, initial phenotype and rewrite
+tape, over eight environment seeds and eight rewrite seeds. Mean pairwise field agreement
+is $0.021$ with both varying and $0.019$ with the initial phenotype fixed; sharing the
+rewrite tape raises it to $0.129$; fixing both returns exactly $1.0$. Chance is $0.004$.
+The fully fixed cell passing exactly is what certifies the instrument: the apparatus can
+register agreement when agreement exists. Against a materially-encodable threshold of
+$0.25$, no single-factor repair reaches it, and a sixteen-context follow-up agrees---only
+four contexts share a modal rule across all eight seeds, at a mean modal share of $0.143$.
+
+The reading that matters is not that the experiment is blocked. It is that the quantity
+the experiment was built to detect does not exist in the substrate, and that this was
+established for the price of a diagnostic rather than a population run. The response was
+to change what the experiment reports. Its registered signature is now a conjunction of
+two measured quantities---behaviour non-inferior on the calibrated band, and less realised
+rewriting work---rather than evidence that a particular target became encoded. That
+criterion needs no stationary target, no twin run and no external reference: it is a
+property of the trajectories themselves.
+
+This is the same move the search apparatus above was forced into, and it is worth naming
+because both were reached the same way. There, an objective scoring how structured a fixed
+window looked ranked configurations inverted against whether they survived, and what
+replaced it was persistence---a property of a single trajectory. Here, an assimilation
+target that the substrate does not hold still enough to carry was replaced by a
+conjunction over trajectories. In both cases the failure was informative in a way a
+success would not have been, because what failed was the \emph{choice of observable}, and
+that is the part a working apparatus would have had to get right first.
+
 
 \printbibliography
 \end{document}

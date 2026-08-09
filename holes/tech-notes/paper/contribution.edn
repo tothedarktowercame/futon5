@@ -1,0 +1,195 @@
+;; contribution.edn — the paper's argument, stated from/against the literature.
+;; Companion to part{1,2,3}-argument.edn (internal coherence) and the Related
+;; Work section (sec:related): each contribution is a DELTA over named kin,
+;; with the threats (T1-T10, FINDINGS-related-work.md) and their resolutions
+;; carried inline. Intended uses: (a) audit the Conclusion and intro claims
+;; against it; (b) source for a cover letter / reviewer response; (c) the
+;; experiment queue it motivates, in priority order.
+
+{:title "What this paper contributes, argued against the literature"
+ :date "2026-08-09"
+
+ :framing
+ "The literature supplies every ingredient separately: rules as dynamical
+  variables, per-cell rules, absorbing transitions in CA, local self-tuning
+  rules, lattice adoption dynamics, two-layer adaptive systems. The paper's
+  contributions are the combinations that turn out to be unoccupied, plus the
+  measurements those combinations make possible. Contribution 6 (the scoped
+  negative) is argued AGAINST the self-tuning positives; contributions 1-2
+  are argued FROM gaps the audit bounded; the rest are measurement deltas."
+
+ :contributions
+ [{:id :operator-family
+   :claim "A group-theoretic family of rule-table maps (8! permutations with
+           negation), enumerated exhaustively, applied as the update law of a
+           running lattice, with fixed-point structure derived as a theorem."
+   :kin [{:key "cattaneo1997transformations"
+          :supplies "exact classification of rule-space transformations"
+          :lacks "static conjugacies applied once; never iterated as dynamics"}
+         {:key "lipackard1990structure"
+          :supplies "operators on truth-table positions across all 256 rules"
+          :lacks "family is the eight single-bit flips; no fixed-point structure"}
+         {:key "ilachinski1987structurally"
+          :supplies "the CA rewrites part of itself while running"
+          :lacks "rewrites substrate, not local function"}
+         {:key "rollier2024taxonomy"
+          :supplies "the recency test: five families, no category for rules
+                     rewritten during evolution"}]
+   :gap "No prior work satisfies all four conjuncts (family + enumeration +
+         live update law + fixed-point theorem); every neighbour breaks >= 2.
+         Audited negative, lane A."
+   :threats [{:t "T9" :key "cattaneo1997transformations"
+              :resolution "distinguished in sec:related: static vs iterated"}
+             {:t "T2" :key "khajehabdollahi2023locally"
+              :resolution "conceded as closest construction (per-cell rule
+                           parameters updated online); they do no enumeration,
+                           no classification, no causal measurement"}]}
+
+  {:id :lambda-degeneracy
+   :claim "The classical edge-of-chaos coordinate is degenerate exactly on the
+           set the rule dynamics selects: every fixed rule of an all-even
+           operator is balanced (lambda = 1/2)."
+   :kin [{:key "hedlund1969endomorphisms"
+          :supplies "surjective CA are balanced — constraint-forces-balance is
+                     56 years old (THE concession, T1)"}
+         {:key "capobianco2017postsurjectivity" :supplies "modern general form"}
+         {:key "paturi2025reversibility" :supplies "balance in non-uniform CA"}
+         {:key "sakai2002lambdaF" :supplies "lambda is many-to-one generally"}]
+   :gap "No prior work shows lambda degenerate on the fixed-point set of a
+         rule-rewriting operator (audited, lane C). The contribution is WHERE
+         the degeneracy lands (the attracting set of the rule dynamics), not
+         that a constraint forces balance."
+   :threats [{:t "T1" :key "hedlund1969endomorphisms"
+              :resolution "cited and conceded in sec:related; claim re-aimed"}]}
+
+  {:id :causal-instrument
+   :claim "A fork-and-flip causal reach scale, calibrated against elementary
+           rules, on which: current-state information reaching the rule layer
+           roughly doubles reach; sustained rule diversity, mutation, refuges,
+           niches, and mobility leave it unchanged; conservative transport
+           breaks the apparent diversity optimum (a mechanism confound)."
+   :kin [{:key "grassberger1995damage"
+          :supplies "damage spreading in the DP frame"
+          :lacks "assumes healing; our frozen regions do not heal"}
+         {:key "park2023farfrom"
+          :supplies "perturbation-spread measures on Boolean models (methodological neighbour)"}
+         {:key "khajehabdollahi2023locally"
+          :supplies "the construction (T2)" :lacks "the measurement"}]
+   :gap "The construction existed; the causal measurement on it did not.
+         Construction-vs-measurement stated explicitly in sec:related."
+   :threats [{:t "T2" :resolution "measurement delta stated"}]}
+
+  {:id :gate-ordering
+   :claim "A gate deciding locally WHEN rewriting fires reproduces the
+           prescribed-rate dial when blind, exceeds it reading current states,
+           falls below it reading a frozen field of matched statistics and
+           higher firing rate — the causal-currency coordinate re-derived from
+           an independent construction."
+   :kin [{:key "bagnoli2012control"
+          :supplies "locally computed sensitivity (Boolean derivatives) siting
+                     controllers in CA — near-miss (T6)"
+          :lacks "objective is convergence to a prescribed target"}]
+   :gap "The live/blind/frozen three-way control, isolating information
+         currency from firing geometry, appears to be ours."
+   :threats [{:t "T6" :resolution "distinguished on objective in sec:related"}]}
+
+  {:id :exotype-outcomes
+   :claim "With per-cell operators adopted under a high-precision selection
+           rule: three outcomes (either phase wins, or full-horizon
+           coexistence); the freezing endpoints are an artefact of the
+           adoption rule (30/30 no-adoption controls neither freeze nor die);
+           boundary-copying accelerates the freezing it was built to prevent;
+           noise holds a foam, not the found configuration's geometry."
+   :kin [{:key "nowak1992spatial" :supplies "the tripartite outcome set for
+          lattice adoption of a modifier"}
+         {:key "huberman1993evolutionary"
+          :supplies "the artefact-of-discipline move (T5)"
+          :lacks "their knob is synchrony and destroys coexistence; ours is
+                  precision and creates freezing; object is an operator"}
+         {:key "klemm2003global" :supplies "noise-vs-freezing rate competition (T10)"}
+         {:key "axelrod1997dissemination" :supplies "similarity-gated copying freezes"}
+         {:key "hilker2006paradox" :supplies "control producing its design's opposite"}
+         {:key "hara2026dmfthopfieldplasticity"
+          :supplies "strongest external corroboration: excessive plasticity
+                     imprints the cue itself (promote to must-cite if the
+                     artefact claim is foregrounded)"}]
+   :gap "The transmitted object (a rule-rewriting operator) and the direction
+         (artefact CREATES the absorbing state) are new; the form is kin."
+   :threats [{:t "T5" :resolution "knob/object/direction stated in sec:related"}
+             {:t "T10" :resolution "presented as CA-substrate instance"}]}
+
+  {:id :scoped-negative
+   :claim "No locally computable quantity WE TESTED finds or holds the
+           coexistence; the obstruction is measured (the needed field
+           decorrelates in ~6 steps, under any discriminating window; ranking
+           probability peaks 0.571 and decays with window length)."
+   :kin [{:key "bornholdt2000topological" :supplies "the canonical positive"}
+         {:key "bornholdt2003socneural"
+          :supplies "its input: locally estimated GLOBAL order parameter"}
+         {:key "droste2013analytical"
+          :supplies "an analytical positive that NAMES our obstruction
+                     ('limited local accessibility of the global phase') and
+                     solves it with an asymmetric one-sided rule (T4)"}
+         {:key "sornette1995mapping" :supplies "self-tuning = coordinate change"}
+         {:key "pruessner2006lessons" :supplies "published mechanisms smuggle N"}
+         {:key "bonachela2009selforganization"
+          :supplies "without conservation, only quasi-criticality — the
+                     theoretical reason to EXPECT our negative"}
+         {:key "melby2005noise" :supplies "self-adjustment is a noise-limited transient"}
+         {:key "sieber2014controlling"
+          :supplies "coexistence CAN be held — by global feedback (T7)"}]
+   :gap "Every positive targets a POINT (K_c, criticality); no work attempts
+         to hold a two-phase MIXTURE (audited, lane E). Ours is the first
+         attempt-and-failure report for that objective, with the obstruction
+         quantified. Scope: symmetric estimator-shaped statistics; the
+         Droste-class one-sided design is untested (stated in sec:related)."
+   :threats [{:t "T4" :key "droste2013analytical"
+              :resolution "scoped in sec:related; motivates the one-sided arm"}
+             {:t "T7" :resolution "locality distinction stated"}]}
+
+  {:id :crossover-scoping
+   :claim "The freezing transition shows a broad crossover with no critical
+           point AT TESTED SIZES; the claim is scoped, with the disorder
+           literature's predicted signatures named rather than discovered in
+           review."
+   :kin [{:key "noest1986new" :supplies "rule disorder exits DP class"}
+         {:key "fates2009asynchronism" :supplies "sharp DP transitions inside
+                uniform ECA under an external parameter — the contrast case"}
+         {:key "hooyberghs2004absorbing" :supplies "activated scaling under disorder (T3)"}
+         {:key "vojta2006rare" :supplies "Griffiths phenomenology (T3)"}
+         {:key "vojta2004broadening" :supplies "extended defects smear — foam precedent"}
+         {:key "gross2006epidemic" :supplies "co-evolution makes transitions
+                first-order with hysteresis — untested rival reading (T8)"}]
+   :gap "No prior characterisation of the absorbing transition of a lattice
+         whose RULE TABLE is rewritten by the dynamics (audited, lane D)."
+   :threats [{:t "T3" :resolution "scoped in sec:related + sec:limits;
+              discriminating test queued (activated-scaling collapse,
+              frozen-lifetime scaling)"}
+             {:t "T8" :resolution "named as unexcluded; hysteresis sweep queued"}]}]
+
+ :experiments-motivated
+ [{:id :activated-scaling :from "T3"
+   :test "Collapse the finite-size scan under activated scaling (ln t vs L^psi)
+          instead of power law; measure frozen-state lifetimes vs L: power law
+          favours crossover reading, exponential favours hidden transition."
+   :status :queued}
+  {:id :hysteresis :from "T8"
+   :test "Adiabatic beta sweep up then down through the freezing regime, with
+          order-parameter (frozen fraction) bimodality check: excludes or
+          confirms the first-order/bistable reading."
+   :status :queued}
+  {:id :one-sided-rule :from "T4 / Droste"
+   :test "A Droste-class asymmetric arm: act tentatively (small random operator
+          writes) while no evidence, decisively on a ONE-SIDED certificate
+          (e.g. a site that has just frozen after long activity is evidence of
+          the frozen phase; sustained activity is evidence of neither). The one
+          design class the closure's negative does not cover."
+   :status :queued}
+  {:id :blind-gate-matched-correlation :from "limits (gate confound)"
+   :test "Blind gate with matched spatial correlation length, separating
+          current-information from firing-geometry contributions."
+   :status :parked}
+  {:id :seed-widening :from "limits (breadth)" :status :parked}
+  {:id :connected-components :from "foam vs regions"
+   :test "Spacetime connected-component statistics separating the foam from the
+          valley configuration structurally." :status :parked}]}

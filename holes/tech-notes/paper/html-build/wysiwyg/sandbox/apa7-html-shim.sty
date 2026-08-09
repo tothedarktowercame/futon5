@@ -1,0 +1,58 @@
+% apa7-html-shim.sty -- close the gap between apa7 and latexml-oxide.
+%
+% latexml-oxide has no apa7 binding, so \documentclass{apa7} stubs out and the
+% APA frontmatter commands are left undefined. Everything else in the paper
+% converts natively. This shim is ordinary LaTeX (no Perl bindings, which
+% oxide ignores), loaded with --preload.
+%
+% Scope, deliberately: frontmatter semantics only. apa7's page layout is a
+% print concern and HTML discards it.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{apa7-html-shim}[2026/08/08 apa7 frontmatter for latexml-oxide]
+
+% ---------------------------------------------------------- frontmatter ----
+% Map APA's author commands onto the kernel's, which oxide already handles.
+\providecommand{\authorsnames}[1]{\author{#1}}
+\providecommand{\authorsaffiliations}[1]{}
+\providecommand{\affiliation}[1]{}
+\providecommand{\shorttitle}[1]{}
+\providecommand{\leftheader}[1]{}
+\providecommand{\course}[1]{}
+\providecommand{\professor}[1]{}
+\providecommand{\duedate}[1]{}
+\providecommand{\addORCIDlink}[2]{#1}
+
+% apa7's \note is the author note. \note is NOT a kernel command, so define it
+% rather than \providecommand-ing around something else's meaning.
+\providecommand{\authorsnote}[1]{}
+\providecommand{\note}[1]{}
+
+% ------------------------------------------------------------- etoolbox ----
+% These only take effect if etoolbox is NOT otherwise loaded.
+%
+% Note for this paper: they do NOT take effect. oxide reads the real apa7.cls
+% to harvest its dependency list, sees etoolbox there, and loads its own
+% native binding (latexml_package/src/package/etoolbox_sty.rs) AFTER preloads
+% run. So the real \patchcmd wins, the paper's two \maketitle patches fail to
+% match the kernel \maketitle, and their \PackageError branches fire.
+%
+% Those two errors are cosmetic -- the patches only adjust title-page spacing,
+% which HTML discards -- but they are noise in the log. There is no --postload
+% to redefine after the fact; the clean fix is a source guard, since
+% \iflatexml is supported (verified). In draft8.tex:
+%     \iflatexml\else  \patchcmd{...}...  \fi
+\providecommand{\patchcmd}[5]{#4}
+\providecommand{\apptocmd}[4]{#3}
+\providecommand{\pretocmd}[4]{#3}
+
+% ---------------------------------------------------------------- expl3 ----
+% One expl3 primitive is reached but undefined. A converter never has shell
+% escape, so the false branch is the correct answer. Defined with expl3
+% catcodes since ':' and '_' are letters there.
+\begingroup
+  \catcode`\_=11 \catcode`\:=11
+  \gdef\sys_if_shell:TF#1#2{#2}%
+  \gdef\sys_if_shell_p:{\c_false_bool}%
+\endgroup
+
+\endinput

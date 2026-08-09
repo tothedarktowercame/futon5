@@ -1,0 +1,203 @@
+{:part "I"
+ :claim "An exactly classified finite family of rule-rewriting operators (fixed rules exist iff every cycle is even, number 2^k, and are all forced to Langton balance) shows that the algebra only bounds the dynamics: collapse, persistence, and diversity are decided by the stochastic spatial process and its schedules, and the diverse phase sits on a broad finite-size crossover, not a critical point."
+ :sections
+ [{:title "Part opening (untitled summary)" :label "part:core"
+   :claim "Part I establishes four results -- the even-cycle classification with its 2^k count and forced balance, the census split with settling not implied, the constructive braid schedule, and the absence of a critical point -- and promises the narrative is readable without the supplement."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "This part establishes four things. Fixed rules"
+     :role :states-claim
+     :note "Roadmap: states the four claims the part will argue, in the order the sections deliver them."}
+    {:n 2 :opening "Definitions, theorems, corollaries and worked examples are"
+     :role :machinery
+     :note "Division of labour with Supplement 2; its promise that the part 'can be read without turning to the supplement' is later breached by undefined terms ('neighbour blending', 'feedforward') -- see violations in sec:census and sec:discussion."}]
+   :violations []}
+
+  {:title "An Operator That Rewrites Rules by Permutation" :label "sec:object"
+   :claim "The operator P_sigma -- a permutation of the eight truth-table positions composed with global negation, acting inside a two-layer CA -- defines a finite, exhaustively enumerable family of 40,320 rule-rewriting operators, with the motivating 2015 example lying just outside it."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "The construction that began this work is recreated"
+     :role :states-claim
+     :note "Motivates the family: the 2015 example is non-bijective and outside it; Part I's job is to embed that phenomenon in an enumerable family."}
+    {:n 2 :opening "A cellular automaton normally evolves a field of"
+     :role :machinery
+     :note "Defines the two-layer (rule field + state field) substrate and fixes the displayed-position indexing convention, including the 2015 conjugation note used later."}
+    {:n 3 :opening "We study the operator $P_\\sig$, parameterised by"
+     :role :machinery
+     :note "Defines P_sigma by Equation (1) and states the section's payload: a finite family of 8! = 40,320 operators, exhaustively enumerable and exactly classified."}
+    {:n 4 :opening "The simultaneous operator of Equation~\\eqref{eq:prop} acts"
+     :role :machinery
+     :note "Separates the simultaneous map from the elementary spatial writes, disclaims novelty of the substrate, and defers the literature placement to sec:related."}
+    {:n 5 :opening "Two operators from the family, each shown over"
+     :role :violation
+     :note "Caption of fig:regimes claims the operator 'drives rule space toward particular, computationally distinguished rules' (Rule 110 domination) -- a substantive claim no paragraph of Part I argues, and the figure is never referenced from Part I text (its only reference is a display-convention note in Part II, line 894)."}]
+   :violations
+   [{:quote "The operator does not merely stir rule space"
+     :kind :unsupported-digression
+     :suggest "Either reference fig:regimes from the sec:object text and argue the drives-toward-distinguished-rules claim there (with the Rule 110 percentages as evidence), or trim the caption to a descriptive statement of the two regimes and let the figure serve only as a visual introduction to the family."}]}
+
+  {:title "Fixed Rules Exist Exactly When Every Cycle Is Even" :label "sec:classification"
+   :claim "P_sigma has a fixed rule iff every cycle of sigma is even; the all-even permutations number 105^2 = 11,025 of 40,320, each with exactly 2^k fixed bytes, and the classification is machine-checked and located within Boolean-network theory."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "$P_\\sig$ has a fixed rule if and"
+     :role :states-claim
+     :note "States Theorem 1, the section's title claim, with the immediate corollary that sigma must be fixed-point-free."}
+    {:n 2 :opening "A fixed rule is a $g$ invariant"
+     :role :evidence
+     :note "Proof sketch in prose: parity of negation around a cycle forces even length; alternating colourings give the converse."}
+    {:n 3 :opening "Worked example~3 shows the theorem on the"
+     :role :machinery
+     :note "Pointer to the worked example that also previews the 2^k count and forced balance, easing the next two sections."}
+    {:n 4 :opening "This is the signed-cycle fixed-point theorem of"
+     :role :calibration
+     :note "Honest placement: the theorem is a specialisation of known signed-cycle results; the contribution claimed is the Lean 4 machine-checked proof of the specialised statement."}
+    {:n 5 :opening "The number of $\\sig \\in S_{2n}$ with"
+     :role :evidence
+     :note "Counts the all-even class (105^2 of 40,320) and cites the classical sources, claiming only the enumeration, not a new identity -- supports the subsection title-claim exactly."}
+    {:n 6 :opening "An all-even $\\sig$ with $k$ cycles"
+     :role :evidence
+     :note "The 2^k fixed-byte count with its one-line proof, machine-check reference, and the sum-consistency check (sum of 2^k = 8!)."}]
+   :violations []}
+
+  {:title "Every Fixed Point Is Balanced" :label "sec:lambda"
+   :claim "Every fixed point of every operator is forced by parity to Hamming weight four (lambda = 1/2), so activity cannot distinguish survivors -- and since the 70-rule balanced shell splits into phenotypically live and dead rules, genotypic death and phenotypic death are distinct events."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "Every fixed point of every operator in"
+     :role :states-claim
+     :note "States Theorem 2, the section's title claim: balance at lambda = 1/2 is forced."}
+    {:n 2 :opening "By Theorem~1 each cycle has even length"
+     :role :evidence
+     :note "One-line parity proof, exhaustive enumeration with zero exceptions, and the machine-check."}
+    {:n 3 :opening "We are deliberate about the standing of this"
+     :role :calibration
+     :note "Separates the algebraic claim (balance forced) from the contested empirical literature around lambda = 1/2, explicitly disclaiming any dynamical interpretation."}
+    {:n 4 :opening "Under an all-even $\\sig$, the fixed points"
+     :role :evidence
+     :note "Connects the 2^k count to the observed terminal populations: distinct rules, one activity value -- but it re-derives the 2^k count already proved in sec:classification (see violation)."}
+    {:n 5 :opening "The smallest nontrivial case of the count is"
+     :role :calibration
+     :note "Distinguishes the 2015 two-rule residual (non-bijective, no fixed rules) from a genuine k=1 instance of the count, preventing a false identification."}
+    {:n 6 :opening "That die-off curve---the count of distinct rules"
+     :role :machinery
+     :note "Introduces the diversity-over-time observable used by the census and braid sections; cautiously framed as an observable, not an order parameter. ('That die-off curve' has a thin antecedent -- the previous paragraph spoke of a 'residual', not a curve -- but the appositive gloss makes it reconstructable."}
+    {:n 7 :opening "Diversity of the observed population and singularity of"
+     :role :transition
+     :note "Closes the subsection and points forward to Part II, but its key clause is opaquely compressed (see violation)."}
+    {:n 8 :opening "Two terminal-diversity solutions of one historical operator."
+     :role :evidence
+     :note "Caption of fig:fig2pair: the historical operator's conjugate collapses to two terminal rules while the direct form stays diverse -- concrete instance of the diversity/collapse contrast, referenced from sec:object p1 and sec:lambda p5."}
+    {:n 9 :opening "The balanced shell is a definite object: exactly"
+     :role :states-claim
+     :note "States the subsection claim: collapse is always onto the particular 70-rule balanced shell, not merely a loss of diversity."}
+    {:n 10 :opening "Balance is necessary for a genotype to freeze"
+     :role :evidence
+     :note "The shell splits 32 live / 38 quiescent at a single lambda -- the coexistence of dynamical classes at one activity value, here by construction rather than survey."}
+    {:n 11 :opening "Figure~\\ref{fig:shell} is such a field, built"
+     :role :evidence
+     :note "Constructs an involution targeting Rule 54; the field dies onto Rule 105 instead, with the phenotype still live -- genotypic and phenotypic death shown to be separate events."}
+    {:n 12 :opening "One caveat marks the open edge of this."
+     :role :calibration
+     :note "Existence of live survivors is settled; steering a field onto a named rule is not -- marks the boundary of the claim honestly."}
+    {:n 13 :opening "A genotypically dead, phenotypically live field. The all-even"
+     :role :evidence
+     :note "Caption of fig:shell restates the construction, the observed collapse onto Rule 105, and what Theorem 2 does and does not say; consistent with the text."}]
+   :violations
+   [{:quote "each even cycle admits two alternating"
+     :kind :redundant
+     :suggest "Sec:classification already proved 'Each even cycle admits exactly two alternating colourings, chosen independently across cycles, whence 2^k'. Replace the re-derivation in this later occurrence with the bare cross-reference: 'number 2^k (sec:classification)'."}
+    {:quote "the metric measures tested do not separate the two"
+     :kind :opaque-compression
+     :suggest "'The metric measures tested' has no referent in this section -- which measures, tested where? Rewrite naming them, e.g. 'the scalar summaries we tested (lambda, terminal rule count) do not separate the two', or defer the whole clause to sec:causal where the tests actually appear."}]}
+
+  {:title "Odd-Cycle Operators All Live; All-Even Types Split" :label "sec:census"
+   :claim "In an exhaustive census of all 40,320 operators, every odd-cycle operator (no fixed bytes) sustains diversity, while the all-even types split, collapse growing more frequent with cycle count -- and possessing a fixed point does not imply settling onto one."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "Theorem~1--2 concern fixed bytes; the spatial"
+     :role :states-claim
+     :note "States the subsection claim (fixed-point existence is not a dynamical verdict) via the rotate+1 vs rotate+2 contrast, and frames the census payload as the death-rate difference between classes -- but leans on 'neighbour blending', an operation never defined in Part I (see violation)."}
+    {:n 2 :opening "The parity dichotomy, by example (the census of"
+     :role :evidence
+     :note "Caption of fig:parity: five operators exhibiting the dichotomy plus the settling-possible-not-inevitable point; self-contained and consistent with the text."}
+    {:n 3 :opening "To guard against reading structure into a"
+     :role :evidence
+     :note "A prediction fixed before running the reduced rotate+2 case, met as stated, with the claim carefully limited to persistence of diversity rather than aperiodicity."}
+    {:n 4 :opening "The trend becomes an exhaustive finite-run observation"
+     :role :evidence
+     :note "The full census over all 40,320 operators, grouped by cycle type, with the caveat that the specific permutation and not cycle type alone decides fate (Figure S3.4)."}
+    {:n 5 :opening "Genotype-alive fraction by cycle type under the census"
+     :role :evidence
+     :note "Table caption: the quantitative split -- 100% alive with any odd cycle, monotone decline from 82.9% to 25.7% as all-even cycle count rises -- the section's central numbers."}]
+   :violations
+   [{:quote "stochastic elementary writes and, in the census, neighbour"
+     :kind :opaque-compression
+     :suggest "'Neighbour blending' is used here, in the fig:parity caption, and as the q=0 endpoint of the sec:discussion scan, but the operation is never defined in Part I text (only Supplement Definition 4) -- breaching the part opening's promise that the narrative is readable without the supplement. Add one defining sentence at first use (what a blend step actually does to a cell's rule)."}]}
+
+  {:title "Fixed Points Are Not Attractors" :label "sec:interrupter"
+   :claim "P_sigma reflects activity across 1/2 and, being a bijection, has no basins -- attraction belongs to the stochastic spatial dynamics -- and a temporal braid of two individually collapsing operators can sustain diversity, something no composed map can produce."
+   :title-matches-claim false
+   :paragraphs
+   [{:n 1 :opening "Possessing a fixed point (Theorem~1) is not"
+     :role :states-claim
+     :note "The title claim, argued algebraically: lambda is reflected, not contracted; bijectivity puts generic rules on periodic orbits; attraction must come from the stochastic write dynamics."}
+    {:n 2 :opening "Everything so far has held one operator fixed"
+     :role :transition
+     :note "Announces the relaxation to schedules and flags that this is the first place a schedule does something neither constituent can."}
+    {:n 3 :opening "Braiding two operators that each collapse alone"
+     :role :evidence
+     :note "The braid result (offset+2 with offset+4 alive though each is dead alone) plus the mixing-fraction dial that makes diversity a controllable quantity for later parts."}
+    {:n 4 :opening "Temporal braiding can sustain aliveness. Two operators that"
+     :role :evidence
+     :note "Caption of fig:braid: the live braid, the dead control braid (offset+2 with offset-2), and the parity-invariant control ruling out one alternative explanation."}
+    {:n 5 :opening "Each operator negates every bit, so under composition"
+     :role :machinery
+     :note "Composition parity: a product of two operators is a pure permutation -- needed to show braiding is not composition."}
+    {:n 6 :opening "Exploratory searches over products of two and"
+     :role :machinery
+     :note "Closes the composition route (no new regime), explains why braiding differs (intermediate coupled states retained), and hands off to Part II. The margin note names Definition 6 'Interrupter' -- a term that never appears in the body text of Part I despite labelling this section."}]
+   :violations
+   [{:quote "\\subsection{Alternating two collapsing operators sustains a diverse field}"
+     :kind :scope-creep
+     :suggest "The part opening bills the braid result as one of Part I's four establishments, but it is buried as a subsection under a title ('Fixed Points Are Not Attractors') that does not state it. Promote the subsection to its own \\section so the TOC carries this claim, keeping the not-attractors paragraph as the lead-in."}]}
+
+  {:title "A Broad Crossover and No Critical Point" :label "sec:discussion"
+   :claim "A finite-size scan across the propagator fraction shows a logistic crossover whose width does not shrink with lattice size and whose susceptibility peak wanders, so the diverse phase is a broad crossover, not a critical point in parameter space."
+   :title-matches-claim true
+   :paragraphs
+   [{:n 1 :opening "The survey (Figure~S3.1) exposes a sharp"
+     :role :states-claim
+     :note "Poses the critical-point question, identifies it as the parameter-space reading of edge-of-chaos distinguished in the introduction, and declares this the one place that reading is tested."}
+    {:n 2 :opening "Figure~\\ref{fig:phase} collects the four diagnostics. The"
+     :role :evidence
+     :note "The scan itself: logistic fits at every size, crossover width ~ L^-0.04, wandering susceptibility peak, no Binder crossing -- each diagnostic consistent with criticality, none locating one."}
+    {:n 3 :opening "The genotype field is also spatially organised. Tinting"
+     :role :violation
+     :note "Reports Supplement 4 material (activity domains, filamentary walls, a withdrawn transport measure) and then declares 'nothing in the argument below depends on them' -- content that argues nothing this section claims (see violations)."}
+    {:n 4 :opening "Finite-size scan across the propagator fraction."
+     :role :evidence
+     :note "Caption of fig:phase: the four panels and scan parameters -- but it names the operator 'Offset $+1$ feedforward', vocabulary not defined until Part II (see violation)."}]
+   :violations
+   [{:quote "The genotype field is also spatially organised"
+     :kind :belongs-elsewhere
+     :suggest "This paragraph supports neither the crossover claim nor anything downstream (it says so itself). Compress to one pointer sentence ('The spatial organisation of the diverse phase, and a transport measure we built and withdrew, are reported in Supplement 4') and delete the matching setup sentence 'We then ask whether the sustained diversity is spatially organised into coexisting dynamical regimes' from the opening paragraph."}
+    {:quote "Neither is a third edge, and nothing in the argument below depends"
+     :kind :opaque-compression
+     :suggest "'A third edge' presupposes two enumerated edges, but this section glosses only one reading (the parameter-space edge); a reader cannot reconstruct the count from the section. If the paragraph survives, rewrite as 'Neither constitutes a further edge-of-chaos reading beyond the two distinguished in the introduction'."}
+    {:quote "Offset $+1$ feedforward"
+     :kind :opaque-compression
+     :suggest "'Feedforward' is Part II vocabulary (the contrast term to the phenotype-reading feedback construction) and is undefined in Part I. In the fig:phase caption write 'offset $+1$ (no phenotype feedback; cf. Part II)' or simply drop the word."}]}
+
+  {:title "Related Constructions" :label "sec:related"
+   :claim "The permutation-propagator family with its derived fixed-point structure appears in none of the adjacent literatures -- ECA symmetry groups, self-referential CA, non-uniform CA, rule-changing CA -- so the contribution is the family and its classification, not the substrate."
+   :title-matches-claim false
+   :paragraphs
+   [{:n 1 :opening "The example of Figure~\\ref{fig:fig2pair} is a"
+     :role :calibration
+     :note "Positions the family against four adjacent genres and defuses the product-alphabet reduction of non-uniform CA; supports the novelty claim -- but its title is a territory label ('Related Constructions'), not the claim it argues (suggest retitling, e.g. 'The Family Does Not Appear in Adjacent Constructions'), and it opens by restating a fact argued twice already (see violation)."}]
+   :violations
+   [{:quote "The example of Figure~\\ref{fig:fig2pair} is a non-bijective writing"
+     :kind :redundant
+     :suggest "This is the third statement of the 2015 example's non-bijectivity (sec:object p1 argues it; sec:lambda p5 restates it with a cross-reference). Open the section with the symmetry-group contrast instead, reducing the fig:fig2pair status to a parenthetical cross-reference to sec:object."}]}]}

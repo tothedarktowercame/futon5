@@ -1,0 +1,230 @@
+/* paper-site.css -- web reading layer over LaTeXML's default stylesheets.
+   Loaded after LaTeXML.css/ltx-article.css, so it only needs to override.
+   The typed-box colours deliberately mirror the tcolorbox colours in the
+   paper's preamble, so the print and web versions read as the same document. */
+
+:root {
+  --ink:        #1a1c1e;
+  --ink-muted:  #5a6068;
+  --bg:         #fbfaf8;
+  --bg-sunk:    #f2f0ec;
+  --rule:       #ddd8d0;
+  --link:       #1a5fa8;
+  --measure:      62rem;   /* text column -- the knob to tune */
+  --measure-wide: 82rem;   /* figures/tables may exceed the text column */
+
+  --box-theorem:    #2f5fa8;   /* blue!55!black   */
+  --box-definition: #6a3fa0;   /* violet!55!black */
+  --box-observation:#1f7a75;   /* teal!55!black   */
+  --box-finding:    #b3670a;   /* orange!65!black */
+  --box-example:    #2e7d32;   /* green!45!black  */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:       #e6e3de;
+    --ink-muted: #9aa1a9;
+    --bg:        #16181a;
+    --bg-sunk:   #1f2225;
+    --rule:      #343a3f;
+    --link:      #79b4f0;
+
+    --box-theorem:    #7aa8e8;
+    --box-definition: #b28ce0;
+    --box-observation:#5fbdb6;
+    --box-finding:    #e0a054;
+    --box-example:    #7cc47f;
+  }
+}
+
+html { background: var(--bg); }
+
+body, .ltx_page_main {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Charter", "Bitstream Charter", "Source Serif 4", Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.62;
+}
+
+/* LaTeXML defaults to a full-bleed measure; papers need a column. */
+.ltx_page_content, .ltx_document {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1.25rem 6rem;
+}
+
+/* ---------------------------------------------------------------- nav ---- */
+.site-nav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; gap: .25rem 1.1rem; align-items: baseline;
+  margin: 0 0 2.5rem; padding: .7rem 1.25rem;
+  background: var(--bg-sunk);
+  border-bottom: 1px solid var(--rule);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: .85rem;
+}
+.site-nav a { color: var(--ink-muted); text-decoration: none; }
+.site-nav a:hover { color: var(--link); }
+.site-nav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+.site-nav .site-nav-home { font-weight: 700; color: var(--ink); }
+
+/* ----------------------------------------------------------- headings --- */
+.ltx_title_document {
+  font-size: 1.9rem; line-height: 1.2; text-align: left;
+  margin: 1rem 0 .5rem;
+}
+.ltx_title_section    { font-size: 1.35rem; margin-top: 2.6rem; }
+.ltx_title_subsection { font-size: 1.1rem;  margin-top: 1.8rem; }
+.ltx_title_part       {
+  font-size: 1.55rem; margin-top: 3.2rem;
+  padding-top: 1.2rem; border-top: 2px solid var(--rule);
+}
+.ltx_authors { text-align: left; color: var(--ink-muted); font-size: .95rem; }
+
+/* Abstract as a set-apart block rather than an indented paragraph. */
+.ltx_abstract {
+  background: var(--bg-sunk);
+  border-left: 3px solid var(--rule);
+  padding: 1rem 1.25rem; margin: 2rem 0;
+  font-size: .97rem;
+}
+.ltx_abstract h6 {
+  margin: 0 0 .5rem; font-size: .75rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-muted);
+}
+.ltx_keywords { color: var(--ink-muted); font-size: .88rem; }
+
+a, .ltx_ref { color: var(--link); }
+
+/* ------------------------------------------------------- typed boxes ---- */
+.paperbox {
+  margin: 1.9rem 0; padding: 1rem 1.15rem;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--box-theorem);
+  border-radius: 5px;
+  background: var(--bg-sunk);
+}
+.paperbox > .ltx_title {
+  display: block; margin: 0 0 .55rem;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .045em; text-transform: uppercase;
+  color: var(--box-theorem);
+}
+.paperbox > .ltx_para:last-child > .ltx_p:last-child { margin-bottom: 0; }
+
+.paperbox-definition       { border-left-color: var(--box-definition); }
+.paperbox-definition       > .ltx_title { color: var(--box-definition); }
+.paperbox-observation      { border-left-color: var(--box-observation); }
+.paperbox-observation      > .ltx_title { color: var(--box-observation); }
+.paperbox-empiricalfinding { border-left-color: var(--box-finding); }
+.paperbox-empiricalfinding > .ltx_title { color: var(--box-finding); }
+.paperbox-workedexample    { border-left-color: var(--box-example); }
+.paperbox-workedexample    > .ltx_title { color: var(--box-example); }
+
+/* --------------------------------------------------- figures & tables --- */
+.ltx_figure, .ltx_table { margin: 2.2rem 0; }
+.ltx_graphics, .ltx_figure img {
+  max-width: 100%; height: auto; display: block; margin: 0 auto;
+  background: #fff; border-radius: 3px;
+}
+.ltx_caption {
+  font-size: .87rem; line-height: 1.5; color: var(--ink-muted);
+  margin-top: .7rem;
+}
+.ltx_caption .ltx_tag { font-weight: 700; color: var(--ink); }
+
+/* Wide content must scroll in its own box, never the page. */
+.ltx_tabular, .ltx_equation, .ltx_listing { max-width: 100%; overflow-x: auto; }
+table.ltx_tabular { border-collapse: collapse; font-size: .92rem; margin: 0 auto; }
+table.ltx_tabular td, table.ltx_tabular th { padding: .32rem .6rem; }
+.ltx_border_t  { border-top: 1px solid var(--rule); }
+.ltx_border_bb { border-bottom: 2px solid var(--ink); }
+
+/* ------------------------------------------------------------- notes ---- */
+.ltx_bibliography  { margin-top: 3.5rem; border-top: 1px solid var(--rule); }
+.ltx_bibitem       { font-size: .9rem; margin: .7rem 0; }
+.ltx_note_content, .ltx_footnote { font-size: .88rem; color: var(--ink-muted); }
+.ltx_page_footer   { display: none; }
+
+/* Math should not force horizontal page scroll on narrow screens. */
+math { font-size: 1em; }
+.ltx_equation math { max-width: 100%; }
+
+@media (max-width: 46rem) {
+  body, .ltx_page_main { font-size: 1rem; }
+  .ltx_page_content, .ltx_document { padding: 0 1rem 4rem; }
+}
+
+/* Cross-document references resolved by finish-site.py. */
+.xdoc-ref { border-bottom: 1px dotted currentColor; text-decoration: none; }
+.xdoc-unresolved { color: var(--ink-muted); border-bottom: 1px dotted var(--rule); }
+
+/* oxide renders the tcolorbox typed boxes as fixed-geometry SVG pictures.
+   Do NOT force max-width on them: the SVG height is precomputed for the print
+   width, so scaling the width clips the last lines of text. Let them keep
+   their intrinsic size and scroll if the viewport is narrower. */
+.ltx_picture { max-width: 100%; overflow-x: auto; }
+.ltx_theorem { margin: 1.9rem 0; }
+
+/* Semantic typed boxes (html-boxes.tex). Two naming schemes coexist: boxes
+   declared via \NewHTMLBox carry ltx_theorem_htmlbox<name>, while amsthm
+   theorems declared directly in a preamble carry ltx_theorem_<name>.
+   Colours mirror the tcolorbox colours of the print build. */
+.ltx_theorem {
+  margin: 1.9rem 0; padding: 1rem 1.15rem;
+  border: 1px solid var(--rule); border-left: 4px solid var(--box-theorem);
+  border-radius: 5px; background: var(--bg-sunk);
+}
+.ltx_theorem .ltx_title {
+  display: block; margin: 0 0 .55rem;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: .82rem; font-weight: 700; letter-spacing: .045em;
+  text-transform: uppercase; color: var(--box-theorem);
+}
+.ltx_theorem > .ltx_para:last-child > .ltx_p:last-child { margin-bottom: 0; }
+
+.ltx_theorem_definition, .ltx_theorem_htmlboxdefinition,
+.ltx_theorem_scoredef                     { border-left-color: var(--box-definition); }
+.ltx_theorem_definition .ltx_title, .ltx_theorem_htmlboxdefinition .ltx_title,
+.ltx_theorem_scoredef .ltx_title          { color: var(--box-definition); }
+
+.ltx_theorem_htmlboxobservation           { border-left-color: var(--box-observation); }
+.ltx_theorem_htmlboxobservation .ltx_title{ color: var(--box-observation); }
+
+.ltx_theorem_htmlboxempiricalfinding      { border-left-color: var(--box-finding); }
+.ltx_theorem_htmlboxempiricalfinding .ltx_title { color: var(--box-finding); }
+
+.ltx_theorem_htmlboxworkedexample         { border-left-color: var(--box-example); }
+.ltx_theorem_htmlboxworkedexample .ltx_title { color: var(--box-example); }
+
+/* ---------------------------------------------------- layout & contrast ---
+   Wide landscape monitors left large gutters at a 46rem measure. The text
+   column is now 62rem (~95 characters, still a sane line length) and wide
+   content is allowed to overflow it, so figures and tables use the screen
+   instead of sitting in a narrow strip. Tune --measure above to taste. */
+.ltx_figure, .ltx_table, .ltx_picture {
+  width: min(var(--measure-wide), 94vw);
+  margin-left: calc(50% - min(var(--measure-wide), 94vw) / 2);
+}
+.ltx_figure img, .ltx_figure .ltx_graphics,
+.ltx_table table { margin-left: auto; margin-right: auto; }
+
+/* Footnotes. LaTeXML.css hardcodes `.ltx_note_mark { color: blue }` and gives
+   the hover popup `background:white; border:1px solid black` -- both unreadable
+   against a dark background. Re-theme them. */
+.ltx_note_mark { color: var(--link); font-weight: 600; }
+.ltx_note_mark:hover { color: var(--ink); }
+.ltx_note_content {
+  background: var(--bg-sunk);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / .38);
+  max-width: min(38rem, 88vw);
+}
+.ltx_note_content .ltx_note_mark { color: var(--ink-muted); }
+
+/* Other hardcoded colours in LaTeXML.css that fail on a dark ground. */
+.ltx_ERROR, .ltx_missing, .ltx_nounicode { color: #e06c7c; }

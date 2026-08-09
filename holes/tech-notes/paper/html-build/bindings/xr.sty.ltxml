@@ -1,0 +1,21 @@
+# -*- mode: Perl -*-
+# xr -> LaTeXML stub.
+#
+# xr lets one document \ref labels defined in another by reading the other
+# document's .aux file. LaTeXML has no equivalent and ships no binding, so
+# without this the supplements fail on \externaldocument and the missing
+# xr.sty.
+#
+# Consequence, stated plainly: cross-document references from a supplement
+# into the main paper will not resolve to a number/link. They degrade to
+# LaTeXML's usual unresolved-reference rendering rather than aborting the run.
+package LaTeXML::Package::Pool;
+use strict;
+use warnings;
+use LaTeXML::Package;
+
+DeclareOption(undef, sub { });
+DefPrimitive('\externaldocument[]{}', undef);
+DefPrimitive('\externalcitedocument[]{}', undef);
+
+1;

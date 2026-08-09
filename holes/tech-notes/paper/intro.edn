@@ -95,7 +95,7 @@
 
   {:id :currency
    :point "On that measurement, what governs propagation is the currency of the rewriting
-           layer's access, and no other tested coordinate."
+           layer's access."
    :subpoints
    ["The live phenotype-to-genotype coupling is what places the construction where it sits:
      cutting that single edge, with seed, tape and construction otherwise identical, roughly
@@ -104,14 +104,17 @@
      and one that reads the currently acquired state, and because the ancestral field is
      itself a real phenotype, marginal statistics and spatial structure are matched at every
      setting; only currency varies. Reach follows it smoothly, while a control matched in rule
-     mobility but blind to the phenotype does not move."
-    "Pursued far enough, the same measurement rejects a tempting substitute. Across seven
-     mechanisms causal reach initially appears to rise and then fall with sustained genotype
-     diversity, but the descending observations obtain high diversity only through mutation
-     or by holding rules still. A conservative eighth construction prescribes the genotype
-     measure and transports it by local bijective exchanges, sustaining causal amplification
-     across the full $32$--$256$ rule range: exchange rate, not diversity alone, controls
-     reach (\\secref{sec:diversity-axis})."
+     mobility but blind to the phenotype does not move."]}
+
+  {:id :currency-not-diversity
+   :point "No other tested coordinate governs, and the tempting substitute fails."
+   :subpoints
+   ["Across seven mechanisms causal reach initially appears to rise and then fall with
+     sustained genotype diversity, but the descending observations obtain high diversity only
+     through mutation or by holding rules still. A conservative eighth construction prescribes
+     the genotype measure and transports it by local bijective exchanges, sustaining causal
+     amplification across the full $32$--$256$ rule range: exchange rate, not diversity alone,
+     controls reach (\\secref{sec:diversity-axis})."
     "Across $\\lambda$, propagator fraction, sustained rule diversity, mutation rate, refuge
      probability, niche width and rule mobility, causal reach stays low. Blend strength alone
      moves it (\\suppfindingref{10}). The coordinate that governs is therefore not a
@@ -133,8 +136,7 @@
      sharing none of its dials."]}
 
   {:id :from-inside
-   :point "Posed from inside the system, access becomes a limit on what can be regulated, and
-           the third sense of the phrase is what survives that limit."
+   :point "Posed from inside the system, access becomes a limit on what can be regulated."
    :subpoints
    ["Those measurements are made from outside. The corresponding question from inside is
      whether the construction can locate such a regime using only quantities available to it
@@ -145,20 +147,30 @@
      computed by forking a run and perturbing a twin; it is available to the experimenter and
      never to the system, and a controller cannot regulate on it. Across the same sweep,
      internal observables predict an intrinsic objective at held-out $R^2 = 0.73$ and a
-     twin-run objective at $0.02$. The loop is closable, and not on the measure that
-     identified the coordinate."
+     twin-run objective at $0.02$. If a loop closes at all, it is not on the measure that
+     identified the coordinate; and Part~III measures why none closes: the local evidence a
+     cell would need decays faster than it accumulates, at every decision rate."
     "The objective supplied to the search fails for a second reason. It reads a fixed window
      and scores how structured the output looks; the behaviour that separates these
      configurations occurs outside that window. Its two maxima are a configuration that
      survives and one that freezes permanently, and it ranks the second above the first."
-    "What survives that critique is the third sense of the phrase, because it is a property of
-     a trajectory rather than of its appearance: whether the sheet reaches a state it does not
-     leave again before the run ends. Three configurations are separated by it. In one, live regions overrun frozen
-     ones; in a second, the reverse happens and the lattice stops changing at a locatable step;
-     in a third, neither outcome obtains for as long as the run can be afforded, with frozen
+]}
+
+  {:id :third-sense
+   :point "What survives that critique is the third sense of the phrase, because it is a
+           property of a trajectory rather than of its appearance: whether the sheet reaches a
+           state it does not leave again before the run ends."
+   :subpoints
+   ["Three configurations are separated by it. In one, live regions overrun frozen ones; in a
+     second, the reverse happens and the lattice stops changing at a locatable step; in a
+     third, neither outcome obtains for as long as the run can be afforded, with frozen
      regions still turning over after ten thousand steps. That third configuration is the
      phenomenon the 2015 example was recognised by. It is exhibited here, not located by any
-     coordinate, and no self-driving search was achieved."]}
+     coordinate."
+    "No self-driving search was achieved, and Part~III closes the question rather than leaving
+     it open: the coexisting regime is the substrate's default condition, endangered by the
+     optimizing selection layer itself, and what is unavailable to the system is not the
+     regime but any local knowledge of where it is."]}
 
   {:id :scope
    :point "The scope of each claim differs, and the parts are not interchangeable."
