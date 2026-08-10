@@ -220,13 +220,7 @@
       pill.addEventListener("click", toggleLogPanel);
       document.body.appendChild(pill);
     }
-    // Sit a fixed 10px left of the wysiwyg pill, whatever size it currently
-    // has (it changes width between Read/Edit states); measured every repaint.
-    var wp = document.getElementById("wysiwyg-pill");
-    if (wp) {
-      var r = wp.getBoundingClientRect();
-      if (r.width) pill.style.right = (window.innerWidth - r.left + 10) + "px";
-    }
+    // Row positioning is owned by paintUfo (🚀 · Emacs · 🛸, right-anchored).
     if (state.inFlight > 0) {
       pill.textContent = "🚀 rocket heard — processing\u2026";
       pill.style.background = "#7a3b10";
@@ -268,17 +262,25 @@
       ufo = document.createElement("div");
       ufo.id = "rocket-ufo";
       ufo.style.cssText =
-        "position:fixed;bottom:2.9rem;right:9.5rem;z-index:9999;" +
+        "position:fixed;bottom:.9rem;right:.9rem;z-index:9999;" +
         "font:12px/1.4 sans-serif;background:#1d2b3a;color:#eee;" +
         "padding:4px 10px;border-radius:12px;opacity:0.85;cursor:pointer;";
       ufo.addEventListener("click", toggleBoard);
       document.body.appendChild(ufo);
     }
-    // right-align with the Emacs pill (measured, so it tracks its position)
+    // One row, right to left: 🛸 anchored at the corner, Emacs pill pushed
+    // to its left, 🚀 to the left of that. All measured each repaint so the
+    // row survives any pill changing width.
     var ewp = document.getElementById("wysiwyg-pill");
     if (ewp) {
-      var er = ewp.getBoundingClientRect();
-      if (er.width) ufo.style.right = (window.innerWidth - er.right) + "px";
+      var ur = ufo.getBoundingClientRect();
+      if (ur.width) {
+        ewp.style.right = (window.innerWidth - ur.left + 10) + "px";
+        var er = ewp.getBoundingClientRect();
+        if (er.width && pill) {
+          pill.style.right = (window.innerWidth - er.left + 10) + "px";
+        }
+      }
     }
     var counts = patternCounts();
     var total = Object.keys(counts).reduce(function (s, k) {
@@ -293,7 +295,7 @@
       board = document.createElement("div");
       board.id = "rocket-leaderboard";
       board.style.cssText =
-        "position:fixed;bottom:5rem;right:.9rem;z-index:9998;width:20rem;" +
+        "position:fixed;bottom:3rem;right:.9rem;z-index:9998;width:20rem;" +
         "max-height:45vh;overflow-y:auto;font:12px/1.7 sans-serif;" +
         "background:#101820;color:#ddd;padding:.6rem .9rem;" +
         "border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.4);";
