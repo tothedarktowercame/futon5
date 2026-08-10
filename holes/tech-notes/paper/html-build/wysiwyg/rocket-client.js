@@ -274,7 +274,12 @@
       ufo.addEventListener("click", toggleBoard);
       document.body.appendChild(ufo);
     }
-    if (pill && pill.style.right) ufo.style.right = pill.style.right;
+    // right-align with the Emacs pill (measured, so it tracks its position)
+    var ewp = document.getElementById("wysiwyg-pill");
+    if (ewp) {
+      var er = ewp.getBoundingClientRect();
+      if (er.width) ufo.style.right = (window.innerWidth - er.right) + "px";
+    }
     var counts = patternCounts();
     var total = Object.keys(counts).reduce(function (s, k) {
       return s + counts[k];
