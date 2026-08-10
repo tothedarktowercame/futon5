@@ -181,7 +181,7 @@
 \newcommand{\suppnote}[1]{\footnote{#1}}
 
 \title{Rule-Rewriting Cellular Automata and the Edge of Chaos}
-\shorttitle{Rule-Rewriting Cellular Automata}
+\shorttitle{Roule-Rewriting Cellular Automata}
 \authorsnames{Joseph Corneli}
 \authorsaffiliations{{Oxford Brookes University, Oxford OX3 0BP, United Kingdom},
   {Hyperreal Enterprises Ltd, United Kingdom}}
@@ -191,7 +191,7 @@
 \abstract{%
 We study cellular automata in which each cell carries, alongside its binary state,
 the eight-bit rule it executes, and in which operators rewrite those rules as the
-system runs. An operator is defined by a permutation $\sig$ of the eight truth-table
+system runs. A rule-rewriting operator is defined by a permutation $\sig$ of the eight truth-table
 positions: it writes the negation of position $p$ to position $\sig(p)$. The
 resulting family of $8! = 40{,}320$ operators is classified exactly, with the
 central statements formally verified: an operator has an unchanged rule exactly when
@@ -200,7 +200,7 @@ $2^k$ unchanged rules; and every unchanged rule has four of its eight outputs
 active, so Langton's activity parameter is $1/2$ at every fixed point. The
 classical edge-of-chaos coordinate therefore cannot distinguish these operators, and
 in a finite-size scan the transition region does not sharpen with lattice size, so
-we find no critical point. We measure instead how far the effect of a single-cell
+we find no critical point. We then expand the class of automata architectures, and examine criticality by measuring how far the effect of a single-cell
 change travels once a run is forked. In every architecture tested, that distance is
 governed by whether rule updates read the current state field: removing the
 state-to-rule input roughly halves it; replacing a growing fraction of current state
@@ -208,15 +208,11 @@ readings with readings of a frozen copy of matched spatial statistics reduces it
 smoothly; and rule diversity, mutation, refuges, niches, and rule mobility leave it
 unchanged. A locally triggered gate reproduces the same ordering---reading current
 states raises the distance, reading a frozen field of matched statistics and firing
-rate lowers it. Finally, individual cells cannot choose between operators from
-local observation: the relevant local field decorrelates in about six steps, less
-than the observation window that discrimination requires, and copying rules across
-phase boundaries accelerates the freezing it was intended to prevent. The
-coexisting state itself has a strictly local specification---the lattice that
-produced it ran one---but no locally computable quantity we tested identifies
-that outcome from within a run, and the local interventions that do prevent
-freezing hold a foam of small frozen islands, not the found configuration's
-extended regions.}  \keywords{cellular automata, rule evolution,
+rate lowers it. Finally, we make the operator assignment itself a per-cell heritable
+state---an exotype---and ask whether local dynamics alone can find and hold the
+regime in which frozen and changing regions coexist and merge into visibly complex patterns.  An external
+selection policy helped us find this regime interactively. Within the tested family of exotypes, local selection was not able to recover the observed behaviour.
+However, we constructed local interventions that do prevent freezing, and hold a foam of small frozen islands, rather than the exotype-driven configuration's extended complex regions.}  \keywords{cellular automata, rule evolution,
   Langton's lambda, self-modifying systems, edge of chaos, artificial
   life, permutation operators, exhaustive classification, damage
   spreading, perturbation analysis}
@@ -289,7 +285,7 @@ controls with the policy removed \\
 \setlength{\parskip}{2pt}
 \pstep{1.1}{\textbf{Assertion (Part~I).} The classical edge-of-chaos
 coordinate cannot govern this family.}
-\pstep{1.1.1}{\tagdef\ An operator is a permutation $\sig$ of the eight
+\pstep{1.1.1}{\tagdef\ A rule-rewriting operator is a permutation $\sig$ of the eight
 truth-table positions, writing $\neg g(k)$ to position $\sig(k)$; the family
 has $8!=40{,}320$ members.}
 \pstep{1.1.2}{\tagthm\ An operator leaves some rule unchanged iff every cycle

@@ -14,7 +14,7 @@
   "use strict";
 
   var PORT = 7079;
-  var VERSION = "s4-3";   // sent to Emacs so we can tell which
+  var VERSION = "s4-4";   // sent to Emacs so we can tell which
                           // script a browser is actually running
   var state = {
     connected: false,
@@ -127,6 +127,14 @@
 
   // Emacs reports a point; find the anchored block that starts closest at or
   // before that line in the same file.
+  //
+  // Scroll discipline (2026-08-10): the point replay that arrives on
+  // connect/reload must not move the page -- it yanked a reader working in
+  // the (unmapped, F2) abstract to whatever block the nearest-before match
+  // resolved to. Highlight always; scroll only for a genuine point CHANGE
+  // once the page has been up a moment.
+  var loadedAt = Date.now();
+  var lastPointBlock = null;
   function highlightNearest(file, line) {
     var best = null, bestLine = -1;
     document.querySelectorAll("[data-sourcepos]").forEach(function (el) {
@@ -136,7 +144,10 @@
     });
     if (best) {
       light(best);
-      best.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (Date.now() - loadedAt > 3000 && best !== lastPointBlock) {
+        best.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+      lastPointBlock = best;
     }
   }
 

@@ -57,3 +57,14 @@ list box was fixed at 47rem regardless of its container, so any column rule
 subdivided an already-halved box. `tuftify.py` now states the width instead of
 inheriting it. Styling-level, but worth knowing before debugging widths here —
 a computed width that matches no rule of yours is likely theirs.
+
+## F2 — macro-argument content carries no source positions
+
+**Found** 2026-08-10, trying to WYSIWYG-edit the abstract.
+**Symptom:** the abstract (and any content passed as a macro argument, here
+`\abstract{...}` at draft9.tex:191) renders without `data-sourcepos`, so the
+client cannot arm it for editing and selections in it report the position of
+the surrounding title block.
+**Where the fix belongs:** oxide's source-map pass — positions inside macro
+arguments are droppable today. Until then: frontmatter is edited directly in
+the tex buffer; the watcher rebuilds the page on save.

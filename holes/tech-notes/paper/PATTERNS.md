@@ -78,6 +78,14 @@ Processing, live, per record:
    trigger=problem generalised, why=the commentary itself).
 3. **Count** matches across the whole paper and report the count as
    immediate spoken-back/on-screen feedback.
+3½. **Trace visibly**: POST each processing step as a one-liner to
+   `http://127.0.0.1:8130/log` (dispatch is logged by the receiver itself) —
+   the page shows log lines as toasts, and the rocket pill click-expands
+   the history. This is the operator's visual trace of the turn; the
+   emacs-repl surface does not echo bell-triggered turns. The pill shows
+   "rocket heard — processing…" (amber, pulsing) from dispatch until the
+   processor POSTs `/done` — ALWAYS end a record's processing with
+   `curl -s -X POST localhost:8130/done`, even when no edit was needed.
 4. **Auto-apply** to the matched sites. The live commentary is the ruling —
    given per-pattern at capture time, so this does not violate the
    never-apply-without-ruling discipline; the count report is the

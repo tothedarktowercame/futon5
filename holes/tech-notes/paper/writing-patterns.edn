@@ -132,7 +132,124 @@
          said something sharper."
    :source "Fork 2 ruling 2026-08-09"}
 
-  {:id :evidence-carries-inspiration
+  {:id :full-name-at-definition
+   :status :captured
+   :trigger "a term of art introduced by its bare short form: 'An operator is
+             defined...' where the paper's term is 'rule-rewriting operator';
+             check definitional sentences for river, gate, exotype, arm too"
+   :before "An operator is defined by a permutation $\sig$ of the eight
+            truth-table positions"
+   :after "A rule-rewriting operator is defined by a permutation $\sig$ of
+           the eight truth-table positions"
+   :rule "Definition sites and first uses carry the full term of art; bare
+          short forms are for bound subsequent uses only."
+   :why "Joe, rocket record 2: 'we should call this a rule rewriting
+         operator, not just an operator.'"
+   :source "rocket 2026-08-10; applied at abstract + outline 1.1.1; 1.1.2
+            left bare (bound by 1.1.1's definition one line above)"}
+
+ {:id :false-instead
+   :status :captured
+   :trigger "'instead'/'rather' presenting a different measurement or question
+             as if it answered the one just declined; test: are the two items
+             genuinely alternative answers to the same question?"
+   :before "we find no critical point. We measure instead how far the effect
+            of a single-cell change travels"
+   :after "we find no critical point. We then expand the class of automata
+           architectures, and examine criticality by measuring how far the
+           effect of a single-cell change travels"
+   :rule "Reserve contrastive connectives for genuine alternatives. And when
+          removing a false one, deleting the connective is the lesser fix:
+          supply the actual move that makes the next measurement follow
+          (what changed, and what question it now serves)."
+   :why "Joe, rocket: 'that is not really an instead, that is just measuring
+         something different'; then his hand edit refined the minimal
+         deletion into a statement of the move itself."
+   :source "rocket 2026-08-10 + hand-edit refinement (the first captured
+            wysiwyg-side ruling); swept 6 other instances, all genuine
+            contrasts, kept"}
+
+ {:id :frame-the-question
+   :status :captured
+   :trigger "a transition (especially across part boundaries) that opens with
+             a negative result; also definite articles presupposing referents
+             not yet introduced in that unit ('the coexisting state')"
+   :before "Finally, individual cells cannot choose between operators from
+            local observation: ..."
+   :after "Finally, we make the operator assignment itself a per-cell
+           heritable state---an exotype---and ask whether local dynamics
+           alone can find and hold the regime in which frozen and changing
+           regions coexist... Within the tested family it cannot: ..."
+   :rule "State the question a stretch of negatives answers before the
+          negatives; each unit (abstract, intro, part) introduces its own
+          referents."
+   :why "Joe, rocket: 'starting with a negative result and not
+         contextualizing the question... decontextualized and just very
+         hard to follow because there is no framing.'"
+   :source "rocket 2026-08-10; sweep: intro third-finding and outline 1.3
+            already frame first — the abstract was the one unframed bridge"}
+
+ {:id :credit-the-interaction
+   :status :captured
+   :trigger "apparatus or policy described as the finder/actor where the
+             actual process was operator-in-the-loop; also results appearing
+             agentless ('the local interventions that do prevent freezing')"
+   :before "a regime an external selection policy does find ... The local
+            interventions that do prevent freezing hold a foam"
+   :after "a regime that an external selection policy helped us find
+           interactively ... However, we constructed local interventions
+           that do prevent freezing"
+   :rule "Name the actual search process (who/what, and that it was
+          interactive when it was) and claim constructed things as
+          constructed."
+   :why "Joe's hand edit; matches the intro's existing honesty ('varying it
+         from outside, between runs, is how the coexistence examples were
+         found') and the not-endogenous ruling in [[measured-scope]]."
+   :source "hand edit 2026-08-10; sweep: body already conforms, abstract was
+            the site"}
+
+ {:id :scoped-negative-names-its-subject
+   :status :captured
+   :trigger "a scoped negative whose subject is a pronoun: 'it cannot',
+             'this fails', 'none do' — name the mechanism, the family, and
+             the criterion instead"
+   :before "Within the tested family it cannot: the relevant local field
+            decorrelates..."
+   :after "Within the tested family of exotypes, local selection was not
+           able to recover the observed behaviour. The relevant local field
+           decorrelates..."
+   :rule "A negative claim names its subject (which mechanism), its scope
+          (which family), and its criterion (recover what) — and stands as
+          its own sentence rather than a colon-chain head."
+   :why "Joe's hand edit refining the frame-the-question rewrite; sharpens
+         [[measured-scope]] from 'scope the negative' to 'name all three
+         parts of it'."
+   :source "hand edit 2026-08-10; sweep: no other bare-pronoun negatives
+            remain"}
+
+ {:id :verdict-not-litany
+   :status :captured
+   :trigger "in the abstract: a multi-clause chain of negative evidence
+             following an already-stated verdict; reads as a litany of
+             failures and duplicates the intro's detail"
+   :before "...was not able to recover the observed behaviour. The relevant
+            local field decorrelates in about six steps, ...; copying rules
+            across phase boundaries accelerates...; and although... no
+            locally computable quantity we tested identifies that outcome.
+            However, we constructed..."
+   :after "...was not able to recover the observed behaviour. However, we
+           constructed..."
+   :rule "The abstract carries verdicts; the evidence chains behind a
+          negative verdict live in the introduction and the sections that
+          contextualize them. (Positive core results may keep their clauses:
+          the Part II chain states the paper's deltas.)"
+   :why "Joe, rocket: 'by its very length reads as a litany of failures...
+         go directly from not being able to recover the observed behavior
+         to the construction of local interventions.'"
+   :source "rocket 2026-08-10; the cut material verified present in the
+            intro third-finding and Part III body"}
+
+ {:id :evidence-carries-inspiration
    :status :house
    :trigger "a result that exists because a specific work suggested the
              design, stated without that work's citation"

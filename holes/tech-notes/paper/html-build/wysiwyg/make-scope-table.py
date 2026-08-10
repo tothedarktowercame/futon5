@@ -124,7 +124,8 @@ def resolve_by_matching(html: str, srcdir: Path) -> dict:
     return resolved
 
 
-CLIENT_TAG = '<script src="wysiwyg-client.js" defer></script>'
+CLIENT_TAG = ('<script src="wysiwyg-client.js" defer></script>'
+              '<script src="rocket-client.js" defer></script>')
 
 
 def main() -> int:
