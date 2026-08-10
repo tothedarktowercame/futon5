@@ -204,7 +204,10 @@
   function toggleLogPanel() {
     panelOpen = !panelOpen;
     if (panel) panel.style.display = panelOpen ? "block" : "none";
-    if (panelOpen) paintLogPanel();
+    if (panelOpen) {
+      if (boardOpen) toggleBoard();   // one panel at a time; they share the spot
+      paintLogPanel();
+    }
   }
 
   // --------------------------------------------------------------- pill
@@ -334,7 +337,10 @@
   function toggleBoard() {
     boardOpen = !boardOpen;
     if (board) board.style.display = boardOpen ? "block" : "none";
-    if (boardOpen) paintBoard();
+    if (boardOpen) {
+      if (panelOpen) toggleLogPanel();   // one panel at a time
+      paintBoard();
+    }
   }
   document.addEventListener("DOMContentLoaded", paintPill);
   paintPill();
