@@ -227,11 +227,6 @@
       var r = wp.getBoundingClientRect();
       if (r.width) pill.style.right = (window.innerWidth - r.left + 10) + "px";
     }
-    var pats = {};
-    state.annotations.forEach(function (a) {
-      pats[a.pat || "?"] = (a.sites || []).length;
-    });
-    var names = Object.keys(pats);
     if (state.inFlight > 0) {
       pill.textContent = "🚀 rocket heard — processing\u2026";
       pill.style.background = "#7a3b10";
@@ -245,15 +240,94 @@
     } else {
       pill.style.background = "#222";
       pill.style.animation = "";
-      pill.textContent = "🚀 " +
-        (state.error ? "offline" :
-         (names.length ? names.map(function (p) {
-            return p + "×" + pats[p];
-          }).join("  ") : "listening"));
+      pill.textContent = "🚀 " + (state.error ? "offline" : "listening");
     }
     pill.title = state.lastSelection ?
       ("fragment: " + state.lastSelection.text.slice(0, 120)) :
       "highlight a region, speak, say 'rocket'";
+    paintUfo();
+  }
+
+  // ------------------------------------------------- pattern leaderboard
+  // The 🛸 pill sits above the 🚀 and Emacs pills; reapplications across
+  // the text are to the agents' credit. Click for the leaderboard: patterns
+  // ranked by how many times they have been applied (an annotation may
+  // carry `applied` for the true paper-wide count; painted sites otherwise).
+  var ufo = null, board = null, boardOpen = false;
+  function patternCounts() {
+    var counts = {};
+    state.annotations.forEach(function (a, i) {
+      var k = a.pat || "?";
+      counts[k] = (counts[k] || 0) +
+        (typeof a.applied === "number" ? a.applied : (a.sites || []).length);
+    });
+    return counts;
+  }
+  function paintUfo() {
+    if (!ufo) {
+      ufo = document.createElement("div");
+      ufo.id = "rocket-ufo";
+      ufo.style.cssText =
+        "position:fixed;bottom:2.9rem;right:9.5rem;z-index:9999;" +
+        "font:12px/1.4 sans-serif;background:#1d2b3a;color:#eee;" +
+        "padding:4px 10px;border-radius:12px;opacity:0.85;cursor:pointer;";
+      ufo.addEventListener("click", toggleBoard);
+      document.body.appendChild(ufo);
+    }
+    if (pill && pill.style.right) ufo.style.right = pill.style.right;
+    var counts = patternCounts();
+    var total = Object.keys(counts).reduce(function (s, k) {
+      return s + counts[k];
+    }, 0);
+    ufo.textContent = "🛸 " + total;
+    ufo.title = "pattern leaderboard — applications across the text";
+    if (boardOpen) paintBoard();
+  }
+  function paintBoard() {
+    if (!board) {
+      board = document.createElement("div");
+      board.id = "rocket-leaderboard";
+      board.style.cssText =
+        "position:fixed;bottom:5rem;right:.9rem;z-index:9998;width:20rem;" +
+        "max-height:45vh;overflow-y:auto;font:12px/1.7 sans-serif;" +
+        "background:#101820;color:#ddd;padding:.6rem .9rem;" +
+        "border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.4);";
+      document.body.appendChild(board);
+    }
+    var counts = patternCounts();
+    var hues = {};
+    state.annotations.forEach(function (a, i) {
+      if (!(a.pat in hues)) hues[a.pat] = hueFor(a, i);
+    });
+    board.innerHTML = "";
+    var head = document.createElement("div");
+    head.textContent = "🛸 pattern leaderboard";
+    head.style.cssText = "font-weight:bold;margin-bottom:.35rem;color:#fff;";
+    board.appendChild(head);
+    Object.keys(counts).sort(function (a, b) {
+      return counts[b] - counts[a];
+    }).forEach(function (k) {
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:.5rem;";
+      var sw = document.createElement("span");
+      sw.style.cssText = "display:inline-block;width:.8rem;height:.8rem;" +
+        "border-radius:3px;background:hsla(" + hues[k] + ",85%,72%,0.95);" +
+        "border:1px solid hsl(" + hues[k] + ",60%,45%);flex:none;";
+      var name = document.createElement("span");
+      name.textContent = k;
+      name.style.cssText = "flex:1;overflow:hidden;text-overflow:ellipsis;";
+      var n = document.createElement("span");
+      n.textContent = "×" + counts[k];
+      n.style.cssText = "color:#9fd;flex:none;";
+      row.appendChild(sw); row.appendChild(name); row.appendChild(n);
+      board.appendChild(row);
+    });
+    board.style.display = "block";
+  }
+  function toggleBoard() {
+    boardOpen = !boardOpen;
+    if (board) board.style.display = boardOpen ? "block" : "none";
+    if (boardOpen) paintBoard();
   }
   document.addEventListener("DOMContentLoaded", paintPill);
   paintPill();
