@@ -112,3 +112,16 @@ not by autonomous dispatch.
   trigger.
 - Renders: after any applied batch, rebuild and re-render the touched pages
   (the pinned .venv-figures matplotlib for figures).
+
+## Coda: the loop is the paper's own construction (Joe, 2026-08-10)
+
+The editing system is an exotype for the paper's contents. The text is the
+fast state layer; writing-patterns.edn is the heritable rule field carried
+alongside it; a pattern application is an operator whose reach comes from
+reading the whole state field; pattern capture is the rule-rewriting layer.
+The paper's negative results are the loop's design constraints: no locally
+computable certificate of the good regime (no grep for well-written), and
+undirected local interventions hold a foam, not extended coherent regions
+(patterns applied without rulings). Hence the gate: "an external selection
+policy helped us find this regime interactively" describes both the exotype
+experiments and this workflow.
