@@ -140,6 +140,7 @@
         }
         state.log = feed.log || [];
         state.inFlight = feed.in_flight || 0;
+        state.voice = !!feed.voice;
         // toast every log line we have not shown yet (the visual trace of
         // the turn: dispatch, patch, count, paint)
         if (state.log.length > seenLog) {
@@ -237,7 +238,8 @@
     } else {
       pill.style.background = "#222";
       pill.style.animation = "";
-      pill.textContent = "🚀 " + (state.error ? "offline" : "listening");
+      pill.textContent = "🚀 " +
+        (state.error ? "offline" : (state.voice ? "listening" : "offline"));
     }
     pill.title = state.lastSelection ?
       ("fragment: " + state.lastSelection.text.slice(0, 120)) :

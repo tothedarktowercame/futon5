@@ -42,6 +42,7 @@ state = {
     "annotations": [],          # what claude has applied, for the painter
     "log": [],                  # claude's per-record trace, shown in-page
     "in_flight": 0,             # records dispatched but not yet /done
+    "voice_ts": 0,              # last voice-client heartbeat
     "records": 0,
     "last_record": None,
 }
@@ -121,7 +122,8 @@ class H(http.server.BaseHTTPRequestHandler):
                 self._send({"annotations": state["annotations"],
                             "log": state["log"][-30:],
                             "records": state["records"],
-                            "in_flight": state["in_flight"]})
+                            "in_flight": state["in_flight"],
+                            "voice": (time.time() - state["voice_ts"]) < 15})
         elif self.path == "/annotations":
             with lock:
                 self._send(state["annotations"])
@@ -194,6 +196,10 @@ class H(http.server.BaseHTTPRequestHandler):
                     print(f"rocket: edit bell failed: {e}", file=sys.stderr)
             threading.Thread(target=bell, daemon=True).start()
             self._send({"ok": True, "record": n})
+        elif self.path == "/heartbeat":
+            with lock:
+                state["voice_ts"] = time.time()
+            self._send({"ok": True})
         elif self.path == "/done":
             with lock:
                 state["in_flight"] = max(0, state["in_flight"] - 1)
