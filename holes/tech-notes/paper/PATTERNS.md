@@ -125,3 +125,24 @@ undirected local interventions hold a foam, not extended coherent regions
 (patterns applied without rulings). Hence the gate: "an external selection
 policy helped us find this regime interactively" describes both the exotype
 experiments and this workflow.
+
+## Roadmap: margin proposals under selection (Joe, 2026-08-10)
+
+The Tufte margin has room for proposed alternative text, staged for
+approval. This makes autonomous sweeps safe — the foam objection was to
+APPLYING without rulings; proposals in the margin are maintained variation,
+and nothing lands without selection.
+
+- Sweeps render candidate rewrites as margin notes beside their target
+  span, hue-matched to their pattern, with accept / reject / edit-then-
+  accept affordances. Accept applies through the established patch path.
+- Every verdict appends to edit-notes.jsonl as {surface: "margin", pat,
+  site, verdict, final-text} — the selection signal.
+- The signal adapts the pattern layer: acceptance promotes (:candidate →
+  :house), rejection narrows triggers or retires, and edited-before-accept
+  versions refine the :after exemplars. The 🛸 leaderboard gains an
+  acceptance column.
+- Tuning warning from the paper itself: adoption at high precision froze
+  every lattice (30/30). Do not drive rejection to zero — overgeneration
+  ("beyond what's wanted") is the variance selection needs; a moderate
+  acceptance threshold keeps the style ecosystem diverse.
