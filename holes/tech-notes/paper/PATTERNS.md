@@ -56,23 +56,41 @@ input live at `futon0/contrib/voice-typing.el`, routing in
 `futon3c/scripts/voice-route/`. That ran against the legacy CLI; the
 pipeline is surface-agnostic enough to port.
 
-Port to the tufte-HTML surface (127.0.0.1:8129/draft9-tufte.html):
-- a small JS layer: on text selection + hotkey, capture
-  `window.getSelection()` plus the nearest anchored element id, and POST
-  `{selection, anchor-id, note}` to a local receiver that appends to
-  `paper/edit-notes.jsonl`;
-- the note is typed or spoken (reuse the Whisper pipeline; the transcription
-  lands in the same POST);
-- selection → tex-source mapping needs no new machinery: the
-  verbatim-greps-once discipline applies to prose selections exactly as to
-  OLD blocks, and the anchor id narrows the search when a phrase repeats.
-The extraction pass then consumes `edit-notes.jsonl` alongside (or instead
-of) git diffs; everything downstream — :candidate entries, promotion by
-ruling, per-pattern sweeps — is unchanged. Emacs-as-surface is the same
-loop with region-highlight in place of browser selection, per
-M-smart-emacs-cursor's revival notes (it stalled when dispatched for
-autonomous building; it is inherently interactive — build it WITH the
-operator at the keyboard).
+Joe's spec (2026-08-09, verbatim sense). **Whisper is another REPL
+frontend**, peer to IRC and Emacs — it delivers turns like any surface,
+with the spoken keyword **"rocket"** as the RET-equivalent: whisper runs
+continuously in the background (as piloted in the legacy CLI), and the
+transcript feeds through only when a rocket completes it. The browser JS
+supplies the other half: it tracks the highlighted region in
+draft9-tufte.html, and the two streams join at rocket-time — the current
+selection is the fragment, the rocket-completed transcript is the
+commentary. A record ingests as:
+
+    surface: whisper
+    fragment: <text payload from the document — the highlighted region>
+    commentary: <rocket-completed transcript>
+
+Processing, live, per record:
+1. **Patch** the fragment immediately per the commentary.
+2. **Extract** the pattern: abstraction of
+   IF fragment HOWEVER commentary→problem THEN commentary→solution
+   (maps onto writing-patterns.edn: before=fragment, after=patch,
+   trigger=problem generalised, why=the commentary itself).
+3. **Count** matches across the whole paper and report the count as
+   immediate spoken-back/on-screen feedback.
+4. **Auto-apply** to the matched sites. The live commentary is the ruling —
+   given per-pattern at capture time, so this does not violate the
+   never-apply-without-ruling discipline; the count report is the
+   checkpoint, and applications should be visually annotated in the HTML
+   (highlighted changed spans) so review is instant and rollback is one
+   word.
+
+Selection → tex-source mapping needs no new machinery: the
+verbatim-greps-once discipline applies to prose fragments exactly as to
+OLD blocks. Emacs-as-surface is the same loop with region-highlight in
+place of browser selection. Per M-smart-emacs-cursor's retrospective, this
+is inherently interactive — build it WITH the operator at the keyboard,
+not by autonomous dispatch.
 
 ## Practical notes
 
