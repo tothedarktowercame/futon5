@@ -22,7 +22,9 @@ data/nonstarter.db
 *.toc
 .clj-kondo/
 
-# Bulk run output, never tracked: raw generator/phenotype dumps and remote run
-# reports. Curated results and figures live in reports/, which IS tracked.
-figs/
-reports-remote/
+# Build and dependency output — never tracked (2026-08-15). These had been
+# committed and were then deleted on disk, so 1152 phantom deletions sat in the
+# working tree: gitignore does not apply to already-tracked files, so the
+# deletion has to be committed for the rule below to take effect.
+pod-eigs/target/
+node_modules/
