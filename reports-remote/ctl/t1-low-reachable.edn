@@ -1,0 +1,646 @@
+{:schema :exotype-controller-v1,
+ :status :preregistered-cell,
+ :test :t1,
+ :arm :low-reachable,
+ :cell {:lambda0 0.1, :target 0.1676},
+ :design
+ {:blend-strength 0.0,
+  :schema :exotype-controller-v1,
+  :step-size 0.001,
+  :kick-size 0.2,
+  :seeds
+  [2026085200
+   2026085201
+   2026085202
+   2026085203
+   2026085204
+   2026085205
+   2026085206
+   2026085207
+   2026085208
+   2026085209
+   2026085210
+   2026085211
+   2026085212
+   2026085213
+   2026085214
+   2026085215],
+  :steps 2000,
+  :width 80,
+  :epistemic-coefficient 0.2,
+  :apply-probability 1.0,
+  :checkpoints [0 50 100 200 400 800 1200 1600 2000],
+  :damage-horizon 20,
+  :blend-action? true,
+  :unreachable-target 0.05,
+  :reachable-target 0.1676,
+  :kick-time 1200},
+ :runs
+ [{:seed 2026085200,
+   :trajectory
+   {0
+    {:damage-reach 12,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 13,
+     :mean-lambda 0.08302499999999999,
+     :lambda-sd 0.012980730911624367},
+    100
+    {:damage-reach 16,
+     :mean-lambda 0.063425,
+     :lambda-sd 0.017467666558530374},
+    200
+    {:damage-reach 9,
+     :mean-lambda 0.030774999999999976,
+     :lambda-sd 0.02335913900382461},
+    400
+    {:damage-reach 12,
+     :mean-lambda 0.0040499999999999954,
+     :lambda-sd 0.009218052939748169},
+    800
+    {:damage-reach 14,
+     :mean-lambda 0.0022250000000000013,
+     :lambda-sd 0.003402113313809521},
+    1200
+    {:damage-reach 5,
+     :mean-lambda 0.0019375000000000013,
+     :lambda-sd 0.0031198707905937388},
+    1600
+    {:damage-reach 0,
+     :mean-lambda 0.0028125000000000016,
+     :lambda-sd 0.003478842300248749},
+    2000
+    {:damage-reach 5,
+     :mean-lambda 0.004975000000000004,
+     :lambda-sd 0.006296774968188084}}}
+  {:seed 2026085201,
+   :trajectory
+   {0
+    {:damage-reach 9,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 13,
+     :mean-lambda 0.07797499999999997,
+     :lambda-sd 0.010156248076922902},
+    100
+    {:damage-reach 12,
+     :mean-lambda 0.05869999999999996,
+     :lambda-sd 0.017994721448246993},
+    200
+    {:damage-reach 0,
+     :mean-lambda 0.015374999999999967,
+     :lambda-sd 0.01800650923971661},
+    400
+    {:damage-reach 7,
+     :mean-lambda 0.0061125,
+     :lambda-sd 0.013200372864051969},
+    800
+    {:damage-reach 13,
+     :mean-lambda 0.0035125000000000026,
+     :lambda-sd 0.0062028093433540285},
+    1200
+    {:damage-reach 11,
+     :mean-lambda 0.004312500000000003,
+     :lambda-sd 0.006735342882882803},
+    1600
+    {:damage-reach 13,
+     :mean-lambda 0.002587500000000002,
+     :lambda-sd 0.004224019856724163},
+    2000
+    {:damage-reach 0,
+     :mean-lambda 0.0038500000000000027,
+     :lambda-sd 0.004671991010265326}}}
+  {:seed 2026085202,
+   :trajectory
+   {0
+    {:damage-reach 8,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 14,
+     :mean-lambda 0.09532499999999998,
+     :lambda-sd 0.017708596076482196},
+    100
+    {:damage-reach 7,
+     :mean-lambda 0.07370000000000002,
+     :lambda-sd 0.023326165565733276},
+    200
+    {:damage-reach 10,
+     :mean-lambda 0.043912499999999965,
+     :lambda-sd 0.023841242495935503},
+    400
+    {:damage-reach 6,
+     :mean-lambda 0.010224999999999988,
+     :lambda-sd 0.018686877079918927},
+    800
+    {:damage-reach 23,
+     :mean-lambda 0.002775000000000002,
+     :lambda-sd 0.0037348862097793573},
+    1200
+    {:damage-reach 13,
+     :mean-lambda 0.0016500000000000009,
+     :lambda-sd 0.0031348843678834465},
+    1600
+    {:damage-reach 16,
+     :mean-lambda 0.0015375000000000007,
+     :lambda-sd 0.002837004361998762},
+    2000
+    {:damage-reach 17,
+     :mean-lambda 0.0063625000000000044,
+     :lambda-sd 0.006563618952224454}}}
+  {:seed 2026085203,
+   :trajectory
+   {0
+    {:damage-reach 17,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 10,
+     :mean-lambda 0.08462499999999998,
+     :lambda-sd 0.01197745277594532},
+    100
+    {:damage-reach 12,
+     :mean-lambda 0.06352499999999998,
+     :lambda-sd 0.017995120866501582},
+    200
+    {:damage-reach 12,
+     :mean-lambda 0.027837499999999966,
+     :lambda-sd 0.023867050378084013},
+    400
+    {:damage-reach 12,
+     :mean-lambda 0.003812499999999994,
+     :lambda-sd 0.007850308513045832},
+    800
+    {:damage-reach 0,
+     :mean-lambda 0.004150000000000003,
+     :lambda-sd 0.0055702333882881455},
+    1200
+    {:damage-reach 15,
+     :mean-lambda 0.0022125000000000014,
+     :lambda-sd 0.003552090053757083},
+    1600
+    {:damage-reach 12,
+     :mean-lambda 0.0025625000000000014,
+     :lambda-sd 0.0037377926306845864},
+    2000
+    {:damage-reach 14,
+     :mean-lambda 0.0030500000000000024,
+     :lambda-sd 0.005707232253903809}}}
+  {:seed 2026085204,
+   :trajectory
+   {0
+    {:damage-reach 12,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 10,
+     :mean-lambda 0.08879999999999996,
+     :lambda-sd 0.010759182125050223},
+    100
+    {:damage-reach 10,
+     :mean-lambda 0.07807499999999996,
+     :lambda-sd 0.019510109558892808},
+    200
+    {:damage-reach 0,
+     :mean-lambda 0.04741249999999995,
+     :lambda-sd 0.02713516802509248},
+    400
+    {:damage-reach 10,
+     :mean-lambda 0.007899999999999976,
+     :lambda-sd 0.01104038042822799},
+    800
+    {:damage-reach 7,
+     :mean-lambda 0.002700000000000002,
+     :lambda-sd 0.0037795502377928527},
+    1200
+    {:damage-reach 8,
+     :mean-lambda 0.0034625000000000025,
+     :lambda-sd 0.005074307218724547},
+    1600
+    {:damage-reach 11,
+     :mean-lambda 0.006050000000000005,
+     :lambda-sd 0.006785830826066917},
+    2000
+    {:damage-reach 10,
+     :mean-lambda 0.005762500000000005,
+     :lambda-sd 0.007458625459828377}}}
+  {:seed 2026085205,
+   :trajectory
+   {0
+    {:damage-reach 9,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 18,
+     :mean-lambda 0.08710000000000004,
+     :lambda-sd 0.013217034463146428},
+    100
+    {:damage-reach 17,
+     :mean-lambda 0.06977499999999998,
+     :lambda-sd 0.018942000290360056},
+    200
+    {:damage-reach 8,
+     :mean-lambda 0.031562499999999966,
+     :lambda-sd 0.022361151440612365},
+    400
+    {:damage-reach 16,
+     :mean-lambda 0.007299999999999992,
+     :lambda-sd 0.010981120161440712},
+    800
+    {:damage-reach 0,
+     :mean-lambda 0.004887500000000004,
+     :lambda-sd 0.006524940133824988},
+    1200
+    {:damage-reach 17,
+     :mean-lambda 0.006037500000000005,
+     :lambda-sd 0.008000693329330908},
+    1600
+    {:damage-reach 11,
+     :mean-lambda 0.001575000000000001,
+     :lambda-sd 0.0034013783970619927},
+    2000
+    {:damage-reach 5,
+     :mean-lambda 0.0035875000000000026,
+     :lambda-sd 0.004808049890548145}}}
+  {:seed 2026085206,
+   :trajectory
+   {0
+    {:damage-reach 0,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 1,
+     :mean-lambda 0.08784999999999997,
+     :lambda-sd 0.015042523059646616},
+    100
+    {:damage-reach 1,
+     :mean-lambda 0.06037499999999999,
+     :lambda-sd 0.026340261483136448},
+    200
+    {:damage-reach 19,
+     :mean-lambda 0.02319999999999998,
+     :lambda-sd 0.023284329494318697},
+    400
+    {:damage-reach 7,
+     :mean-lambda 0.0039625000000000025,
+     :lambda-sd 0.005686483425633109},
+    800
+    {:damage-reach 9,
+     :mean-lambda 0.0026500000000000017,
+     :lambda-sd 0.002941513216016546},
+    1200
+    {:damage-reach 19,
+     :mean-lambda 0.0027500000000000016,
+     :lambda-sd 0.0053420501682406585},
+    1600
+    {:damage-reach 20,
+     :mean-lambda 0.0021625000000000012,
+     :lambda-sd 0.0026050131957439295},
+    2000
+    {:damage-reach 14,
+     :mean-lambda 0.0036000000000000025,
+     :lambda-sd 0.006252199612936239}}}
+  {:seed 2026085207,
+   :trajectory
+   {0
+    {:damage-reach 12,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 12,
+     :mean-lambda 0.08427499999999997,
+     :lambda-sd 0.010591240484475848},
+    100
+    {:damage-reach 14,
+     :mean-lambda 0.05772499999999996,
+     :lambda-sd 0.015967917052640283},
+    200
+    {:damage-reach 12,
+     :mean-lambda 0.024899999999999978,
+     :lambda-sd 0.02404142258686037},
+    400
+    {:damage-reach 0,
+     :mean-lambda 0.005962499999999994,
+     :lambda-sd 0.010475499689752265},
+    800
+    {:damage-reach 13,
+     :mean-lambda 0.0026000000000000016,
+     :lambda-sd 0.0031328900395641065},
+    1200
+    {:damage-reach 10,
+     :mean-lambda 0.0022750000000000014,
+     :lambda-sd 0.0038890069426525875},
+    1600
+    {:damage-reach 8,
+     :mean-lambda 0.003150000000000002,
+     :lambda-sd 0.0043792122579295045},
+    2000
+    {:damage-reach 14,
+     :mean-lambda 0.0028750000000000017,
+     :lambda-sd 0.004121210380458635}}}
+  {:seed 2026085208,
+   :trajectory
+   {0
+    {:damage-reach 12,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 10,
+     :mean-lambda 0.09337499999999999,
+     :lambda-sd 0.01222126732380895},
+    100
+    {:damage-reach 15,
+     :mean-lambda 0.07347499999999997,
+     :lambda-sd 0.016714495954111223},
+    200
+    {:damage-reach 17,
+     :mean-lambda 0.037987499999999966,
+     :lambda-sd 0.02490657230029858},
+    400
+    {:damage-reach 6,
+     :mean-lambda 0.006499999999999992,
+     :lambda-sd 0.014288981769181449},
+    800
+    {:damage-reach 16,
+     :mean-lambda 0.002762500000000002,
+     :lambda-sd 0.0036202339358113317},
+    1200
+    {:damage-reach 0,
+     :mean-lambda 0.003312500000000002,
+     :lambda-sd 0.0035305585606246513},
+    1600
+    {:damage-reach 14,
+     :mean-lambda 0.0035125000000000026,
+     :lambda-sd 0.004588010870736905},
+    2000
+    {:damage-reach 5,
+     :mean-lambda 0.002925000000000002,
+     :lambda-sd 0.004309219766964782}}}
+  {:seed 2026085209,
+   :trajectory
+   {0
+    {:damage-reach 14,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 15,
+     :mean-lambda 0.081,
+     :lambda-sd 0.013379088160259666},
+    100
+    {:damage-reach 8,
+     :mean-lambda 0.06434999999999998,
+     :lambda-sd 0.02359401407136991},
+    200
+    {:damage-reach 0,
+     :mean-lambda 0.03552499999999996,
+     :lambda-sd 0.029150889780588187},
+    400
+    {:damage-reach 14,
+     :mean-lambda 0.006549999999999992,
+     :lambda-sd 0.010156155768793614},
+    800
+    {:damage-reach 14,
+     :mean-lambda 0.005975000000000005,
+     :lambda-sd 0.006851961398023202},
+    1200
+    {:damage-reach 11,
+     :mean-lambda 0.001987500000000001,
+     :lambda-sd 0.003337265909393497},
+    1600
+    {:damage-reach 0,
+     :mean-lambda 0.002250000000000001,
+     :lambda-sd 0.004823121395942674},
+    2000
+    {:damage-reach 15,
+     :mean-lambda 0.0035000000000000022,
+     :lambda-sd 0.0054129474410897485}}}
+  {:seed 2026085210,
+   :trajectory
+   {0
+    {:damage-reach 10,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 15,
+     :mean-lambda 0.0889,
+     :lambda-sd 0.017719762978098796},
+    100
+    {:damage-reach 1,
+     :mean-lambda 0.06592499999999997,
+     :lambda-sd 0.022114347718167063},
+    200
+    {:damage-reach 6,
+     :mean-lambda 0.033574999999999966,
+     :lambda-sd 0.025148446771122872},
+    400
+    {:damage-reach 14,
+     :mean-lambda 0.004437499999999994,
+     :lambda-sd 0.011140964668734913},
+    800
+    {:damage-reach 8,
+     :mean-lambda 0.0034250000000000023,
+     :lambda-sd 0.006398779180437469},
+    1200
+    {:damage-reach 0,
+     :mean-lambda 0.0021500000000000013,
+     :lambda-sd 0.0032523068735898814},
+    1600
+    {:damage-reach 14,
+     :mean-lambda 0.0022625000000000015,
+     :lambda-sd 0.0044937282683758266},
+    2000
+    {:damage-reach 11,
+     :mean-lambda 0.005175000000000004,
+     :lambda-sd 0.006981717195647505}}}
+  {:seed 2026085211,
+   :trajectory
+   {0
+    {:damage-reach 17,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 0,
+     :mean-lambda 0.08202499999999999,
+     :lambda-sd 0.013462888805898991},
+    100
+    {:damage-reach 10,
+     :mean-lambda 0.061399999999999975,
+     :lambda-sd 0.02126123232552621},
+    200
+    {:damage-reach 7,
+     :mean-lambda 0.03229999999999998,
+     :lambda-sd 0.02489849393035651},
+    400
+    {:damage-reach 0,
+     :mean-lambda 0.004412499999999991,
+     :lambda-sd 0.01160354875673816},
+    800
+    {:damage-reach 0,
+     :mean-lambda 0.004325000000000003,
+     :lambda-sd 0.006131425201370399},
+    1200
+    {:damage-reach 20,
+     :mean-lambda 0.002850000000000002,
+     :lambda-sd 0.003811495769379788},
+    1600
+    {:damage-reach 5,
+     :mean-lambda 0.003037500000000002,
+     :lambda-sd 0.004127480314913688},
+    2000
+    {:damage-reach 12,
+     :mean-lambda 0.002762500000000002,
+     :lambda-sd 0.004436337875996373}}}
+  {:seed 2026085212,
+   :trajectory
+   {0
+    {:damage-reach 7,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 0,
+     :mean-lambda 0.08894999999999999,
+     :lambda-sd 0.015391474913080948},
+    100
+    {:damage-reach 0,
+     :mean-lambda 0.06914999999999996,
+     :lambda-sd 0.018597782125834274},
+    200
+    {:damage-reach 16,
+     :mean-lambda 0.037637499999999977,
+     :lambda-sd 0.02489088374787043},
+    400
+    {:damage-reach 11,
+     :mean-lambda 0.009487499999999986,
+     :lambda-sd 0.014057021154924666},
+    800
+    {:damage-reach 10,
+     :mean-lambda 0.0024500000000000017,
+     :lambda-sd 0.004865439342957634},
+    1200
+    {:damage-reach 6,
+     :mean-lambda 0.007162500000000005,
+     :lambda-sd 0.008850767975153348},
+    1600
+    {:damage-reach 9,
+     :mean-lambda 0.001925000000000001,
+     :lambda-sd 0.003056857046052367},
+    2000
+    {:damage-reach 0,
+     :mean-lambda 0.0038500000000000027,
+     :lambda-sd 0.005431620384378867}}}
+  {:seed 2026085213,
+   :trajectory
+   {0
+    {:damage-reach 12,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 6,
+     :mean-lambda 0.08940000000000002,
+     :lambda-sd 0.013591909358143922},
+    100
+    {:damage-reach 15,
+     :mean-lambda 0.07197499999999997,
+     :lambda-sd 0.017133282668537295},
+    200
+    {:damage-reach 0,
+     :mean-lambda 0.04458749999999997,
+     :lambda-sd 0.02199812136865329},
+    400
+    {:damage-reach 7,
+     :mean-lambda 0.009524999999999983,
+     :lambda-sd 0.014234618891983006},
+    800
+    {:damage-reach 12,
+     :mean-lambda 0.0032875000000000022,
+     :lambda-sd 0.003966086704801096},
+    1200
+    {:damage-reach 9,
+     :mean-lambda 0.0062125000000000045,
+     :lambda-sd 0.008060232239209987},
+    1600
+    {:damage-reach 18,
+     :mean-lambda 0.003237500000000002,
+     :lambda-sd 0.007448563200376303},
+    2000
+    {:damage-reach 9,
+     :mean-lambda 0.003037500000000002,
+     :lambda-sd 0.004428441458346266}}}
+  {:seed 2026085214,
+   :trajectory
+   {0
+    {:damage-reach 16,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 7,
+     :mean-lambda 0.08289999999999995,
+     :lambda-sd 0.011558114033007298},
+    100
+    {:damage-reach 6,
+     :mean-lambda 0.06494999999999998,
+     :lambda-sd 0.019146736014266263},
+    200
+    {:damage-reach 14,
+     :mean-lambda 0.04507499999999996,
+     :lambda-sd 0.02505432846835055},
+    400
+    {:damage-reach 5,
+     :mean-lambda 0.008562499999999989,
+     :lambda-sd 0.01651502630182585},
+    800
+    {:damage-reach 10,
+     :mean-lambda 0.0023625000000000013,
+     :lambda-sd 0.0036477518761560547},
+    1200
+    {:damage-reach 8,
+     :mean-lambda 0.003087500000000002,
+     :lambda-sd 0.0033286399249543353},
+    1600
+    {:damage-reach 16,
+     :mean-lambda 0.004162500000000003,
+     :lambda-sd 0.006056904634382156},
+    2000
+    {:damage-reach 2,
+     :mean-lambda 0.0016875000000000008,
+     :lambda-sd 0.002786546922267775}}}
+  {:seed 2026085215,
+   :trajectory
+   {0
+    {:damage-reach 13,
+     :mean-lambda 0.09999999999999984,
+     :lambda-sd 1.6653345369377348E-16},
+    50
+    {:damage-reach 13,
+     :mean-lambda 0.08837499999999997,
+     :lambda-sd 0.01214122625602539},
+    100
+    {:damage-reach 17,
+     :mean-lambda 0.07657499999999998,
+     :lambda-sd 0.022177001037110507},
+    200
+    {:damage-reach 11,
+     :mean-lambda 0.040349999999999976,
+     :lambda-sd 0.026139577272786957},
+    400
+    {:damage-reach 8,
+     :mean-lambda 0.00486249999999999,
+     :lambda-sd 0.00775039313518996},
+    800
+    {:damage-reach 11,
+     :mean-lambda 0.0027250000000000017,
+     :lambda-sd 0.004034151087899413},
+    1200
+    {:damage-reach 12,
+     :mean-lambda 0.002700000000000002,
+     :lambda-sd 0.004548076516506734},
+    1600
+    {:damage-reach 8,
+     :mean-lambda 0.0010125000000000004,
+     :lambda-sd 0.0018741247957380005},
+    2000
+    {:damage-reach 9,
+     :mean-lambda 0.0015875000000000008,
+     :lambda-sd 0.002965188653357491}}}]}

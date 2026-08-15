@@ -1,0 +1,722 @@
+{:schema :exotype-policy-epistemic-v2,
+ :design
+ {:churn-bonuses
+  [0.0
+   0.05
+   0.1
+   0.15
+   0.2
+   0.25
+   0.3
+   0.35
+   0.4
+   0.45
+   0.5
+   0.55
+   0.6
+   0.65
+   0.7
+   0.75
+   0.8
+   0.85
+   0.9
+   0.95
+   1.0
+   1.05
+   1.1
+   1.15
+   1.2
+   1.25
+   1.3
+   1.35
+   1.4
+   1.45
+   1.5
+   1.55
+   1.6
+   1.65
+   1.7
+   1.75
+   1.8
+   1.85
+   1.9
+   1.95
+   2.0],
+  :schema :exotype-policy-epistemic-v2,
+  :lambda 0.55,
+  :steps 600,
+  :width 80,
+  :churn-seeds
+  [2026084200
+   2026084201
+   2026084202
+   2026084203
+   2026084204
+   2026084205
+   2026084206
+   2026084207],
+  :checkpoints [20 60 120 300 600],
+  :damage-horizon 10,
+  :experiment-seeds
+  [2026084300
+   2026084301
+   2026084302
+   2026084303
+   2026084304
+   2026084305
+   2026084306
+   2026084307
+   2026084308
+   2026084309
+   2026084310
+   2026084311
+   2026084312
+   2026084313
+   2026084314
+   2026084315
+   2026084316
+   2026084317
+   2026084318
+   2026084319
+   2026084320
+   2026084321
+   2026084322
+   2026084323
+   2026084324
+   2026084325
+   2026084326
+   2026084327
+   2026084328
+   2026084329
+   2026084330
+   2026084331],
+  :churn-tolerance 0.02,
+  :scale-seeds
+  [2026084100
+   2026084101
+   2026084102
+   2026084103
+   2026084104
+   2026084105
+   2026084106
+   2026084107
+   2026084108
+   2026084109
+   2026084110
+   2026084111
+   2026084112
+   2026084113
+   2026084114
+   2026084115
+   2026084116
+   2026084117
+   2026084118
+   2026084119
+   2026084120
+   2026084121
+   2026084122
+   2026084123
+   2026084124
+   2026084125
+   2026084126
+   2026084127
+   2026084128
+   2026084129
+   2026084130
+   2026084131],
+  :apply-probabilities [0.1 0.15 0.3 0.6 1.0]},
+ :scale
+ {:schema :exotype-policy-epistemic-v2,
+  :x-rms-sd 0.3101475310574781,
+  :ambiguity-rms-sd 0.14831845081155845,
+  :scope :expected-injection-effective-horizon-5-to-20,
+  :status :locked-before-dynamics,
+  :formula :rms-within-cell-ambiguity-sd-over-rms-within-cell-x-sd,
+  :reserved-experiment-seeds
+  [2026084300
+   2026084301
+   2026084302
+   2026084303
+   2026084304
+   2026084305
+   2026084306
+   2026084307
+   2026084308
+   2026084309
+   2026084310
+   2026084311
+   2026084312
+   2026084313
+   2026084314
+   2026084315
+   2026084316
+   2026084317
+   2026084318
+   2026084319
+   2026084320
+   2026084321
+   2026084322
+   2026084323
+   2026084324
+   2026084325
+   2026084326
+   2026084327
+   2026084328
+   2026084329
+   2026084330
+   2026084331],
+  :kappa 0.47821902791182086,
+  :cells 12800,
+  :reserved-churn-seeds
+  [2026084200
+   2026084201
+   2026084202
+   2026084203
+   2026084204
+   2026084205
+   2026084206
+   2026084207],
+  :scale-seeds
+  [2026084100
+   2026084101
+   2026084102
+   2026084103
+   2026084104
+   2026084105
+   2026084106
+   2026084107
+   2026084108
+   2026084109
+   2026084110
+   2026084111
+   2026084112
+   2026084113
+   2026084114
+   2026084115
+   2026084116
+   2026084117
+   2026084118
+   2026084119
+   2026084120
+   2026084121
+   2026084122
+   2026084123
+   2026084124
+   2026084125
+   2026084126
+   2026084127
+   2026084128
+   2026084129
+   2026084130
+   2026084131],
+  :apply-probabilities [0.1 0.15 0.3 0.6 1.0]},
+ :churn-control
+ {:schema :exotype-policy-epistemic-v2,
+  :matched-adoption-rate 0.9960625000000001,
+  :grid
+  [0.0
+   0.05
+   0.1
+   0.15
+   0.2
+   0.25
+   0.3
+   0.35
+   0.4
+   0.45
+   0.5
+   0.55
+   0.6
+   0.65
+   0.7
+   0.75
+   0.8
+   0.85
+   0.9
+   0.95
+   1.0
+   1.05
+   1.1
+   1.15
+   1.2
+   1.25
+   1.3
+   1.35
+   1.4
+   1.45
+   1.5
+   1.55
+   1.6
+   1.65
+   1.7
+   1.75
+   1.8
+   1.85
+   1.9
+   1.95
+   2.0],
+  :churn-seeds
+  [2026084200
+   2026084201
+   2026084202
+   2026084203
+   2026084204
+   2026084205
+   2026084206
+   2026084207],
+  :apply-probability 0.3,
+  :target-adoption-rate 0.9956432291666666,
+  :bonus 0.15,
+  :status :matched-on-disjoint-seeds,
+  :gap 4.192708333334849E-4},
+ :apply-probability 0.3,
+ :arm :matched-churn,
+ :runs
+ [{:arm :matched-churn,
+   :dominant-share 0.4875,
+   :selected-x 0.35690299479166665,
+   :apply-probability 0.3,
+   :seed 2026084300,
+   :dominant :identity,
+   :adoption-rate 0.9964166666666666,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 3, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 4, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.3787571614583333,
+   :apply-probability 0.3,
+   :seed 2026084301,
+   :dominant :builder,
+   :adoption-rate 0.9989375,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 4, :halting-capable-share 0.0},
+    120 {:phenotype-damage 4, :halting-capable-share 0.0},
+    300 {:phenotype-damage 3, :halting-capable-share 0.0},
+    600 {:phenotype-damage 2, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.37419921875,
+   :apply-probability 0.3,
+   :seed 2026084302,
+   :dominant :identity,
+   :adoption-rate 0.9974375,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 3, :halting-capable-share 0.0},
+    300 {:phenotype-damage 5, :halting-capable-share 0.0},
+    600 {:phenotype-damage 5, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.36657747395833334,
+   :apply-probability 0.3,
+   :seed 2026084303,
+   :dominant :builder,
+   :adoption-rate 0.9968541666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 2, :halting-capable-share 0.0},
+    300 {:phenotype-damage 3, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.375005859375,
+   :apply-probability 0.3,
+   :seed 2026084304,
+   :dominant :identity,
+   :adoption-rate 0.9979375,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 4, :halting-capable-share 0.0},
+    60 {:phenotype-damage 6, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 6, :halting-capable-share 0.0},
+    600 {:phenotype-damage 2, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.37811979166666665,
+   :apply-probability 0.3,
+   :seed 2026084305,
+   :dominant :builder,
+   :adoption-rate 0.997625,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 5, :halting-capable-share 0.0},
+    60 {:phenotype-damage 7, :halting-capable-share 0.0},
+    120 {:phenotype-damage 4, :halting-capable-share 0.0},
+    300 {:phenotype-damage 1, :halting-capable-share 0.0},
+    600 {:phenotype-damage 3, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.3760455729166667,
+   :apply-probability 0.3,
+   :seed 2026084306,
+   :dominant :identity,
+   :adoption-rate 0.9979166666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 1, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 1, :halting-capable-share 0.0},
+    600 {:phenotype-damage 1, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.372306640625,
+   :apply-probability 0.3,
+   :seed 2026084307,
+   :dominant :builder,
+   :adoption-rate 0.9968333333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 1, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.3741848958333333,
+   :apply-probability 0.3,
+   :seed 2026084308,
+   :dominant :identity,
+   :adoption-rate 0.9956458333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 2, :halting-capable-share 0.0},
+    60 {:phenotype-damage 2, :halting-capable-share 0.0},
+    120 {:phenotype-damage 2, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.375591796875,
+   :apply-probability 0.3,
+   :seed 2026084309,
+   :dominant :identity,
+   :adoption-rate 0.9980208333333334,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 4, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.376302734375,
+   :apply-probability 0.3,
+   :seed 2026084310,
+   :dominant :identity,
+   :adoption-rate 0.9986041666666666,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 2, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 3, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 4, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.4875,
+   :selected-x 0.340685546875,
+   :apply-probability 0.3,
+   :seed 2026084311,
+   :dominant :identity,
+   :adoption-rate 0.9875625,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 4, :halting-capable-share 0.0},
+    300 {:phenotype-damage 3, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.357310546875,
+   :apply-probability 0.3,
+   :seed 2026084312,
+   :dominant :identity,
+   :adoption-rate 0.9964375,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 4, :halting-capable-share 0.0},
+    60 {:phenotype-damage 3, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 3, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.36529296875,
+   :apply-probability 0.3,
+   :seed 2026084313,
+   :dominant :identity,
+   :adoption-rate 0.9937291666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 2, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 2, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.3761627604166667,
+   :apply-probability 0.3,
+   :seed 2026084314,
+   :dominant :identity,
+   :adoption-rate 0.9989375,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 2, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.32649544270833336,
+   :apply-probability 0.3,
+   :seed 2026084315,
+   :dominant :identity,
+   :adoption-rate 0.9956041666666666,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 1, :halting-capable-share 0.0},
+    60 {:phenotype-damage 8, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 4, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.3693958333333333,
+   :apply-probability 0.3,
+   :seed 2026084316,
+   :dominant :identity,
+   :adoption-rate 0.9973333333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 4, :halting-capable-share 0.0},
+    60 {:phenotype-damage 3, :halting-capable-share 0.0},
+    120 {:phenotype-damage 5, :halting-capable-share 0.0},
+    300 {:phenotype-damage 1, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.37551692708333334,
+   :apply-probability 0.3,
+   :seed 2026084317,
+   :dominant :builder,
+   :adoption-rate 0.9983125,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 2, :halting-capable-share 0.0},
+    60 {:phenotype-damage 3, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 4, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.31789908854166665,
+   :apply-probability 0.3,
+   :seed 2026084318,
+   :dominant :identity,
+   :adoption-rate 0.9930416666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 1, :halting-capable-share 0.0},
+    120 {:phenotype-damage 6, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.37614388020833334,
+   :apply-probability 0.3,
+   :seed 2026084319,
+   :dominant :builder,
+   :adoption-rate 0.9989583333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 3, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.37493489583333334,
+   :apply-probability 0.3,
+   :seed 2026084320,
+   :dominant :builder,
+   :adoption-rate 0.9962916666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 6, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.3756751302083333,
+   :apply-probability 0.3,
+   :seed 2026084321,
+   :dominant :builder,
+   :adoption-rate 0.9991458333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 0, :halting-capable-share 0.0},
+    60 {:phenotype-damage 1, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 3, :halting-capable-share 0.0},
+    600 {:phenotype-damage 6, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.374923828125,
+   :apply-probability 0.3,
+   :seed 2026084322,
+   :dominant :builder,
+   :adoption-rate 0.9960416666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 4, :halting-capable-share 0.0},
+    60 {:phenotype-damage 1, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 3, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.374822265625,
+   :apply-probability 0.3,
+   :seed 2026084323,
+   :dominant :identity,
+   :adoption-rate 0.9968125,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 2, :halting-capable-share 0.0},
+    60 {:phenotype-damage 2, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 1, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.37432161458333335,
+   :apply-probability 0.3,
+   :seed 2026084324,
+   :dominant :builder,
+   :adoption-rate 0.9972291666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 2, :halting-capable-share 0.0},
+    60 {:phenotype-damage 4, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 4, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.4875,
+   :selected-x 0.3552024739583333,
+   :apply-probability 0.3,
+   :seed 2026084325,
+   :dominant :identity,
+   :adoption-rate 0.9957291666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 7, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 5, :halting-capable-share 0.0},
+    300 {:phenotype-damage 5, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.525,
+   :selected-x 0.3734778645833333,
+   :apply-probability 0.3,
+   :seed 2026084326,
+   :dominant :identity,
+   :adoption-rate 0.9942708333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 5, :halting-capable-share 0.0},
+    60 {:phenotype-damage 7, :halting-capable-share 0.0},
+    120 {:phenotype-damage 3, :halting-capable-share 0.0},
+    300 {:phenotype-damage 3, :halting-capable-share 0.0},
+    600 {:phenotype-damage 4, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.338232421875,
+   :apply-probability 0.3,
+   :seed 2026084327,
+   :dominant :identity,
+   :adoption-rate 0.9952291666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 4, :halting-capable-share 0.0},
+    60 {:phenotype-damage 1, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 3, :halting-capable-share 0.0},
+    600 {:phenotype-damage 3, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.3693619791666667,
+   :apply-probability 0.3,
+   :seed 2026084328,
+   :dominant :identity,
+   :adoption-rate 0.9858333333333333,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 5, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 1, :halting-capable-share 0.0},
+    600 {:phenotype-damage 8, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5125,
+   :selected-x 0.37424739583333333,
+   :apply-probability 0.3,
+   :seed 2026084329,
+   :dominant :builder,
+   :adoption-rate 0.9966041666666666,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 1, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.4875,
+   :selected-x 0.3542584635416667,
+   :apply-probability 0.3,
+   :seed 2026084330,
+   :dominant :identity,
+   :adoption-rate 0.998375,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 2, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 0, :halting-capable-share 0.0}}}
+  {:arm :matched-churn,
+   :dominant-share 0.5,
+   :selected-x 0.3771328125,
+   :apply-probability 0.3,
+   :seed 2026084331,
+   :dominant :identity,
+   :adoption-rate 0.9968541666666667,
+   :halting-capable-share 0.0,
+   :trajectory
+   {20 {:phenotype-damage 3, :halting-capable-share 0.0},
+    60 {:phenotype-damage 0, :halting-capable-share 0.0},
+    120 {:phenotype-damage 0, :halting-capable-share 0.0},
+    300 {:phenotype-damage 0, :halting-capable-share 0.0},
+    600 {:phenotype-damage 1, :halting-capable-share 0.0}}}]}
