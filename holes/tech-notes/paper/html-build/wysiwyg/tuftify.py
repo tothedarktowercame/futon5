@@ -374,12 +374,37 @@ HEAD_CSS = """
     font-family: inherit; font-variant: normal; font-weight: inherit;
     font-style: inherit; }
 
+  /* The measure belongs on the PROSE, not on the subsection box. Constraining
+     the box traps wide figures: a .wide-fig inside a subsection still gets the
+     full-bleed negative margin, which is calibrated against the section width,
+     so it is yanked off the left edge and clipped by article{overflow-x:clip}.
+     Measured (Joe, 2026-08-22, "Box 1 has now degenerated to one column"):
+     figure margin-left -377.59px in a 486px subsection -> table at left -339,
+     columns 1 and 2 entirely clipped, only column 3 visible. Constrain the
+     children instead; figures then size against the full section. */
   section.ltx_subsection, section.ltx_subsubsection {
-    display: block; width: var(--measure); max-width: 100%; }
+    display: block; width: auto; max-width: 100%; }
   section.ltx_subsection > .ltx_para, section.ltx_subsubsection > .ltx_para,
   section.ltx_subsection > .ltx_para > .ltx_p,
-  section.ltx_subsubsection > .ltx_para > .ltx_p {
-    width: 100%; max-width: 100%; }
+  section.ltx_subsubsection > .ltx_para > .ltx_p,
+  section.ltx_subsection > .ltx_p, section.ltx_subsubsection > .ltx_p,
+  section.ltx_subsection > .ltx_itemize, section.ltx_subsection > .ltx_enumerate,
+  section.ltx_subsection > .ltx_description, section.ltx_subsection > .ltx_quote,
+  section.ltx_subsubsection > .ltx_itemize, section.ltx_subsubsection > .ltx_enumerate,
+  section.ltx_subsubsection > .ltx_description, section.ltx_subsubsection > .ltx_quote {
+    width: var(--measure); max-width: 100%; }
+  /* ltx-amsart.css:29-40 runs the FIRST paragraph of a subsection in beside its
+     title, by setting the title, its sibling .ltx_para AND that para's .ltx_p
+     all to display:inline. Tuftify already renders subsection titles as block
+     headings, so the run-in is half-undone -- and an inline box ignores width,
+     which meant the first paragraph of every subsection silently escaped the
+     measure the moment the subsection box stopped constraining it (measured:
+     width computed 486.4px, rect 1187px). Complete the un-run-in. */
+  .ltx_subsection .ltx_title + .ltx_para,
+  .ltx_subsection .ltx_title + .ltx_para > .ltx_p,
+  .ltx_subsubsection .ltx_title + .ltx_para,
+  .ltx_subsubsection .ltx_title + .ltx_para > .ltx_p {
+    display: block; width: var(--measure); max-width: 100%; }
   /* LaTeXML emits h4 at paragraph level in some classes and h5 in others;
      keying the run-in heading to h5 alone lets it fall back to the SECTION's
      font-size, which is smaller than the paragraph text it introduces. */
