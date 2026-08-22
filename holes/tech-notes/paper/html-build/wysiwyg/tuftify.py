@@ -344,8 +344,48 @@ HEAD_CSS = """
      section, which IS a block, and let the heading run in as it does in print. */
   section.ltx_paragraph { display: block; width: var(--measure); max-width: 100%;
     margin: 1.15rem 0 0; }
+  /* Same treatment for starred sub/subsub-sections: LaTeXML nests body text in
+     section.ltx_subsection, which nothing else here constrains, so a paper that
+     uses \subsection*{} had its prose run the full block while a paper that did
+     not looked fine (Joe, 2026-08-22 -- the fix had been made once, in one
+     paper, and did not travel). */
+  /* LIGHT. paper-site.css carries a prefers-color-scheme:dark block whose
+     coverage is partial -- tables and figures keep light backgrounds while the
+     page goes dark, so the result is unreadable rather than dark. Pin light for
+     every tuftified paper until dark is either completed or dropped. This lived
+     in one paper's local publish step and did not travel (Joe, 2026-08-22). */
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #111; --ink-muted: #555; --bg: #fffff8; --bg-sunk: #f4f4ec;
+            --rule: #ccc; --link: #1a4b8c; }
+    html, body, article, .ltx_page_main, .ltx_page_content, .ltx_document,
+    figure, figure.ltx_table, figure.ltx_figure, table, table.ltx_tabular,
+    table.ltx_tabular td, table.ltx_tabular th, .sidenote, .marginnote {
+      background: #fffff8; color: #111; }
+    .site-nav { background: #f4f4ec; border-bottom-color: #ddd; }
+    a, .ltx_ref { color: #1a4b8c; }
+  }
+  /* Nav and cross-reference markers: explicit stacks so they cannot fall back
+     to a decorative or math face. */
+  .site-nav, .site-nav a, .site-nav .site-nav-home {
+    font-family: "et-book", Palatino, "Palatino Linotype", Georgia, serif;
+    font-variant: normal; font-weight: 400; }
+  .site-nav a[aria-current="page"], .site-nav .site-nav-home { font-weight: 600; }
+  a, .ltx_ref, .ltx_ref .ltx_text, .ltx_ref_tag {
+    font-family: inherit; font-variant: normal; font-weight: inherit;
+    font-style: inherit; }
+
+  section.ltx_subsection, section.ltx_subsubsection {
+    display: block; width: var(--measure); max-width: 100%; }
+  section.ltx_subsection > .ltx_para, section.ltx_subsubsection > .ltx_para,
+  section.ltx_subsection > .ltx_para > .ltx_p,
+  section.ltx_subsubsection > .ltx_para > .ltx_p {
+    width: 100%; max-width: 100%; }
+  /* LaTeXML emits h4 at paragraph level in some classes and h5 in others;
+     keying the run-in heading to h5 alone lets it fall back to the SECTION's
+     font-size, which is smaller than the paragraph text it introduces. */
+  section.ltx_paragraph > h4.ltx_title_paragraph,
   section.ltx_paragraph > h5.ltx_title_paragraph { display: inline; float: none;
-    font-size: 1em; font-weight: 700; font-style: normal; margin: 0;
+    font-size: 1.334em; font-weight: 700; font-style: normal; margin: 0;
     padding: 0; }
 
   /* Notes hang in the margin, beside the line that cites them. */

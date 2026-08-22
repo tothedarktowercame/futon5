@@ -23,17 +23,32 @@ Does four things the converter cannot:
 """
 import argparse
 import html
+import os
 import re
 from pathlib import Path
 
-PAGES = [
+# PAGES_SPEC (newline-separated "slug|label|blurb") overrides the default set,
+# so other papers can be built without copying this script (Joe, 2026-08-21).
+# build-site.sh exports it ONLY when DOCS_SPEC was given, so the default run is
+# byte-identical to before and keeps the hand-written blurbs below.
+_SPEC = os.environ.get("PAGES_SPEC", "").strip()
+if _SPEC:
+    PAGES = []
+    for _line in _SPEC.splitlines():
+        _line = _line.strip()
+        if not _line:
+            continue
+        _parts = (_line.split("|") + ["", "", ""])[:3]
+        PAGES.append(tuple(_parts))
+else:
+    PAGES = [
     ("index-paper", "Main paper",     "The paper itself."),
     ("supplement",  "S4 · Domains",   "Exploratory domain analysis and a withdrawn statistic."),
     ("supplement1", "S1 · Findings",  "Empirical findings, boxed and numbered."),
     ("supplement2", "S2 · Theory",    "Definitions, theorems and worked examples."),
     ("supplement3", "S3 · Figures",   "Supplementary figure galleries."),
     ("supplement5", "S5 · Apparatus", "Apparatus and further analysis."),
-]
+    ]
 
 
 def text_of(fragment: str) -> str:
@@ -41,7 +56,17 @@ def text_of(fragment: str) -> str:
 
 
 def nav_html(current: str) -> str:
-    items = ['<a class="site-nav-home" href="index.html">Rule-Rewriting CA</a>']
+    # Home link was hardcoded to this repo's own paper AND to index.html, so a
+    # site built from another source got a nav entry naming a paper it did not
+    # contain (Joe, 2026-08-22). Both are now parameters; defaults unchanged.
+    _home_label = os.environ.get("SITE_HOME_LABEL", "Rule-Rewriting CA")
+    _home_href = os.environ.get("SITE_HOME_HREF", "index.html")
+    # Drop the home item when it points at a page that is already in the nav:
+    # otherwise the paper it names appears twice, once as "home" and once as
+    # itself (Joe, 2026-08-22).
+    _page_hrefs = {f"{slug}.html" for slug, _, _ in PAGES}
+    items = ([] if _home_href in _page_hrefs
+             else [f'<a class="site-nav-home" href="{_home_href}">{_home_label}</a>'])
     for slug, label, _ in PAGES:
         cur = ' aria-current="page"' if slug == current else ""
         items.append(f'<a href="{slug}.html"{cur}>{html.escape(label)}</a>')

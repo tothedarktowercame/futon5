@@ -34,27 +34,43 @@ fi
 
 mkdir -p "$OUT" "$XML"
 
+# DOCS_SPEC ("tex|slug[|label[|blurb]]", newline-separated) and PRELOAD let this
+# script build other papers without being copied (Joe, 2026-08-21).
+PRELOAD="${PRELOAD-apa7-html-shim.sty}"
+if [ -n "${DOCS_SPEC:-}" ]; then
+  mapfile -t DOCS <<<"$DOCS_SPEC"
+else
 DOCS=(
-  "draft8.tex|index-paper"
+  "draft9.tex|index-paper"
   "supplement.tex|supplement"
   "supplement1.tex|supplement1"
   "supplement2-theory.tex|supplement2"
   "supplement3-figures.tex|supplement3"
   "supplement5.tex|supplement5"
 )
+fi
 
 cd "$SRC"
 for entry in "${DOCS[@]}"; do
-  IFS='|' read -r tex slug <<<"$entry"
+  IFS="|" read -r tex slug label blurb <<<"$entry"
   echo "==> $tex"
-  "$OX" --path="$SHIM" --preload=apa7-html-shim.sty \
+  PRE=(); [ -n "$PRELOAD" ] && PRE=(--preload="$PRELOAD")
+  "$OX" --path="$SHIM" --path="$SRC" "${PRE[@]}" \
         --dest="$OUT/$slug.html" "$tex" 2>&1 | grep -E "^Conversion|^Error" || true
-  "$OX" --path="$SHIM" --preload=apa7-html-shim.sty --xml \
+  "$OX" --path="$SHIM" --path="$SRC" "${PRE[@]}" --xml \
         --dest="$XML/$slug.xml" "$tex" >/dev/null 2>&1 || true
 done
 
 cp -f "$HERE/paper-site.css" "$OUT/paper-site.css"
 
+if [ -n "${DOCS_SPEC:-}" ]; then
+  PAGES_SPEC=""
+  for entry in "${DOCS[@]}"; do
+    IFS='|' read -r _tex slug label blurb <<<"$entry"
+    PAGES_SPEC+="${slug}|${label}|${blurb}"$'\n'
+  done
+  export PAGES_SPEC
+fi
 echo "==> nav, xref resolution, bibliography dedup, index"
 python3 "$HERE/finish-site.py" "$OUT" --xml "$XML"
 
