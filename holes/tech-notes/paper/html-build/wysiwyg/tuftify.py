@@ -413,6 +413,13 @@ HEAD_CSS = """
     font-size: 1.334em; font-weight: 700; font-style: normal; margin: 0;
     padding: 0; }
 
+  /* A sidenote is a right float, so a figure or table starting before the
+     float has ended renders UNDER it. Measured 2026-08-22: the footnote from
+     the paragraph above Box 2 overlapped the table's third column, making both
+     unreadable. Floats must be cleared by anything that lays out its own
+     columns. */
+  .ltx_figure, .ltx_table, figure.ltx_float { clear: right; }
+
   /* Notes hang in the margin, beside the line that cites them. */
   .sidenote, .marginnote {
     float: right; clear: right; position: relative;
