@@ -381,17 +381,30 @@ HEAD_CSS = """
      Measured (Joe, 2026-08-22, "Box 1 has now degenerated to one column"):
      figure margin-left -377.59px in a 486px subsection -> table at left -339,
      columns 1 and 2 entirely clipped, only column 3 visible. Constrain the
-     children instead; figures then size against the full section. */
-  section.ltx_subsection, section.ltx_subsubsection {
+     children instead; figures then size against the full section.
+     2026-08-23: section.ltx_paragraph was MISSING from this list, so the same
+     bug survived one container deeper -- a \\paragraph{} before a wide figure
+     put the figure inside section.ltx_paragraph, which was still box-constrained,
+     and Figure 2 of futon-2026 was yanked left until its centre sat on the page
+     edge. Same symptom, same cause, one selector short. LaTeXML emits
+     ltx_paragraph and ltx_subparagraph as <section> too; both are listed now. */
+  section.ltx_subsection, section.ltx_subsubsection,
+  section.ltx_paragraph, section.ltx_subparagraph {
     display: block; width: auto; max-width: 100%; }
   section.ltx_subsection > .ltx_para, section.ltx_subsubsection > .ltx_para,
+  section.ltx_paragraph > .ltx_para, section.ltx_subparagraph > .ltx_para,
   section.ltx_subsection > .ltx_para > .ltx_p,
   section.ltx_subsubsection > .ltx_para > .ltx_p,
+  section.ltx_paragraph > .ltx_para > .ltx_p,
+  section.ltx_subparagraph > .ltx_para > .ltx_p,
   section.ltx_subsection > .ltx_p, section.ltx_subsubsection > .ltx_p,
+  section.ltx_paragraph > .ltx_p, section.ltx_subparagraph > .ltx_p,
   section.ltx_subsection > .ltx_itemize, section.ltx_subsection > .ltx_enumerate,
   section.ltx_subsection > .ltx_description, section.ltx_subsection > .ltx_quote,
   section.ltx_subsubsection > .ltx_itemize, section.ltx_subsubsection > .ltx_enumerate,
-  section.ltx_subsubsection > .ltx_description, section.ltx_subsubsection > .ltx_quote {
+  section.ltx_subsubsection > .ltx_description, section.ltx_subsubsection > .ltx_quote,
+  section.ltx_paragraph > .ltx_itemize, section.ltx_paragraph > .ltx_enumerate,
+  section.ltx_paragraph > .ltx_description, section.ltx_paragraph > .ltx_quote {
     width: var(--measure); max-width: 100%; }
   /* ltx-amsart.css:29-40 runs the FIRST paragraph of a subsection in beside its
      title, by setting the title, its sibling .ltx_para AND that para's .ltx_p
