@@ -381,7 +381,23 @@ HEAD_CSS = """
      Measured (Joe, 2026-08-22, "Box 1 has now degenerated to one column"):
      figure margin-left -377.59px in a 486px subsection -> table at left -339,
      columns 1 and 2 entirely clipped, only column 3 visible. Constrain the
-     children instead; figures then size against the full section. */
+     children instead; figures then size against the full section.
+
+     DO NOT add section.ltx_paragraph to this list without doing the rest of
+     the work. Tried 2026-08-23 and reverted the same hour: a \\paragraph{}
+     before a wide figure nests it in section.ltx_paragraph, which is still
+     box-constrained, so the figure is dragged left until its centre sits on
+     the page edge -- the same bug this rule fixes, one container deeper. But
+     releasing that box with width:auto also releases everything inside it that
+     has no replacement measure rule, and the paragraph TITLE (h5.ltx_title_
+     paragraph) is one of them: WR-4's heading and its lede immediately ran the
+     full page width. The child list below covers .ltx_para/.ltx_p/lists, not
+     titles, and not lists nested inside .ltx_para. A correct fix must enumerate
+     every child of a paragraph box, titles included, or move the measure onto
+     the prose elements themselves rather than toggling ancestor boxes.
+     Until then the author-side workaround is the cheap one: do not put a
+     \\paragraph{} immediately before a wide figure (p4ng 80a2eb6 uses
+     \\noindent\\textbf lead-ins instead). */
   section.ltx_subsection, section.ltx_subsubsection {
     display: block; width: auto; max-width: 100%; }
   section.ltx_subsection > .ltx_para, section.ltx_subsubsection > .ltx_para,
