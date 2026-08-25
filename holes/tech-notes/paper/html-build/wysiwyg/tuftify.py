@@ -234,6 +234,53 @@ def fix_bibliography(html: str) -> tuple:
     return html, (dropped, changed[0])
 
 
+def inline_svg(page_dir, body):
+    """Replace <object data="x.svg"> with the SVG itself, inline.
+
+    An <object> loads the file into a NESTED browsing context, and the browser
+    paints that document's canvas -- white -- behind it. No outer CSS reaches
+    inside, so a transparent SVG still lands on a white tile (Joe, 2026-08-25).
+    Inlining also puts the SVG's <text> into the page DOM, where it can be
+    selected, searched and read aloud with the surrounding prose instead of
+    being a picture of words. The root's fixed pt width/height are dropped so
+    the stylesheet sizes it; viewBox keeps the aspect ratio.
+    """
+    m = re.search(r'<object[^>]*data="([^"]+\.svg)"[^>]*>.*?</object>', body, re.S)
+    if not m or not page_dir:
+        return body
+    f = page_dir / m.group(1).split("/")[-1]
+    try:
+        raw = f.read_text()
+    except OSError:
+        return body
+    i = raw.find("<svg")
+    if i < 0:
+        return body
+    svg = raw[i:]
+    root = re.match(r"<svg[^>]*>", svg)
+    if not root:
+        return body
+    stripped = re.sub(r'\s(?:width|height)="[^"]*"', "", root.group())
+    return body[:m.start()] + stripped + svg[root.end():] + body[m.end():]
+
+
+def svg_aspect(page_dir, ref):
+    """'W / H' for an SVG asset, or None. An <object> is a replaced element
+    with no intrinsic size here, so without an explicit aspect it falls back to
+    the min-height meant for full-width diagrams -- which stretched a 250x256
+    key to 390px tall."""
+    f = page_dir / ref.split("/")[-1]
+    if not f.exists() or f.suffix.lower() != ".svg":
+        return None
+    head = f.read_text(encoding="utf-8", errors="replace")[:2000]
+    w = re.search(r'\bwidth="([\d.]+)', head)
+    hh = re.search(r'\bheight="([\d.]+)', head)
+    if not (w and hh):
+        m = re.search(r'viewBox="[\d.\-]+ [\d.\-]+ ([\d.]+) ([\d.]+)', head)
+        return f"{m.group(1)} / {m.group(2)}" if m else None
+    return f"{w.group(1)} / {hh.group(1)}"
+
+
 def size_figures(html: str, page_dir=None) -> tuple:
     """Decide which figures span the block and which take the text column.
 
@@ -244,8 +291,25 @@ def size_figures(html: str, page_dir=None) -> tuple:
     margin for free) and only the schematic diagram, which is genuinely wide
     and detailed, spans everything.
     """
-    counts = [0, 0]
+    counts = [0, 0, 0]
     COLUMN_PX = 646    # the text column at a typical desktop width
+    # A vector this small is a key or a legend, not a diagram, and belongs in
+    # the margin beside the prose that reads it. Surveyed across every paper
+    # using this tool (2026-08-24): the smallest real diagram is 465px and the
+    # only asset below 400 is a 250px register key. The threshold is therefore
+    # well clear of anything it could catch by accident. It is also the knob:
+    # a generator that wants the margin emits a small SVG.
+    MARGIN_PX = 400
+    # Two kinds of figure live in the margin and they want different sizes.
+    # A SIDEBAR is a small object -- a key, a glyph, a legend -- that is drawn
+    # at the size it should be read at; enlarging it to fill the column makes
+    # it look like a diagram that has been blown up, which it has (the 250px
+    # register key). A MARGINFIGURE is a diagram that merely happens to fit the
+    # margin, and wants the whole column. The natural width separates them,
+    # which keeps every layout decision in this file a function of the asset,
+    # as the rest of the module already is. Authors choose by rendering at the
+    # size they want (Joe, 2026-08-25).
+    SIDEBAR_PX = 300
     # Width left for artwork when the caption sits beside it, at ~1600px.
     SIDE_PX = 1150
     TOLERANCE = 1.12   # a <=12% reduction is not visible; a third of one is
@@ -257,13 +321,27 @@ def size_figures(html: str, page_dir=None) -> tuple:
         # size, which is why their axis labels became unreadable. A figure
         # whose text cannot be read is either unimportant or being treated as
         # unimportant; these are neither.
-        nat = None
+        nat, nat_ref = None, None
         if page_dir:
             for ref in ASSET.findall(body):
                 w = asset_width(page_dir, ref)
-                if w:
-                    nat = max(nat or 0, w)
+                if w and w > (nat or 0):
+                    nat, nat_ref = w, ref
         vector = ("<svg" in body) or ("<object" in body)
+        # Margin figures are decided first and exclusively: they take neither a
+        # width class nor a caption-placement class, because both assume the
+        # figure occupies the block grid and a margin figure floats out of it.
+        if vector and nat is not None and nat <= MARGIN_PX:
+            counts[2] += 1
+            ar = svg_aspect(page_dir, nat_ref) if page_dir and nat_ref else None
+            st = f"--nat: {int(nat)}px" + (f"; --nar: {ar}" if ar else "")
+            wide_margin = nat > SIDEBAR_PX
+            kind = " margin-fig marginfigure" if wide_margin else " margin-fig"
+            # Only the wide kind is inlined: it is the one drawn transparent to
+            # sit on the page ground. A sidebar carries its own ground and is
+            # left exactly as it was.
+            inner = inline_svg(page_dir, body) if wide_margin else body
+            return f'{open_}{cls}{kind}{close[:-1]} style="{st}">{inner}{end}'
         wide = vector or ("<table" in body) or (nat is not None and nat > COLUMN_PX)
         # Caption beside is the default (Joe, 2026-08-08: "better wherever
         # possible"). It costs the artwork ~350px, so the biggest rasters are
@@ -525,6 +603,62 @@ HEAD_CSS = """
   .ltx_figure object, .ltx_figure embed { display: block; width: 100%;
     min-height: 26rem; border: 0; }
 
+  /* A margin figure. Floated like a marginnote rather than placed in the
+     block grid, so body text runs alongside it instead of leaving column 1
+     empty. Capped at the asset's own pixels: a 250px key stretched to the
+     full margin looked like a diagram that had been enlarged, which is what
+     it was. */
+  figure.ltx_figure.margin-fig, .ltx_figure.margin-fig {
+    display: block; float: right; clear: right;
+    width: var(--note-w); max-width: var(--note-w);
+    /* NOT the marginnote's negative margin. A note's containing block is the
+       paragraph, at reading measure; a figure's is the section, already
+       --block wide, so the same negative margin threw it 100px past the
+       viewport (measured x=1655 in a 1600px window). Offsetting from the
+       right by the margin column's unused width lands its left edge on the
+       margin, in line with every caption and note. */
+    margin: .3rem calc(var(--margin-w) - var(--note-w)) 1.2rem 0;
+    grid-template-columns: none; }
+  /* Fill the margin column rather than sitting at the asset's own pixels. A
+     vector may be enlarged, and capping at --nat left a 250px key at 79% of
+     its 315px caption, which read as a thumbnail beside a block of text
+     (Joe, 2026-08-24). 95% keeps a hair of right-hand air. */
+  .ltx_figure.margin-fig > *:not(figcaption) {
+    grid-column: auto; width: 95%; max-width: 95%;
+    margin-left: 0; margin-right: auto; }
+  /* A marginfigure takes the whole margin column rather than the note width.
+     --note-w is capped at 21rem because prose wants a reading measure; a
+     diagram does not, and on a wide window that left a 364px figure beside an
+     850px margin, reading as a thumbnail. A sidebar (.margin-fig without this
+     class) is unaffected. */
+  .ltx_figure.margin-fig.marginfigure {
+    /* Stack explicitly rather than leaning on auto-margin arithmetic: the
+       figure inherits grid rules from three earlier blocks, several of them
+       !important, and `margin-right: auto` on the caption was not surviving
+       the trip. A column flex box with a start alignment states the intent --
+       artwork, then caption, both against the left edge (Joe, 2026-08-25). */
+    display: flex !important; flex-direction: column; align-items: flex-start;
+    width: var(--margin-w); max-width: var(--margin-w);
+    margin-right: 0; }
+  /* The caption keeps the sidebar's measure and sits at the left edge, below
+     the artwork -- a caption run across a full-margin figure is far past a
+     readable line length (Joe, 2026-08-25). */
+  /* !important, reluctantly: the cap-side block below sets
+     `width: 100% !important` on every figure caption, which outranks this on
+     the cascade no matter how specific it is. Specificity then decides
+     between the two importants, and this rule is the more specific. */
+  .ltx_figure.margin-fig.marginfigure > figcaption {
+    width: var(--note-w) !important; max-width: var(--note-w) !important;
+    margin-left: 0 !important; margin-right: auto !important;
+    text-align: left !important; }
+  .ltx_figure.margin-fig > figcaption {
+    grid-column: auto; width: 100%; max-width: 100%;
+    margin: .5rem 0 0; }
+  .ltx_figure.margin-fig object, .ltx_figure.margin-fig embed {
+    min-height: 0; height: auto; aspect-ratio: var(--nar, auto); }
+  .ltx_figure.margin-fig svg, .ltx_figure.margin-fig img {
+    width: 100%; height: auto; max-height: none; }
+
   /* References. The entries were collapsing to ~94px blocks inside a 608px
      section: the bibblock spans were being sized as grid items. Take the list
      out of the grid, give it the full span, and set it in columns so the
@@ -602,7 +736,7 @@ def main():
 
     print(f"  {out.name}: {refs[0]} cross-references shortened "
           f"({refs[1]} titles moved to the margin), {notes} footnotes -> sidenotes, "
-          f"{figs[0]} full-width / {figs[1]} column figures, "
+          f"{figs[0]} full-width / {figs[1]} column / {figs[2]} margin figures, "
           f"{bib[0]} duplicate bibliography dropped, {bib[1]} citation years fixed")
 
 
