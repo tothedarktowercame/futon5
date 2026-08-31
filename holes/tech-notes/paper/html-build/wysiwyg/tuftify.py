@@ -700,7 +700,12 @@ HEAD_CSS = """
     .ltx_document { padding-left: 4vw; padding-right: 4vw; }
     .sidenote, .marginnote, .ltx_figure.mn-fig {
       float: none; width: 100%; margin: .9rem 0; display: block;
-      background: #f4f2e9; padding: .55rem .75rem; }
+      background: #f4f2e9; padding: .55rem .75rem;
+      /* The base sheet caps notes at calc(100vw - measure - gutter - pads),
+         the space BESIDE the text column. On a phone that is negative,
+         clamps to 0, and every footnote rendered as a one-word-per-line
+         ribbon (measured: 23px wide, 5379px tall at 390px). */
+      max-width: 100%; }
     /* The previous rule here was a bare .ltx_figure (0,1,0), which LOSES to
        the base figure.ltx_figure display:grid (0,1,1) -- so on a phone the
        two-column grid survived, the caption column sat past the right edge,
