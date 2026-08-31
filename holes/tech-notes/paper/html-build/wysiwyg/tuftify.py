@@ -701,8 +701,47 @@ HEAD_CSS = """
     .sidenote, .marginnote, .ltx_figure.mn-fig {
       float: none; width: 100%; margin: .9rem 0; display: block;
       background: #f4f2e9; padding: .55rem .75rem; }
-    .ltx_figure, .ltx_table { display: block; width: 100%; }
-    .ltx_figure > figcaption, .ltx_table > figcaption { margin-top: .5rem; }
+    /* The previous rule here was a bare .ltx_figure (0,1,0), which LOSES to
+       the base figure.ltx_figure display:grid (0,1,1) -- so on a phone the
+       two-column grid survived, the caption column sat past the right edge,
+       and .ltx_document{overflow-x:clip} deleted every caption (Joe,
+       2026-08-31, reading on a phone). Match every figure variant at equal
+       or better weight; margin-fig floats and marginfigure's !important flex
+       need the !important to lose too. */
+    figure.ltx_figure, .ltx_figure, figure.ltx_table, .ltx_table,
+    figure.cap-side, .ltx_figure.cap-side, .ltx_table.cap-side,
+    figure.ltx_figure.margin-fig, .ltx_figure.margin-fig,
+    .ltx_figure.margin-fig.marginfigure {
+      display: block !important; float: none; clear: both;
+      width: 100% !important; max-width: 100% !important;
+      margin: 1.6rem 0; grid-template-columns: none; }
+    .ltx_figure > *:not(figcaption), .ltx_table > *:not(figcaption),
+    .ltx_figure.margin-fig > *:not(figcaption) {
+      width: 100%; max-width: 100%; }
+    .ltx_figure > figcaption, .ltx_table > figcaption,
+    .ltx_figure.margin-fig.marginfigure > figcaption {
+      width: 100% !important; max-width: 100% !important;
+      margin: .5rem 0 0; }
+    /* 26rem of forced height letterboxes a shallow SVG on a narrow screen;
+       let the object's own width/height attributes set the aspect. */
+    .ltx_figure object, .ltx_figure embed { min-height: 0; }
+  }
+
+  /* Phone. Anything wider than the screen must scroll inside its own box,
+     because the document clips: a wide tabular or equation was simply cut
+     off at the right edge with no way to reach the rest (Joe, 2026-08-31).
+     display:block on a <table> is the standard scrollable-table move; the
+     row groups form an anonymous table inside the scrolling block. */
+  @media (max-width: 600px) {
+    :root { --gutter: 1rem; }
+    table.ltx_tabular, .ltx_tabular {
+      display: block; width: 100%; max-width: 100%;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ltx_equation, .ltx_equationgroup, .ltx_eqn_table {
+      display: block; width: 100%; max-width: 100%; overflow-x: auto; }
+    .ltx_listing, .ltx_verbatim, pre { max-width: 100%; overflow-x: auto; }
+    /* Two-up biblist columns at 24rem each cannot fit; one readable column. */
+    .ltx_biblist, .ltx_bibliography ul { columns: auto 1; }
   }
 </style>
 """
