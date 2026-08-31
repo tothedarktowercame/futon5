@@ -725,6 +725,39 @@ HEAD_CSS = """
     /* 26rem of forced height letterboxes a shallow SVG on a narrow screen;
        let the object's own width/height attributes set the aspect. */
     .ltx_figure object, .ltx_figure embed { min-height: 0; }
+    /* Long URLs and the DOI/pubnotes line are unbreakable strings; measured
+       at 390px they ran to 465-531px and set the page's scroll width. */
+    a.ltx_url, .ltx_bibblock, .ltx_pubnotes_content, .ltx_pubnotes {
+      overflow-wrap: anywhere; max-width: 100%; }
+    /* A paragraph holding a FIXED --measure inside an indented list overflows
+       by exactly the indentation (measured: outline items at x=122 running to
+       right=419 in a 390px viewport, every nesting level of app-argument-
+       outline). width:auto follows the container through the indents; the
+       measure survives as a line-length cap. !important because several base
+       rules set the width at (0,2,1) via section-scoped child selectors. */
+    .ltx_para, .ltx_p, .ltx_abstract, .ltx_theorem, .ltx_proof, .ltx_listing,
+    .ltx_itemize, .ltx_enumerate, .ltx_quote, .ltx_description,
+    section.ltx_paragraph {
+      width: auto !important; max-width: var(--measure) !important; }
+    /* LaTeXML.css puts white-space:nowrap on li.ltx_item (its :272, to hold
+       the item tag and the inline-block para on one line), so outline items
+       ran past the screen edge and were clipped, not wrapped -- 40px of
+       every app-argument-outline line lost at 390px. Released, the
+       inline-block para shrinks to the li's width (probed live: right edge
+       419 -> 374). */
+    .ltx_para, .ltx_p { white-space: normal !important; }
+    li.ltx_item, .ltx_item { white-space: normal !important; }
+    /* Any content table wider than the screen scrolls inside its own box
+       rather than being clipped by the document. ALL tables, not just
+       .ltx_tabular: the WR/snatch tables carry no class and their last
+       columns were unreachable. When a table fits, no scrollbar appears,
+       so this is safe on tablets too. display:block on a <table> leaves
+       the row groups forming an anonymous table inside the scroll box. */
+    .ltx_document table:not(.ltx_eqn_table), table.ltx_tabular, .ltx_tabular {
+      display: block; width: 100%; max-width: 100%;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ltx_equation, .ltx_equationgroup, .ltx_eqn_table {
+      display: block; width: 100%; max-width: 100%; overflow-x: auto; }
   }
 
   /* Phone. Anything wider than the screen must scroll inside its own box,
@@ -734,14 +767,11 @@ HEAD_CSS = """
      row groups form an anonymous table inside the scrolling block. */
   @media (max-width: 600px) {
     :root { --gutter: 1rem; }
-    table.ltx_tabular, .ltx_tabular {
-      display: block; width: 100%; max-width: 100%;
-      overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .ltx_equation, .ltx_equationgroup, .ltx_eqn_table {
-      display: block; width: 100%; max-width: 100%; overflow-x: auto; }
     .ltx_listing, .ltx_verbatim, pre { max-width: 100%; overflow-x: auto; }
     /* Two-up biblist columns at 24rem each cannot fit; one readable column. */
     .ltx_biblist, .ltx_bibliography ul { columns: auto 1; }
+    /* A list at var(--measure) plus its own indent ran ~5px past the screen. */
+    .ltx_itemize, .ltx_enumerate { width: auto; }
   }
 </style>
 """
