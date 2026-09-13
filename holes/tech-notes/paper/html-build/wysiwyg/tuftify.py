@@ -379,6 +379,53 @@ def fix_notes(html: str) -> tuple:
     return NOTE.sub(repl, html), n[0]
 
 
+MARGINPAR = re.compile(r'<span class="ltx_note ltx_marginpar[^"]*"[^>]*>')
+SPAN_TAG = re.compile(r'<span\b|</span>')
+
+
+def fix_marginpars(html: str) -> tuple:
+    """Turn LaTeXML \\marginpar notes into Tufte margin notes.
+
+    LaTeXML renders a marginpar like a footnote -- a dagger whose text only
+    appears in a hover popup, so on a phone, which cannot hover, the note is
+    unreachable (p4ng plop-2026's 37 tracker notes, 2026-09-13). Unlike a
+    footnote its body nests paragraph spans, so the end is found by counting
+    spans rather than by a fixed run of closing tags.
+    """
+    out, pos, n = [], 0, 0
+    while (m := MARGINPAR.search(html, pos)):
+        depth, i = 1, m.end()
+        while depth:
+            t = SPAN_TAG.search(html, i)
+            if t is None:
+                break
+            depth += 1 if t.group() == "<span" else -1
+            i = t.end()
+        if depth:
+            break  # unbalanced: leave the rest of the page as LaTeXML wrote it
+        body = html[m.end():i - len("</span>")]
+        inner = re.search(r'<span class="ltx_note_content">(.*)</span></span>$', body, re.S)
+        content = inner.group(1) if inner else body
+        content = re.sub(r'<sup class="ltx_note_mark">[^<]*</sup>', "", content)
+        content = re.sub(r'<span class="ltx_note_type">[^<]*</span>', "", content)
+        # \scriptsize in print; in the margin the note takes the sidenote size.
+        content = re.sub(r"font-size:\s*[\d.]+%;?", "", content)
+        content = re.sub(r"\s+", " ", content).strip()
+        note = f'<span class="marginnote">{content}</span>'
+        before = html[pos:m.start()]
+        # Between blocks (e.g. after the abstract) the note's parent is the
+        # full-width article, so the margin offset put it past the right edge
+        # of the window. Hang it on the block it follows, as print does.
+        tail = re.search(r"</div>\s*$", before)
+        if tail:
+            before = before[:tail.start()] + note + before[tail.start():]
+            note = ""
+        out += [before, note]
+        pos, n = i, n + 1
+    out.append(html[pos:])
+    return "".join(out), n
+
+
 HEAD_CSS = """
 <link rel="stylesheet" href="tufte.css"/>
 <style>
@@ -522,6 +569,10 @@ HEAD_CSS = """
     margin-top: .3rem; margin-bottom: 1.1rem;
     font-size: 1.05rem; line-height: 1.5; text-align: left; text-indent: 0;
     font-style: normal; color: #55524a; }
+  /* A coloured marginpar keeps its author's colour. The page is pinned light
+     above, but LaTeXML.css lightens --ltx-fg-color under a dark scheme, which
+     would wash it out against the light margin. */
+  .marginnote [style*="--ltx-fg-color:"] { color: var(--ltx-fg-color); }
   /* LaTeXML CENTRES figure contents and display equations. Against a strict
      left-aligned measure that gives every figure a different left edge --
      which reads, correctly, as things scattered at random. Everything hangs
@@ -793,6 +844,7 @@ def main():
 
     html, refs = fix_refs(html)
     html, notes = fix_notes(html)
+    html, margins = fix_marginpars(html)
     html, figs = size_figures(html, Path(args.page).parent)
     html, bib = fix_bibliography(html)
 
@@ -809,7 +861,7 @@ def main():
         shutil.copyfile(TUFTE_SRC, css)
 
     print(f"  {out.name}: {refs[0]} cross-references shortened "
-          f"({refs[1]} titles moved to the margin), {notes} footnotes -> sidenotes, "
+          f"({refs[1]} titles moved to the margin), {notes} footnotes -> sidenotes, {margins} margin notes, "
           f"{figs[0]} full-width / {figs[1]} column / {figs[2]} margin figures, "
           f"{bib[0]} duplicate bibliography dropped, {bib[1]} citation years fixed")
 
