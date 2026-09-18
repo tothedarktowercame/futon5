@@ -1,7 +1,7 @@
 (ns cyberant-wiring-compare
   "Compare wiring-based cyberant configs vs sigil-based configs.
 
-   Generates cyberant config EDN files that can be used with futon2's
+   Generates cyberant config EDN files that can be used with futon2a's
    ants.compare benchmark.
 
    Usage:
@@ -33,7 +33,7 @@
     "  --help              Show this message"
     ""
     "Output:"
-    "  Creates EDN files for use with futon2's ants.compare:"
+    "  Creates EDN files for use with futon2a's ants.compare:"
     "    - wiring-cyberant.edn    (from wiring diagram)"
     "    - sigil-cyberants.edn    (from sigil list)"
     "    - comparison-manifest.edn (metadata for tracking)"
@@ -43,7 +43,7 @@
     "    --wiring data/wiring-ladder/level-5-creative.edn \\"
     "    --sigils 工,土,上"
     ""
-    "Then in futon2:"
+    "Then in futon2a:"
     "  clj -M -m ants.compare \\"
     "    --hex /tmp/cyberant-compare/wiring-cyberant.edn \\"
     "    --sigil /tmp/cyberant-compare/sigil-cyberants.edn \\"
@@ -141,7 +141,7 @@
               (println)
               (println "=== Ready for comparison ===")
               (println)
-              (println "Run in futon2:")
+              (println "Run in futon2a:")
               (println (format "  clj -M -m ants.compare \\"))
               (println (format "    --hex %s \\" (out/abs-path wiring-path)))
               (println (format "    --sigil %s \\" (out/abs-path sigil-path)))
