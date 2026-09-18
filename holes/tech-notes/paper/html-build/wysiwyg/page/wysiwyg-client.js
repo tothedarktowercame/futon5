@@ -13,8 +13,15 @@
 (function () {
   "use strict";
 
-  var PORT = 7079;
-  var VERSION = "s4-4";   // sent to Emacs so we can tell which
+  // Endpoint: direct local use (http://127.0.0.1:8129 / localhost) talks
+  // straight to the Emacs websocket on 7079; anything served through Caddy
+  // (zone.hyperreal.enterprises/wysiwyg/) uses the wss proxy path the
+  // Caddyfile adds, because a remote browser cannot reach the loopback port.
+  var WS_URL =
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? "ws://localhost:7079"
+      : "wss://" + location.host + "/wysiwyg-ws/";
+  var VERSION = "s4-5-caddy";   // sent to Emacs so we can tell which
                           // script a browser is actually running
   var state = {
     connected: false,
@@ -64,7 +71,7 @@
 
     var sock;
     try {
-      sock = new WebSocket("ws://localhost:" + PORT);
+      sock = new WebSocket(WS_URL);
     } catch (e) {
       state.error = String(e);
       retry = setTimeout(connect, 1500);

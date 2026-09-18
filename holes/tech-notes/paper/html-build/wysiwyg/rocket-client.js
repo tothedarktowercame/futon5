@@ -14,7 +14,12 @@
 (function () {
   "use strict";
 
-  var BASE = "http://127.0.0.1:8130";
+  // Same rule as wysiwyg-client.js: direct local use talks to loopback 8130;
+  // a page served through Caddy uses the same-origin /wysiwyg-api proxy.
+  var BASE =
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? "http://127.0.0.1:8130"
+      : location.origin + "/wysiwyg-api";
   var state = { lastSelection: null, sent: 0, annotations: [],
                 painted: 0, error: null };
   window.__rocket = state;
