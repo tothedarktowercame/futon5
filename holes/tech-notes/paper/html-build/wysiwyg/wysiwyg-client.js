@@ -527,7 +527,7 @@
          + " " + VERSION)
       : ("emacs closed " + (ws ? ws.readyState : "-"));
     pill.title = live
-      ? "connected to latex-wysiwyg on :" + PORT
+      ? "connected to latex-wysiwyg at " + WS_URL
       : "no Emacs: M-x latex-wysiwyg-start";
     pill.style.opacity = live ? "1" : "0.45";
   }
