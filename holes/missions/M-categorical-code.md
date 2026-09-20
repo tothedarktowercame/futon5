@@ -543,3 +543,11 @@ it feeds both the lift-boost and the saturation analysis below.
 at 1–2. Suggests real degeneracy, but **verify against the actual WM/Agency turn store** (source not
 located in-tree; Agency at :7070). If degenerate, the trigram-factored retract above is the likely remedy
 (spreads load across the compositional 8×8 rather than collapsing to a few archetypes).
+
+### tl;dr
+
+- [ ] The code-evolution specification defines object schemas and concrete select, vary, and refine morphisms.
+- [ ] Executable checks test composition preservation for the evolution-to-code functor.
+- [ ] Code-side structural entropy, coupling, and churn-sensitivity diagnostics are evaluated against classical graph-metric baselines.
+- [ ] A consent-gated code-refinement loop applies edit proposals and feeds measured improvement back into subsequent proposals.
+- [ ] The substrate-completion Campaign escrow states the structural quantities required by code-evolution diagnostics.
