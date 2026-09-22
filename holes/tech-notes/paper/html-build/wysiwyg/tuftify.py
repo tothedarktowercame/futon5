@@ -488,6 +488,17 @@ HEAD_CSS = """
       background: #fffff8; color: #111; }
     .site-nav { background: #f4f4ec; border-bottom-color: #ddd; }
     a, .ltx_ref { color: #1a4b8c; }
+    /* LaTeXML.css has its own dark block, which inverts the lightness of every
+       --ltx-*-color the converter emitted. On a page pinned light that turns a
+       diagram's black arrows white on cream: 0708.2185's commutative square was
+       invisible until it was highlighted (Joe, 2026-09-22), and the labels stayed
+       dark, so only the arrows vanished. Put the authored colours back. */
+    [style*="--ltx-fg-color:"] { color: var(--ltx-fg-color); }
+    [style*="--ltx-bg-color:"] { background-color: var(--ltx-bg-color); }
+    [style*="--ltx-border-color:"] { border-color: var(--ltx-border-color); }
+    [style*="--ltx-fill-color:"] { fill: var(--ltx-fill-color); }
+    [style*="--ltx-stroke-color:"] { stroke: var(--ltx-stroke-color); }
+    .ltx_foreignobject_content { color: #111; }
   }
   /* Nav and cross-reference markers: explicit stacks so they cannot fall back
      to a decorative or math face. */
