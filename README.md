@@ -1,5 +1,8 @@
 # futon5 — Meta-Pattern Operators
 
+> **New to FUTON? Start with [futon0/INSTALL.md](https://github.com/tothedarktowercame/futon0/blob/main/INSTALL.md)**, the single guide to
+> installing and running the stack. Needed on disk for the core install (on Agency's classpath); you don't run it separately.
+
 futon5 is the meta-evolution layer of the futon stack. It runs cellular automata
 experiments (MMCA) that search for edge-of-chaos dynamics, evolves "exotypes"
 (kernel contexts) and "xenotypes" (evaluator populations), and maps discoveries
