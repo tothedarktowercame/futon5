@@ -1,10 +1,19 @@
 # M-aif-tokamak — Port the modern AIF (R1–R19) into a MetaCA tokamak controller
 
-**Status:** SPEC / DERIVE (2026-07-14). Owner: Claude. Build: staged Zai handoffs (zai-10), Claude reviews each.
+**Status:** OPEN — SPEC / DERIVE (2026-07-14). Owner: Claude. Build: staged Zai handoffs (zai-10), Claude reviews each.
 **Parallel to:** `futon2/holes/M-aif-ants-port.md` (Port 1, ants, driven by zai-9). Same R1–R19 AIF
 contract, **developed slice-by-slice in parity** so the shared AIF core stays honest to both domains.
 **Compliance standard:** `mathlib4/DarkTower/AIF-COMPLIANCE.md` — the tokamak must be **DarkTower-native**,
 not prose with a formalism bolted on later.
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] The R1–R19 map cites a real MetaCA seam or a typed absence for every row and records the feed-forward versus feedback decision.
+- [ ] The Clojure forward model and DarkTower `Stage` spine agree on one controller tick and pass their fixed-seed check.
+- [ ] The `:aif` controller uses the shared futon2 EFE core and its fixture agrees to `1e-9` while Lean's EFE legs typecheck as `BV.copar`.
+- [ ] Precision, τ, and every observation feed have winner-changing or starvation tests that fail when their named contribution is severed.
+- [ ] Horizon-three rollout beats the greedy policy in the planted confinement case and the R9 conservation, coverage, and abstention theorems build.
+- [ ] A preregistered, independently reproducible confinement experiment reports all named arms using a validated EoC discriminator and logged seeds.
 
 ## Why (the reframe, shared with Port 1)
 

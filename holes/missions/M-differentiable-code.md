@@ -1,11 +1,20 @@
 # M-differentiable-code
 
-**Status:** MAP opened 2026-05-31
+**Status:** OPEN — MAP opened 2026-05-31
 **Xenotype:** derivation (IDENTIFY → MAP → DERIVE → ARGUE → VERIFY → INSTANTIATE)
 **Created:** 2026-05-30
 **Owner:** claude-6 (ratified by Joe, 2026-06-01) — owns this mission (E2); contributes to Campaign `C-substrate-completion` (futon3c). Keystone `M-substrate-metric` owned by codex-3; co-consumer `M-aif2` (E1) by claude-3.
 **Repo:** futon5
 **Escrow (E2, Campaign C-substrate-completion):** this mission's continuity requirement — a continuous code-graph embedding (the band a gradient ranges over) **+ node-granularity resolution** (gap #1) — is registered `:held` on the keystone `M-substrate-metric`. Per the Campaign's CONSTITUTION, node-granularity is a *shared* prerequisite resolved once in the keystone (it's also the metric's own precondition). Release: `:contract-released` on Campaign STANDARD-VERIFY, `:satisfied` on metric delivery. See `futon3c/holes/campaigns/C-substrate-completion.md`. Don't solve node-granularity unilaterally here — it's keystone work now.
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] MAP contains a line-by-line contract extraction from `jax_refine.py`.
+- [ ] MAP records a small graph inventory for the chosen Pilot A slice and a concrete futon4 consumer slice.
+- [ ] MAP names a Pilot C benchmark list derived from `M-aif2` with file and line evidence.
+- [ ] MAP records one canonical exclusion policy used by every extractor.
+- [ ] A first common EDN graph schema is written and covers the selected pilots.
+- [ ] DERIVE specifies the predicate-to-band relaxation and controls for graph size and granularity identified by the probes.
 
 ## Context
 

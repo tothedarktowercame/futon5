@@ -1,8 +1,15 @@
 # Mission: Fulab Wiring Survey
 
 **Date:** 2026-02-18
-**Status:** Ready
+**Status:** OPEN — Ready
 **Blocked by:** None
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] A catalog names every wiring diagram under `data/wiring-rules/` and its reusable primitives.
+- [ ] The survey records recurring subgraph patterns across the catalog.
+- [ ] Each surveyed wiring has an SCI-based stability assessment with the command or artifact that produced it.
+- [ ] A follow-on fulab wiring mission for compression stability is written with a bounded scope and acceptance conditions.
 
 ## Summary
 

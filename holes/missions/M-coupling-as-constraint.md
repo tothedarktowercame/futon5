@@ -1,8 +1,14 @@
 # Mission: Coupling as Constraint
 
 **Date:** 2026-02-18
-**Status:** Ready
+**Status:** OPEN — Ready
 **Blocked by:** M-xor-coupling-probe, M-tpg-coupling-evolution
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] `scripts/tpg_coupling_evolve.clj` treats coupling as a `>= 0.05` floor and diversity as the primary objective.
+- [ ] A recorded comparison shows how the constrained formulation changes or preserves the Pareto-front structure.
+- [ ] `docs/technote-verifier-guided-tpg.md` documents the constraint formulation and the comparison result.
 
 ## Summary
 

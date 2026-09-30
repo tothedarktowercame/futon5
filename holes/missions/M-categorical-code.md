@@ -1,6 +1,6 @@
 # M-categorical-code
 
-**Status:** IDENTIFY opened 2026-06-02
+**Status:** OPEN — IDENTIFY opened 2026-06-02
 **Xenotype:** derivation (IDENTIFY → MAP → DERIVE → ARGUE → VERIFY → INSTANTIATE)
 **Created:** 2026-06-02 (paired with Joe, emacs-repl)
 **Owner:** claude-6. Sibling / generalization of `M-differentiable-code` (E2); same owner.
@@ -544,7 +544,7 @@ at 1–2. Suggests real degeneracy, but **verify against the actual WM/Agency tu
 located in-tree; Agency at :7070). If degenerate, the trigram-factored retract above is the likely remedy
 (spreads load across the compositional 8×8 rather than collapsing to a few archetypes).
 
-### tl;dr
+## Acceptance checklist (2026-09-30)
 
 - [ ] The code-evolution specification defines object schemas and concrete select, vary, and refine morphisms.
 - [ ] Executable checks test composition preservation for the evolution-to-code functor.

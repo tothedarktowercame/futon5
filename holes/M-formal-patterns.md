@@ -1,7 +1,16 @@
 # M-formal-patterns
 
-**Status:** CHARTERED 2026-07-17 (oxf-claude-2 + Joe). Logic model established over a
+**Status:** OPEN — CHARTERED 2026-07-17 (oxf-claude-2 + Joe). Logic model established over a
 long working session; slices below are the handoffs.
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] `TN-baldwin-reboot.md` §10 records N1–N4 and H1–H4 as discharged, allowing the slice freeze to be lifted.
+- [ ] S0 records a canonical signed graph for one pattern and justifies every edge and sign from pattern semantics.
+- [ ] The arbitrary-edge-sign balance theorem builds in Lean without `sorry`, `admit`, `axiom`, or finite-case `decide` substitution.
+- [ ] A concrete pattern type and a pattern-language validation graph both use the balance theorem to report coherence.
+- [ ] A real Peeragogy pattern language is translated from its own NEXT-STEPS and references and checked for frustrated cycles.
+- [ ] The War Machine bridge states and checks the relationship between balanced validation networks and joint G-minima as a frontier result.
 
 **One-line:** Formalize design patterns as *signed graphs* whose coherence is governed by
 the (proved) signed-cycle balance theorem, at two self-similar scales — inside a single

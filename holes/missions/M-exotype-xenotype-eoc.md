@@ -1,12 +1,20 @@
 # M-exotype-xenotype-eoc — can the substrate DISCOVER edge-of-chaos?
 
-**Status (end of 2026-08-03):** Slices 0, 1, 2, 2b, 3 and the critical-point
+**Status:** OPEN — (end of 2026-08-03): Slices 0, 1, 2, 2b, 3 and the critical-point
 characterisation are all RUN, REVIEWED and COMMITTED. Slice 0b (lambda-grounded lift)
 specified but deferred — the lift is not on the critical path. **Read section 10 before
 quoting any number from this document: the coexistence result is refuted and only the
 dynamical findings survive.** Chartered 2026-08-03 from the collapse of the Baldwin
 framing. Owner: claude-11 (orchestration/review). Builders: codex-1, codex-2 by
 dispatch; every artifact independently re-run and verified byte-identical by the owner.
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] Slice 5 compares the `mu=0` absorbing control with positive pseudocount floors using kind-indexed AIF policies.
+- [ ] Logged long-horizon trajectories distinguish sustained-active exotype diversity from transient coarsening and frozen seeded diversity.
+- [ ] The stationary distributions across λ, τ, and μ are reported with damage-based EoC measurements and independently reproducible seeds.
+- [ ] Joe's open decisions on the schema-2 artifact, E locality, lift neighbourhood, and framework repository are recorded as rulings.
+- [ ] The Part III account quotes only the surviving dynamical findings and explicitly retracts sustained coexistence and joint-band claims.
 
 **One line:** every "Baldwin" experiment to date fixed an exotype in advance (river =
 rot+2) and tried to get genotypes to stabilise under it. That is not the question. The
