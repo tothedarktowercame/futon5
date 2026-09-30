@@ -1,8 +1,15 @@
 # Mission: XOR Coupling Probe
 
 **Date:** 2026-02-18
-**Status:** DERIVE (XOR operator implemented, probe results in, wired into TPG)
+**Status:** OPEN — OPEN — DERIVE (XOR operator implemented, probe results in, wired into TPG)
 **Blocked by:** None
+
+## Acceptance checklist (2026-09-30)
+
+- [x] `scripts/probe_xor_vs_add.clj` records XOR and carry-chain mutual-information and diversity measurements sufficient to test the stated tradeoff. (evidence: this file, Summary)
+- [x] `sigil-xor` is implemented in `src/futon5/xenotype/generator.clj`, registered in `resources/xenotype-generator-components.edn`, and represented by `data/wiring-rules/hybrid-110-xorself.edn`. (evidence: this file, Key Files)
+- [ ] A completed 20-generation XOR-enabled TPG run has a durable result record containing its coupling, diversity, and evolution outcome.
+- [ ] This mission records an adopt, revise, or reject decision for XOR coupling by comparing the completed evolution run with the baseline and carry-chain results.
 
 ## Summary
 
