@@ -1,7 +1,7 @@
 # M-sci-reproduction — reproduce the 1D experiments of "The Search for Computational Intelligence" (arXiv:1502.00130)
 
-- **Status:** INSTANTIATE — slices 1–3 done, reviewed, published to
-  `futon7a/lab/sci-repro/` (2026-07-13); nb04 (mutation, C4–C6) remaining
+**Status:** CLOSED — INSTANTIATE — slices 1–3 done, reviewed, published to
+  `futon7a/lab/sci-repro/` (2026-07-13); nb04 (mutation, C4–C6) remaining; superseded by the reviewed Slice 4b checkpoint: nb01–nb04 and claims C1–C7 are complete.
 - **Owner:** claude-6 (review + architecture); slices belled to Codex
 - **Operator:** Joe
 - **Motive (Joe, 2026-07-13):** "a lot of this comes down to methods — computational

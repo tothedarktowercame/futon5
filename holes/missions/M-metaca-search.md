@@ -1,6 +1,6 @@
 # M-metaca-search — a two-frame search engine over CA dynamics
 
-- **Status:** PLAN / DERIVE (drafted 2026-07-14, claude-1; direction approved by Joe
+**Status:** OPEN — PLAN / DERIVE (drafted 2026-07-14, claude-1; direction approved by Joe
   the same day). Grows out of the "how do we *search* the space?" question Joe
   raised while the sci-repro reproductions were landing.
 - **Context:** M-sci-reproduction reproduced the paper's CA dynamics and the
@@ -10,6 +10,14 @@
   It couples the lab (`notebooks/sci-repro/`) to the dark-tower theory
   (`futon5a/holes/excursions/E-the-dark-tower{,-2}.md`) and its Lean
   implementation (`~/code/mathlib4/DarkTower/`).
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] Additional reproduced dynamics, including Baldwin, are represented as typed-hole fills on the shared DarkTower skeleton.
+- [ ] The held “flow a blend” step records that its ported-example and War Machine cooldown gates have cleared before dispatch.
+- [ ] A re-targeted War Machine flight blends two reproduced dynamics, runs the result, and feeds measured behaviour back to the model grid.
+- [ ] DarkTower lemmas discharge the blended dynamic's well-formedness and the behaviour discriminators report its novelty against explicit nulls.
+- [ ] The research artifact records a discrete finite-difference curvature measurement across the model and behaviour grids.
 
 ## 1. The question
 

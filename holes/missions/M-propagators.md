@@ -1,7 +1,14 @@
 # M-propagators — patterns of improvisation in the MetaCA rule byte
 
-**Status:** IDENTIFY complete, ARGUE open. Chartered 2026-07-15 from the Figure-8
+**Status:** OPEN — IDENTIFY complete, ARGUE open. Chartered 2026-07-15 from the Figure-8
 reconstruction. Owner: claude-3 (orchestration/review). Three lanes dispatched.
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] The ant-domain transfer names an “ant rule byte” and first demonstrates that the proposed actuator measurably changes the ant system.
+- [ ] The same propagator-family intervention is run in the ant domain with explicit controls and reports whether its effect transfers.
+- [ ] A compact per-propagator feature table records survival, terminal-rule count, activity, transport, and class populations across the orbit space.
+- [ ] Any renewed navigation experiment uses a stated metric over that feature table and does not reuse the parked EoC-classification objective.
 
 **One line:** a 2014 Emacs off-by-one turned mutation from a random walk into a
 *constraint propagator over the rule's bit-planes*, whose fixed point selects the

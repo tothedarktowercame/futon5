@@ -1,12 +1,21 @@
 # Replay ledger — futon5 "bright ideas" mined for M-sci-reproduction
 
-**Status:** OPEN (companion artifact; parent mission in INSTANTIATE)
+**Status:** OPEN — OPEN (companion artifact; parent mission in INSTANTIATE)
 
 Companion to `M-sci-reproduction.md`. Compiled 2026-07-13 (claude-6, from a
 forensic audit of the CyberAnts transfer + a 25-idea census of the repo).
 Rule of the ledger: an idea gets replayed only as a notebook with a claims
 table, explicit baselines, and persisted artifacts — same gates as the paper
 reproduction itself.
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] The CyberAnts replay reports random-wiring and shuffled-parameter controls, starvation, confidence intervals, and persisted per-run artifacts at a pinned futon2 revision.
+- [ ] The boundary-guardian replay's remaining triangle-density discriminator is implemented and reported beside bitplane MI and diagonal autocorrelation.
+- [ ] The cross-bitplane MI spectrum is replayed as a notebook against its three-regime known-rule catalog and explicit nulls.
+- [ ] The evaluator-population replay compares the co-evolving evaluator arm with a naïve-collapse baseline over seeded runs and confidence intervals.
+- [ ] The 泰-zone replay sweeps update probability and match threshold against a null and records whether the EoC prediction survives.
+- [ ] Every completed replay has a reviewed rendered notebook, claims table, persisted artifacts, and unpiped gate results.
 
 ## The diagnosis, quantified
 

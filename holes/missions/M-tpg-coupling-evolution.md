@@ -1,8 +1,15 @@
 # Mission: TPG Coupling Evolution
 
 **Date:** 2026-02-15
-**Status:** MAP (production run complete, diversity-coupling tradeoff identified)
+**Status:** OPEN — MAP (production run complete, diversity-coupling tradeoff identified)
 **Blocked by:** None
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] A production evolution run includes XOR coupling in the TPG operator set with its full configuration and seeds persisted.
+- [ ] The run reports coupling, diversity, satisfaction, and barcode-collapse measures against the prior carry-chain production baseline.
+- [ ] `scripts/tpg_coupling_report.clj` and `scripts/tpg_coupling_stability.clj` reproduce the reported comparison from `out/tpg-evo-production/`.
+- [ ] `docs/technote-verifier-guided-tpg.md` records whether XOR removes or merely relocates the diversity–coupling tradeoff.
 
 ## Summary
 

@@ -1,12 +1,21 @@
 # M-lab-standard — standardize the experimental lab before remote scale-out
 
-- **Status:** DERIVE (drafted 2026-07-13, claude-6; ratification = Joe)
+**Status:** OPEN — DERIVE (drafted 2026-07-13, claude-6; ratification = Joe)
 - **Context:** M-sci-reproduction's nb01/nb02 established the genre for
   pheno-geno experiments. The Tier-2 replays (see
   `M-sci-reproduction-replay-ledger.md`) live in the richer
   **pheno-geno-exo-xeno** paradigm. Joe (2026-07-13): "We might want to
   standardize the lab for the next phase of experiments locally before we
   push out work" (to zai runners on linode-chicago/metameso).
+
+## Acceptance checklist (2026-09-30)
+
+- [ ] Joe ratifies the lab genre, layer-stack, stochasticity, dispatch, and long-run contracts recorded here.
+- [ ] `nb03_phenotype.clj` and `nb04_mutation.clj` satisfy the genre contract, render, and publish with their provenance indexes.
+- [ ] `scirepro.exo` has a cross-check against the original boundary-guardian implementation before its measurements are trusted.
+- [ ] A disposable metameso runner registers through Agency and completes a trivial parked bell before a real remote slice is dispatched.
+- [ ] The metameso futon repositories are synchronized to pinned commits and the `256ca.el` cross-check passes there.
+- [ ] `scirepro.runstore` persists and resumes keyed long computations with explicit completion markers.
 
 ## The genre contract (extracted from nb01/nb02 — every lab notebook satisfies it)
 

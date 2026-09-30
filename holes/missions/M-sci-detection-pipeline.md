@@ -1,7 +1,7 @@
 # Mission: SCI Detection Pipeline
 
 **Date:** 2026-02-15
-**Status:** Complete
+**Status:** CLOSED — Complete
 **Blocked by:** None
 
 ## Summary
