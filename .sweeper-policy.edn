@@ -1,0 +1,4 @@
+;; The WYSIWYG edit journal is authored source for the paper workflow, not a
+;; generated rendering. Keep it beside the draft it records.
+{:additional-hand-authored-paths
+ #{"holes/tech-notes/paper/wysiwyg-edits.jsonl"}}
