@@ -1,0 +1,186 @@
+{
+  "batches": [
+    {
+      "batch": "head-minus-450",
+      "comparisons": {
+        "categorical-coupling": {
+          "all-baseline-effects": {
+            "degree-centrality": 0.0,
+            "prior-churn": -0.003063141678493808,
+            "weighted-degree": 0.00094480669967556
+          },
+          "baseline": "degree-centrality",
+          "baseline-ap": 0.15929651386541702,
+          "diagnostic-ap": 0.15929651386541702,
+          "effect": 0.0,
+          "ranking-agreement": 1.0
+        },
+        "churn-sensitivity": {
+          "all-baseline-effects": {
+            "degree-centrality": -0.13953848707167213,
+            "prior-churn": -0.14260162875016594,
+            "weighted-degree": -0.13859368037199657
+          },
+          "baseline": "prior-churn",
+          "baseline-ap": 0.16235965554391082,
+          "diagnostic-ap": 0.019758026793744877,
+          "effect": -0.14260162875016594,
+          "ranking-agreement": 0.012201472728308141
+        },
+        "structural-entropy": {
+          "all-baseline-effects": {
+            "degree-centrality": 0.016947886670922174,
+            "prior-churn": 0.013884744992428366,
+            "weighted-degree": 0.017892693370597734
+          },
+          "baseline": "weighted-degree",
+          "baseline-ap": 0.15835170716574146,
+          "diagnostic-ap": 0.1762444005363392,
+          "effect": 0.017892693370597734,
+          "ranking-agreement": 0.9557918650964335
+        }
+      },
+      "cutoff": "3f75aabded004fc0071947771ae8e39763ec071d",
+      "eligible-files": 505,
+      "reworked-files": 8,
+      "target-commits": 100,
+      "target-end": "a64bcee5202fad4e7e1282bf22bf4b392c66c2a1"
+    },
+    {
+      "batch": "head-minus-350",
+      "comparisons": {
+        "categorical-coupling": {
+          "all-baseline-effects": {
+            "degree-centrality": 0.0,
+            "prior-churn": -0.024452971146475017,
+            "weighted-degree": 0.0017042170032185167
+          },
+          "baseline": "degree-centrality",
+          "baseline-ap": 0.13345110133685245,
+          "diagnostic-ap": 0.13345110133685245,
+          "effect": 0.0,
+          "ranking-agreement": 1.0
+        },
+        "churn-sensitivity": {
+          "all-baseline-effects": {
+            "degree-centrality": -0.1081307481379799,
+            "prior-churn": -0.13258371928445492,
+            "weighted-degree": -0.10642653113476139
+          },
+          "baseline": "prior-churn",
+          "baseline-ap": 0.15790407248332747,
+          "diagnostic-ap": 0.025320353198872554,
+          "effect": -0.13258371928445492,
+          "ranking-agreement": 0.013034007188643688
+        },
+        "structural-entropy": {
+          "all-baseline-effects": {
+            "degree-centrality": -0.00889264930030946,
+            "prior-churn": -0.03334562044678448,
+            "weighted-degree": -0.007188432297090944
+          },
+          "baseline": "weighted-degree",
+          "baseline-ap": 0.13174688433363393,
+          "diagnostic-ap": 0.12455845203654299,
+          "effect": -0.007188432297090944,
+          "ranking-agreement": 0.9549258670360492
+        }
+      },
+      "cutoff": "a64bcee5202fad4e7e1282bf22bf4b392c66c2a1",
+      "eligible-files": 513,
+      "reworked-files": 17,
+      "target-commits": 100,
+      "target-end": "87b5dd2ea88ed02b5ac152073da2fd865e05ad4c"
+    },
+    {
+      "batch": "head-minus-250",
+      "comparisons": {
+        "categorical-coupling": {
+          "all-baseline-effects": {
+            "degree-centrality": 0.0,
+            "prior-churn": -0.039434669240269504,
+            "weighted-degree": -0.01926004226863745
+          },
+          "baseline": "degree-centrality",
+          "baseline-ap": 0.18503338873920178,
+          "diagnostic-ap": 0.18503338873920178,
+          "effect": 0.0,
+          "ranking-agreement": 1.0
+        },
+        "churn-sensitivity": {
+          "all-baseline-effects": {
+            "degree-centrality": -0.17008074250488842,
+            "prior-churn": -0.20951541174515792,
+            "weighted-degree": -0.18934078477352587
+          },
+          "baseline": "prior-churn",
+          "baseline-ap": 0.22446805797947128,
+          "diagnostic-ap": 0.014952646234313367,
+          "effect": -0.20951541174515792,
+          "ranking-agreement": 0.006746376155616981
+        },
+        "structural-entropy": {
+          "all-baseline-effects": {
+            "degree-centrality": -0.01761137373484925,
+            "prior-churn": -0.057046042975118755,
+            "weighted-degree": -0.0368714160034867
+          },
+          "baseline": "weighted-degree",
+          "baseline-ap": 0.20429343100783923,
+          "diagnostic-ap": 0.16742201500435253,
+          "effect": -0.0368714160034867,
+          "ranking-agreement": 0.9536499913756034
+        }
+      },
+      "cutoff": "87b5dd2ea88ed02b5ac152073da2fd865e05ad4c",
+      "eligible-files": 513,
+      "reworked-files": 8,
+      "target-commits": 100,
+      "target-end": "d9346d1238fd62708a996ff50956e0ef8bf43de5"
+    }
+  ],
+  "experiment": {
+    "batch-offsets": [
+      450,
+      350,
+      250
+    ],
+    "evaluation": "average precision",
+    "head": "b733bc07497aae91d9ad5722da58ae1bae363079",
+    "repo": "/home/joe/code/futon3c",
+    "source-prefixes": [
+      "src/",
+      "dev/"
+    ],
+    "source-suffixes": [
+      ".clj",
+      ".cljc"
+    ],
+    "target": "file reworked at least once in the following window",
+    "target-window-commits": 100
+  },
+  "schema": "futon5/semi-robust-code-diagnostics-v1",
+  "summary": {
+    "categorical-coupling": {
+      "baseline": "degree-centrality",
+      "change-disagreements": [],
+      "effect-variance": 0.0,
+      "mean-effect": 0.0,
+      "mean-ranking-agreement": 1.0
+    },
+    "churn-sensitivity": {
+      "baseline": "prior-churn",
+      "change-disagreements": [],
+      "effect-variance": 0.0011662553521813608,
+      "mean-effect": -0.16156691992659292,
+      "mean-ranking-agreement": 0.01066061869085627
+    },
+    "structural-entropy": {
+      "baseline": "weighted-degree",
+      "change-disagreements": [],
+      "effect-variance": 0.0005010277846676923,
+      "mean-effect": -0.00872238497665997,
+      "mean-ranking-agreement": 0.954789241169362
+    }
+  }
+}

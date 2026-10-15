@@ -546,6 +546,32 @@ located in-tree; Agency at :7070). If degenerate, the trigram-factored retract a
 
 ## Acceptance checklist (2026-09-30)
 
+### Semi-robust baseline harness (2026-10-15)
+
+`tools/embed/semi_robust_diagnostics.py` turns the original single-window
+VERIFY spike into a reproducible three-batch experiment. Each batch freezes
+the Clojure source corpus at its cutoff, uses the same git extraction rules,
+and scores rework in the next 100 commits. The committed result is
+`reports/categorical-code/semi-robust-baselines.json`; rerun it with:
+
+```sh
+python3 tools/embed/semi_robust_diagnostics.py
+```
+
+The three code diagnostics have named matched baselines: structural entropy
+vs weighted degree, categorical coupling vs degree centrality, and
+churn-sensitivity vs prior churn. The report carries per-batch average-
+precision effects against every classical baseline (degree centrality,
+weighted degree, and prior churn), primary-pair ranking agreement, across-batch
+effect variance, and diagnostic/baseline change-disagreement cases. The result is again negative:
+categorical coupling is exactly degree centrality (agreement 1.0 and zero
+effect in all batches); churn-sensitivity trails prior churn in all batches;
+structural entropy beats weighted degree only in the oldest window and has a
+negative mean effect across all three. This is stronger evidence for the
+existing descriptive-not-predictive re-anchor, not evidence to activate the
+refinement loop. The checklist remains open because the selected War Machine
+token has no declared locator, so this parcel does not manufacture closure.
+
 - [ ] The code-evolution specification defines object schemas and concrete select, vary, and refine morphisms.
 - [ ] Executable checks test composition preservation for the evolution-to-code functor.
 - [ ] Code-side structural entropy, coupling, and churn-sensitivity diagnostics are evaluated against classical graph-metric baselines.
