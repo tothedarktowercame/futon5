@@ -50,7 +50,7 @@ active-inference reading of self-evidencing.
   re-run), and its register `futon5/TN-baldwin-reboot.md` §10.
 - Blog post: "Cascades as pasted pushouts: four records, drawn" (3 November
   2026), https://zone.hyperreal.enterprises/2026-11-03-cascades-as-pasted-pushouts.html
-- Lynn, M. (2026). "Conceptual Blending in Humans and Language Models".
+- Lynn (2026). "Conceptual Blending in Humans and Language Models".
   Frontiers in Psychology 17. doi:10.3389/fpsyg.2026.1849083. Reading notes and
   a run of its supplementary code:
   `~/notes/wm-next/anticipation/parr-friston-and-futon-theory.md` (section
