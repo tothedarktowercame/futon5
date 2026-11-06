@@ -1,0 +1,18 @@
+{
+  "generated-by": "make-scope-table.py (M-latex-wysiwyg S1)",
+  "page": "draft8.html",
+  "src-dir": "/home/joe/code/futon5/holes/tech-notes/paper/html-build/wysiwyg/sandbox",
+  "files": [
+    "draft8.tex",
+    "intro-generated.tex",
+    "part3-exotype.tex"
+  ],
+  "anchor-count": 1053,
+  "source-sha": {
+    "draft8.tex": "de7d8f8ac0bc2440",
+    "intro-generated.tex": "bccb3369c12b3cc0",
+    "part3-exotype.tex": "3983ea06ae49f13f"
+  },
+  "confidence": {},
+  "notes": []
+}

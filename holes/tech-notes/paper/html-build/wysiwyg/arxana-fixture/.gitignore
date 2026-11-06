@@ -1,0 +1,4 @@
+# oxide copies page assets next to --dest; they duplicate page/
+*.png
+*.svg
+*.css

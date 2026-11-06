@@ -1,0 +1,52 @@
+{
+  "fixture/id": "m-jvm-arxana/draft8-v1",
+  "source-commit": "245773fef526c36b040576add694ce774afb46f3",
+  "built-at-commit": "9fdc5690e5ffd8e83554a4ac5f0f8bf69f379691",
+  "artifacts": [
+    {
+      "logical-id": "draft8.tex",
+      "path": "sandbox/draft8.tex",
+      "revision-id": "arxana:revision:sha256:de7d8f8ac0bc2440698d0335be0e3870df982a114b2499946d2801c5a0b6cf95"
+    },
+    {
+      "logical-id": "intro-generated.tex",
+      "path": "sandbox/intro-generated.tex",
+      "revision-id": "arxana:revision:sha256:bccb3369c12b3cc0e96dbae3a58fc8d1b797dbd649a375be35290e2c38b64f4c"
+    },
+    {
+      "logical-id": "part3-exotype.tex",
+      "path": "sandbox/part3-exotype.tex",
+      "revision-id": "arxana:revision:sha256:3983ea06ae49f13f97eab0a9af1d2cf6a9c2eb1dacb55454e03ad308e1e78ff1"
+    },
+    {
+      "logical-id": "draft8.html",
+      "path": "page/draft8.html",
+      "revision-id": "arxana:revision:sha256:7ae3821ffcf2265d5f3615b7424d227bab48d66b2cca52e122fe221d13a60ca7"
+    }
+  ],
+  "source-map": {
+    "path": "sandbox/scopes.json",
+    "status": "regenerated",
+    "revision-id": "arxana:revision:sha256:5e7fb53757f6b2920549b70839033f6c68c46b8be666a43295754691ae0031e3"
+  },
+  "negative-fixture": {
+    "path": "scopes-negative-v1.json",
+    "status": "retained-contradiction-bearing",
+    "expect": "fixture/revision-mismatch"
+  },
+  "build": {
+    "id": "arxana-build:sha256:7ae3821ffcf2265d",
+    "tool": {
+      "name": "latexml_oxide",
+      "version": "0.7.5"
+    },
+    "command": "latexml_oxide --source-map --path=html-build --preload=apa7-html-shim.sty --dest=<fixture>/draft8.html html-build/wysiwyg/sandbox/draft8.tex",
+    "scope-builder": "make-scope-table.py --src sandbox --build-root sandbox --producer-cwd <paper>",
+    "canonicalization": "sha256 over exact file bytes, UTF-8, no normalization"
+  },
+  "cases": [
+    "paragraph-point",
+    "section-range",
+    "math-transformation"
+  ]
+}
