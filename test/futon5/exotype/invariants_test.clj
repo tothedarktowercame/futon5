@@ -208,8 +208,15 @@
                             (map #(efe/score-policy :efe-full % o {:observation-model mk})
                                  candidates))))))]
       (testing "over the declared four (legacy vs derived)"
-        (is (> (get (wins :legacy declared) :chaos 0) (* 2/3 (count domain)))
-            "under the typed table, chaos dominates")
+        ;; 2026-11-06 (H1 remainder): deriving :activity/:diversity in
+        ;; `fixed-model` displaced chaos under :legacy TOO. Under the typed
+        ;; table chaos won >2/3 of the grid; with the derived base numbers the
+        ;; :legacy wins are {:identity 6, :collapser 1, :chaos 2} -- identity
+        ;; dominates instead. So the chaos domination was a property of the
+        ;; typed numbers through and through, not of the objective.
+        (is (= {:identity 6, :collapser 1, :chaos 2}
+               (select-keys (wins :legacy declared) [:identity :collapser :chaos]))
+            "under the derived-base legacy table, identity dominates, not chaos")
         ;; Under the 12-kind derived model, the 4 declared still compete but
         ;; chaos no longer dominates (collapser takes the majority)
         (is (<= (get (wins :derived declared) :chaos 0) (* 1/3 (count domain)))
@@ -341,8 +348,12 @@
 
    Since 2026-08-04 `predict` defaults to the derived conditional model, so this
    table no longer drives anything unless `:legacy` is requested. It is kept as
-   the comparison baseline and the hole is kept open because the table itself is
-   still unconditional and still hand-typed in :activity/:diversity.
+   the comparison baseline. The hand-typed half of the hole is CLOSED
+   (2026-11-06): `:activity` and `:diversity` are now derived, count-weighted
+   per-kind means over the measured bins, pinned by
+   `fixed-model-activity-diversity-are-derived-not-typed` below. What stays
+   open is the unconditionality: the table itself is still unconditional, with
+   no slot for the current observation.
 
    Its docstring reads 'P(next local observation | exotype, current local
    observation)', but the map has no slot for the current observation: it is
@@ -355,6 +366,40 @@
     (is (every? #(= #{:rule-change :activity :diversity} (set (keys %)))
                 (vals efe/fixed-model))
         "three numbers per kind")))
+
+(deftest fixed-model-activity-diversity-are-derived-not-typed
+  (testing "H1 remainder closed 2026-11-06. `fixed-model`'s :activity and
+   :diversity used to be four typed pairs; now they are count-weighted
+   per-kind means over the measured conditional-model bins. This control
+   RECOMPUTES the means here from the real resource (not by calling the
+   production helper), so re-typing a constant -- or regenerating the resource
+   without updating the table -- fails rather than drifting silently. The
+   control-pair shape is the repository's own (TN-baldwin-reboot.md 21.3): the
+   same predicate that pins the derived value would reject the old typed ones."
+    (let [recompute (fn [model kind ch]
+                      (let [rows (filter #(= kind (ffirst %)) (:bins model))
+                            n (reduce + (map #(get-in % [1 :n]) rows))]
+                        (/ (reduce + (map #(* (get-in % [1 :n]) (get-in % [1 ch])) rows))
+                           n)))
+          m @efe/conditional-model]
+      (doseq [k [:builder :collapser :chaos :identity]
+              ch [:activity :diversity]]
+        (is (< (Math/abs (- (get-in efe/fixed-model [k ch]) (recompute m k ch))) 1.0e-12)
+            (str k " " ch " must equal the count-weighted bin mean"))
+        ;; G3 bounds: a mean of measured rates lies in [0,1] by construction.
+        (is (<= 0.0 (get-in efe/fixed-model [k ch]) 1.0)
+            (str k " " ch " inside the [0,1] floor/ceiling")))
+      (testing "and the control rejects the old typed values (it is not a tautology)"
+        (let [old-typed {:builder {:activity 0.48 :diversity 0.72}
+                         :collapser {:activity 0.12 :diversity 0.18}
+                         :chaos {:activity 0.78 :diversity 0.88}
+                         :identity {:activity 0.35 :diversity 0.35}}]
+          (is (some (fn [[k chans]]
+                      (some (fn [ch] (>= (Math/abs (- (get chans ch)
+                                                      (recompute m k ch))) 1.0e-12))
+                            [:activity :diversity]))
+                    old-typed)
+              "at least one old typed value must diverge from the derived mean"))))))
 
 (deftest hole-the-default-exotype-vocabulary-is-four-of-forty-thousand
   (testing "HOLE. Four sigma, hand-picked and never justified.
@@ -413,8 +458,11 @@
 (deftest derived-model-beats-legacy-out-of-sample
   (testing "on a seed NOT used to derive the table
 
-   The legacy model is worse than predicting a constant on every channel. The
-   derived model beats it on diversity and hunger, and matches the null on
+   The legacy model was worse than predicting a constant on every channel
+   while its base numbers were typed (TN-baldwin-reboot.md 28). The 2026-11-06
+   derivation of :activity/:diversity (H1 remainder) closed that defect on
+   diversity -- see the reversed pin at the end -- but the derived conditional
+   model still beats it on diversity and hunger, and matches the null on
    activity -- which is structural, not a failure: `phenotype-step` reads the
    CURRENT genotype, so an exotype chosen at t moves the phenotype only at t+2."
     (let [rows (held-out-rows 77 60)          ; 77 is not in the derivation seeds
@@ -431,8 +479,11 @@
             (str ch ": derived must beat legacy out of sample"))
         (is (< (mae rows derived ch) (mae rows null ch))
             (str ch ": derived must also beat the constant null")))
-      (is (> (mae declared-rows legacy :diversity) (mae rows null :diversity))
-          "pinned: the LEGACY model is worse than a constant on diversity")))))
+      (is (< (mae declared-rows legacy :diversity) (mae rows null :diversity))
+          "2026-11-06 pin REVERSED: with the derived base numbers the legacy
+           blend is no longer worse than a constant on diversity (typed values
+           were the whole of that defect on this channel); what remains wrong
+           with legacy is the missing interaction term, not the numbers")))))
 
 (deftest derived-model-reduces-objective-degeneracy
   (testing "deriving the model displaces chaos and widens the policy
@@ -450,7 +501,10 @@
                                 (map #(try (efe/score-policy arm % o {:observation-model mk})
                                             (catch Exception e {:candidate-exotype :error :total Double/MAX_VALUE}))
                                      candidates)))))))]
-      (is (= 2 (winners :efe-full :legacy [:builder :collapser :chaos :identity])))
+      ;; 2026-11-06 (H1 remainder): legacy winners went 2 -> 3 when the base
+      ;; numbers were derived ({:identity 6, :collapser 1, :chaos 2}); the
+      ;; derived-path counts are unchanged.
+      (is (= 3 (winners :efe-full :legacy [:builder :collapser :chaos :identity])))
       (is (= 2 (winners :efe-full :derived [:builder :collapser :chaos :identity]))
           "over the 4 declared, 2 distinct winners")
       ;; 2 -> 4 when the model was re-derived over all 14 propagators (TN 56):

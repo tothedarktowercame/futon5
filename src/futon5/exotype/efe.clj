@@ -36,12 +36,67 @@
    :efe-ambiguity-only {:risk? false :ambiguity? true :conatus? true}
    :efe-no-conatus {:risk? true :ambiguity? true :conatus? false}})
 
-(def ^:private declared-channels
-  "HAND-DECLARED, not derived. Nothing has measured `:activity` or `:diversity`,
-   and whether they are functions of sigma is unknown -- do NOT assume symmetry
-   with `:rule-change`. Deliberately left standing (Joe, 2026-08-04: \"if
-   :activity and :diversity need sorting in a different way we can do so
-   later\"). H1 covers `:rule-change` only."
+(defn- weighted-kind-means
+  "Count-weighted per-kind means of :activity and :diversity over the measured
+   conditional-model bins. This is the H1 remainder (2026-11-06): the two
+   channels `declared-channels` used to carry as typed constants. Recomputed
+   here rather than baked, so the table cannot drift from the measurement the
+   way `:rule-change` drifted for months."
+  [model]
+  (into {}
+        (for [[kind {:keys [w a d]}]
+              (reduce (fn [acc [[k _ _] {:keys [n activity diversity]}]]
+                        (update acc k (fn [m]
+                                        {:w (+ (:w m 0) n)
+                                         :a (+ (:a m 0.0) (* n activity))
+                                         :d (+ (:d m 0.0) (* n diversity))})))
+                      {}
+                      (:bins model))]
+          [kind {:activity (/ a w) :diversity (/ d w)}])))
+
+(def conditional-model
+  "P(next local observation | exotype, current local observation), DERIVED by
+   measuring the substrate rather than declared.
+
+   Regenerate with `scripts/derive_conditional_model.clj`; determinism, coverage
+   and out-of-sample accuracy are pinned by `futon5.exotype.invariants-test`.
+   Held-out mean absolute error against the legacy path
+   (TN-baldwin-reboot.md 28):
+
+     channel      null     legacy    derived
+     activity    0.1799    0.2309    0.1801    (no gain -- and none is possible,
+                                                see below)
+     diversity   0.0281    0.2306    0.0126    18x better than legacy
+     hunger      0.1805    0.2171    0.1681    23% better than legacy
+
+   The legacy model is WORSE THAN A CONSTANT on every channel. `:activity` is the
+   one channel the derived model cannot improve, and that is structural rather
+   than a modelling failure: `phenotype-step` reads the CURRENT genotype, so an
+   exotype chosen at t changes the genotype at t+1 and the phenotype only at t+2.
+   Next-step activity is therefore not a function of this step's exotype."
+  (delay (some-> (io/resource "futon5/exotype/conditional-model.edn")
+                 slurp
+                 edn/read-string)))
+
+(def ^:private legacy-baseline-channels
+  "SUPERSEDED BASELINE, kept as provenance only (do not read from here -- see
+   `fixed-model`). These are the numbers `fixed-model` carried from 2026-07-15
+   to 2026-11-06: typed in, never measured. The 2026-11-06 derivation
+   (fixed-model) replaced them, exactly as the 2026-08-04 H1 fix replaced the
+   typed `:rule-change` column. Recorded here so pre-2026-11-06 `:legacy`
+   comparisons can be reconstructed.
+
+   Count-weighted per-kind means at resource fingerprint c1665f627d58d645
+   (left; `was` = this superseded table, right):
+
+     kind        activity  was     diversity  was
+     :builder     0.3511   0.48     0.9867    0.72
+     :collapser   0.3853   0.12     0.9436    0.18
+     :chaos       0.3642   0.78     0.9944    0.88
+     :identity    0.3399   0.35     0.9889    0.35
+
+   (the `was` columns are this table; the left columns are the derived means at
+   the 2026-11-06 resource fingerprint c1665f627d58d645.)"
   {:builder {:activity 0.48 :diversity 0.72}
    :collapser {:activity 0.12 :diversity 0.18}
    :chaos {:activity 0.78 :diversity 0.88}
@@ -58,25 +113,35 @@
    nothing but fixed points. It is the MOST disruptive propagator in the family,
    not the least.
 
-   Deriving the column means it cannot drift from the operator it describes
-   again. Derived (uniform bytes) vs the old declared values:
+   `:activity` and `:diversity` are DERIVED the same way (H1 remainder,
+   2026-11-06): count-weighted per-kind means over the measured
+   `conditional-model` bins, not typed constants. Derived vs the old declared
+   values (`legacy-baseline-channels` keeps the full old table):
 
-     kind        derived   was     fix(sigma)   floor = fix/8
-     :identity    1.0000   0.02        8           1.000
-     :builder     0.8125   0.78        5           0.625
-     :chaos       0.5625   0.90        1           0.125
-     :collapser   0.5000   0.18        0           0.000
+     kind        derived activity / was    derived diversity / was
+     :identity    0.3399 / 0.35             0.9889 / 0.35
+     :builder     0.3511 / 0.48             0.9867 / 0.72
+     :chaos       0.3642 / 0.78             0.9944 / 0.88
+     :collapser   0.3853 / 0.12             0.9436 / 0.18
 
-   NOTE this does NOT change which exotype the EFE selects: `:chaos` wins under
-   both the old and the derived values (tested, 24 observations, 18/24 -> 20/24).
-   \"Chaos always wins\" is structural to the objective, not an artefact of the
-   numbers -- see TN-baldwin-reboot.md 15.2 and
-   TN-metaca-baldwin-micro-pilots.md before touching the objective."
-  (into {}
-        (for [[kind channels] declared-channels]
-          [kind (assoc channels
-                       :rule-change
-                       (gen/rule-change-rate (get grid/propagators kind)))])))
+   The typed `:chaos` activity (0.78) was the largest error -- the measured
+   kind-mean is 0.3642, close to the others, so the old table exaggerated
+   chaos's distinctiveness on this channel. NOTE this does NOT change which
+   exotype the EFE selects on the default (`:derived`) path; `fixed-model`
+   numbers drive only `:legacy` predictions, and \"chaos always wins\" is
+   structural to the objective, not an artefact of the numbers -- see
+   TN-baldwin-reboot.md 15.2 and TN-metaca-baldwin-micro-pilots.md before
+   touching the objective.
+
+   G3 bounds: both channels are means of measured rates, so each lies in [0,1]
+   by construction; `weighted-kind-means` divides by the bin count weight, and
+   every kind here has bins above `min-bin-samples` (S0b)."
+  (let [derived (weighted-kind-means @conditional-model)]
+    (into {}
+          (for [[kind _] legacy-baseline-channels]
+            [kind {:activity (:activity (get derived kind))
+                   :diversity (:diversity (get derived kind))
+                   :rule-change (gen/rule-change-rate (get grid/propagators kind))}]))))
 
 (def preferences
   "C is local: conservative own-rule change and, load-bearingly, low hunger.
@@ -163,30 +228,6 @@
    dominated by the dense bins either way. Treat this as a low-impact heuristic;
    if a decision ever turns on a sparse bin, sweep it first."
   30)
-
-(def conditional-model
-  "P(next local observation | exotype, current local observation), DERIVED by
-   measuring the substrate rather than declared.
-
-   Regenerate with `scripts/derive_conditional_model.clj`; determinism, coverage
-   and out-of-sample accuracy are pinned by `futon5.exotype.invariants-test`.
-   Held-out mean absolute error against the legacy path
-   (TN-baldwin-reboot.md 28):
-
-     channel      null     legacy    derived
-     activity    0.1799    0.2309    0.1801    (no gain -- and none is possible,
-                                                see below)
-     diversity   0.0281    0.2306    0.0126    18x better than legacy
-     hunger      0.1805    0.2171    0.1681    23% better than legacy
-
-   The legacy model is WORSE THAN A CONSTANT on every channel. `:activity` is the
-   one channel the derived model cannot improve, and that is structural rather
-   than a modelling failure: `phenotype-step` reads the CURRENT genotype, so an
-   exotype chosen at t changes the genotype at t+1 and the phenotype only at t+2.
-   Next-step activity is therefore not a function of this step's exotype."
-  (delay (some-> (io/resource "futon5/exotype/conditional-model.edn")
-                 slurp
-                 edn/read-string)))
 
 (defn- predict-legacy
   [candidate-exotype {:keys [activity diversity]}]

@@ -357,7 +357,7 @@ is. A *Headache* has a bounded fix and the prior work survives it.
 | **N2b** | **The endogenous clock** — per-rule $(r,\tau,m)$, stress-integrating age, apoptosis | **LOOK-AHEAD ONLY**, §14 — prerequisites (N2, H1) now clear; still not a work item until Joe opens it | Joe |
 | **N3** | **Orphaned knowledge** — *retrieval at the design step*, not documentation coverage | **RE-SCOPED §19**; three co-locations built as components-first verifications §21; ledger backlog remains | Joe |
 | **N4** | **Recursive blind spot** — every level of review failed the same check | **DONE** §17 story, §18 all three mechanisms built + mutation-tested | — |
-| **H1** | **RE-SCOPED §15** — not "four wrong numbers" but *`:rule-change` is hand-typed for a quantity that is a function of σ*; the exotype layer has no computed coordinates | **DONE** §16 — `:rule-change` derived from σ; `:activity`/`:diversity` still hand-declared, flagged | — |
+| **H1** | **RE-SCOPED §15** — not "four wrong numbers" but *`:rule-change` is hand-typed for a quantity that is a function of σ*; the exotype layer has no computed coordinates | **DONE** §16 — `:rule-change` derived from σ; `:activity`/`:diversity` derived too (2026-11-06, count-weighted bin means, pinned by `fixed-model-activity-diversity-are-derived-not-typed`) | — |
 | **H2** | Baldwin arm has no genotype variation source | open — **candidate resolution is N2b** | folded into N2b |
 | **H5** | **Impoverished exotype** — vocabulary / parameters / structure | **structure DISCHARGED** §28–29 (derived conditional model, now default); **parameters** partly (`:rule-change` derived); **vocabulary** unblocked, not widened | — |
 | **H3** | slice-12 calibration docstring asserted the opposite of the measurement | **DONE** | — |
