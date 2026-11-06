@@ -17,6 +17,7 @@
             [futon5.exotype.efe :as efe]
             [futon5.exotype.grid :as grid]
             [futon5.exotype.self-tuning :as tuning]
+            [futon5.exotype.selection :as selection]
             [futon5.xenotype.generator :as gen]))
 
 ;; ---------------------------------------------------------------------------
@@ -722,3 +723,63 @@
           ":apply-probability must reach the trajectory driver, not just score-policy")
       (is (= (run {} 42) (run {:observation-model :derived} 42))
           "asking for the default explicitly must be a no-op"))))
+
+;; ---------------------------------------------------------------------------
+;; (4) Neighbourhood: selection copies ONLY an immediate neighbour, and the
+;; choice of direction is uniform.  TN-baldwin-reboot.md 20.4 ledger row
+;; "`select-genotypes` picks a uniformly selected neighbour" -- was false, now
+;; fixed, and pinned here per the 21.6 pattern (co-located pointer plus the
+;; check; the pointer alone can go stale silently).
+
+(defn- copy-violations
+  "Every cell whose post-selection genotype is neither its own nor one of its
+   two immediate ring neighbours'.  Empty means the immediate-neighbourhood
+   claim holds on this run."
+  [width genotypes selected]
+  (keep (fn [i]
+          (let [allowed #{(nth genotypes i)
+                          (nth genotypes (mod (dec i) width))
+                          (nth genotypes (mod (inc i) width))}]
+            (when-not (contains? allowed (nth selected i)) i)))
+        (range width)))
+
+(deftest select-genotypes-picks-a-uniform-immediate-neighbour
+  (let [width 8
+        genotypes (mapv #(keyword (str "g" %)) (range width))
+        fitness (vec (for [i (range width)] (if (odd? i) 1.0 0.0)))]
+    (testing "the claim itself: copies come only from an immediate neighbour"
+      (is (empty? (copy-violations
+                   width genotypes
+                   (reduce (fn [acc seed]
+                             (selection/select-genotypes
+                              (or acc genotypes) fitness 1.0 seed))
+                           nil (range 200))))
+          "some cell holds a genotype that is neither its own nor an immediate
+           neighbour's -- selection has stopped being local"))
+    (testing "the checker is not vacuous: a non-neighbour copier is caught"
+      (let [wrong (fn [gs _fit _str _seed]
+                    (mapv (fn [i] (nth gs (mod (+ i 2) width))) (range width)))
+            selected (wrong genotypes fitness 1.0 17)]
+        (is (seq (copy-violations width genotypes selected))
+            "a copier at distance 2 must be flagged; if it is not, this pin
+             tests nothing")))
+    (testing "the claim itself: neighbour direction is drawn 50/50"
+      ;; fitness [0 1 0 1]: every even cell has BOTH neighbours fitter at
+      ;; strength 1, so it always copies, and the copied VALUE tells you which
+      ;; neighbour was drawn.  Odd cells are never selected against.  500
+      ;; seeds x 2 even cells = 1000 Bernoulli(1/2) draws; band is 4 sd.
+      (let [draws (for [seed (range 500)
+                        i [0 2]
+                        :let [selected (selection/select-genotypes
+                                        genotypes fitness 1.0 seed)]]
+                    (if (= (nth selected i) (nth genotypes (mod (inc i) width)))
+                      :right :left))
+            right (count (filter #{:right} draws))
+            n (count draws)
+            sd (Math/sqrt (* n 0.25))]
+        (is (= 1000 n) "each seed must yield both even-cell observations")
+        (is (< (- (/ n 2) (* 4 sd)) right (+ (/ n 2) (* 4 sd)))
+            (str "right-draws " right " of " n
+                 " falls outside the 4-sd band around "
+                 (int (/ n 2)) "; the direction draw is no longer uniform"))))))
+

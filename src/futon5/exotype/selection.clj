@@ -71,7 +71,12 @@
 
 (defn select-genotypes
   "Synchronously copy a uniformly selected immediate neighbour when its
-   relative fitness wins a strength-weighted draw. Strength zero is identity."
+   relative fitness wins a strength-weighted draw. Strength zero is identity.
+
+   LEDGER CLAIM, PINNED: TN-baldwin-reboot.md 20.4 -- 'select-genotypes picks
+   a uniformly selected neighbour'. Locality (self or an immediate ring
+   neighbour, nothing else) and the 50/50 direction draw are pinned by
+   futon5.exotype.invariants-test/select-genotypes-picks-a-uniform-immediate-neighbour."
   [genotypes fitness strength draw-seed]
   (when-not (<= 0.0 (double strength) 1.0)
     (throw (ex-info "selection strength must be in [0,1]"

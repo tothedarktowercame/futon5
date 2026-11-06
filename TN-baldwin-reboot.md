@@ -1206,7 +1206,7 @@ machinery, only doing it everywhere it applies.
 | `fixed-model :activity` / `:diversity` describe anything | **HOLE** — hand-declared, never measured, derivability unknown |
 | the four exotype kinds are the right or only kinds | **HOLE** — four σ of 40,320, chosen and never justified (§15) |
 | per-cell draws are independent | **DISCHARGED** — fixed and test-pinned (§16, §18) |
-| `select-genotypes` picks a uniformly selected neighbour | **HOLE** — was false, now fixed, **no test pins it** |
+| `select-genotypes` picks a uniformly selected neighbour | **DISCHARGED — pinned** (2026-11-06): locality and the 50/50 direction draw pinned by `invariants-test/select-genotypes-picks-a-uniform-immediate-neighbour`, with a co-located pointer at `exotype/selection.clj` |
 | the Baldwin arm has a variation source | **HOLE** — H2, open |
 | the S₈ theorems apply to the 2015 bug | **REFUTED and retracted** — draft7 (§11) |
 | slice results measure spatial structure | **HOLE** — 6 of 12 marked RE-RUN, not re-run (§13) |
