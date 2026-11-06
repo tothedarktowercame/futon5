@@ -1,7 +1,17 @@
 # M-formal-patterns
 
-**Status:** OPEN — CHARTERED 2026-07-17 (oxf-claude-2 + Joe). Logic model established over a
-long working session; slices below are the handoffs.
+**Status:** SUPERSEDED — WONTFIX (Joe, 2026-11-06); superseded by `M-formal-patterns-redux`. Was: OPEN — CHARTERED 2026-07-17 (oxf-claude-2 + Joe).
+Logic model established over a long working session; slices below were the handoffs.
+
+
+> **Retired 2026-11-06 (Joe).** The old experiments are done and are treated as pilots:
+> accepted in good faith, learned from, but not depended on for framing or findings. The MMCA
+> work has moved on, and patterns are being formalised by a different route (a pattern as a
+> 3/2 blend, a cascade as pasted pushouts:
+> https://zone.hyperreal.enterprises/2026-11-03-cascades-as-pasted-pushouts.html).
+> Nothing here is thrown away: `M-formal-patterns-redux` starts over and reads this mission in
+> its MAP phase. Joe's answers to the six questions in
+> `futon2/holes/tickets/T-formal-patterns-unblock.md` are recorded there.
 
 ## Acceptance checklist (restated 2026-11-06 with locators; blocked items cite numbered questions in `futon2/holes/tickets/T-formal-patterns-unblock.md`)
 
