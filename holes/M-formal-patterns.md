@@ -3,14 +3,16 @@
 **Status:** OPEN — CHARTERED 2026-07-17 (oxf-claude-2 + Joe). Logic model established over a
 long working session; slices below are the handoffs.
 
-## Acceptance checklist (2026-09-30)
+## Acceptance checklist (restated 2026-11-06 with locators; blocked items cite numbered questions in `futon2/holes/tickets/T-formal-patterns-unblock.md`)
 
-- [ ] `TN-baldwin-reboot.md` §10 records N1–N4 and H1–H4 as discharged, allowing the slice freeze to be lifted.
-- [ ] S0 records a canonical signed graph for one pattern and justifies every edge and sign from pattern semantics.
-- [ ] The arbitrary-edge-sign balance theorem builds in Lean without `sorry`, `admit`, `axiom`, or finite-case `decide` substitution.
-- [ ] A concrete pattern type and a pattern-language validation graph both use the balance theorem to report coherence.
-- [x] A real Peeragogy pattern language is translated from its own NEXT-STEPS and references and checked for frustrated cycles.
-- [ ] The War Machine bridge states and checks the relationship between balanced validation networks and joint G-minima as a frontier result.
+- [ ] Register closure: `TN-baldwin-reboot.md` §10 records N1–N4 and H1–H5 as discharged (N2b, N3, H2, H5 still open), and the slice freeze below is lifted or amended. Locator: the §10 status table. blocked: questions 1–4, 6 in T-formal-patterns-unblock.
+- [ ] (N3 backlog, in freeze scope) `TN-metaca-baldwin-micro-pilots.md` micro-pilot 7 is read and split into its pure-function half and its dynamical half (pattern: TN §21.2); the pointer is co-located at `src/futon5/exotype/efe.clj` and the checkable half is pinned in `test/futon5/exotype/invariants_test.clj` (the `chaos-is-the-structural-argmin` pin already covers the scoring half; the dynamical half gets a re-run or an explicit hole marker).
+- [ ] (N3 backlog, in freeze scope) The remaining open §20.4 ledger claims are co-located claim-by-claim per the §21.6 pattern (co-located pointer + pin test, or explicit hole marker at the code). Locator: `test/futon5/exotype/invariants_test.clj` grows per claim; each claim's code site carries the pointer. The "slice results measure spatial structure" row additionally needs the §13 RE-RUN set — blocked: question 5 in T-formal-patterns-unblock.
+- [ ] S0 records a canonical signed graph for one pattern and justifies every edge and sign from pattern semantics (DERIVE-with-Joe session; output appended to this mission). blocked: question 1 in T-formal-patterns-unblock (freeze).
+- [ ] S1: the arbitrary-edge-sign balance theorem builds in Lean without `sorry`, `admit`, `axiom`, or finite-case `decide` substitution. Locator: `cd mathlib4 && lake build` green, with T1/T2/T3 generalised to an edge sign function and referencing `cycleType`. blocked: question 1 in T-formal-patterns-unblock (freeze).
+- [ ] S2+S3: a concrete pattern type and a pattern-language validation graph both use the S1 theorem to report coherence (including the K5 2^10 finite check as a sanity artifact). Locator: new artifacts name the S1 theorem. blocked: question 1 in T-formal-patterns-unblock (freeze); depends on S0 and S1.
+- [x] S4: a real Peeragogy pattern language is translated from its own NEXT-STEPS and references and checked for frustrated cycles (commit 84409a9; `scripts/peeragogy/check_pattern_language_balance.clj`, `reports/peeragogy-pattern-language-balance.md`).
+- [ ] S5: the War Machine bridge states and checks the relationship between balanced validation networks and joint G-minima as a frontier result. blocked: question 1 in T-formal-patterns-unblock (freeze); depends on S1–S3.
 
 **One-line:** Formalize design patterns as *signed graphs* whose coherence is governed by
 the (proved) signed-cycle balance theorem, at two self-similar scales — inside a single
@@ -111,6 +113,29 @@ parked in §12 with a home. **Do not dispatch a slice while this notice stands.*
 N1 is decided (§11): the 2015 bug is *promoted*, not retracted — it becomes a short warm-up
 section before Part I, because working out how it actually worked was the route to
 everything else. What gets deleted is the claim that the permutation family generalises it.
+
+**Vocabulary and register status (added 2026-11-06, so this file is self-contained about
+the freeze).** A *slice* is one of the handoff units S0–S5 below. The *register* is the
+locked list of substrate problems in `TN-baldwin-reboot.md` §10 that bounds this mission's
+scope while the freeze stands: a *Nightmare* (N) has no bounded fix, or invalidates a body
+of work, or changes what the project is; a *Headache* (H) has a bounded fix and the prior
+work survives it.
+
+Register status as of 2026-11-06 (copied from `TN-baldwin-reboot.md` §10; that table is the
+live source of truth):
+
+| # | item | status | gate |
+|---|---|---|---|
+| N1 | Wrong object — the paper's family excludes the phenomenon | CLOSED 2026-08-04 (§11) | — |
+| N2 | Ghost evidence — twelve slices under degenerate seeding | DONE (§16; disposition §13) | — |
+| N2b | The endogenous clock — per-rule (r,τ,m), stress-integrating age, apoptosis | LOOK-AHEAD ONLY (§14); prerequisites N2, H1 now clear; not a work item until Joe opens it | Joe |
+| N3 | Orphaned knowledge — retrieval at the design step | RE-SCOPED (§19); three co-locations built (§21); ledger backlog remains | Joe |
+| N4 | Recursive blind spot in review | DONE (§17, §18) | — |
+| H1 | Exotype layer has no computed coordinates | DONE (§16; `:activity`/`:diversity` derived 2026-11-06) | — |
+| H2 | Baldwin arm has no genotype variation source | open — candidate resolution is N2b | folded into N2b |
+| H5 | Impoverished exotype — vocabulary / parameters / structure | structure DISCHARGED (§28–29); parameters partly; vocabulary unblocked, not widened (§30) | Joe (vocabulary pick) |
+| H3 | slice-12 calibration docstring | DONE | — |
+| H4 | test gate undercount | DONE (G4) | — |
 
 ## Substrate ground truth — READ BEFORE DISPATCHING (added 2026-08-04)
 
