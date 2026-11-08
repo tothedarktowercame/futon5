@@ -63,13 +63,18 @@ def assessments (s : List Record) (k : Key) : List Assessment := s.filterMap (as
 inductive Acceptance | candidate | accepted | rejected
 deriving DecidableEq, Repr
 
-/-- The latest assessment decides; with none, a claim is a candidate. -/
-def acceptance (s : List Record) (k : Key) : Acceptance :=
-  match (assessments s k).getLast? with
-  | none => .candidate
-  | some a => match a.verdict with
-    | .accepted => .accepted
-    | .rejected => .rejected
+/-- Selecting one acceptance from a claim's assessments needs a **named
+policy** (DERIVE-core §18, codex-21 round 10): append order alone is not
+semantic authority, and conflicting assessments may coexist unresolved. A
+policy sees every assessment of the claim; the only constraint on it is that
+with no assessment the claim is a candidate. -/
+structure AcceptancePolicy where
+  name : String
+  decide : List Assessment → Acceptance
+  empty_is_candidate : decide [] = .candidate
+
+def acceptance (p : AcceptancePolicy) (s : List Record) (k : Key) : Acceptance :=
+  p.decide (assessments s k)
 
 /-! ## Append-only -/
 
@@ -100,20 +105,28 @@ theorem assess_keeps_evidence (s : List Record) (a : Assessment) (k : Key) :
   simp [push, evidence, attestOf]
 
 /-- New evidence never changes acceptance. -/
-theorem attest_keeps_acceptance (s : List Record) (a : Attestation) (k : Key) :
-    acceptance (push s (.attest a)) k = acceptance s k := by
+theorem attest_keeps_acceptance (p : AcceptancePolicy) (s : List Record) (a : Attestation) (k : Key) :
+    acceptance p (push s (.attest a)) k = acceptance p s k := by
   simp [acceptance, assessments, push, assessOf]
 
 /-- With no assessment, a claim is a candidate: never accepted by default. -/
-theorem unassessed_is_candidate (s : List Record) (k : Key) (h : assessments s k = []) :
-    acceptance s k = .candidate := by
-  simp [acceptance, h]
+theorem unassessed_is_candidate (p : AcceptancePolicy) (s : List Record) (k : Key)
+    (h : assessments s k = []) : acceptance p s k = .candidate := by
+  simp [acceptance, h, p.empty_is_candidate]
 
 /-- Assessing one claim leaves every other claim's acceptance alone
 (stage-local criticism at the record level, F4). -/
-theorem assess_is_local (s : List Record) (a : Assessment) (k : Key) (h : a.subject ≠ k) :
-    acceptance (push s (.assess a)) k = acceptance s k := by
+theorem assess_is_local (p : AcceptancePolicy) (s : List Record) (a : Assessment) (k : Key)
+    (h : a.subject ≠ k) : acceptance p (push s (.assess a)) k = acceptance p s k := by
   simp [acceptance, assessments, push, assessOf, h]
+
+/-- Conflicting assessments by different actors coexist: appending a second
+never removes the first. -/
+theorem conflicting_assessments_coexist (s : List Record) (a₁ a₂ : Assessment) (k : Key)
+    (h₁ : a₁.subject = k) (h₂ : a₂.subject = k) :
+    a₁ ∈ assessments (push (push s (.assess a₁)) (.assess a₂)) k ∧
+    a₂ ∈ assessments (push (push s (.assess a₁)) (.assess a₂)) k := by
+  constructor <;> simp [assessments, push, assessOf, h₁, h₂]
 
 theorem evidence_push_attest (s : List Record) (a : Attestation) (k : Key) :
     evidence (push s (.attest a)) k = evidence s k ++ (if a.subject = k then [a] else []) := by

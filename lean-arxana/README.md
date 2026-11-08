@@ -8,7 +8,7 @@ only, no Mathlib. `lake build` checks every theorem.
 | Module | What it proves |
 |---|---|
 | `Identity` | swapping roles changes a 'clusion's id; futon1b's role-dropping default cannot tell them apart; a new type revision is a new id |
-| `Store` | the log is append-only; attestations, assessments and successors never change the set of claims; assessments never rewrite evidence; evidence never changes acceptance; unassessed means candidate; assessing one claim leaves others alone; two interpreters' same claim = one key, both attestations kept; merging replicas keeps both sides in either order |
+| `Store` | the log is append-only; attestations, assessments and successors never change the set of claims; assessments never rewrite evidence; evidence never changes acceptance; acceptance is selected only by a named policy over all of a claim's assessments (never append order; codex-21 round 10), and under any policy unassessed means candidate; conflicting assessments coexist; assessing one claim leaves others alone; two interpreters' same claim = one key, both attestations kept; merging replicas keeps both sides in either order |
 | `Read` | bounded reads terminate, never return more than `maxNodes` ids, never repeat an id (cyclic graphs included), and report truncation with a typed reason |
 | `Compose` | a composition passing the rank validator has no cycles; a self-loop is always refused |
 | `Projection` | every fragment names a claim in the store; layout changes leave the shown records unchanged; a new claim appears in every view that renders it; evidence does not change a view |
