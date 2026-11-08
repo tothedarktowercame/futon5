@@ -1,0 +1,11 @@
+name = "FormalArxanaGeometry"
+version = "0.1.0"
+defaultTargets = ["FormalArxanaGeometry"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "master" # lake-manifest pins 5ee50502, exactly as apm-lean does
+
+[[lean_lib]]
+name = "FormalArxanaGeometry"
