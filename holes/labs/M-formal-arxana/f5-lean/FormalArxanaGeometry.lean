@@ -34,9 +34,34 @@ theorem cube_fibre_negation_equation (z : ℂ) :
       z ^ 3 = -(-z ^ 3) := by ring
       _ = -1 := by rw [h]
 
-/-- Hence the corresponding root set has exactly three elements. -/
-theorem cube_fibre_model_card : Fintype.card (rootsOfUnity 3 ℂ) = 3 :=
-  Complex.card_rootsOfUnity 3
+theorem cube_fibre_neg_one_card_complex : {z : ℂ | z ^ 3 = -1}.ncard = 3 := by
+  have hset : {z : ℂ | z ^ 3 = -1} =
+      Neg.neg '' (↑(Polynomial.nthRootsFinset 3 (1 : ℂ)) : Set ℂ) := by
+    ext z
+    simp only [Set.mem_setOf_eq, Set.mem_image, Finset.mem_coe,
+      Polynomial.mem_nthRootsFinset (by norm_num : 0 < 3)]
+    constructor
+    · intro h; exact ⟨-z, (cube_fibre_negation_equation z).mp h, neg_neg z⟩
+    · rintro ⟨w, hw, rfl⟩; rw [cube_fibre_negation_equation, neg_neg]; exact hw
+  rw [hset, Set.ncard_image_of_injective _ neg_injective, Set.ncard_coe_finset,
+    (Complex.isPrimitiveRoot_exp 3 (by norm_num)).card_nthRootsFinset]
+
+theorem cube_fibre_on_unit_circle {z : ℂ} (h : z ^ 3 = -1) : ‖z‖ = 1 := by
+  have : ‖z‖ ^ 3 = 1 := by rw [← norm_pow, h, norm_neg, norm_one]
+  exact (pow_eq_one_iff_of_nonneg (norm_nonneg z) (by norm_num)).mp this
+
+/-- Cubing on the unit circle sends exactly three points to -1. -/
+theorem cube_fibre_neg_one_card : {z : Circle | (z : ℂ) ^ 3 = -1}.ncard = 3 := by
+  have h := Set.ncard_image_of_injective {z : Circle | (z : ℂ) ^ 3 = -1}
+    (Subtype.val_injective : Function.Injective ((↑) : Circle → ℂ))
+  rw [← h]
+  convert cube_fibre_neg_one_card_complex using 2
+  ext w
+  constructor
+  · rintro ⟨z, hz, rfl⟩; exact hz
+  · intro hw
+    refine ⟨⟨w, ?_⟩, hw, rfl⟩
+    simpa [Submonoid.unitSphere] using cube_fibre_on_unit_circle hw
 
 theorem inversion_is_conjugation (z : Circle) :
     ((↑z⁻¹ : ℂ)) = starRingEnd ℂ (z : ℂ) := Circle.coe_inv_eq_conj z
