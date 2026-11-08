@@ -1,0 +1,6 @@
+name = "arxana_core"
+version = "0.1.0"
+defaultTargets = ["ArxanaCore"]
+
+[[lean_lib]]
+name = "ArxanaCore"
