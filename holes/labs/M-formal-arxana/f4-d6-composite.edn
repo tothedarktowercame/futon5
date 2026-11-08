@@ -1,0 +1,12 @@
+{:diagram/id :formal-arxana/f4-d6-composite
+ :diagram/version 1
+ :reason "The AIF tokamak diagrams model signal wiring, not the typed D6 record ports required by F4."
+ :ports [{:role :source-act :record/type [:interpretation 1]}
+         {:role :intent :record/type [:d6/intent-stage 1]}
+         {:role :candidate :record/type [:d6/candidate-stage 1]}
+         {:role :decision :record/type [:d6/decision-stage 1]}]
+ :links [{:type [:d6/intends 1] :from :source-act :to :intent}
+         {:type [:d6/compiles-to 1] :from :intent :to :candidate}
+         {:type [:d6/decides 1] :from :candidate :to :decision}]
+ :dynamics {:id "formal-arxana/d6-compose" :version 1}
+ :execution :inert}
