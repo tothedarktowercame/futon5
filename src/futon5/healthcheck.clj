@@ -17,8 +17,7 @@
 
 (def ^:private expected-local-deps
   ;; Relative to futon5 repo root (directory containing deps.edn).
-  ["../futon3a"
-   "../futon1/apps/common"])
+  ["../futon3a"])
 
 (defn- file-exists?
   [^java.io.File f]
