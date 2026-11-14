@@ -356,6 +356,38 @@ theorem partyVote_length :
 
 /-! ### `entriesFrom` and `reasonFor` -/
 
+/-! ### The endgame bound (step 5) -/
+
+/-- The party round shows at least `m` items whenever `m` fresh items are
+available and the budget allows them (`m ≤ n`): with fewer than ten open
+items the round still shows ALL of them (Joe, 2026-11-14: "at least ten
+items isn't quite right if there are fewer than ten items remaining"). -/
+
+theorem partyVote_min :
+    ∀ (m n : Nat) (seen : List EntityId) (os : Retro.Orderings),
+      FreshAvail seen os m → m ≤ n → m ≤ (Retro.partyVote n seen os).length := by
+  intro m
+  induction m with
+  | zero => intro _ _ _ _ _; exact Nat.zero_le _
+  | succ m ih =>
+    intro n seen os hfresh hmn
+    rcases hs : Retro.sweep seen os with _ | ⟨a, i, os''⟩
+    · exact absurd hs (sweep_ne_none hfresh)
+    · cases hos : os'' with
+      | nil =>
+        obtain ⟨l, hl⟩ := Retro.sweep_head_contributes seen os a i os'' hs
+        rw [hos] at hl
+        exact absurd hl (by simp)
+      | cons q rest =>
+        rw [hos] at hs
+        cases n with
+        | zero => omega
+        | succ n' =>
+          have hf := freshAvail_step os a i q rest m hs hfresh
+          simp only [Retro.partyVote, hs, List.length_cons]
+          have hrec := ih n' (i :: seen) (rest ++ [(q.fst, q.snd)]) hf (by omega)
+          omega
+
 theorem entriesFrom_length (r : Agent → EntityId → Reason) :
     ∀ (l : List (Agent × EntityId)) (p : Nat), (entriesFrom p r l).length = l.length := by
   intro l
@@ -462,49 +494,58 @@ The hypotheses it needs about the characters (each says why it is here):
   `rebuild` from the current inputs. Without it a hand-built state showing
   anything fails part (a); the witness under `quiescent_shows_nothing_new`
   is one.
-* `hopen` — the dedup invariant (2026-11-12/13: one substrate entity per
-  document) restricted to the open items; `erase`-based availability
-  counting needs it (a duplicated id would let one document count twice).
-* `hcover` — each character set covers every open item: some character's
-  ordering contains it. This is what makes "at least ten when ten are open"
-  true; a party that skips an open item shows fewer.
+* `hcover` — ENDGAME (step 5, Joe 2026-11-14): some character lists
+  `min 10 (open count)` DISTINCT OPEN items (distinctness absorbs the old
+  `hopen` dedup hypothesis, now unused). This replaces the earlier
+  "each character set covers every open item", which is false for the real
+  characters (each lists only its top 10); Thor satisfies this one because
+  its pass order covers every open item (`Circus.Characters.thor_endgame_cover`).
+  It makes "at least ten when ten are open" true — and, in the endgame (Joe:
+  "at least ten items isn't quite right if there are fewer than ten items
+  remaining"), it makes part (b) show ALL remaining items.
 * `hvoc` — every term of every character's reason comes from the operator's
   vocabulary (the item's accepted benefit lines, the operator's
   introductions/word rules, or a name already in the vocabulary). This is
-  the whole content of "recognisable".
+  the whole content of "recognisable". (FINDING, step 5: the reason strings
+  `giraffe_party.py` actually writes do NOT satisfy this — see
+  `Circus.Characters`, "FINDINGS". The hypothesis models the vocabulary the
+  design must reach; the characters must be reworded to meet it.)
 
 Priority order is rank in the party list, made numeric: the first party
 entry has priority `budgetTen`, each later one a step less (so priorities
 strictly descend along the shown list). -/
 theorem primary_up_to_date_top_ten (cs : List Character) (v : Vocabulary) (s : State)
     (hs : s.shown = rebuild cs s.inputs)
-    (hopen : ((s.inputs.items.filter (·.open_)).map Item.id).Nodup)
-    (hcover : ∀ i ∈ s.inputs.items, i.open_ = true →
-      ∃ c ∈ cs, ∃ e ∈ c.order s.inputs, e.item = i.id)
+    (hcover : ∃ c ∈ cs, ∃ l : List EntityId, l.Nodup
+      ∧ l.length = min budgetTen ((s.inputs.items.filter (·.open_)).length)
+      ∧ (∀ x ∈ l, ∃ it ∈ s.inputs.items, it.open_ = true ∧ it.id = x)
+      ∧ (∀ x ∈ l, x ∈ (c.order s.inputs).map (·.item)))
     (hvoc : ∀ c ∈ cs, ∀ e ∈ c.order s.inputs, ∀ t ∈ e.reason.terms, t ∈ v.terms) :
     -- current
     s.shown = rebuild cs s.inputs
-    -- at least ten when ten are open
-    ∧ ((s.inputs.items.filter (·.open_)).length ≥ 10 → s.shown.length ≥ 10)
+    -- at least min 10 (open count) items are shown: the top ten, or in
+    -- the endgame (fewer than ten open) every remaining item
+    ∧ (min budgetTen ((s.inputs.items.filter (·.open_)).length) ≤ s.shown.length)
     -- in priority order
     ∧ (∀ i j (hij : i < j) (h₁ : j < s.shown.length),
          (s.shown.get ⟨i, Nat.lt_trans hij h₁⟩).priority ≥ (s.shown.get ⟨j, h₁⟩).priority)
     -- explainable
     ∧ (∀ e ∈ s.shown, e.reason.explainable v) := by
   refine ⟨hs, ?_, ?_, ?_⟩
-  · intro hlen
-    have hfresh := open_fresh cs s.inputs hopen hcover
-    have hfl : ((s.inputs.items.filter (·.open_)).map Item.id).length
-        = (s.inputs.items.filter (·.open_)).length := by simp
-    rw [hfl] at hfresh
-    have hfresh10 : FreshAvail [] (orderingsOf cs s.inputs) budgetTen :=
-      hfresh.mono hlen
-    have hvote := partyVote_length budgetTen [] (orderingsOf cs s.inputs) hfresh10
+  · obtain ⟨c, hc, l, hnd, hlen, _, hin⟩ := hcover
+    have hfresh : FreshAvail [] (orderingsOf cs s.inputs)
+        (min budgetTen ((s.inputs.items.filter (·.open_)).length)) := by
+      refine ⟨l, hnd, Nat.le_of_eq hlen.symm, ?_⟩
+      intro x hx
+      refine ⟨fun h => absurd h (List.not_mem_nil), c.who, (c.order s.inputs).map (·.item), ?_, ?_⟩
+      · exact List.mem_map.mpr ⟨c, hc, rfl⟩
+      · exact hin x hx
+    have hvote := partyVote_min _ budgetTen [] (orderingsOf cs s.inputs) hfresh
+      (Nat.min_le_left budgetTen ((s.inputs.items.filter (·.open_)).length))
     have hl : s.shown.length =
         (Retro.partyVote budgetTen [] (orderingsOf cs s.inputs)).length := by
       rw [hs, rebuild, entriesFrom_length]
-    rw [hl, hvote]
-    exact Nat.le_refl budgetTen
+    omega
   · intro i j hij h₁
     have hkey : ∀ k (hk : k < s.shown.length),
         (s.shown.get ⟨k, hk⟩).priority = budgetTen - k := by
