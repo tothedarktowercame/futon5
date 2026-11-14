@@ -184,7 +184,7 @@ nothing more.
 other winning, and neither winning within the horizon — separated by a bisectable boundary.
 
 **Ground.** Frozen fraction and absorbing-state checks over 3000–10,000 steps: the low-β arm
-settles at 0.040 and never absorbs; the high-β arm absorbs at t = 1046 and t = 881; β = 12,
+erodes to a frozen fraction below 0.001 by t = 3000 and never absorbs; the high-β arm absorbs at t = 1046 and t = 881; β = 12,
 14, 16 absorb at 1917, 2604, 1722; β = 8 and 10 do not. One realisation at β = 8 sustains an
 intermediate state across 10,000 steps with 391 frozen regions still turning over at
 t = 9500.
