@@ -413,6 +413,25 @@ theorem gcc_navigable_in_five (g : GCC) (hb : LoopBuilt g) (a b : GNode)
     g.Reach 5 a b :=
   GCC.Reach.pad (by decide) (gcc_navigable_in_four g hb a b ha hbm)
 
+/-- The `LoopBuilt` hypothesis has teeth: a record-less GCC does not connect
+its items at any length. -/
+private def emptyGCC : GCC := ⟨[], [], fun _ => []⟩
+private def it0 : Item := ⟨0, .mission, "a", true⟩
+private def it1 : Item := ⟨1, .mission, "b", true⟩
+
+private theorem empty_reach : ∀ {n : Nat} {a b : GNode},
+    emptyGCC.Reach n a b → a = b := by
+  intro n a b h
+  induction h with
+  | refl => rfl
+  | @step n' a' c' b' hadj _ _ =>
+    cases a' <;> cases c' <;> simp [GCC.adj, emptyGCC] at hadj
+  | @more n' a' b' t ih => exact ih
+
+example : ¬ emptyGCC.Reach 5 (.item it0) (.item it1) := by
+  intro h
+  exact absurd (GNode.item.inj (empty_reach h)) (by decide)
+
 /-! ### `top_ten_is_a_cascade`
 
 Restated (the draft was `True`): every entry after the first either needs an
