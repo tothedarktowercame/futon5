@@ -213,9 +213,9 @@ structure Character where
   who : Agent
   order : Inputs → List Entry
 
-/-- The party view: round robin over the four characters, skipping items
-already chosen (party-contract.md). -/
-opaque party : List Character → Inputs → List Entry := fun _ _ => []
+/-! The party view is concrete in `Circus/Loop.lean` (`rebuild`, over the
+retro-specified round robin); the draft's `opaque party` placeholder is
+gone. -/
 
 /-! ## The state over time -/
 
@@ -233,10 +233,9 @@ structure State where
   lastInputChange : Time
   lastRecompute : Time
 
-/-- One step of the loop; left abstract (the implementation is what is being
-specified). -/
-opaque step : State → Event → State := fun s _ => s
-opaque rebuild : List Character → Inputs → List Entry := fun _ _ => []
+/-! `step` and `rebuild` are concrete in `Circus/Loop.lean`; the statements
+about them (`incremental_eq_rebuilt`, `quiescent_shows_nothing_new`,
+`top_ten_is_a_cascade`, and the primary theorem) live there too. -/
 
 /-! ## Statements for Joe to read (restated 2026-11-14; the vacuous or false
 drafts are replaced. Provable-now statements are proved; the rest carry real
@@ -432,7 +431,8 @@ example : ¬ emptyGCC.Reach 5 (.item it0) (.item it1) := by
   intro h
   exact absurd (GNode.item.inj (empty_reach h)) (by decide)
 
-/-! ### `top_ten_is_a_cascade`
+/-! ### `top_ten_is_a_cascade` (statement in `Circus/Loop.lean`; the
+definition and witness below stay here)
 
 Restated (the draft was `True`): every entry after the first either needs an
 earlier entry, or names why it stands alone (a nonempty reason). -/
@@ -442,11 +442,6 @@ def Cascade (inp : Inputs) (es : List Entry) : Prop :=
     (∃ (j : Nat) (hj : j < k),
         inp.needs (es.get ⟨k, hk⟩).item (es.get ⟨j, Nat.lt_of_lt_of_le hj (Nat.le_of_lt hk)⟩).item = true)
     ∨ (es.get ⟨k, hk⟩).reason.terms ≠ []
-
-theorem top_ten_is_a_cascade (cs : List Character) (s : State)
-    (h : s.shown = rebuild cs s.inputs) :
-    Cascade s.inputs s.shown := by
-  sorry
 
 private def cascadeInp : Inputs :=
   ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], []⟩
@@ -470,30 +465,13 @@ example : ¬ Cascade cascadeInp [plainEntry 0, plainEntry 1] := by
       rw [hf]; exact fun h => Bool.noConfusion h)
   | inr hn => exact hn rfl
 
-/-- Recomputing after each event agrees with rebuilding from the inputs. -/
-theorem incremental_eq_rebuilt (cs : List Character) (s : State) (e : Event) :
-    (step s e).shown = rebuild cs (step s e).inputs := by
-  sorry
+/-! ### `primary_up_to_date_top_ten`
 
-/-- With no events but ticks, nothing new is shown. -/
-theorem quiescent_shows_nothing_new (s : State) :
-    (step s .tick).shown = s.shown := by
-  sorry
-
-/-- PRIMARY (Joe, 2026-11-14): "Giraffe always gives an up to date ranking of
-at least the top ten missions by priority order that is recognisable to the
-operator"; recognisable = explainable. Within bound B of the last input
-change, what is shown is current, has at least ten entries when ten open
-items exist, is in priority order, and every reason is explainable in the
-operator's vocabulary. -/
-theorem primary_up_to_date_top_ten (cs : List Character) (v : Vocabulary)
-    (B : Nat) (s : State) (hB : s.now ≥ s.lastInputChange + B) :
-    s.shown = rebuild cs s.inputs
-    ∧ ((s.inputs.items.filter (·.open_)).length ≥ 10 → s.shown.length ≥ 10)
-    ∧ (∀ i j (hij : i < j) (h₁ : j < s.shown.length),
-         (s.shown.get ⟨i, Nat.lt_trans hij h₁⟩).priority ≥ (s.shown.get ⟨j, h₁⟩).priority)
-    ∧ (∀ e ∈ s.shown, e.reason.explainable v) := by
-  sorry
+The primary theorem (Joe, 2026-11-14): "Giraffe always gives an up to date
+ranking of at least the top ten missions by priority order that is
+recognisable to the operator"; recognisable = explainable. It is stated and
+proved over the concrete loop in `Circus/Loop.lean`, under explicit
+hypotheses about the characters. -/
 
 /-! ### `focus_coherence`
 
