@@ -198,7 +198,13 @@ structure Entry where
   reason : Reason
 deriving Repr
 
-/-- The inputs a ranking is computed from at a moment. -/
+/-- The inputs a ranking is computed from at a moment.
+
+`mana` is a TYPED HOLE (Joe, 2026-11-14: the attention meter "may turn out to
+be a typed hole", futon3 `futon3/library/proof-search/typed-hole-as-frontier.flexiarg`):
+a parameter of known type with NO producer — no `Event` writes it and no
+animal's record feeds it. It threads through `applyEvent` untouched; the
+design must still say what, if anything, produces it. -/
 structure Inputs where
   items : List Item
   readings : List (EntityId × Nat)        -- item, document version read
@@ -206,6 +212,7 @@ structure Inputs where
   needs : EntityId → EntityId → Bool
   serves : EntityId → List BenefitLine
   focus : List (EntityId × Nat)            -- 猴: weight per item
+  mana : Nat
 
 /-- A character orders open items by its own rule (unblocking, strategy,
 quick, harm reduction). -/
@@ -444,7 +451,7 @@ def Cascade (inp : Inputs) (es : List Entry) : Prop :=
     ∨ (es.get ⟨k, hk⟩).reason.terms ≠ []
 
 private def cascadeInp : Inputs :=
-  ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], []⟩
+  ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
 
 private def plainEntry (i : EntityId) : Entry :=
   ⟨i, 0, ⟨[], .giraffe⟩⟩
@@ -503,7 +510,7 @@ theorem focus_coherence (inp : Inputs) (F G : List (EntityId × Nat))
 no shared accepted benefit line score zero, so no focus over them can beat
 anything. -/
 example :
-    relatedPairs ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], []⟩
+    relatedPairs ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
       [(0, 1), (1, 1), (2, 1)] = 0 := by
   rfl
 
