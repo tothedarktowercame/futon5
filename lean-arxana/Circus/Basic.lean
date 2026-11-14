@@ -117,20 +117,57 @@ def consumable {α : Type} (c : Contract α) : Exchange α → Option α
   | .accepted v => if c.valid v then some v else none
   | _ => none
 
-/-! ## The GCC as a graph -/
+/-! ## The GCC as a graph (as the loop builds it) -/
 
-/-- Every record lives in the GCC (an Arxana store) and points at items or
-other records; reads go through it, never through evidence bodies. -/
+/-- The GCC: records reference items (never evidence bodies); reads go
+through these references. -/
 structure GCC where
+  items : List Item
   records : List Record
-  nodes : List EntityId
-  edge : EntityId → EntityId → Bool
+  refs : Record → List Item
+
+/-- A GCC the loop built: every record points at a stored item, and any two
+items are co-referenced by some record (the loop ties related items —
+`needs`, `serves` — together through records). This is the hypothesis that
+makes point-to-point navigation true; an arbitrary record graph need not
+satisfy it. -/
+def LoopBuilt (g : GCC) : Prop :=
+  (∀ r ∈ g.records, ∃ i ∈ g.refs r, i ∈ g.items)
+  ∧ (∀ i ∈ g.items, ∀ j ∈ g.items, ∃ r ∈ g.records, i ∈ g.refs r ∧ j ∈ g.refs r)
+
+/-- A node of the GCC: an item or a record. -/
+inductive GNode
+  | item (i : Item)
+  | record (r : Record)
+deriving Repr
+
+/-- Membership: which nodes a GCC actually contains. -/
+def GCC.Mem (g : GCC) : GNode → Prop
+  | .item i => i ∈ g.items
+  | .record r => r ∈ g.records
+
+/-- Adjacency: a record is adjacent to each item it references
+(undirected). -/
+def GCC.adj (g : GCC) : GNode → GNode → Prop
+  | .record r, .item i => i ∈ g.refs r
+  | .item i, .record r => i ∈ g.refs r
+  | _, _ => False
 
 /-- A path of at most `n` hops from `a` to `b`. -/
-def reachableWithin (g : GCC) : Nat → EntityId → EntityId → Prop
-  | 0, a, b => a = b
-  | n + 1, a, b => a = b ∨ ∃ c, c ∈ g.nodes ∧ (g.edge a c = true ∨ g.edge c a = true)
-                      ∧ reachableWithin g n c b
+inductive GCC.Reach (g : GCC) : Nat → GNode → GNode → Prop
+  | refl (a : GNode) : g.Reach 0 a a
+  | step (n : Nat) (a c b : GNode) (h : g.adj a c) (t : g.Reach n c b) :
+      g.Reach (n + 1) a b
+  | more (n : Nat) (a b : GNode) (t : g.Reach n a b) :
+      g.Reach (n + 1) a b
+
+/-- A path of `m` hops is a path of any larger length. -/
+theorem GCC.Reach.pad {g : GCC} {a b : GNode} :
+    ∀ {m n : Nat}, m ≤ n → g.Reach m a b → g.Reach n a b := by
+  intro m n hn r
+  induction hn with
+  | refl => exact r
+  | step _ ih => exact .more _ _ _ ih
 
 /-! ## Benefit (virtual), orderings, ranking -/
 
@@ -201,23 +238,151 @@ specified). -/
 opaque step : State → Event → State := fun s _ => s
 opaque rebuild : List Character → Inputs → List Entry := fun _ _ => []
 
-/-! ## Statements for Joe to read (proofs to follow once approved) -/
+/-! ## Statements for Joe to read (restated 2026-11-14; the vacuous or false
+drafts are replaced. Provable-now statements are proved; the rest carry real
+statements under `sorry` per the statement-registry policy, each with a
+witness that the statement has content). -/
 
-/-- Every record kind some agent reads has a writer in the wiring. -/
-theorem every_read_has_a_writer :
-    ∀ h ∈ wiring, ∃ w ∈ wiring, w.kind = h.kind ∧ w.reader = h.reader := by
+/-! ### `every_read_has_a_writer`
+
+Restated (the draft was trivially true: a handoff witnesses itself): every
+record kind any agent reads is written by some *other* agent in the wiring.
+Giraffe's own reading is the one self-read in the design — giraffe rereads
+its own record — so it is stated as an explicit exception, not hidden. -/
+
+def writtenByAnother (h : Handoff) : Bool :=
+  wiring.any fun w =>
+    decide (w.kind = h.kind ∧ w.reader = h.reader ∧ w.writer ≠ h.reader)
+
+def readHasWriter (h : Handoff) : Bool :=
+  (h.kind == RecordKind.giraffeReading) || writtenByAnother h
+
+theorem every_read_has_a_writer : wiring.all readHasWriter = true := by
+  decide
+
+theorem every_read_has_a_writer_of_mem {h : Handoff} (hh : h ∈ wiring)
+    (hkind : h.kind ≠ RecordKind.giraffeReading) :
+    ∃ w ∈ wiring, w.kind = h.kind ∧ w.reader = h.reader ∧ w.writer ≠ h.reader := by
+  have hall := List.all_eq_true.mp every_read_has_a_writer h hh
+  simp [readHasWriter, hkind, writtenByAnother, List.any_eq_true] at hall
+  obtain ⟨w, hw_mem, hw⟩ := hall
+  exact ⟨w, hw_mem, hw⟩
+
+/-! ### `handoffs_follow_the_chain`
+
+Restated (the draft was `True`): a record kind is never read at a turn event
+earlier than the event at which it enters the wiring — the earliest trigger
+attached to that kind, which is its producer's entry — and nothing is
+triggered outside the chain's five events. -/
+
+/-- The rank of a handoff's trigger; an untriggered handoff sits after the
+whole chain. -/
+def entryRank (h : Handoff) : Nat :=
+  h.trigger.elim 5 TurnEvent.rank
+
+/-- The earliest rank at which a kind appears in the wiring: the moment its
+record enters the chain. -/
+def earliest (k : RecordKind) : Nat :=
+  ((wiring.filter fun h => h.kind == k).map entryRank).foldl min 8
+
+theorem handoffs_follow_the_chain :
+    wiring.all (fun h =>
+      h.trigger.elim true (fun t =>
+        decide (earliest h.kind ≤ TurnEvent.rank t ∧ TurnEvent.rank t ≤ 4))) = true := by
+  decide
+
+theorem handoffs_follow_the_chain_of_mem {h : Handoff} (hh : h ∈ wiring)
+    {t : TurnEvent} (ht : h.trigger = some t) :
+    earliest h.kind ≤ TurnEvent.rank t ∧ TurnEvent.rank t ≤ 4 := by
+  have hall := List.all_eq_true.mp handoffs_follow_the_chain h hh
+  rw [ht] at hall
+  exact of_decide_eq_true (by simpa using hall)
+
+/-! ### `gcc_navigable_in_five`
+
+Restated (the draft was false for arbitrary graphs): the statement holds for
+a GCC *the loop built* — `LoopBuilt` above — and in fact four hops suffice. -/
+
+private theorem reachable_items {g : GCC} (hb : LoopBuilt g) {i j : Item}
+    (hi : i ∈ g.items) (hj : j ∈ g.items) :
+    g.Reach 2 (.item i) (.item j) := by
+  obtain ⟨r, _, hi1, hj1⟩ := hb.2 i hi j hj
+  exact .step 1 (.item i) (.record r) (.item j) hi1
+    (.step 0 (.record r) (.item j) (.item j) hj1 (.refl _))
+
+/-- Key lemma (Joe, 2026-11-14): a loop-built GCC is navigable point to
+point in at most four hops (so five always suffices). -/
+theorem gcc_navigable_in_four (g : GCC) (hb : LoopBuilt g) (a b : GNode)
+    (ha : g.Mem a) (hbm : g.Mem b) :
+    g.Reach 4 a b := by
+  match a, b, ha, hbm with
+  | .item i, .item j, hi, hj =>
+    exact GCC.Reach.pad (by decide) (reachable_items hb hi hj)
+  | .item i, .record r, hi, hr =>
+    obtain ⟨j, hjr, hj⟩ := hb.1 r hr
+    obtain ⟨r', _, hi2, hj2⟩ := hb.2 i hi j hj
+    exact GCC.Reach.pad (by decide)
+      (.step 2 (.item i) (.record r') (.record r) hi2
+        (.step 1 (.record r') (.item j) (.record r) hj2
+          (.step 0 (.item j) (.record r) (.record r) hjr (.refl _))))
+  | .record r, .item j, hr, hj =>
+    obtain ⟨i, hir, hi⟩ := hb.1 r hr
+    obtain ⟨r', _, hi2, hj2⟩ := hb.2 i hi j hj
+    exact GCC.Reach.pad (by decide)
+      (.step 2 (.record r) (.item i) (.item j) hir
+        (.step 1 (.item i) (.record r') (.item j) hi2
+          (.step 0 (.record r') (.item j) (.item j) hj2 (.refl _))))
+  | .record r, .record r', hr, hr' =>
+    obtain ⟨i, hir, hi⟩ := hb.1 r hr
+    obtain ⟨j, hjr, hj⟩ := hb.1 r' hr'
+    obtain ⟨rc, _, hi2, hj2⟩ := hb.2 i hi j hj
+    exact .step 3 (.record r) (.item i) (.record r') hir
+      (.step 2 (.item i) (.record rc) (.record r') hi2
+        (.step 1 (.record rc) (.item j) (.record r') hj2
+          (.step 0 (.item j) (.record r') (.record r') hjr (.refl _))))
+
+theorem gcc_navigable_in_five (g : GCC) (hb : LoopBuilt g) (a b : GNode)
+    (ha : g.Mem a) (hbm : g.Mem b) :
+    g.Reach 5 a b :=
+  GCC.Reach.pad (by decide) (gcc_navigable_in_four g hb a b ha hbm)
+
+/-! ### `top_ten_is_a_cascade`
+
+Restated (the draft was `True`): every entry after the first either needs an
+earlier entry, or names why it stands alone (a nonempty reason). -/
+
+def Cascade (inp : Inputs) (es : List Entry) : Prop :=
+  ∀ k (hk : k < es.length) (_ : 0 < k),
+    (∃ (j : Nat) (hj : j < k),
+        inp.needs (es.get ⟨k, hk⟩).item (es.get ⟨j, Nat.lt_of_lt_of_le hj (Nat.le_of_lt hk)⟩).item = true)
+    ∨ (es.get ⟨k, hk⟩).reason.terms ≠ []
+
+theorem top_ten_is_a_cascade (cs : List Character) (s : State)
+    (h : s.shown = rebuild cs s.inputs) :
+    Cascade s.inputs s.shown := by
   sorry
 
-/-- Turn-chain handoffs run forward: a reader triggered at an event reads
-only records written at or before it. -/
-theorem handoffs_follow_the_chain : True := by
-  sorry
+private def cascadeInp : Inputs :=
+  ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], []⟩
 
-/-- Key lemma (Joe, 2026-11-14): the GCC is connected and navigable from
-point to point in 5 or fewer hops. -/
-theorem gcc_navigable_in_five (g : GCC) :
-    ∀ a ∈ g.nodes, ∀ b ∈ g.nodes, reachableWithin g 5 a b := by
-  sorry
+private def plainEntry (i : EntityId) : Entry :=
+  ⟨i, 0, ⟨[], .giraffe⟩⟩
+
+/-- The cascade statement has teeth: a second entry that neither needs an
+earlier one nor says why it stands alone is not a cascade. -/
+example : ¬ Cascade cascadeInp [plainEntry 0, plainEntry 1] := by
+  intro h
+  have h1 := h 1 (by decide) (by decide)
+  cases h1 with
+  | inl he =>
+    obtain ⟨j, hj, hn⟩ := he
+    have hj0 : j = 0 := Nat.le_zero.mp (Nat.le_of_lt_succ hj)
+    subst hj0
+    exact absurd hn (by
+      have hf : cascadeInp.needs ([plainEntry 0, plainEntry 1].get ⟨1, by decide⟩).item
+          ([plainEntry 0, plainEntry 1].get ⟨0, by decide⟩).item = false := rfl
+      rw [hf]; exact fun h => Bool.noConfusion h)
+  | inr hn => exact hn rfl
 
 /-- Recomputing after each event agrees with rebuilding from the inputs. -/
 theorem incremental_eq_rebuilt (cs : List Character) (s : State) (e : Event) :
@@ -244,16 +409,38 @@ theorem primary_up_to_date_top_ten (cs : List Character) (v : Vocabulary)
     ∧ (∀ e ∈ s.shown, e.reason.explainable v) := by
   sorry
 
-/-- The top ten is a cascade in its own right (Joe: "not just presented as a
-ranking but as an up-to-date cascade"): every entry after the first is
-linked to an earlier one by `needs`, or names why it stands alone. -/
-theorem top_ten_is_a_cascade (s : State) : True := by
+/-! ### `focus_coherence`
+
+Restated (the draft was `True`): a relatedness measure over focused items —
+one needs the other, or both serve the same accepted benefit line — and a
+coherence score counting related pairs. Joe: focus over three related
+missions beats five unrelated ones. -/
+
+/-- Two items are related when one needs the other, or both serve the same
+operator-accepted benefit line. -/
+def related (inp : Inputs) (i j : EntityId) : Bool :=
+  (inp.needs i j || inp.needs j i)
+    || (inp.serves i).any (fun b =>
+          b.acceptedByOperator && (inp.serves j).contains b)
+
+/-- The coherence of a focus list: its number of ordered related pairs. -/
+def relatedPairs (inp : Inputs) (F : List (EntityId × Nat)) : Nat :=
+  F.foldl (fun acc x =>
+    F.foldl (fun a y => a + (if related inp x.1 y.1 then 1 else 0)) acc) 0
+
+theorem focus_coherence (inp : Inputs) (F G : List (EntityId × Nat))
+    (hF : 3 ≤ F.length) (hnd : (F.map Prod.fst).Nodup)
+    (hFrel : (F.map Prod.fst).Pairwise (fun i j => related inp i j))
+    (hGrel : (G.map Prod.fst).Pairwise (fun i j => !related inp i j)) :
+    relatedPairs inp G < relatedPairs inp F := by
   sorry
 
-/-- Focus coherence (Joe, after Salingaros): focus over a few related items
-is better than over more unrelated ones. Stated once a coherence measure is
-chosen; placeholder. -/
-theorem focus_coherence : True := by
-  sorry
+/-- The coherence statement has teeth: three items with no needs edges and
+no shared accepted benefit line score zero, so no focus over them can beat
+anything. -/
+example :
+    relatedPairs ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], []⟩
+      [(0, 1), (1, 1), (2, 1)] = 0 := by
+  rfl
 
 end Circus
