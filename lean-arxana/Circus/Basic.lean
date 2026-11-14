@@ -270,33 +270,100 @@ theorem every_read_has_a_writer_of_mem {h : Handoff} (hh : h ∈ wiring)
 
 /-! ### `handoffs_follow_the_chain`
 
-Restated (the draft was `True`): a record kind is never read at a turn event
-earlier than the event at which it enters the wiring — the earliest trigger
-attached to that kind, which is its producer's entry — and nothing is
-triggered outside the chain's five events. -/
+Restated (the draft was `True`; a plain "earliest trigger" version is also
+too weak, because a reading entry drags the minimum down itself): for every
+turn-triggered kind there is a first entry written by the producer (writer ≠
+reader), every entry of the kind has that same writer, and no entry's read
+happens before the first entry's rank. A consumer getting the kind from
+anyone else, or before it enters the chain, fails this. -/
 
-/-- The rank of a handoff's trigger; an untriggered handoff sits after the
-whole chain. -/
+/-- The rank of a trigger; an untriggered handoff sits after the whole
+chain. -/
+def triggerRank (o : Option TurnEvent) : Nat :=
+  o.elim 5 TurnEvent.rank
+
+/-- The rank at which a handoff reads. -/
 def entryRank (h : Handoff) : Nat :=
-  h.trigger.elim 5 TurnEvent.rank
+  triggerRank h.trigger
 
-/-- The earliest rank at which a kind appears in the wiring: the moment its
-record enters the chain. -/
-def earliest (k : RecordKind) : Nat :=
-  ((wiring.filter fun h => h.kind == k).map entryRank).foldl min 8
+def kindEntries (k : RecordKind) : List Handoff :=
+  wiring.filter fun h => h.kind == k
 
-theorem handoffs_follow_the_chain :
-    wiring.all (fun h =>
-      h.trigger.elim true (fun t =>
-        decide (earliest h.kind ≤ TurnEvent.rank t ∧ TurnEvent.rank t ≤ 4))) = true := by
+/-- The first entry of a kind in the chain: minimal `entryRank`. -/
+def firstOf (k : RecordKind) : Option Handoff :=
+  (kindEntries k).foldl (fun acc h =>
+    match acc with
+    | none => some h
+    | some w => if entryRank h < entryRank w then some h else acc) none
+
+def followsChain (fo : Option Handoff) (h : Handoff) : Bool :=
+  match fo with
+  | none => false
+  | some w =>
+      (w.writer == h.writer) && decide (w.writer ≠ w.reader)
+        && decide (entryRank w ≤ triggerRank h.trigger)
+
+def chainHandoffs (h : Handoff) : Bool :=
+  h.trigger.elim true fun _ => followsChain (firstOf h.kind) h
+
+theorem handoffs_follow_the_chain : wiring.all chainHandoffs = true := by
   decide
+
+private theorem pick_mem :
+    ∀ (l : List Handoff) (acc : Option Handoff) (w : Handoff),
+      (l.foldl (fun a h =>
+        match a with
+        | none => some h
+        | some v => if entryRank h < entryRank v then some h else a) acc
+        = some w) → w ∈ l ∨ acc = some w := by
+  intro l
+  induction l with
+  | nil => intro acc w h; exact Or.inr h
+  | cons x xs ih =>
+    intro acc w h
+    simp only [List.foldl_cons] at h
+    cases ih _ w h with
+    | inl hm => exact Or.inl (List.mem_cons_of_mem _ hm)
+    | inr hc =>
+      cases acc with
+      | none =>
+        simp only at hc
+        have hxw : w = x := Option.some.inj hc.symm
+        exact Or.inl (hxw ▸ List.mem_cons_self ..)
+      | some v =>
+        by_cases hxv : entryRank x < entryRank v
+        · simp only at hc
+          rw [if_pos hxv] at hc
+          have hxw : w = x := Option.some.inj hc.symm
+          exact Or.inl (hxw ▸ List.mem_cons_self ..)
+        · simp only at hc
+          rw [if_neg hxv] at hc
+          exact Or.inr hc
+
+theorem firstOf_mem {k : RecordKind} {w : Handoff} (h : firstOf k = some w) :
+    w ∈ wiring ∧ w.kind = k := by
+  simp only [firstOf] at h
+  cases pick_mem (kindEntries k) none w h with
+  | inr hn => exact absurd hn (by simp)
+  | inl hm =>
+    simp only [kindEntries, List.mem_filter] at hm
+    exact ⟨hm.1, of_decide_eq_true hm.2⟩
 
 theorem handoffs_follow_the_chain_of_mem {h : Handoff} (hh : h ∈ wiring)
     {t : TurnEvent} (ht : h.trigger = some t) :
-    earliest h.kind ≤ TurnEvent.rank t ∧ TurnEvent.rank t ≤ 4 := by
+    ∃ w ∈ wiring, w.kind = h.kind ∧ w.writer = h.writer ∧ w.writer ≠ w.reader
+      ∧ entryRank w ≤ TurnEvent.rank t := by
   have hall := List.all_eq_true.mp handoffs_follow_the_chain h hh
-  rw [ht] at hall
-  exact of_decide_eq_true (by simpa using hall)
+  rw [chainHandoffs, ht] at hall
+  have hf0 : followsChain (firstOf h.kind) h = true := hall
+  generalize hfo : firstOf h.kind = fo at hf0
+  cases fo with
+  | none => rw [followsChain] at hf0; exact Bool.noConfusion hf0
+  | some w =>
+    rw [followsChain] at hf0
+    simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq, ht] at hf0
+    have hfm := firstOf_mem hfo
+    exact ⟨w, hfm.1, hfm.2, hf0.1.1, hf0.1.2, hf0.2⟩
 
 /-! ### `gcc_navigable_in_five`
 
