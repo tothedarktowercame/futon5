@@ -138,6 +138,23 @@
     (unchecked-add (unchecked-multiply (long (or time 0)) (long width))
                    (long index)))))
 
+(def ^:private transmission-stream-tag
+  "P-008b §8 baseline (ruling R-b): the neutral-transmission stream tag,
+  0xB45E1E, distinct from 0x050F7A / 0x0B1E4D / 0x0A7711 / 0x0E8E8E. Same
+  key shape as the mutation stream: the tag is mixed into the seed BEFORE
+  the coordinates are added."
+  0xB45E1E)
+
+(defn neutral-draw-seed
+  "P-008b §8 baseline (ruling R-b): neutral-transmission stream key
+  mix-seed(mix-seed(seed XOR 0xB45E1E) + t*width + i)."
+  [seed time width index]
+  (ca/mix-seed
+   (unchecked-add
+    (ca/mix-seed (bit-xor (long (or seed 0)) transmission-stream-tag))
+    (unchecked-add (unchecked-multiply (long (or time 0)) (long width))
+                   (long index)))))
+
 (defn apply-transposition
   "P-008b §7 item 5, step 5b-B: p′ = τ∘p for τ = (a b). In the futon5 vector
   p[i] is the IMAGE of neighbourhood i, so composing on the left by τ swaps
@@ -175,6 +192,18 @@
       (throw (ex-info "unknown :mutation value"
                       {:mutation mutation
                        :available [:s8-transposition :e8-point]})))))
+
+(defn check-transmission!
+  "Fail-closed validation of the transmission option, called at the top of
+  transmit alongside check-mutation!. The only non-default value is
+  :neutral (P-008b §8 baseline); an unknown :transmission value throws
+  rather than silently behaving like today's score selection."
+  [transmission]
+  (when (some? transmission)
+    (when-not (= :neutral transmission)
+      (throw (ex-info "unknown :transmission value"
+                      {:transmission transmission
+                       :available [:neutral]})))))
 
 (defn mutation-draw
   "All mutation draws for cell INDEX inside ONE ca/with-seed scope on the
@@ -360,13 +389,29 @@
         selection-seed (+ (long (or (:seed state) 0))
                           (* (long (or (:time state) 0)) width)
                           index)
-        winner (if probabilities
-                 (sample-policy
-                  candidates probabilities
-                  (ca/with-mixed-seed
-                    (bit-xor selection-seed policy-stream-tag)
-                    (ca/rnd)))
-                 (first (sort-by :total candidates)))
+        score-winner (if probabilities
+                       (sample-policy
+                        candidates probabilities
+                        (ca/with-mixed-seed
+                          (bit-xor selection-seed policy-stream-tag)
+                          (ca/rnd)))
+                       (first (sort-by :total candidates)))
+        ;; P-008b §8 baseline (rulings R-a/R-b): under :transmission :neutral
+        ;; the winner is drawn UNIFORMLY from exactly the candidates the cell
+        ;; has at this step (3, or 4 when :blend-action? adds :blend), on the
+        ;; neutral stream -- independent of the scores, which are still
+        ;; computed and recorded. The score-chosen candidate is kept as
+        ;; :score-winner so the readout can count how often the neutral draw
+        ;; differs from selection. Candidate order (pinned by test):
+        ;; [:hold :adopt-left :adopt-right] with :blend appended last.
+        n-candidates (count candidates)
+        neutral-draw (when (= :neutral (:transmission state))
+                       (ca/with-seed (neutral-draw-seed (:seed state) (:time state)
+                                                        width index)
+                         (ca/rnd-int n-candidates)))
+        winner (if neutral-draw
+                 (nth candidates neutral-draw)
+                 score-winner)
         decision (cond-> {:index index :observation observation
                           :candidates candidates :winner winner}
                    probabilities
@@ -374,7 +419,12 @@
                           (mapv (fn [candidate probability]
                                   {:policy (:policy candidate)
                                    :probability probability})
-                                candidates probabilities)))
+                                candidates probabilities))
+                   neutral-draw
+                   (assoc :score-winner score-winner
+                          :transmission {:mode :neutral
+                                         :n n-candidates
+                                         :draw neutral-draw}))
         hunger (double (get-in decision [:winner :prediction :hunger]))]
     (assoc decision
            :lambda lambda
@@ -388,6 +438,9 @@
         ;; decision is computed -- unknown :mutation values, and :e8-point
         ;; without grid/*allow-end8?*, throw at the first transmit call.
         _ (check-mutation! mutation)
+        ;; P-008b §8 baseline: fail-closed before any decision, like the
+        ;; mutation config.
+        _ (check-transmission! (:transmission state))
         decisions (mapv #(cell-decision state %)
                         (range (count (:exotypes state))))
         ;; P-008b §7 item 5: when mutation is configured, draw the per-cell
@@ -529,6 +582,11 @@
       ;; rate, and mutation-hit? validates it.
       (contains? state :mutation)
       (assoc :mutation (:mutation state))
+      ;; P-008b §8 baseline: the transmission option is trajectory state in
+      ;; the same pattern -- dropped here would silently turn the baseline
+      ;; into score selection after the first step.
+      (contains? state :transmission)
+      (assoc :transmission (:transmission state))
       (contains? state :mu)
       (assoc :mu (:mu state)))))
 
