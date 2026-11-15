@@ -250,8 +250,16 @@
   {:seeds [11 22 33 44 55 66 77 88 99 111 222 333]
    :width 60 :steps 160})
 
-(defn- measure-menu-model [menu]
-  (let [{:keys [seeds width steps]} menu-model-config
+(def ^:dynamic *menu-model-seeds*
+  "The seeds a menu's rows are measured over. Bind it to measure with more
+   seeds; the default is the shipped resource's twelve. It is part of the
+   memoisation key, so two bindings never share rows."
+  (:seeds menu-model-config))
+
+(defn- measure-menu-model
+  ([menu] (measure-menu-model menu (:seeds menu-model-config)))
+  ([menu seeds]
+  (let [{:keys [width steps]} menu-model-config
         rows (mapcat
               (fn [seed]
                 (let [st (ca/with-seed seed
@@ -276,15 +284,18 @@
         mean (fn [g ch] (/ (reduce + (map #(get (second %) ch) g)) (double (count g))))
         channels [:activity :diversity :hunger]]
     {:menu menu
-     :config menu-model-config
+     :config (assoc menu-model-config :seeds (vec seeds))
      :sample-count (count rows)
      :global (into {} (for [ch channels] [ch (mean rows ch)]))
      :covered (set (map (comp first first) rows))
      :bins (into {} (for [[k g] (group-by first rows)]
                       [k (assoc (into {} (for [ch channels] [ch (mean g ch)]))
-                                :n (count g))]))}))
+                                :n (count g))]))})))
 
-(def menu-model
+(def ^:private menu-model*
+  (memoize (fn [menu seeds] (measure-menu-model (grid/check-menu menu) seeds))))
+
+(defn menu-model
   "P(next local observation | exotype, current local observation) for the
    exotypes of MENU, measured on a fixed heterogeneous grid drawn from MENU. This
    is what the shipped resource is for the named kinds, made per menu, so that a
@@ -296,8 +307,10 @@
    - A NAMED kind in a menu still reads the shipped resource, so the July menu
      scores exactly as before. Only permutation-vector entries read these rows.
 
-   Memoised per menu; one measurement is 12 seeds x 60 cells x 160 steps."
-  (memoize (fn [menu] (measure-menu-model (grid/check-menu menu)))))
+   Memoised per menu and seed list; one measurement is 60 cells x 160 steps
+   for each seed in `*menu-model-seeds*` (twelve by default)."
+  [menu]
+  (menu-model* menu *menu-model-seeds*))
 
 (defn covered-kinds
   "Exotypes for which the derived model actually has rows."

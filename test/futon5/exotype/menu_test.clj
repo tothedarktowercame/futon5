@@ -88,6 +88,15 @@
       (is (= (into {} (:bins shipped)) (:bins m)))
       (is (= (:global shipped) (:global m))))))
 
+(deftest more-measurement-seeds-give-other-rows
+  (let [menu [(as-vector :chaos) (as-vector :odd53)]
+        twelve (efe/menu-model menu)
+        three (binding [efe/*menu-model-seeds* [11 22 33]] (efe/menu-model menu))]
+    (is (= (* 12 60 159) (:sample-count twelve)))
+    (is (= (* 3 60 159) (:sample-count three)))
+    (is (not= (:bins twelve) (:bins three)))
+    (is (= twelve (efe/menu-model menu)) "the default binding still reads its own rows")))
+
 (deftest a-random-menu-runs
   (let [menu [[2 6 7 0 3 1 4 5] [1 0 4 3 5 6 2 7] [3 7 5 6 4 1 2 0]]
         end (last (take 31 (iterate tuning/step (state 5 menu))))]
