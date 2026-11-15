@@ -3,3 +3,4 @@ import Circus.Retro
 import Circus.Loop
 import Circus.Characters
 import Circus.Party
+import Circus.WMParty
