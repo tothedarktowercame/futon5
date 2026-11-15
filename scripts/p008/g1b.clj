@@ -11,12 +11,19 @@
 ;; final grid is looked up in {(kind->s8 kind) kind} over the 12 kinds; an
 ;; unmapped vector is a hard error (adoption only ever copies a neighbour's
 ;; exotype, so the 12 kinds' vectors are closed under the step).
-;; Tie-break note (§10.1): at 615c773 there is NO separate seeded tie-break in
-;; the S8 path; both paths share efe/cell-decision, whose winner is
-;; (first (sort-by :total [hold left right])) -- "hold, then left". So G1b
-;; compares like with like, and we count how many decisions in these 36 runs
-;; were exact ties (any non-winner candidate with :total equal to the
-;; winner's), as asked.
+;; Tie-break note (§10.1), CORRECTED 2026-11-15: there is no separate seeded
+;; tie-break in the S8 path, and at these betas the winner is NOT the argmin.
+;; The G1b states carry :policy-precision gamma (scripts/
+;; local_compressibility_grid.clj:128), so metaca-step -> tuning/step
+;; (self_tuning.clj:285) -> transmit (:223) -> cell-decision (:137) takes the
+;; softmax branch: softmax-probabilities (self_tuning.clj:119) over
+;; -gamma*total, then a seeded sample-policy draw (:202). efe/cell-decision's
+;; (first (sort-by :total ...)) is a different function and is not in this
+;; call chain. Equal totals get equal probability; the candidate order
+;; (hold, left, right, blend) only lays out the CDF inside sample-policy.
+;; So G1b still compares like with like (one shared decision rule), and the
+;; tie counts below measure degeneracy of :total, not tie-break sensitivity.
+;; Recount: scripts/p008/g1b_ties.clj.
 (require '[clojure.string :as str]
          '[futon5.exotype.efe :as efe]
          '[futon5.exotype.grid :as grid])

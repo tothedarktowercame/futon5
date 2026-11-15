@@ -1,0 +1,27 @@
+G1B-TIES 10.0 0.1 2026102000 1500 cells 375000 a-all-ties 334243 b-distinct-exotype 0 c-argmin-order-flips 0 d-drawn!=left-argmin 9643 d-within-b 0
+G1B-TIES 10.0 0.1 2026102001 1500 cells 375000 a-all-ties 334050 b-distinct-exotype 0 c-argmin-order-flips 0 d-drawn!=left-argmin 13122 d-within-b 0
+G1B-TIES 12.0 0.1 2026102000 1500 cells 375000 a-all-ties 341422 b-distinct-exotype 2 c-argmin-order-flips 2 d-drawn!=left-argmin 6202 d-within-b 2
+G1B-TIES 12.0 0.1 2026102001 1500 cells 375000 a-all-ties 340321 b-distinct-exotype 1 c-argmin-order-flips 1 d-drawn!=left-argmin 8788 d-within-b 0
+
+Column definitions (as computed by scripts/p008/g1b_ties.clj; fractions are
+column / cells, cells = 250 cells x 1500 steps = 375000 per run):
+
+- a (all ties): the decision has more than one candidate whose :total equals
+  the winner's :total (g1b_ties.clj:57-58) -- same definition as the G1b tie
+  counter in scripts/p008/g1b.clj:71-73.
+- b (distinct-exotype ties): of (a), the tied set (all candidates at the
+  winner's :total) names at least two distinct :candidate-exotype values
+  (g1b_ties.clj:59).
+- c (argmin-order flips): of (b), the first-of-sort argmin over [hold, left,
+  right, blend] (left-order, g1b_ties.clj:48, 51-53) differs from the argmin
+  over the mirrored order [hold, right, left, blend] (right-order, :49)
+  (g1b_ties.clj:60-62).
+- d (drawn != left-argmin): the actually drawn softmax winner's
+  :candidate-exotype differs from the left-first argmin (g1b_ties.clj:63-64).
+- d-within-b (d-in-b): of (b), those where the drawn winner differs from the
+  left-first argmin (g1b_ties.clj:69).
+
+Counting rule source: claude-1's packet text (bell invoke-1794722599460-
+20803-76db1e1d, 2026-11-15). Deterministic (seeded softmax draw), not rerun
+since; this file is the verbatim /tmp/g1b-ties.log output plus these
+definitions.
