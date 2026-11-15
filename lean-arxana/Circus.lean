@@ -6,3 +6,4 @@ import Circus.Party
 import Circus.WMParty
 import Circus.Freshness
 import Circus.LateWrites
+import Circus.Supersession
