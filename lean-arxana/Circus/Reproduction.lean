@@ -108,7 +108,11 @@ theorem reproduce_from_receipt (cs : List Circus.Character) (i : ChainInput)
     (available : ∃ s, lookup (hash (snapshot i)) = some s ∧ hash s = hash (snapshot i))
     (faithful : DigestFaithful hash lookup (snapshot i)) :
     reproduce cs i.bridge hash lookup
-      (recordReceipt hash i (renderChain cs i)) = .ok (observe (renderChain cs i)) := by sorry
+      (recordReceipt hash i (renderChain cs i)) = .ok (observe (renderChain cs i)) := by
+  obtain ⟨recovered, found, digest⟩ := available
+  have eq := faithful recovered found digest
+  subst recovered
+  simp [reproduce, checkedLookup, recordReceipt, found, restore_snapshot]
 
 /-- VERIFY obligation 5, "Independent acceptance": unavailable or corrupt
 recorded content is a named failure, never a purported reproduced output. -/
@@ -117,7 +121,12 @@ theorem reproduction_mismatch_is_typed (cs : List Circus.Character) (b : Bridge)
     (lookup r.replayDigest = none → reproduce cs b hash lookup r =
       .error (.missingContent .replaySnapshot)) ∧
     (∀ s, lookup r.replayDigest = some s → hash s ≠ r.replayDigest →
-      reproduce cs b hash lookup r = .error (.digestMismatch .replaySnapshot)) := by sorry
+      reproduce cs b hash lookup r = .error (.digestMismatch .replaySnapshot)) := by
+  constructor
+  · intro missing
+    simp [reproduce, checkedLookup, missing]
+  · intro recovered found mismatch
+    simp [reproduce, checkedLookup, found, mismatch]
 
 /-- Agent identities are reader identities, not character roles: two operators
 must remain distinguishable. These strings require authentication in live receipts. -/
@@ -151,7 +160,19 @@ theorem implementer_account_not_witness (cs : List Circus.Character) (i : ChainI
     (recorded : r.receipt.replayDigest = hash (snapshot i))
     (faithful : DigestFaithful hash lookup (snapshot i))
     (accepted : Accepted cs i.bridge hash lookup r) :
-    r.receipt.output = observe (renderChain cs i) := by sorry
+    r.receipt.output = observe (renderChain cs i) := by
+  obtain ⟨_, actual, claimed, _⟩ := accepted
+  rw [claimed] at actual
+  unfold reproduce checkedLookup at actual
+  rw [recorded] at actual
+  cases found : lookup (hash (snapshot i)) with
+  | none => simp [found] at actual
+  | some recovered =>
+    by_cases digest : hash recovered = hash (snapshot i)
+    · have eq := faithful recovered found digest
+      subst recovered
+      simpa [found, restore_snapshot] using actual
+    · simp [found, digest] at actual
 
 /- Live-store conformance: mapping corpus/source evidence to futon1b, passes to
 Giraffe run storage, rendered output to party.json, and deliveries to the turn
