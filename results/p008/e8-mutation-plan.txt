@@ -1,0 +1,219 @@
+# e8 path step 5a — V1 mutation: discovery report (no source changes)
+
+DESIGN-P008b §7 item 5 (`:s8-transposition`, `:e8-point`, per-cell rate mu,
+draws through `ca/rnd-int` at the exotype transmission step). All quotes are
+from worktree ~/worktrees/futon5/p008 at head 380c464. Discovery only.
+
+## 1. Where is "the exotype transmission step"?
+
+The engine a P-008 run uses is `scripts/local_compressibility_grid.clj`
+(width 250, `checked-metaca-step` at its line 130), which calls
+`futon5.exotype.self-tuning/step` (self_tuning.clj:323). `step` first calls
+`transmit` (self_tuning.clj:259):
+
+    (defn transmit [state]
+      (let [decisions (mapv #(cell-decision state %)
+                            (range (count (:exotypes state))))]
+        {:exotypes (mapv #(get-in % [:winner :candidate-exotype]) decisions) ...}))
+
+`transmit` READS the whole `state` (via `cell-decision`, self_tuning.clj:170:
+lambdas, exotypes, genotype, phenotype, and all score-shaping keys) and WRITES
+the next `:exotypes` vector (one slot per cell = the winning candidate), the
+next `:lambdas`, and the decision records. That is the exotype transmission
+step; mutation belongs exactly there — after the winner is chosen, before the
+map is returned — so a mutated operator is a property of the transmitted map,
+not of any cell's decision record.
+
+Order of RNG draws today, per step (IMPORTANT: there is no sequential stream —
+every draw is independently keyed by (seed, time, width, index) through
+`ca/with-mixed-seed` / `ca/mix-seed`):
+
+ a. policy selection, per cell: `cell-decision` self_tuning.clj:238-242, draw
+    = `(ca/rnd)` inside `(ca/with-mixed-seed (bit-xor selection-seed
+    policy-stream-tag))` where `selection-seed = seed + time*width + index`
+    and `policy-stream-tag` is 0x050F7A (:109).
+ b. blend coin, per cell, in `genotype-step` self_tuning.clj:300-305:
+    `(ca/rnd) < beta` under `bit-xor draw-seed blend-stream-tag` (0x0B1E4D, :99),
+    only when `beta` is positive.
+ c. apply coin, self_tuning.clj:307-312: `(ca/rnd) < p` under `bit-xor
+    draw-seed apply-stream-tag` (0x0A7711, :104), only when `p < 1`.
+ d. propagator position draw k, self_tuning.clj:316:
+    `(.nextInt (java.util.Random. (ca/mix-seed draw-seed)) 8)` — note this one
+    is a FRESH `java.util.Random` per (cell, step), not `ca/rnd-int` under the
+    dynamic RNG.
+
+with draw-seed = `seed + time*width + index` (self_tuning.clj:298). So the
+established discipline is per-cell keyed streams separated by xor tags; a
+mutation stream is a new tag in the same family.
+
+## 2. How does per-run configuration reach `transmit`?
+
+Directly through the state map — no dynamic var is needed. Unlike `sigma-of`
+(which receives only the exotype), `transmit`/`cell-decision` receive the
+whole state, and score-shaping controls are already threaded as state keys:
+`step` (self_tuning.clj:323) copies each control into the advanced state only
+when present (`(contains? state :blend-strength)` etc., self_tuning.clj:341+
+"Score-shaping controls are trajectory state. Dropping one here silently
+turns it off after the first step"). The smallest change in the same shape:
+
+ - `metaca-state` (local_compressibility_grid.clj:115-128) gains nothing by
+   default; a run adds `:mutation :s8-transposition|:e8-point` and `:mu 1e-4`.
+ - `transmit` reads `(get state :mutation)` / `(get state :mu)`; `step` copies
+   both keys through the same `contains?` cond-> so they survive step 1.
+
+The `*allow-end8?*` dynamic var is still needed for the `sigma-of` call path
+under `:e8-point` (item 1b wiring), but the MUTATION CONFIG itself needs no
+dynamic var. This differs from the flag experience only because `transmit`
+already has the state; the lesson of step 1b (no config reaches `sigma-of`)
+does not apply to `transmit`.
+
+## 3. RNG stream discipline
+
+OFF must be byte-identical to today: when `:mutation` is absent, draw NOTHING
+(no Bernoulli at all), exactly like the blend/apply coins that are skipped
+when beta=0 / p=1 (self_tuning.clj:302, 308). G1 hash unchanged by
+construction, verified by the existing g1b_one recheck.
+
+ON: one Bernoulli per cell per step, keyed by its own xor tag so it cannot
+perturb draws (a)-(d):
+
+    (ca/with-mixed-seed (bit-xor draw-seed mutation-stream-tag) ...)
+    ; new tag, e.g. 0x0E8E8E, following blend/apply/policy (:99,:104,:109)
+
+`ca/rnd-int` returns integers, so the rate must be quantised. Design μ values
+are 1e-4 and 1e-3; proposed integer scheme, exact for both:
+
+    (let [scale 10000] (< (ca/rnd-int scale) (long (Math/round (* scale mu)))))
+
+i.e. hit iff `(ca/rnd-int 10000)` returns 0 at μ=1e-4 and 0..9 at μ=1e-3 —
+exactly one integer draw per cell per step whether or not it hits (do NOT
+short-circuit the draw when μ is small; a fixed one-draw-per-cell stream is
+reproducible and analysable). Conditional on a hit, the mutation's own draws
+(`:e8-point` needs k and j; `:s8-transposition` needs the pair a<b) come from
+further `ca/rnd-int` calls in the SAME mixed-seed scope, so a hit consumes a
+deterministic number of draws given its outcome count. Order: the mutation
+Bernoulli runs at the START of transmit's per-cell winner processing or at the
+END on the winner's vector — end is simpler and matches "at the exotype
+transmission step": draw after the winning exotype is known, mutate the
+returned vector. One caveat to flag to the design: with-mixed-seed scopes must
+not nest inside the (a)/(d) scopes; a fresh scope per cell after the winner
+choice is clean.
+
+## 4. Composition convention
+
+In the futon5 vector representation, p[i] means "neighbourhood named by
+truth-table-3[i] maps to truth-table-3[p[i]]" (grid.clj s8->sigma:118-124);
+as functions, p IS σ.
+
+ - "apply the transposition to the vector's values" (map τ over the values):
+   `p'[i] = τ(p[i])` for all i. Since (p')[i] = τ(σ(i)) as neighbourhood maps,
+   this is σ' = τ ∘ σ — the design's "σ ← τ∘σ". Concretely: swap every
+   occurrence of the value a with the value b in the vector.
+ - The other order, σ' = σ ∘ τ: `p'[i] = p[τ(i)]` — swap the ENTRIES at
+   positions a and b.
+
+Both stay in S8 (a transposition composed either way with a permutation is a
+permutation). The design text (τ∘σ) means the FIRST: relabel the images, i.e.
+swap values in the vector, not entries at positions. This is worth a test
+because the prose "apply the transposition to the vector" is ambiguous and the
+two conventions give different stationary behaviours? — no: both are standard
+random-transposition-style chains whose stationary distribution on S8 is
+uniform, but the STEP-LEVEL matrices differ, so the convention must be pinned
+by a test (see 7).
+
+## 5. Where `*allow-end8?*` must sit for `:e8-point`
+
+Step-1b finding: caller dynamic bindings do NOT convey into the slice
+harness's pool tasks (slice_harness.clj:181 `.submit pool ... run-fn`), so a
+binding around the harness call is void inside a task. Therefore the binding
+must sit INSIDE the run function that the pool executes — either at the top of
+the per-seed run-fn (`(binding [grid/*allow-end8?** true] (trajectory ...))`)
+or inside the mutation operator itself around the write of the mutated vector.
+Binding inside the mutation helper is the smaller blast radius but hides the
+flag from every other sigma-of call the run makes; binding at the top of
+run-fn is the honest one (the whole run is an End(8) run) and matches the
+docstring of `*allow-end8?*` (grid.clj:158: "Bound around an End(8)
+trajectory").
+
+Configuration-time throw: `:e8-point` with the flag off must throw at config
+time, not at the first non-injective write. Since the flag is bound inside
+run-fn, the check also belongs at the top of run-fn BEFORE the first step (or
+in a small `assert-mutation-config!` called by the run constructor):
+requesting `:mutation :e8-point` while NOT binding `*allow-end8?*` true throws
+immediately with the existing message family. The fail-closed guards from
+step 3b remain the backstop if the check is bypassed.
+
+## 6. Vocabulary representation and cache/memo growth
+
+Exotypes are stored per cell as plain values — vectors for S8/E8, keywords for
+the 12 kinds (grid.clj `initial-grid`:521+ returns a vector of vectors;
+`transmit` returns winners directly). There is NO per-run vocabulary index, so
+a mutated operator is simply a new vector in that cell's slot.
+
+Cache behaviour as the number of distinct vectors grows (μ=1e-3, width 250,
+T=3000 → ≈750 mutation events per run, most creating new vectors):
+
+ - `self_tuning/s8-transition-memo` (self_tuning.clj:83): keys are
+   [sigil exotype k]; a run touches ≈ events × 1 sigil × 1 k ≈ hundreds of
+   entries per run — negligible.
+ - `self_tuning/s8-score-memo` (:68): keys [candidate activity diversity] with
+   3×3 observation grid → ≈ events × up-to-9 entries, each an `efe/score-policy`
+   call routed through the pooled S8 predictor — thousands of entries, fine.
+ - `policy_epistemic/s8-pair-value-memo` (policy_epistemic.clj:79): keys are
+   [own candidate] PAIRS. Each step scores ~3 candidates per cell against the
+   cell's own exotype; with an open vocabulary the distinct-pair count can
+   reach O(events) ≈ 750 per run — each value cheap (exact-pair-value), fine.
+ - `chain_risk/s8-column-memo` (chain_risk.clj:77): each DISTINCT exotype
+   costs one `kind-column` (256 successors × 12 markov steps) and caches a
+   256-double column (~2 KB). At ≈750 distinct vectors that is ≈1.5 MB of
+   columns and ≈750 × ~10 ms of compute ONCE each — acceptable, but this is
+   the cache that makes E8 runs slower than S8 runs, and it is only consulted
+   when `:chain-risk?` is on.
+ - plain `memoize` caches never evict, but they are per-JVM, and a run is one
+   JVM; worst case above stays in the MBs. No action needed for V1.
+
+The genuinely unbounded growth would come from `fg-class` (40,320-conjugation
+min per NEW vector, ~14 ms after the step-2 fix, grid.clj fg-class) if V1
+arms ever classify per step; item 5 does not require it, and §12(e)'s AHU
+note exists for exactly that scale.
+
+## 7. Tests I would write (list only)
+
+ 1. OFF byte-identical: `:mutation` absent (and present-but-nil) → G1 hash
+    `957e93e21609fb79` unchanged (extend g1b_one protocol).
+ 2. Transposition preserves permutation-ness: every mutated vector from a
+    permutation is a permutation (`grid/perm?`), 100 seeded hits.
+ 3. Composition pinned: the mutated vector equals the VALUES-swapped vector
+    (τ∘σ convention), not the positions-swapped one, on a hand case.
+ 4. Stationary distribution: the `:s8-transposition` chain from a fixed start
+    approaches uniform on S8 — chi-square over cycle types at T=20000 within
+    a stated bound (or a symmetry check: the chain's step operator commutes
+    with left/right composition by any fixed permutation, which forces the
+    uniform stationary distribution without a long run).
+ 5. Point mutation leaves S8 with probability 7/8: from a permutation, count
+    over N=10000 seeded hits that the result is non-injective; expect
+    8750 ± binomial (that the mutated cell's k had τ... i.e. f(k)=j≠f(k)
+    collides) — assert within 4 SE.
+ 6. Rate: over a long run (e.g. 250 cells × 3000 steps at μ=1e-3), the hit
+    count is within a binomial interval of μ·width·T.
+ 7. Config-time throw: requesting `:e8-point` without the flag bound throws
+    the config error immediately, with zero engine steps run; the same run
+    with the flag bound runs (and the step-3b guard tests remain the backstop).
+
+## Where the design text does not fit the code
+
+ - "Draws go through `ca/rnd-int`": the engine's propagator draw today is NOT
+   `ca/rnd-int` under the dynamic RNG — it is `.nextInt` on a fresh
+   `java.util.Random` per (cell, step) (self_tuning.clj:316). Using
+   `ca/rnd-int` for the mutation stream is fine (and matches `random-s8`'s
+   convention), but the mutation stream will be the FIRST keyed stream in this
+   engine to use `ca/rnd-int`; say so in the registration.
+ - "at the exotype transmission step": `transmit` returns winners; the actual
+   genotype write happens later in `genotype-step`. Placing mutation in
+   `transmit` (on the returned vector) means the mutation is visible to the
+   decision record only as a post-hoc edit; the record's `:winner
+   :candidate-exotype` then disagrees with the transmitted vector. Recommend
+   recording the mutation in the decision (e.g. `:mutation-hit`) for audit.
+ - μ quantisation: `ca/rnd-int` forces an integer scheme; the exact-at-both-μ
+   scheme in §3 above assumes the scale 10000; any other μ (e.g. 5e-5) would
+   need rounding — register the scheme, not just the rate.
