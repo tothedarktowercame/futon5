@@ -161,6 +161,30 @@
   0x0A7711 / 0x0E8E8E / 0xB45E1E."
   0x57A712)
 
+(defn frame-maps
+  "P-008b §4 item 8 (exotype origin/main 8538186): the 299-map sampling
+  frame from the PARSED frame-file content (the map read from
+  results/p008/e8-frame-300.edn). The file's :entries carry 303 entries:
+  the 299 stratified-frame maps plus 4 :source :bug-class calibration
+  targets OUTSIDE the frame. This is the one shared definition of the
+  frame (e8strat-draw review finding): file order, bug-class entries
+  removed, as a vector. Throws unless exactly 299 remain and every
+  entry's :vector is a valid End(8) vector (8 entries, each 0..7)."
+  [frame-file-content]
+  (let [entries (remove #(= :bug-class (:source %)) (:entries frame-file-content))
+        frame (vec entries)]
+    (when-not (= 299 (count frame))
+      (throw (ex-info "frame file must yield exactly 299 maps after removing :bug-class entries"
+                      {:count (count frame)})))
+    (doseq [entry frame]
+      (let [v (:vector entry)]
+        (when-not (and (vector? v)
+                       (= 8 (count v))
+                       (every? #(and (integer? %) (<= 0 % 7)) v))
+          (throw (ex-info "frame entry is not a valid End(8) vector"
+                          {:vector v})))))
+    frame))
+
 (defn frame-draw-key
   "P-008b §4 item 4: the scope key for the i-th draw (i = 0..11) of the
   E8-2 per-run vocabulary draw, mix-seed(mix-seed(seed XOR 0x57A712) + i)."

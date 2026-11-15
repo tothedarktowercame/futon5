@@ -24,13 +24,10 @@
     (apply str (map #(format "%02x" %) d))))
 
 (def ^:private frame
-  "The 299-map sampling frame in frame-file row order: the :entries of the
-  frame file MINUS the 4 :source :bug-class entries (they are calibration
-  targets outside the 299)."
-  (->> (edn/read-string (slurp "results/p008/e8-frame-300.edn"))
-       :entries
-       (filter #(not= :bug-class (:source %)))
-       vec))
+  "The 299-map sampling frame via the shared helper st/frame-maps (the
+  :entries of the frame file minus the 4 :source :bug-class entries, file
+  order)."
+  (st/frame-maps (edn/read-string (slurp "results/p008/e8-frame-300.edn"))))
 
 (def frame-set (set frame))
 
