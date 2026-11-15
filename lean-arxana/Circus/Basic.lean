@@ -297,7 +297,11 @@ inductive Term
   | namesConv (f : String) (n : Nat)
 deriving DecidableEq, Repr
 
-/-- `render` reproduces the script's exact strings. -/
+/-- `render` reproduces the script's strings term by term. The script joins
+terms with "; ", except Merlin's first three terms (`featureIs`,
+`convergence`, `withinTwoHops`), which `merlin_order` writes as ONE clause:
+"is F (convergence N, unfinished work within two hops)". The facts are the
+same; only the grouping differs (giraffe_party.py:178). -/
 def Term.render : Term → String
   | .lit s => s
   | .unblocksCount n => s!"unblocks {n} item(s)"
