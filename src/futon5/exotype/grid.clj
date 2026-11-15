@@ -123,6 +123,37 @@
          (throw (ex-info "S8 exotype is not a permutation of 0..7" {:exotype p})))
        (into {} (map-indexed (fn [k j] [(nth tt k) (nth tt (long j))]) p))))))
 
+;; --- P-008b §7 item 1: End(8) representation (flag-gated, not yet wired) ---
+;; e8->sigma is the same table construction as s8->sigma WITHOUT the
+;; permutation check: DESIGN-P008b.md §7 item 1. It accepts any 8-vector with
+;; integer entries in 0..7 (all of End(8)); anything else still throws. It is
+;; NOT reachable from sigma-of yet: no config reaches sigma-of today (see the
+;; call-site list in LEDGER/commit). Non-injective maps may hit code that
+;; assumes a permutation once wired: gen/rule-permute via grid/apply-exotype
+;; (grid.clj:221,232) sends position k to f(k) and is fine, but
+;; chain_risk/positional (chain_risk.clj:32), policy-epistemic pair/blend
+;; values, self_tuning/s8-score and s8-transition (self_tuning.clj:79), and
+;; efe/score-policy's 1/8 and inverse-map assumptions (items 2-3 of §7) do
+;; not hold for non-injective f. Do not fix here.
+
+(defn perm?
+  "Is EXOTYPE a permutation of 0..7 (an S8 vector)? DESIGN-P008b §7 item 1."
+  [exotype]
+  (and (vector? exotype)
+       (= 8 (count exotype))
+       (every? #(and (integer? %) (<= 0 (long %) 7)) exotype)
+       (= (sort exotype) (range 8))))
+
+(def ^:private e8->sigma
+  (memoize
+   (fn [f]
+     (let [tt (vec ca/truth-table-3)]
+       (when-not (and (vector? f) (= 8 (count f))
+                      (every? #(and (integer? %) (<= 0 (long %) 7)) f))
+         (throw (ex-info "E8 exotype must be a vector of 8 integer entries in 0..7"
+                         {:exotype f})))
+       (into {} (map-indexed (fn [k j] [(nth tt k) (nth tt (long j))]) f))))))
+
 (defn sigma-of
   "Neighbourhood map for EXOTYPE: a named kind (looked up in `propagators`) or an
    S8 vector (converted). The single access point for sigma under P-008."

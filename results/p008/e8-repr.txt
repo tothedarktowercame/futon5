@@ -1,0 +1,52 @@
+P-008b §7 item 1 -- representation only (SHEET reference label applies to the
+engine; these runs are unit tests + one G1b reproduction seed).
+
+Tests (futon5.exotype.e8-repr-test):
+Ran 4 tests containing 66 assertions.
+0 failures, 0 errors.
+  perm?: true on permutations, false on [0 0 1 2 3 4 5 6], wrong length,
+    out-of-range and non-integer entries, and non-vectors.
+  e8->sigma = s8->sigma exactly on 50 seeded permutations (seed 20261115,
+    #'grid/random-s8).
+  sigma-of on [0 0 1 2 3 4 5 6] throws "S8 exotype is not a permutation of
+    0..7" (existing message, unchanged; no flag exists yet -- see STOP).
+    e8->sigma on it: position 0 (f(0)=0) maps truth-table-3[0] to itself;
+    position 7 (f(7)=6) maps truth-table-3[7] to truth-table-3[6].
+  e8->sigma still throws on out-of-range entries, wrong length, non-vectors.
+
+G1 unaffected (test 4): scripts/p008/g1b_one.clj, one seed, beta 10, kappa
+0.1, seed 2026102000, T 1500:
+G1B-ONE 10.0 0.1 2026102000 1500 957e93e21609fb79 kw 957e93e21609fb79 recorded 957e93e21609fb79 MATCH div nil
+Recorded value 957e93e21609fb79 from /tmp/g1-p008-10.0.txt (G1 run record,
+same protocol as scripts/p008/g1b.clj).
+
+STOP REPORT (packet clause: "if it does not [reach], STOP"):
+No config reaches grid/sigma-of today. Every call site passes only the
+exotype:
+  - grid.clj:221,232  apply-exotype / transfer  (sigil, exotype, draw-seed)
+  - self_tuning.clj:79  s8-transition           (memoized [sigil exotype k])
+  - efe.clj:144   legacy baseline rows          (keyword kinds only)
+  - efe.clj:291   score-policy, S8 branch       (candidate, observation, options)
+  - efe.clj:319   score-policy, bin branch      (same)
+  - chain_risk.clj:32  positional               (kind)
+Options for the :allow-end8? dispatch (design choice for claude-1 and
+lon-claude-4, not decided here):
+  A. Dynamic binding: a ^:dynamic *allow-end8?* in grid.clj, default false;
+     sigma-of consults it. No signature changes anywhere; e8 runs bind it
+     once around the trajectory. Cost: implicit state, testable but hidden.
+  B. A second arity of sigma-of ([exotype allow-end8?] or a separate
+     grid/sigma-of-e8 entry point) used only by the e8 code paths as they
+     are built in §7 items 2-5, leaving the existing one-argument sigma-of
+     and all current call sites untouched (fail-closed by construction).
+     Cost: new e8 call sites must remember to use it; an audit/test asserts
+     no e8 vector reaches the one-argument path in a flag-on run.
+
+Places a non-injective f would reach permutation-assuming code once wired
+(§7 items 2-3 own the fixes; listed, not fixed):
+  - chain_risk/positional + gen/sigma-positional: builds inverse-position
+    tables assuming a bijection (chain_risk.clj:32).
+  - policy-epistemic/pair-value and blend-value: pair terms assume each
+    neighbourhood image occurs once.
+  - self_tuning/s8-score and s8-transition: 1/8 weights and index inverse.
+  - efe/score-policy S8/bin branches: s8-predictor rows are keyed by kind
+    or per-permutation summaries; non-injective vectors have no rows.
