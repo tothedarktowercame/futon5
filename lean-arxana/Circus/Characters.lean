@@ -129,7 +129,10 @@ theorem toEntries_items {α : Type} (who : Agent) (termsOf : α → List Term)
 /-- The producer defaults a missing rank to zero when rendering Thor. This
 is a reported default, not a reconstructed position in the pass order. -/
 def thorTerms (pf : PassFacts) (x : EntityId) : List Term :=
-  [.unblocksCount (pf.unblocks x), .coneCount (pf.cone x), .passRank ((pf.rank x).getD 0)]
+  [.unblocksCount (pf.unblocks x), .coneCount (pf.cone x),
+    match pf.rank x with
+    | some r => .passRank r
+    | none => .noPassRank]
 
 /-- Thor's order: Giraffe's pass order, first `top` (`thor_order`). -/
 def thorOrder (pf : PassFacts) (top : Nat) : List Entry :=
@@ -372,7 +375,7 @@ NEW: computed strings are welcome; their typed values must equal source facts.
 -/
 
 def thorFacts (pf : PassFacts) (x : EntityId) : ReasonFacts :=
-  { unblocks := pf.unblocks x, cone := pf.cone x, rank := some ((pf.rank x).getD 0) }
+  { unblocks := pf.unblocks x, cone := pf.cone x, rank := pf.rank x }
 def thyraFacts (pf : PassFacts) (p : Pending) : ReasonFacts :=
   { rank := pf.rank p.item, level := p.level, harm := p.harm }
 def merlinFacts (r : MerlinRow) : ReasonFacts :=
@@ -384,8 +387,8 @@ def questorFacts (best : Pending → Option (FeatureId × Nat)) (p : Pending) : 
 theorem thor_terms_faithful (pf : PassFacts) (x : EntityId) :
     ∀ t ∈ thorTerms pf x, t.faithful (thorFacts pf x) := by
   intro t ht
-  simp [thorTerms] at ht
-  rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, thorFacts]
+  cases hr : pf.rank x <;> simp [thorTerms, hr] at ht <;>
+    rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, thorFacts, hr]
 
 theorem thyra_terms_faithful (pf : PassFacts) (p : Pending) (harm : p.harm.isSome = true) :
     ∀ t ∈ thyraTerms pf p, t.faithful (thyraFacts pf p) := by
@@ -502,12 +505,18 @@ example : Term.withinTwoHops ∉ thyraTerms exPass exPending := by decide
 theorem thor_terms_all_computed (pf : PassFacts) (x : EntityId) :
     ∀ t ∈ thorTerms pf x, t.isLiteral = false := by
   intro t ht
-  simp [thorTerms] at ht
-  rcases ht with rfl | rfl | rfl <;> rfl
+  cases hr : pf.rank x <;> simp [thorTerms, hr] at ht <;>
+    rcases ht with rfl | rfl | rfl <;> rfl
 
--- Additional producer alignment: Thor defaults absent rank; Merlin suppresses
--- the named phrase at zero even when the best-named feature exists.
-example : Term.passRank 0 ∈ thorTerms ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17 := by decide
+-- Thor with no pass rank says so (claude-13 review 2026-11-15: the producer
+-- printed "Giraffe pass rank 0", a false claim; producer and model fixed to
+-- "no Giraffe pass rank"). Merlin suppresses the named phrase at zero even
+-- when the best-named feature exists.
+example : Term.noPassRank ∈ thorTerms ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17 ∧
+    Term.passRank 0 ∉ thorTerms ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17 := by decide
+-- TEETH: the old default would claim rank 0 against a basis with no rank.
+example : ¬ (Term.passRank 0).faithful (thorFacts ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17) := by
+  simp [Term.faithful, thorFacts]
 example : Term.namesHalved "toy" 0 ∉
     merlinTerms ⟨17, .partly, some "own-toy", 2, 0, some "toy"⟩ := by decide
 

@@ -283,6 +283,7 @@ inductive Term
   | unblocksCount (n : Nat)
   | coneCount (n : Nat)
   | passRank (n : Nat)
+  | noPassRank
   | notInPass (level : Nat)
   | harmLine (h : String)
   | featureIs (f : String)
@@ -300,6 +301,7 @@ def Term.render : Term → String
   | .unblocksCount n => s!"unblocks {n} item(s)"
   | .coneCount n => s!"cone of {n} behind it"
   | .passRank n => s!"Giraffe pass rank {n}"
+  | .noPassRank => "no Giraffe pass rank"
   | .notInPass l => s!"not in the Giraffe pass; pending level {l}"
   | .harmLine h => s!"on harm line {h}"
   | .featureIs f => s!"is {f}"
@@ -331,6 +333,7 @@ def Term.faithful (f : ReasonFacts) : Term → Prop
   | .unblocksCount n => n = f.unblocks
   | .coneCount n => n = f.cone
   | .passRank n => f.rank = some n
+  | .noPassRank => f.rank = none
   | .notInPass n => f.rank = none ∧ n = f.level
   | .harmLine h => f.harm = some h
   | .featureIs x => f.feature = some x
