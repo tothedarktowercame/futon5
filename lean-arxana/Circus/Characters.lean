@@ -282,18 +282,22 @@ theorem thyra_monotone (pf : PassFacts) (ps : List Pending) (top : Nat)
 /-! ## Merlin: convergence, half-weighted -/
 
 /-- A row of Merlin's input: the feature the item IS (none = typed absence,
-dropped), that feature's convergence, half the convergence of the strongest
-unfinished feature the item names (with its slug). -/
+dropped), that feature's convergence, and the convergence of the strongest
+unfinished feature the item names (with its slug). The script's score is
+own + named/2, which can be half-integral (e.g. 27 + 27/2 = 40.5 for a live
+item, found by scripts/giraffe_party_conformance.py, futon3c 12dd5516d), so the
+model keeps the DOUBLED score 2·own + named: exact in Nat, same order. -/
 structure MerlinRow where
   item : EntityId
   label : PendingLabel
   feature : Option FeatureId
   own : Nat
-  half : Nat
+  named : Nat
   namedBest : Option FeatureId
 deriving DecidableEq, Repr
 
-def MerlinRow.score (r : MerlinRow) : Nat := r.own + r.half
+/-- Twice the script's score (own + named/2), so half-points are exact. -/
+def MerlinRow.score (r : MerlinRow) : Nat := 2 * r.own + r.named
 
 /-- The script drops "may be no longer wanted" rows and rows whose item is no
 lexicon feature (the typed absence, recorded separately, never rank 0). -/
@@ -303,7 +307,7 @@ def merlinKept (r : MerlinRow) : Bool :=
 def merlinTerms (r : MerlinRow) : List Term :=
   [.featureIs (r.feature.getD ""), .convergence r.own, .withinTwoHops] ++
     (match r.namedBest with
-      | some f => [.namesHalved f (2 * r.half)]
+      | some f => [.namesHalved f r.named]
       | none => [])
 
 /-- Merlin's order: kept rows, first `top` (`merlin_order`); the input is
@@ -323,8 +327,8 @@ theorem merlin_monotone_score (rows : List MerlinRow) (top : Nat)
 /-- FINDING: Merlin is NOT monotone in the item's own convergence. The score
 adds HALF the strongest named convergence, so an item with lower own
 convergence but a strong named feature outranks it. -/
-private def rowLow : MerlinRow := ⟨3, .partly, some "g", 3, 5, some "g"⟩   -- own 3, score 8
-private def rowHigh : MerlinRow := ⟨5, .partly, some "f", 5, 0, none⟩      -- own 5, score 5
+private def rowLow : MerlinRow := ⟨3, .partly, some "g", 3, 10, some "g"⟩  -- own 3, script score 8 (doubled 16)
+private def rowHigh : MerlinRow := ⟨5, .partly, some "f", 5, 0, none⟩       -- own 5, script score 5 (doubled 10)
 
 theorem merlin_convergence_inversion :
     [rowLow, rowHigh].Pairwise merlinLE ∧ rowLow.own < rowHigh.own := by
