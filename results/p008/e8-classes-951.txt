@@ -1,0 +1,49 @@
+# e8 classes: the 951-class check (P-008b step 2b, §12(e) / §7 item 2)
+
+Orbit marking over all 8^8 = 16,777,216 maps f: {0..7} -> {0..7}, independent
+of fg-class (fg-class is only checked against the result at the end).
+Index encoding: index(f) = sum_k f(k) * 8^(7-k), so f(0) is the most
+significant base-8 digit and increasing index order IS lexicographic order on
+the vector [f(0) ... f(7)] -- the same order fg-class minimises over.
+
+Conjugation action: g = p o f o p^-1, i.e. g[i] = p(f(p^-1(i))), the same
+action fg-class uses. 951 orbit representatives x 40,320 conjugations; all
+16,777,216 indices visited once.
+
+## Result (measured, single JVM, marking pass ~11.8 s)
+
+- orbits:                951
+- sum of orbit sizes:    16,777,216  (= 8^8, exact)
+- permutation orbits:    22          (= partitions of 8, as required)
+- orbit count by rank (image size) of the representative:
+
+  | rank | orbits |
+  |------|--------|
+  | 1    | 1      |
+  | 2    | 14     |
+  | 3    | 75     |
+  | 4    | 221    |
+  | 5    | 314    |
+  | 6    | 229    |
+  | 7    | 75     |
+  | 8    | 22     |
+  | sum  | 951    |
+
+## 3(d): index order vs fg-class's vector order
+
+The two orders COINCIDE by construction of the encoding (f(0) most
+significant), so the first unmarked member of each orbit is the
+lexicographically least vector in it, which is exactly fg-class's minimiser.
+Asserted: (fg-class r) = r for all 951 representatives -- passes. Also
+asserted: fg-class constant on each orbit (3 seeded conjugates per
+representative) and the 951 fg-class values pairwise distinct.
+
+Test: futon5.exotype.e8-classes-951-test, 1 test / 2860 assertions / 0
+failures / 0 errors.
+
+Note: two bugs were caught and fixed in the test itself before any correct
+number was produced (encode's reduce over elements misused as indices;
+conj-index dropped the +off on the outer ps read, which made permutation
+orbits collapse to 1 -- the wrong-conjugation run reported 6435 orbits and
+is reported here, not hidden: first run 6435 orbits / by-rank
+[8 196 1176 2450 1960 588 56 1] / 1 permutation orbit).
