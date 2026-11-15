@@ -123,18 +123,19 @@
          (throw (ex-info "S8 exotype is not a permutation of 0..7" {:exotype p})))
        (into {} (map-indexed (fn [k j] [(nth tt k) (nth tt (long j))]) p))))))
 
-;; --- P-008b §7 item 1: End(8) representation (flag-gated, not yet wired) ---
+;; --- P-008b §7 item 1: End(8) representation (wired via *allow-end8?*) ---
 ;; e8->sigma is the same table construction as s8->sigma WITHOUT the
 ;; permutation check: DESIGN-P008b.md §7 item 1. It accepts any 8-vector with
-;; integer entries in 0..7 (all of End(8)); anything else still throws. It is
-;; NOT reachable from sigma-of yet: no config reaches sigma-of today (see the
-;; call-site list in LEDGER/commit). Non-injective maps may hit code that
-;; assumes a permutation once wired: gen/rule-permute via grid/apply-exotype
-;; (grid.clj:221,232) sends position k to f(k) and is fine, but
+;; integer entries in 0..7 (all of End(8)); anything else still throws.
+;; sigma-of sends a non-injective vector here only when *allow-end8?* is
+;; bound true (step 1b); permutations always take s8->sigma. Non-injective
+;; maps may hit code that assumes a permutation once the flag is on:
+;; gen/rule-permute via grid/apply-exotype (grid.clj apply-exotype /
+;; transfer) sends position k to f(k) and is fine, but
 ;; chain_risk/positional (chain_risk.clj:32), policy-epistemic pair/blend
-;; values, self_tuning/s8-score and s8-transition (self_tuning.clj:79), and
-;; efe/score-policy's 1/8 and inverse-map assumptions (items 2-3 of §7) do
-;; not hold for non-injective f. Do not fix here.
+;; values, self_tuning/s8-score and s8-transition (self_tuning.clj s8
+;; section), and efe/score-policy's 1/8 and inverse-map assumptions (items
+;; 2-3 of §7) do not hold for non-injective f. Do not fix here.
 
 (defn perm?
   "Is EXOTYPE a permutation of 0..7 (an S8 vector)? DESIGN-P008b §7 item 1."
@@ -196,8 +197,13 @@
     (mapv vec (parts 8 8))))
 
 (defn cycle-type
-  "Cycle type of an S8 vector, as a descending vector."
+  "Cycle type of an S8 vector, as a descending vector. P-008b §7 item 2: the
+   argument must be a permutation; on a non-permutation the walk below can
+   loop forever, so a non-permutation throws instead."
   [p]
+  (when-not (perm? p)
+    (throw (ex-info "cycle-type requires a permutation; use fg-signature for End(8)"
+                    {:exotype p})))
   (loop [seen #{} k 0 acc []]
     (cond (= k 8) (vec (sort > acc))
           (seen k) (recur seen (inc k) acc)
@@ -213,6 +219,250 @@
           (doseq [i (range n)] (aset p (long (nth cyc i)) (long (nth cyc (mod (inc i) n)))))
           (recur (rest ps) (+ off n)))))
     (vec p)))
+
+;; --- P-008b §7 item 2: End(8) classes ---------------------------------------
+;; Conjugation formula (stated per the packet's STOP clause): for a
+;; permutation p of {0..7} used as a RELABELLING of positions, the conjugate
+;; of f is g = p o f o p^-1, i.e. g[p(k)] = p(f(k)), so g[i] = p(f(p^-1(i))).
+;; fg-class takes the lexicographically least such g over all 40,320 p.
+;; This is the §7 item 2 construction as the packet states it; §12(e)
+;; prescribes the linear-time AHU canonical form for V1 scale instead --
+;; flagged to claude-1, not decided here.
+
+(defn- fg-cycles
+  "Vector of the cycles of f (vectors of positions), each sorted. Works for
+   any End(8) vector."
+  [f]
+  (let [f (long-array f) seen (boolean-array 8) cycles (volatile! [])]
+    (dotimes [k 8]
+      (when-not (aget seen k)
+        (let [cyc (loop [j k c []]
+                    (cond (and (seq c) (= j k)) c
+                          (or (aget seen j) (> (count c) 8)) nil
+                          :else (recur (aget f j) (conj c j))))]
+          (when cyc
+            (doseq [j cyc] (aset seen j true))
+            (vswap! cycles conj (vec (sort cyc)))))))
+    @cycles))
+
+(def ^:private uie-sets
+  "U/I/E index sets (§4). Index i names neighbourhood value x = 7 - i
+   (mirror-test convention), so value 0 <-> index 7, value 7 <-> index 0.
+   U = {000,111} -> indices {0,7}; I = {010,101} -> indices {2,5};
+   E = edges = the remaining four values {001,011,100,110} -> indices
+   {1,3,4,6}. E-as-complement is an assumption, stated here and flagged."
+  {:u #{0 7} :i #{2 5} :e #{1 3 4 6}})
+
+(defn- uie-counts [positions]
+  (let [{:keys [u i e]} uie-sets]
+    {:u (count (filter u positions))
+     :i (count (filter i positions))
+     :e (count (filter e positions))}))
+
+(defn- hunting-positions
+  "Union hunting rule (§1, derived 2026-11-15): j hunts in some class iff
+   A(j) = {j} plus every k with f^n(k) = j, n >= 1, contains an odd cycle
+   (a fixed point included) or at least two unwritten positions (positions
+   not in im(f)). Unwritten positions never hunt."
+  [f]
+  (let [cycles (fg-cycles f)
+        odd-cycle-nodes (set (mapcat #(nth cycles %)
+                                     (filter #(odd? (count (nth cycles %)))
+                                             (range (count cycles)))))
+        unwritten (set (remove (set f) (range 8)))
+        ancestors (fn [j]
+                    (let [f' (long-array f)]
+                      (loop [up #{} k 0]
+                        (if (= k 8)
+                          (conj up j)
+                          (recur (if (loop [x (aget f' k) n 1]
+                                     (cond (= x j) true
+                                           (> n 8) false
+                                           :else (recur (aget f' x) (inc n))))
+                                   (conj up k) up)
+                                 (inc k))))))]
+    (set (filter (fn [j]
+                   (let [a (ancestors j)]
+                     (or (some odd-cycle-nodes a)
+                         (<= 2 (count (filter unwritten a))))))
+                 (range 8)))))
+
+(defn fg-signature
+  "Covariates of an End(8) map f, as a map. §4's list, quoted:
+    - rank; number of components; cycle-part partition; number of fixed
+      points; whether all cycles are even (whether immune bytes exist);
+      in-degree multiset; maximum tree height; number of hunting positions,
+      i.e. positions that can never settle; im(f) ∩ U/I/E and unwritten ∩
+      U/I/E, with U = {000, 111}, I = {010, 101}, E = edges.
+  Implementation notes: in-degree multiset is {in-degree -> count};
+  cycle-part is the cycle type of f restricted to its recurrent set,
+  descending; hunting positions follow the §1 union rule; the E set is the
+  complement of U ∪ I in index space (assumption, see uie-sets)."
+  [f]
+  (when-not (and (vector? f) (= 8 (count f))
+                 (every? #(and (integer? %) (<= 0 (long %) 7)) f))
+    (throw (ex-info "fg-signature requires an End(8) vector" {:exotype f})))
+  (let [f' (vec f)
+        cycles (fg-cycles f')
+        im (set f')
+        cycle-node? (set (mapcat identity cycles))
+        height (fn [k]
+                 (loop [x k n 0]
+                   (if (cycle-node? x) n (recur (nth f' x) (inc n)))))
+        max-height (reduce max (map height (range 8)))
+        hunts (hunting-positions f')]
+    {:rank (count im)
+     :components (count cycles)
+     :cycle-part (vec (sort > (map count cycles)))
+     :fixed-points (count (filter #(= 1 (count %)) cycles))
+     :all-cycles-even? (every? even? (map count cycles))
+     :in-degree-multiset (into (sorted-map) (frequencies f'))
+     :max-tree-height (long max-height)
+     :hunt-count (count hunts)
+     :hunting-positions (vec (sort hunts))
+     :im-uie (uie-counts im)
+     :unwritten-uie (uie-counts (set (remove im (range 8))))}))
+
+(def ^:private s8-relabellings
+  "All 40,320 permutations and their inverses as two flat long-arrays
+   (permutation c occupies (* 8 c) .. (+ 8 c) - 1), so the fg-class inner
+   loop stays in primitives."
+  (delay
+    (let [n 40320
+          ps (long-array (* 8 n))
+          invs (long-array (* 8 n))
+          idx (atom 0)]
+      (letfn [(go [used perm]
+                (if (= 8 (count perm))
+                  (let [c (long (dec (swap! idx inc)))
+                        p (long-array 8) q (long-array 8)]
+                    (dotimes [k 8] (aset p k (long (nth perm k))))
+                    (dotimes [k 8] (aset q (aget p k) k))
+                    (dotimes [k 8]
+                      (aset ps (+ (* 8 c) k) (aget p k))
+                      (aset invs (+ (* 8 c) k) (aget q k))))
+                  (dotimes [j 8]
+                    (when-not (used j)
+                      (go (conj used j) (conj perm j))))))]
+        (go #{} []))
+      [ps invs])))
+
+(def fg-class
+  "Canonical form of an End(8) map: the lexicographically least relabelling
+   over the 40,320 conjugations (\u00a77 item 2), memoised. Conjugation:
+   g[i] = p(f(p^-1(i))). NOTE \u00a712(e) prescribes the linear-time AHU
+   canonical form for V1 scale; this is the \u00a77 item 2 brute force as the
+   packet states it (cold-call wall time reported in the packet's tests)."
+  (memoize
+   (fn [f]
+     (let [[ps invs] @s8-relabellings
+           f (long-array f)
+           best (long-array 8)
+           tmp (long-array 8)]
+       (dotimes [i 8] (aset best i (aget f i)))
+       (loop [c 0]
+         (when (< c 40320)
+           (let [off (* 8 c)]
+             (dotimes [i 8]
+               (aset tmp i (aget ps (+ off (aget f (aget invs (+ off i)))))))
+             (loop [i 0]
+               (when (< i 8)
+                 (let [t (aget tmp i) b (aget best i)]
+                   (cond (< t b) (do (dotimes [k 8] (aset best k (aget tmp k)))
+                                     (recur 8))
+                         (= t b) (recur (inc i)))))))
+           (recur (inc c))))
+       (vec best)))))
+
+(def ^:private e8-strata
+  "Cache: stratum [rank cycle-part] -> vector of members packed as 24-bit
+   longs (entry k = bits 3k)."
+  (atom {}))
+
+(defn- cycle-parts-of
+  "Cycle-part (descending) of any End(8) vector: the multiset of cycle
+   lengths of f restricted to its recurrent set."
+  [f]
+  (let [fa (long-array f)
+        done (boolean-array 8)
+        parts (volatile! [])]
+    (dotimes [k 8]
+      (when-not (aget done k)
+        (let [local (volatile! {k 0})]
+          (loop [j (aget fa k) n 1]
+            (cond (aget done j) nil
+                  (contains? @local j)
+                  (vswap! parts conj (- n (get @local j)))
+                  :else (do (vswap! local assoc j n)
+                            (recur (aget fa j) (inc n)))))
+          (doseq [j (keys @local)]
+            (aset done j true)))))
+    (vec (sort > @parts))))
+
+(defn- e8-stratum-members
+  "All End(8) maps whose signature has RANK and CYCLE-PART, packed. One
+   full 8^8 enumeration pass per stratum (chunk-parallel), cached. The
+   filter uses the cheap rank + cycle-parts-of, not full fg-signature
+   (hunting positions are too heavy for 16.7M maps)."
+  [rank cycle-part]
+  (let [m (get @e8-strata [rank cycle-part])]
+    (if m
+      m
+      (let [total 16777216
+            chunk 1048576
+            pack1 (fn pack1 [n]
+                    (loop [x n k 0 acc 0]
+                      (if (= k 8)
+                        acc
+                        (recur (quot x 8) (inc k)
+                               (+ acc (* (mod x 8)
+                                         (bit-shift-left 1 (* 3 k))))))))
+            scan (fn scan [c]
+                   (let [lo (* c chunk)
+                         hi (min total (* (inc c) chunk))
+                         out (java.util.ArrayList.)]
+                     (loop [n lo]
+                       (when (< n hi)
+                         (let [f (long-array 8)]
+                           (loop [x n k 0]
+                             (when (< k 8)
+                               (aset f k (long (mod x 8)))
+                               (recur (quot x 8) (inc k))))
+                           (let [seen-img (boolean-array 8)
+                                 _ (dotimes [k 8]
+                                     (aset seen-img (aget f k) true))
+                                 r (loop [k 0 acc 0]
+                                     (if (= k 8)
+                                       acc
+                                       (recur (inc k)
+                                              (if (aget seen-img k)
+                                                (inc acc)
+                                                acc))))
+                                 cp (cycle-parts-of f)]
+                             (when (and (= r rank) (= cycle-part cp))
+                               (.add out (pack1 n))))
+                         (recur (inc n)))))
+                     (vec out)))
+            members (vec (mapcat identity (pmap scan (range 16))))]
+        (swap! e8-strata assoc [rank cycle-part] members)
+        members))))
+
+(defn random-e8-of-stratum
+  "Uniform draw from the stratum (rank, cycle-part) of §4's allocation.
+   Uses the engine's seeded RNG convention: ca/rnd-int under ca/*rng* (same
+   as random-s8 / random-s8-of-type), so ca/with-seed makes the draws
+   reproducible. Members are enumerated exhaustively (one cached 8^8 pass
+   per stratum), so the draw is exactly uniform over the stratum."
+  [rank cycle-part]
+  (let [members (e8-stratum-members rank cycle-part)
+        n (count members)]
+    (when (zero? n)
+      (throw (ex-info "empty stratum" {:rank rank :cycle-part cycle-part})))
+    (let [packed (nth members (ca/rnd-int n))
+          f (long-array 8)]
+      (dotimes [k 8]
+        (aset f k (long (mod (bit-shift-right packed (* 3 k)) 8))))
+      (vec f))))
 
 (defn boring?
   "The three-bit circular phenotype neighbourhood is uniform."
