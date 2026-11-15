@@ -112,9 +112,81 @@ inductive ReachableStore : Store → Prop
   | rejected {s} (h : ReachableStore s) (i digest r) : ReachableStore (reject s i digest r)
   | withdrawn {s} (h : ReachableStore s) (r operator why) : ReachableStore (withdraw s r operator why)
 
+private theorem map_records (rows : List Reading) (f : Reading → Reading)
+    (hf : ∀ q, (f q).record = q.record) : (rows.map f).map Reading.record = rows.map Reading.record := by
+  simp only [List.map_map]
+  congr 1
+  funext q
+  exact hf q
+
+private def Retained (s : Store) : Prop :=
+  ∀ r ∈ s.ever, r ∈ s.rows.map Reading.record ∧ r ∈ semanticRecords s.journal
+
+private theorem retained_queryable (s : Store) (h : Retained s) : Queryable s := by
+  intro r hr
+  obtain ⟨rows, journal⟩ := h r hr
+  refine ⟨?_, ?_⟩
+  · cases he : lookup s r with
+    | none =>
+      have hn := List.find?_eq_none.mp he
+      obtain ⟨row, hm, eq⟩ := List.mem_map.mp rows
+      exact False.elim ((hn row hm) (by simpa using eq))
+    | some row =>
+      exact ⟨row, rfl, by simpa using List.find?_some he⟩
+  · simpa [projection, rebuildGraph] using journal
+
+private theorem retained_transform (s : Store) (h : Retained s) (f : Reading → Reading)
+    (hf : ∀ q, (f q).record = q.record) : Retained {s with rows := s.rows.map f} := by
+  intro r hr
+  simpa only [map_records _ _ hf] using h r hr
+
+private theorem retained_append (s : Store) (h : Retained s) (row : Reading) :
+    Retained (appendRecord {s with rows := s.rows ++ [row]} row.record) := by
+  intro r hr
+  simp only [appendRecord, List.mem_append, List.mem_singleton] at hr
+  rcases hr with hr | rfl
+  · obtain ⟨hm, hj⟩ := h r hr
+    constructor
+    · simp only [appendRecord, List.map_append, List.mem_append]
+      exact Or.inl hm
+    · simp only [appendRecord, semanticRecords, List.map_append, List.mem_append]
+      exact Or.inl hj
+  · constructor <;> simp [appendRecord, semanticRecords, eraseOperational]
+
+private theorem retained_commit (s : Store) (h : Retained s) : Retained (commitGeneration s) := h
+
+private theorem retained_reachable (s : Store) (h : ReachableStore s) : Retained s := by
+  induction h with
+  | initial => simp [Retained, empty]
+  | @landed s h i digest r why ih =>
+    unfold land
+    split <;> try exact ih
+    split <;> try exact ih
+    apply retained_commit
+    exact retained_append _ (retained_transform s ih _ (by intro q; split <;> rfl)) _
+  | @rejected s h i digest r ih =>
+    unfold reject
+    split <;> try exact ih
+    split <;> try exact ih
+    exact retained_commit _ (retained_append s ih _)
+  | @withdrawn s h r operator why ih =>
+    unfold withdraw
+    split <;> try exact ih
+    dsimp only
+    split <;> try exact ih
+    apply retained_commit
+    intro x hx
+    obtain ⟨hm, hj⟩ := ih x hx
+    constructor
+    · rw [map_records _ _ (by intro q; split <;> rfl)]
+      exact hm
+    · simp only [appendRecord, semanticRecords, List.map_append, List.mem_append]
+      exact Or.inl hj
+
 /-- Obligation 4: "Rejected and superseded readings must remain queryable".
 Generation switches preserve the source inventory and structured status. -/
-theorem history_queryable (s : Store) (h : ReachableStore s) : Queryable s := by sorry
+theorem history_queryable (s : Store) (h : ReachableStore s) : Queryable s := by
+  exact retained_queryable s (retained_reachable s h)
 
 /-- Obligation 2: "showing how it supersedes the earlier interpretation".
 Every displaced current reading remains, with the replacement pointer/reason. -/
@@ -123,7 +195,19 @@ theorem superseded_stays_queryable (s : Store) (old : Reading)
     (i digest : Nat) (sameItem : old.item = i) (r : SourceRecord) (why value : String)
     (fresh : freshRecord s r = true) (success : r.payload = .success value) :
     lookup (land s i digest r why) old.record =
-      some { old with status := .superseded r why } := by sorry
+      some { old with status := .superseded r why } := by
+  let f : Reading → Reading := fun q =>
+    if q.item == i && q.status == .current then { q with status := .superseded r why } else q
+  have hf : ∀ q, (f q).record = q.record := by intro q; unfold f; split <;> rfl
+  have hp : (fun q => (f q).record == old.record) = (fun q => q.record == old.record) := by
+    funext q; rw [hf]
+  change s.rows.find? (fun q => q.record == old.record) = some old at present
+  simp only [land, success, fresh, ↓reduceIte, lookup, commitGeneration, appendRecord]
+  change ((s.rows.map f) ++ _).find? _ = _
+  rw [List.find?_append, List.find?_map]
+  change ((s.rows.find? (fun q => (f q).record == old.record)).map f).or _ = _
+  rw [hp, present]
+  simp [f, sameItem, active]
 
 inductive Recovery
   | unexplored
@@ -147,7 +231,21 @@ that digest; changing the digest is necessary, not sufficient, for retry. -/
 theorem rejected_distinguishes_from_unexplored (s : Store) (row : Reading)
     (present : row ∈ s.rows) (deniedRow : denied row = true) :
     recover s row.item ≠ .unexplored ∧ retryAsNew s row.item row.digest = false ∧
-    (∀ digest, retryAsNew s row.item digest = true → digest ≠ row.digest) := by sorry
+    (∀ digest, retryAsNew s row.item digest = true → digest ≠ row.digest) := by
+  have hm : row ∈ s.rows.filter (·.item == row.item) := by simp [present]
+  have hn : (s.rows.filter (·.item == row.item)).isEmpty = false := by
+    cases he : s.rows.filter (·.item == row.item) with
+    | nil => simp [he] at hm
+    | cons x xs => rfl
+  have hr : retryAsNew s row.item row.digest = false := by
+    simp only [retryAsNew, Bool.not_eq_false', List.any_eq_true]
+    exact ⟨row, present, by simp [deniedRow]⟩
+  refine ⟨?_, hr, ?_⟩
+  · simp [recover, hn]
+  · intro digest h eq
+    subst digest
+    rw [hr] at h
+    cases h
 
 /-- Citation comes from the artifact's captured generation, never the latest
 pointer substituted into an old artifact. Missing citations fail closed. -/
@@ -181,7 +279,21 @@ def ReaderSafe (s : Store) (reader : Reader) : Prop :=
 citations must be current. Superseded/withdrawn readings remain qualified
 history; no immediate successful refresh is asserted. -/
 theorem reader_sees_replacement (s : Store) (v : ViewState) :
-    ReaderSafe s (renderReader s v) := by sorry
+    ReaderSafe s (renderReader s v) := by
+  constructor
+  · intro a e hc
+    have ha : (render v).artifact = some a := hc.1
+    have he := hc.2.1
+    by_cases hk : citationCurrent s a.runId e.item = true
+    · exact hk
+    · exfalso
+      apply hc.2.2.2.2.2 .sourceChangedSincePass
+      simp only [Visible, renderReader, ha]
+      apply List.mem_append_right
+      apply List.mem_filterMap.mpr
+      exact ⟨e, he, by simp [hk]⟩
+  · intro row hr hn
+    simp [renderReader, hr, hn]
 
 inductive Correction
   | replace (item : EntityId) (digest : Nat) (record : SourceRecord) (reason : String)
@@ -218,16 +330,111 @@ theorem correction_reaches_reader (cs : List Circus.Character) (s : Store)
     (v : ViewState) (c : Correction) (T occurred observed : Time)
     (timely : Timely T [⟨occurred, observed, correctionEvent (correct s c) v⟩]) :
     observed ≤ occurred + T ∧
-      CorrectionVisible s (correct s c) (observeCorrection cs s v c) := by sorry
+      CorrectionVisible s (correct s c) (observeCorrection cs s v c) := by
+  refine ⟨(timely.2 ⟨occurred, observed, correctionEvent (correct s c) v⟩ (by simp)).2, ?_⟩
+  intro old ho active row found noncurrent
+  have hs := reader_sees_replacement (correct s c) (advance cs v (correctionEvent (correct s c) v))
+  refine ⟨hs.2 row (List.mem_of_find?_eq_some found) noncurrent, ?_⟩
+  intro a e cited consumed
+  have hc := hs.1 a e consumed
+  simp [citationCurrent, cited, found, noncurrent] at hc
 
 def OneCurrent (rows : List Reading) : Prop :=
   (rows.filter (·.status == .current) |>.map (·.item)).Nodup
+
+private theorem current_map_sublist (rows : List Reading) (f : Reading → Reading)
+    (items : ∀ q, (f q).item = q.item)
+    (active : ∀ q, (f q).status = .current → q.status = .current) :
+    List.Sublist ((rows.map f).filter (·.status == .current) |>.map (·.item))
+      (rows.filter (·.status == .current) |>.map (·.item)) := by
+  induction rows with
+  | nil => simp
+  | cons q qs ih =>
+    by_cases hf : (f q).status = .current
+    · have hq := active q hf
+      simpa [hf, hq, items] using ih.cons₂ q.item
+    · by_cases hq : q.status = .current
+      · simpa [hf, hq] using ih.cons q.item
+      · simpa [hf, hq] using ih
+
+private theorem one_current_map (rows : List Reading) (h : OneCurrent rows)
+    (f : Reading → Reading) (items : ∀ q, (f q).item = q.item)
+    (active : ∀ q, (f q).status = .current → q.status = .current) :
+    OneCurrent (rows.map f) :=
+  h.sublist (current_map_sublist rows f items active)
+
+private theorem one_current_filter (s : Store) (h : OneCurrent s.rows) :
+    OneCurrent (currentRows s) := by
+  simpa [OneCurrent, currentRows, List.filter_filter] using h
+
+private theorem unique_commit (s : Store)
+    (h : OneCurrent s.rows ∧ ∀ gen ∈ s.generations, OneCurrent gen.readings) :
+    OneCurrent (commitGeneration s).rows ∧
+      ∀ gen ∈ (commitGeneration s).generations, OneCurrent gen.readings := by
+  refine ⟨h.1, ?_⟩
+  intro gen hg
+  simp only [commitGeneration, List.mem_append, List.mem_singleton] at hg
+  rcases hg with hg | rfl
+  · exact h.2 gen hg
+  · exact one_current_filter s h.1
+
+private theorem unique_land_rows (rows : List Reading) (h : OneCurrent rows)
+    (i digest : Nat) (r : SourceRecord) (why : String) :
+    OneCurrent ((rows.map fun old => if old.item == i && old.status == .current then
+      {old with status := .superseded r why} else old) ++ [⟨i, digest, r, .current⟩]) := by
+  let f : Reading → Reading := fun old => if old.item == i && old.status == .current then
+    {old with status := .superseded r why} else old
+  have hm : OneCurrent (rows.map f) := one_current_map rows h f
+    (by intro q; unfold f; split <;> rfl)
+    (by intro q; unfold f; split <;> simp_all)
+  have hn : i ∉ ((rows.map f).filter (·.status == .current) |>.map (·.item)) := by
+    intro hi
+    obtain ⟨q, hq, eq⟩ := List.mem_map.mp hi
+    obtain ⟨hq, hc⟩ := List.mem_filter.mp hq
+    obtain ⟨old, ho, rfl⟩ := List.mem_map.mp hq
+    unfold f at hc eq
+    split at hc <;> simp_all
+  change OneCurrent (rows.map f ++ _)
+  simp only [OneCurrent, List.filter_append, List.filter_cons, beq_self_eq_true,
+    List.filter_nil, ↓reduceIte, List.map_append, List.map_cons, List.map_nil]
+  apply List.nodup_append.mpr
+  refine ⟨hm, by simp, ?_⟩
+  intro a ha b hb
+  simp only [List.mem_singleton] at hb
+  subst b
+  intro eq
+  exact hn (eq ▸ ha)
 
 /-- Obligation 2's replacement and the corpus duplicate refusal: at most one
 current reading per item, both in the active ledger and each saved generation.
 Old snapshots remain snapshots; their current rows are not current globally. -/
 theorem one_current_per_item (s : Store) (h : ReachableStore s) :
-    OneCurrent s.rows ∧ ∀ gen ∈ s.generations, OneCurrent gen.readings := by sorry
+    OneCurrent s.rows ∧ ∀ gen ∈ s.generations, OneCurrent gen.readings := by
+  induction h with
+  | initial => simp [empty, OneCurrent]
+  | @landed s h i digest r why ih =>
+    unfold land
+    split <;> try exact ih
+    split <;> try exact ih
+    apply unique_commit
+    exact ⟨unique_land_rows s.rows ih.1 i digest r why, ih.2⟩
+  | @rejected s h i digest r ih =>
+    unfold reject
+    split <;> try exact ih
+    split <;> try exact ih
+    apply unique_commit
+    refine ⟨?_, ih.2⟩
+    simpa [appendRecord, OneCurrent] using ih.1
+  | @withdrawn s h r operator why ih =>
+    unfold withdraw
+    split <;> try exact ih
+    dsimp only
+    split <;> try exact ih
+    apply unique_commit
+    refine ⟨?_, ih.2⟩
+    apply one_current_map s.rows ih.1
+    · intro q; split <;> rfl
+    · intro q; split <;> simp_all
 
 /-! ## TEETH: defective stores/adapters violate the registered predicates
 These invented bad states are outside the transition discipline. -/
