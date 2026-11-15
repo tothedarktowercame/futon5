@@ -594,4 +594,37 @@ example : passViolations missingConePass 0 = [] := by decide
 example : (thorTerms missingConePass 17).map Term.render =
     ["unblocks 2 item(s)", "cone of 0 behind it (count missing)", "Giraffe pass rank 1"] := by decide
 
+/-! ## The characters meet `top_ten_is_a_cascade`'s `hreason` (claude-13,
+2026-11-15): every entry any of the four characters ranks carries at least
+one rendered term. -/
+
+theorem toEntries_reasons_nonempty {α : Type} (who : Agent) (termsOf : α → List Term)
+    (itemOf : α → EntityId) (hne : ∀ x, termsOf x ≠ []) :
+    ∀ (p : Nat) (l : List α), ∀ e ∈ toEntries who termsOf itemOf p l, e.reason.terms ≠ [] := by
+  intro p l
+  induction l generalizing p with
+  | nil => intro e he; cases he
+  | cons x xs ih =>
+    intro e he
+    cases List.mem_cons.mp he with
+    | inl h => subst h; simpa using hne x
+    | inr h => exact ih (p - 1) e h
+
+theorem thor_reasons_nonempty (pf : PassFacts) (top : Nat) :
+    ∀ e ∈ thorOrder pf top, e.reason.terms ≠ [] :=
+  toEntries_reasons_nonempty _ _ _ (fun x => by simp [thorTerms]) _ _
+
+theorem thyra_reasons_nonempty (pf : PassFacts) (ps : List Pending) (top : Nat) :
+    ∀ e ∈ thyraOrder pf ps top, e.reason.terms ≠ [] :=
+  toEntries_reasons_nonempty _ _ _ (fun x => by simp [thyraTerms]) _ _
+
+theorem merlin_reasons_nonempty (rows : List MerlinRow) (top : Nat) :
+    ∀ e ∈ merlinOrder rows top, e.reason.terms ≠ [] :=
+  toEntries_reasons_nonempty _ _ _ (fun x => by simp [merlinTerms]) _ _
+
+theorem questor_reasons_nonempty (ps : List Pending)
+    (best : Pending → Option (FeatureId × Nat)) (top : Nat) :
+    ∀ e ∈ questorOrder ps best top, e.reason.terms ≠ [] :=
+  toEntries_reasons_nonempty _ _ _ (fun x => by simp [questorTerms]) _ _
+
 end Circus.Characters

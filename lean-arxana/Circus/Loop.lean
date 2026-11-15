@@ -136,15 +136,8 @@ example : ¬ (step [exChar] exState .tick).shown = exState.shown := by
   rw [h] at h1
   exact absurd h1 (by decide)
 
-/-! ## `top_ten_is_a_cascade` (statement carried over from `Basic.lean`;
-proof is a later step) -/
-
-/-- Every entry after the first either needs an earlier entry, or names why
-it stands alone (a nonempty reason). -/
-theorem top_ten_is_a_cascade (cs : List Character) (s : State)
-    (h : s.shown = rebuild cs s.inputs) :
-    Cascade s.inputs s.shown := by
-  sorry
+/-! ## `top_ten_is_a_cascade`: restated and proved at the end of this file
+(it needs the membership lemmas below). -/
 
 /-! ## The primary theorem (step 4)
 
@@ -693,5 +686,193 @@ theorem giraffe_firing_rule (cs : List Character) (s : State) (i : EntityId) (v 
       · simp only [step]
         rw [(docChange_stales s.inputs i v).2 x hxi]
         exact hstale
+
+/-! ## `top_ten_is_a_cascade` (restated 2026-11-15, claude-13)
+
+OLD:
+  theorem top_ten_is_a_cascade (cs : List Character) (s : State)
+      (h : s.shown = rebuild cs s.inputs) : Cascade s.inputs s.shown
+FALSE as stated: nothing stops a character from ranking items with an empty
+reason, and then a later shown entry that needs no earlier one says nothing
+about why it stands alone (`cascade_needs_reasons` below, two items, one
+character, no `needs` edges).
+NEW: one added hypothesis `hreason`, that every character's own entries carry
+a nonempty reason. The real characters meet it: each renders at least one
+term per entry (`thor_reasons_nonempty` for Thor). -/
+
+theorem firstEntryFor_none :
+    ∀ (i : EntityId) (es : List Entry),
+      firstEntryFor i es = none → ∀ e ∈ es, e.item ≠ i := by
+  intro i es
+  induction es with
+  | nil => intro _ e he; cases he
+  | cons x xs ih =>
+    intro h e he
+    rw [firstEntryFor] at h
+    by_cases hxi : x.item = i
+    · rw [if_pos hxi] at h; exact absurd h (by simp)
+    · rw [if_neg hxi] at h
+      cases List.mem_cons.mp he with
+      | inl hx => subst hx; exact hxi
+      | inr hx => exact ih h e hx
+
+/-- The reason for an item some character ranks is that character's own
+(first) entry's reason, so it is nonempty when theirs are. -/
+theorem reasonFor_nonempty (inp : Inputs) (a : Agent) (i : EntityId) :
+    ∀ (cs : List Character),
+      (∀ c ∈ cs, ∀ e ∈ c.order inp, e.reason.terms ≠ []) →
+      (∃ c ∈ cs, ∃ e ∈ c.order inp, e.item = i) →
+      (reasonFor cs inp a i).terms ≠ [] := by
+  intro cs
+  induction cs with
+  | nil => intro _ hm; obtain ⟨c, hc, _⟩ := hm; cases hc
+  | cons c cs ih =>
+    intro hr hm
+    cases hf : firstEntryFor i (c.order inp) with
+    | some e =>
+      obtain ⟨he, _⟩ := firstEntryFor_some i (c.order inp) e hf
+      simp only [reasonFor, hf]
+      exact hr c (List.mem_cons_self ..) e he
+    | none =>
+      simp only [reasonFor, hf]
+      refine ih (fun c' hc' => hr c' (List.mem_cons_of_mem _ hc')) ?_
+      obtain ⟨c', hc', e, he, hi⟩ := hm
+      cases List.mem_cons.mp hc' with
+      | inl h => subst h; exact absurd hi (firstEntryFor_none i _ hf e he)
+      | inr h => exact ⟨c', h, e, he, hi⟩
+
+theorem drawFresh_mem {seen : List EntityId} :
+    ∀ (l : List EntityId) (i : EntityId) (l' : List EntityId),
+      Retro.drawFresh seen l = some (i, l') → i ∈ l ∧ ∀ x ∈ l', x ∈ l := by
+  intro l
+  induction l with
+  | nil => intro i l' h; exact absurd h (by simp [Retro.drawFresh])
+  | cons a as ih =>
+    intro i l' h
+    rw [Retro.drawFresh] at h
+    by_cases hs : seen.contains a = true
+    · rw [if_pos hs] at h
+      obtain ⟨h1, h2⟩ := ih i l' h
+      exact ⟨List.mem_cons_of_mem _ h1, fun x hx => List.mem_cons_of_mem _ (h2 x hx)⟩
+    · rw [if_neg hs] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      exact ⟨List.mem_cons_self .., fun x hx => List.mem_cons_of_mem _ hx⟩
+
+/-- Every list in the orderings draws only from `U`. -/
+def OrdIn (U : EntityId → Prop) (os : Retro.Orderings) : Prop :=
+  ∀ p ∈ os, ∀ x ∈ p.2, U x
+
+theorem sweep_mem {seen : List EntityId} (U : EntityId → Prop) :
+    ∀ (os : Retro.Orderings) (a : Agent) (i : EntityId) (os' : Retro.Orderings),
+      Retro.sweep seen os = some (a, i, os') → OrdIn U os → U i ∧ OrdIn U os' := by
+  intro os
+  induction os with
+  | nil => intro a i os' h; exact absurd h (by simp [Retro.sweep])
+  | cons p ps ih =>
+    intro a i os' h hu
+    obtain ⟨b, l⟩ := p
+    rw [Retro.sweep] at h
+    cases hd : Retro.drawFresh seen l with
+    | some r =>
+      obtain ⟨j, l'⟩ := r
+      rw [hd] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl, rfl⟩ := h
+      obtain ⟨hj, hl'⟩ := drawFresh_mem l j l' hd
+      refine ⟨hu (b, l) (List.mem_cons_self ..) j hj, ?_⟩
+      intro q hq x hx
+      cases List.mem_cons.mp hq with
+      | inl h => subst h; exact hu (b, l) (List.mem_cons_self ..) x (hl' x hx)
+      | inr h => exact hu q (List.mem_cons_of_mem _ h) x hx
+    | none =>
+      rw [hd] at h
+      exact ih a i os' h (fun q hq => hu q (List.mem_cons_of_mem _ hq))
+
+theorem partyVote_mem (U : EntityId → Prop) :
+    ∀ (n : Nat) (seen : List EntityId) (os : Retro.Orderings),
+      OrdIn U os → ∀ q ∈ Retro.partyVote n seen os, U q.2 := by
+  intro n
+  induction n with
+  | zero => intro seen os _ q hq; simp [Retro.partyVote] at hq
+  | succ n ih =>
+    intro seen os hu q hq
+    rw [Retro.partyVote] at hq
+    cases hs : Retro.sweep seen os with
+    | none => rw [hs] at hq; cases hq
+    | some r =>
+      obtain ⟨a, i, os'⟩ := r
+      obtain ⟨hi, hos'⟩ := sweep_mem U os a i os' hs hu
+      rw [hs] at hq
+      cases os' with
+      | nil => cases hq
+      | cons p rest =>
+        obtain ⟨a', l'⟩ := p
+        simp only at hq
+        cases List.mem_cons.mp hq with
+        | inl h => subst h; exact hi
+        | inr h =>
+          refine ih (i :: seen) (rest ++ [(a', l')]) ?_ q h
+          intro p hp x hx
+          cases List.mem_append.mp hp with
+          | inl h' => exact hos' p (List.mem_cons_of_mem _ h') x hx
+          | inr h' =>
+            rw [List.mem_singleton] at h'; subst h'
+            exact hos' (a', l') (List.mem_cons_self ..) x hx
+
+theorem entriesFrom_mem (r : Agent → EntityId → Reason) :
+    ∀ (p : Nat) (l : List (Agent × EntityId)) (e : Entry),
+      e ∈ entriesFrom p r l → ∃ q ∈ l, e.reason = r q.1 q.2 := by
+  intro p l
+  induction l generalizing p with
+  | nil => intro e he; cases he
+  | cons q qs ih =>
+    intro e he
+    cases List.mem_cons.mp he with
+    | inl h => subst h; exact ⟨q, List.mem_cons_self .., rfl⟩
+    | inr h =>
+      obtain ⟨q', hq', hr⟩ := ih (p - 1) e h
+      exact ⟨q', List.mem_cons_of_mem _ hq', hr⟩
+
+theorem top_ten_is_a_cascade (cs : List Character) (s : State)
+    (h : s.shown = rebuild cs s.inputs)
+    (hreason : ∀ c ∈ cs, ∀ e ∈ c.order s.inputs, e.reason.terms ≠ []) :
+    Cascade s.inputs s.shown := by
+  intro k hk _
+  right
+  have hmem : s.shown.get ⟨k, hk⟩ ∈ rebuild cs s.inputs := h ▸ List.get_mem _ _
+  obtain ⟨q, hq, hr⟩ := entriesFrom_mem _ _ _ _ hmem
+  have hu := partyVote_mem (fun x => ∃ c ∈ cs, ∃ e ∈ c.order s.inputs, e.item = x)
+    budgetTen [] (orderingsOf cs s.inputs) (by
+      intro p hp x hx
+      obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hp
+      obtain ⟨e, he, rfl⟩ := List.mem_map.mp hx
+      exact ⟨c, hc, e, he, rfl⟩) q hq
+  rw [hr]
+  exact reasonFor_nonempty s.inputs q.1 q.2 cs hreason hu
+
+/-- The OLD statement is false: one character, two items, empty reasons, no
+`needs` edges; the second shown entry is neither tied to the first nor says
+why it stands alone. -/
+private def silentChar : Character :=
+  ⟨.thor, fun _ =>
+    [{ item := 0, priority := 0, reason := { terms := [], chosenBy := .thor } },
+     { item := 1, priority := 0, reason := { terms := [], chosenBy := .thor } }]⟩
+
+private def silentInp : Inputs :=
+  ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
+
+theorem cascade_needs_reasons :
+    ¬ ∀ (cs : List Character) (s : State),
+        s.shown = rebuild cs s.inputs → Cascade s.inputs s.shown := by
+  intro hall
+  have hc := hall [silentChar] ⟨0, silentInp, rebuild [silentChar] silentInp, 0, 0⟩ rfl
+  have hlen : (rebuild [silentChar] silentInp).length = 2 := by decide
+  have h1 := hc 1 (by simp only [hlen]; decide) (by decide)
+  cases h1 with
+  | inl he =>
+    obtain ⟨j, hj, hn⟩ := he
+    exact absurd hn (by simp [silentInp])
+  | inr hn => exact hn rfl
 
 end Circus
