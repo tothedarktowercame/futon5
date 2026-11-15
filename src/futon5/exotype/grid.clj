@@ -104,6 +104,50 @@
    :odd332 (gen/positional-sigma->neighbourhood-sigma
             (positional "12045376") elisp-table)})  ; (3,3,2)   rate 0.5000  0 immune bytes
 
+(defn sigma-vector?
+  "Is X a permutation of 0..7 written as a vector? This is the form a general
+   menu entry takes: X[k] is the position, in `ca/truth-table-3` order, that
+   position k is sent to. It is the same positional map `gen/sigma-positional`
+   returns for a named kind, so `(gen/sigma-positional (sigma-of :chaos))` is a
+   valid menu entry denoting the same operator as `:chaos`."
+  [x]
+  (and (vector? x)
+       (= 8 (count x))
+       (every? integer? x)
+       (= (range 8) (sort x))))
+
+(def ^:private vector-sigma
+  (memoize
+   (fn [sigma]
+     (let [table (vec ca/truth-table-3)]
+       (into {} (map-indexed (fn [k nbhd] [nbhd (nth table (nth sigma k))]) table))))))
+
+(defn sigma-of
+  "The neighbourhood map for EXOTYPE: a named kind from `propagators`, or a
+   permutation vector (see `sigma-vector?`). Anything else is an error; a
+   silent nil here would make `rule-permute` a no-op."
+  [exotype]
+  (cond
+    (keyword? exotype)
+    (or (get propagators exotype)
+        (throw (ex-info "unknown named exotype" {:exotype exotype
+                                                 :named (sort (keys propagators))})))
+    (sigma-vector? exotype) (vector-sigma exotype)
+    :else (throw (ex-info "an exotype is a named kind or a permutation of 0..7 as a vector"
+                          {:exotype exotype}))))
+
+(defn check-menu
+  "Return MENU as a vector, or throw. A menu is a non-empty list of exotypes
+   (named kinds or permutation vectors) with no repeats."
+  [menu]
+  (let [menu (vec menu)]
+    (when (empty? menu)
+      (throw (ex-info "a menu needs at least one exotype" {})))
+    (when-not (apply distinct? menu)
+      (throw (ex-info "a menu lists each exotype once" {:menu menu})))
+    (run! sigma-of menu)
+    menu))
+
 (defn boring?
   "The three-bit circular phenotype neighbourhood is uniform."
   [phenotype index]
@@ -114,12 +158,16 @@
 (defn initial-grid
   "Create the exotype grid for ARM. Transmitting arms share the same seeded
    heterogeneous initialization as :heterogeneous-fixed."
-  [arm width]
-  (case arm
-    :uniform-fixed (vec (repeat width :builder))
-    (:heterogeneous-fixed :conformist :boring-triggered)
-    (vec (repeatedly width #(ca/rnd-nth exotype-kinds)))
-    (throw (ex-info "unknown exotype-grid arm" {:arm arm :available arms}))))
+  ([arm width]
+   (initial-grid arm width exotype-kinds))
+  ([arm width kinds]
+   ;; KINDS is the menu the heterogeneous arms draw from. One draw per cell
+   ;; whatever the menu, so the random stream is consumed as before.
+   (case arm
+     :uniform-fixed (vec (repeat width :builder))
+     (:heterogeneous-fixed :conformist :boring-triggered)
+     (vec (repeatedly width #(ca/rnd-nth kinds)))
+     (throw (ex-info "unknown exotype-grid arm" {:arm arm :available arms})))))
 
 (defn- local-majority [grid index]
   (let [width (count grid)
@@ -153,7 +201,7 @@
   ([sigil exotype draw-seed]
    (ca/with-mixed-seed draw-seed
      (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
-                                       (get propagators exotype)))))
+                                       (sigma-of exotype)))))
   ([sigil neighbour-sigil exotype q draw-seed]
    (when-not (<= 0.0 (double q) 1.0)
      (throw (ex-info "transfer fraction must be in [0,1]" {:transfer-fraction q})))
@@ -164,7 +212,7 @@
                       neighbour-sigil
                       sigil)]
          (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str source))
-                                           (get propagators exotype))))))))
+                                           (sigma-of exotype))))))))
 
 (defn blend-rule
   "Deterministically blend LEFT and RIGHT around CENTRE, following the 2014
