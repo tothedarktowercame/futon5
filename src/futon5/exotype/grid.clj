@@ -154,11 +154,27 @@
                          {:exotype f})))
        (into {} (map-indexed (fn [k j] [(nth tt k) (nth tt (long j))]) f))))))
 
+(def ^:dynamic *allow-end8?*
+  "DESIGN-P008b §7 item 1: \"Non-injective vectors are accepted only under an
+   explicit config flag `:allow-end8? true`; without it, `s8->sigma`'s throw
+   stays in place. That keeps G1/G1b fail-closed.\" Bound around an End(8)
+   trajectory (the CA path is single-threaded, ca/core.clj:92); default
+   false, so every existing call site keeps today's behaviour."
+  false)
+
 (defn sigma-of
   "Neighbourhood map for EXOTYPE: a named kind (looked up in `propagators`) or an
-   S8 vector (converted). The single access point for sigma under P-008."
+   S8 vector (converted). The single access point for sigma under P-008.
+   P-008b §7 item 1: with *allow-end8?* bound true, a NON-INJECTIVE vector
+   goes through e8->sigma; in every other case exactly today's path -- a
+   permutation always goes through s8->sigma, flag or not, so the S8 path is
+   byte-identical under the flag."
   [exotype]
-  (if (s8? exotype) (s8->sigma exotype) (get propagators exotype)))
+  (if (s8? exotype)
+    (if (and *allow-end8?* (not (perm? exotype)))
+      (e8->sigma exotype)
+      (s8->sigma exotype))
+    (get propagators exotype)))
 
 (defn kind->s8
   "The S8 vector of a named kind (same sigma, as data)."

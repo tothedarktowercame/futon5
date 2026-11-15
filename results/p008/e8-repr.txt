@@ -50,3 +50,29 @@ Places a non-injective f would reach permutation-assuming code once wired
   - self_tuning/s8-score and s8-transition: 1/8 weights and index inverse.
   - efe/score-policy S8/bin branches: s8-predictor rows are keyed by kind
     or per-permutation summaries; non-injective vectors have no rows.
+
+--- step 1b (option A ruling): *allow-end8?* wired into sigma-of ---
+Tests: futon5.exotype.e8-repr-test, 8 tests / 76 assertions / 0 failures.
+  flag off: sigma-of [0 0 1 2 3 4 5 6] throws "S8 exotype is not a
+    permutation of 0..7" (existing message).
+  flag on: same call returns the e8 table (tt[0]->tt[0], tt[7]->tt[6]).
+  no leak: after the binding exits the call throws again; flag-on first,
+    flag-off second on the same vector also throws (e8->sigma and s8->sigma
+    are separate memoized fns; no cross-leak).
+  flag on, 50 seeded permutations (seed 20261116): sigma-of = flag-off
+    result exactly (permutations always take s8->sigma).
+Item 5, thread check (report only, harness unchanged): slice_harness.clj:178
+submits plain #(run-fn condition seed) Callables to a fixed pool via .submit.
+A binding established by the CALLER is NOT visible inside those tasks:
+Clojure conveys bindings only through binding-conveyor-fn (future), not
+plain .submit. Experiment (futon5 REPL, 2026-11-15): caller binds
+*allow-end8?* true around (.submit pool #(if grid/*allow-end8?*
+:bound-in-task :root-in-task)); the task printed :root-in-task. A binding
+INSIDE the task does work (task returned the e8 table). So any End(8) run
+through slice_harness must bind inside run-fn (or convey explicitly); the
+CA path within one task is single-threaded, so that is sufficient.
+G1 unaffected (recheck after step 1b): scripts/p008/g1b_one.clj, beta 10,
+seed 2026102000, T 1500:
+G1B-ONE 10.0 0.1 2026102000 1500 957e93e21609fb79 kw 957e93e21609fb79 recorded 957e93e21609fb79 MATCH div nil
+Durable G1 record: the /tmp/g1-p008-10.0.txt (and -12.0.txt) G1 run records
+are now copied to /home/joe/storage/exotype/p008-g1/ .

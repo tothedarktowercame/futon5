@@ -62,3 +62,50 @@
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo #"E8 exotype"
          (#'grid/e8->sigma :identity)))))
+
+;; --- step 1b: the *allow-end8?* flag (option A ruling, claude-1 2026-11-15) ---
+
+(deftest flag-off-stays-fail-closed
+  (testing "flag off (default): sigma-of on a non-injective vector throws the existing message"
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"S8 exotype is not a permutation of 0..7"
+         (grid/sigma-of f-noninjective)))))
+
+(deftest flag-on-converts-non-injective-vectors
+  (testing "flag on: the same call returns the e8 table"
+    (let [tt (vec ca/truth-table-3)
+          table (binding [grid/*allow-end8?* true]
+                  (grid/sigma-of f-noninjective))]
+      (is (= (nth tt 0) (get table (nth tt 0))))
+      (is (= (nth tt 6) (get table (nth tt 7)))))))
+
+(deftest flag-does-not-leak
+  (testing "after the binding exits, the call throws again"
+    (binding [grid/*allow-end8?* true]
+      (is (map? (grid/sigma-of f-noninjective))))
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"S8 exotype is not a permutation of 0..7"
+         (grid/sigma-of f-noninjective))))
+  (testing "flag-on first, flag-off second, same vector: memoisation must not leak"
+    ;; e8->sigma and s8->sigma are separate memoized fns, and the flag-off
+    ;; path never calls e8->sigma; the throw proves no cached e8 table is
+    ;; served under the s8->sigma path.
+    (is (map? (binding [grid/*allow-end8?* true]
+                (grid/sigma-of f-noninjective))))
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo
+         #"S8 exotype is not a permutation of 0..7"
+         (grid/sigma-of f-noninjective)))))
+
+(deftest flag-on-leaves-the-s8-path-identical
+  (testing "flag on, 50 seeded permutations: sigma-of = flag-off result exactly"
+    (let [perms (ca/with-seed 20261116
+                  (vec (repeatedly 50 #(#'grid/random-s8))))
+          off (mapv grid/sigma-of perms)
+          on (binding [grid/*allow-end8?* true]
+               (mapv grid/sigma-of perms))]
+      (is (= 50 (count perms)))
+      (is (every? grid/perm? perms))
+      (is (= off on)))))
