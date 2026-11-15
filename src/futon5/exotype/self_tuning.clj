@@ -138,13 +138,59 @@
     (unchecked-add (unchecked-multiply (long (or time 0)) (long width))
                    (long index)))))
 
-(defn mutation-hit?
-  "One rate draw for cell INDEX: a single (ca/rnd-int 10000) inside
-  ca/with-seed on the mutation stream key; hit iff the draw is below
-  round(10000*mu) (threshold 1 at mu 1e-4, 10 at mu 1e-3). Throws if
-  10000*mu is not integral (within 1e-9), or if :mu is missing while
-  mutation is configured."
-  [state index]
+(defn apply-transposition
+  "P-008b §7 item 5, step 5b-B: p′ = τ∘p for τ = (a b). In the futon5 vector
+  p[i] is the IMAGE of neighbourhood i, so composing on the left by τ swaps
+  the VALUES a and b wherever they occur: p′[i] = τ(p[i]). This is NOT a
+  swap of the entries at positions a and b (pinned by a test). Defined on S8
+  only: a non-permutation p throws."
+  [p a b]
+  (when-not (grid/perm? p)
+    (throw (ex-info ":s8-transposition mutation is defined on S8 only"
+                    {:exotype p})))
+  (mapv (fn [v] (cond (= v a) b (= v b) a :else v)) p))
+
+(defn apply-point
+  "P-008b §7 item 5, step 5b-B: f(k) := j. p′ = p with p′[k] = j; j may
+  equal p[k] (a no-op hit, probability 1/8) -- the caller records it as a
+  hit all the same. Any integer vector p is accepted; the result may be
+  non-injective (End(8)), allowed only under grid/*allow-end8?*."
+  [p k j]
+  (assoc p k j))
+
+(defn check-mutation!
+  "Fail-closed validation of the mutation config, called at the top of
+  transmit BEFORE any decision is computed. An unknown :mutation value
+  throws; :e8-point throws when grid/*allow-end8?* is not bound true (the
+  End(8) config flag), because its results are non-injective vectors that
+  only the flag-on guards accept."
+  [mutation]
+  (when (some? mutation)
+    (case mutation
+      :s8-transposition nil
+      :e8-point (when-not grid/*allow-end8?*
+                  (throw (ex-info
+                          ":e8-point mutation requires End(8): bind grid/*allow-end8?* true (config :allow-end8? true)"
+                          {:mutation mutation :allow-end8? grid/*allow-end8?*})))
+      (throw (ex-info "unknown :mutation value"
+                      {:mutation mutation
+                       :available [:s8-transposition :e8-point]})))))
+
+(defn mutation-draw
+  "All mutation draws for cell INDEX inside ONE ca/with-seed scope on the
+  mutation stream key (step 5b-B). First the rate draw, a single
+  (ca/rnd-int 10000) exactly as in step 5b-A -- the hit schedule is
+  unchanged; hit iff the draw is below round(10000*mu). On a hit the
+  operator's draws follow in the SAME scope: :s8-transposition draws
+  a = (rnd-int 8), b0 = (rnd-int 7), b = b0+1 if b0 >= a else b0 (a
+  uniform ordered pair of distinct values, i.e. a uniform transposition);
+  :e8-point draws k = (rnd-int 8), j = (rnd-int 8). On no hit, no further
+  draws. A winner that is not a vector (one of the 12 keyword kinds) is not
+  mutated: the record is {:op {:kind :skipped-keyword}} (placeholder pending
+  the reviewer ruling). Returns nil on no hit, else {:pre :post :op}.
+  Throws if 10000*mu is not integral (within 1e-9), or if :mu is missing
+  while mutation is configured."
+  [state index exotype]
   (when-not (contains? state :mu)
     (throw (ex-info "mutation configured but :mu is missing" {:state-keys (keys state)})))
   (let [mu (double (:mu state))
@@ -155,7 +201,23 @@
                       {:mu mu :scaled scaled})))
     (ca/with-seed (mutation-draw-seed (:seed state) (:time state)
                                       (count (:exotypes state)) index)
-      (< (ca/rnd-int 10000) threshold))))
+      (when (< (ca/rnd-int 10000) threshold)
+        (if-not (vector? exotype)
+          {:pre exotype :post exotype :op {:kind :skipped-keyword}}
+          (case (:mutation state)
+            :s8-transposition
+            (let [a (ca/rnd-int 8)
+                  b0 (ca/rnd-int 7)
+                  b (if (>= b0 a) (inc b0) b0)]
+              {:pre exotype
+               :post (apply-transposition exotype a b)
+               :op {:kind :s8-transposition :a a :b b}})
+            :e8-point
+            (let [k (ca/rnd-int 8)
+                  j (ca/rnd-int 8)]
+              {:pre exotype
+               :post (apply-point exotype k j)
+               :op {:kind :e8-point :k k :j j}})))))))
 
 (defn clip-unit [x]
   (-> (double x) (max 0.0) (min 1.0)))
@@ -305,25 +367,32 @@
 
 (defn transmit [state]
   (let [mutation (:mutation state)
+        ;; P-008b §7 item 5, step 5b-B: fail-closed config check BEFORE any
+        ;; decision is computed -- unknown :mutation values, and :e8-point
+        ;; without grid/*allow-end8?*, throw at the first transmit call.
+        _ (check-mutation! mutation)
         decisions (mapv #(cell-decision state %)
                         (range (count (:exotypes state))))
-        ;; P-008b §7 item 5, step 5b-A: when mutation is configured, draw the
-        ;; per-cell hit AFTER the winner is chosen and record it on the
-        ;; decision. The exotype vector itself is NOT changed yet (this packet
-        ;; is the hit schedule only): :post = :pre, :op :none-yet. When
-        ;; :mutation is absent or nil, no draw happens and no key is added,
-        ;; so the output is identical to today.
+        ;; P-008b §7 item 5: when mutation is configured, draw the per-cell
+        ;; mutation AFTER the winner is chosen, inside one keyed scope
+        ;; (mutation-draw). A hit replaces that cell's next exotype with
+        ;; :post and is recorded on the decision as {:pre :post :op}. The
+        ;; winner entry in the decision is left as it is. When :mutation is
+        ;; absent or nil, no draw happens and no key is added, so the output
+        ;; is identical to today.
         decisions (if (nil? mutation)
                     decisions
                     (mapv (fn [decision]
-                            (if (mutation-hit? state (:index decision))
-                              (let [exotype (get-in decision [:winner :candidate-exotype])]
-                                (assoc decision
-                                       :mutation-hit {:pre exotype :post exotype
-                                                      :op :none-yet}))
-                              decision))
+                            (let [winner (get-in decision [:winner :candidate-exotype])]
+                              (if-let [hit (mutation-draw state (:index decision) winner)]
+                                (assoc decision :mutation-hit hit)
+                                decision)))
                           decisions))]
-    {:exotypes (mapv #(get-in % [:winner :candidate-exotype]) decisions)
+    {:exotypes (mapv (fn [decision]
+                       (if-let [hit (:mutation-hit decision)]
+                         (:post hit)
+                         (get-in decision [:winner :candidate-exotype])))
+                     decisions)
      :lambdas (mapv :next-lambda decisions)
      :decisions decisions}))
 

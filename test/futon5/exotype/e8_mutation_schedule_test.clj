@@ -73,27 +73,29 @@
     (testing ":mutation nil: same hashes, no schedule"
       (is (= base nil-run)))))
 
-(deftest on-does-not-perturb-existing-streams
-  (load-engine!)
-  (let [ns* (find-ns 'local-compressibility-grid)
-        metaca-state @(ns-resolve ns* 'metaca-state)
-        step @(ns-resolve ns* 'checked-metaca-step)
-        off (nth (iterate step (metaca-state 10.0 0.1 2026102600)) 50)
-        on (nth (iterate step (assoc (metaca-state 10.0 0.1 2026102600)
-                                     :mutation :s8-transposition :mu 0.001))
-                50)]
-    (testing "50 steps: exotypes, genotype, phenotype equal the off run exactly"
-      (is (= (:exotypes off) (:exotypes on)))
-      (is (= (:genotype off) (:genotype on)))
-      (is (= (:phenotype off) (:phenotype on))))
-    (testing "decisions differ: hit records are attached"
-      (let [hits (filter :mutation-hit (:self-tuning-decisions on))]
-        (is (pos? (count hits)) "expected at least one hit in 50x250 cells at mu 1e-3")
-        (is (every? #(= (:pre %) (:post %)) (map :mutation-hit hits)))
-        (is (every? #(= :none-yet (:op %)) (map :mutation-hit hits)))
-        (is (not= (:self-tuning-decisions off) (:self-tuning-decisions on))))
-      (let [hits-off (filter :mutation-hit (:self-tuning-decisions off))]
-        (is (empty? hits-off) "off run has no hit records")))))
+(deftest hit-schedule-unchanged-from-step-5b-a
+  (testing "step 5b-B's rate draw is step 5b-A's hit schedule exactly (first 200 steps)"
+    (let [seed 2026102600 mu 0.001 w 250 T 200
+          state (fn [t] {:seed seed :time t :mutation :s8-transposition
+                         :mu mu :exotypes (vec (repeat w :identity))})
+          ;; the NEW schedule: truthy mutation-draw (a keyword winner is
+          ;; skipped, but the rate draw still decides hit vs no hit)
+          new-schedule (into #{}
+                             (for [t (range T) i (range w)
+                                   :when (st/mutation-draw (state t) i :identity)]
+                               [t i]))
+          ;; part A's schedule, computed directly: ONE (ca/rnd-int 10000)
+          ;; under the same key
+          old-schedule (into #{}
+                             (for [t (range T) i (range w)
+                                   :when (ca/with-seed
+                                           (st/mutation-draw-seed seed t w i)
+                                           (< (ca/rnd-int 10000) 10))]
+                               [t i]))]
+      (is (= old-schedule new-schedule))
+      (is (<= 30 (count new-schedule) 70)
+          (str "expected ~50 hits (mean 50, sd 7) in 200x250 at mu 1e-3; got "
+               (count new-schedule))))))
 
 ;; --- the schedule itself, computed directly (no engine stepping) -----------
 
@@ -101,15 +103,17 @@
 (def ^:private T 3000)
 
 (defn- hit-set
-  "Set of [t i] hits for SEED at rate MU, computed with mutation-hit? on a
-  minimal state (the draw depends only on seed/time/width/index/mu)."
+  "Set of [t i] hits for SEED at rate MU, computed with mutation-draw on a
+  minimal state (the rate draw depends only on seed/time/width/index/mu).
+  The winner is a keyword, so a hit yields the :skipped-keyword record --
+  truthy exactly when the rate draw hits."
   [seed mu]
   (into #{}
         (for [t (range T)
               :let [state {:seed seed :time t :mutation :s8-transposition
                            :mu mu :exotypes (vec (repeat width :identity))}]
               i (range width)
-              :when (st/mutation-hit? state i)]
+              :when (st/mutation-draw state i :identity)]
           [t i])))
 
 (deftest rate-within-binomial-interval
@@ -184,10 +188,10 @@
   (testing "mu 5e-5: 10000*mu = 0.5 is not integral"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo #"10000\*mu"
-         (st/mutation-hit? {:seed 1 :time 0 :mutation :e8-point :mu 5e-5
-                            :exotypes (vec (repeat 8 :identity))} 0))))
+         (st/mutation-draw {:seed 1 :time 0 :mutation :e8-point :mu 5e-5
+                            :exotypes (vec (repeat 8 :identity))} 0 :identity))))
   (testing ":mutation set but :mu missing throws"
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo #":mu is missing"
-         (st/mutation-hit? {:seed 1 :time 0 :mutation :e8-point
-                            :exotypes (vec (repeat 8 :identity))} 0)))))
+         (st/mutation-draw {:seed 1 :time 0 :mutation :e8-point
+                            :exotypes (vec (repeat 8 :identity))} 0 :identity)))))
