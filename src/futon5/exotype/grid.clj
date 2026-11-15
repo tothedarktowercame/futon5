@@ -371,16 +371,16 @@
    packet states it (cold-call wall time reported in the packet's tests)."
   (memoize
    (fn [f]
-     (let [[ps invs] @s8-relabellings
+     (let [[^longs ps ^longs invs] @s8-relabellings
            f (long-array f)
            best (long-array 8)
            tmp (long-array 8)]
        (dotimes [i 8] (aset best i (aget f i)))
        (loop [c 0]
          (when (< c 40320)
-           (let [off (* 8 c)]
+           (let [off (long (* 8 c))]
              (dotimes [i 8]
-               (aset tmp i (aget ps (+ off (aget f (aget invs (+ off i)))))))
+               (aset tmp i (aget ps (+ off (aget f (aget invs (+ off (long i))))))))
              (loop [i 0]
                (when (< i 8)
                  (let [t (aget tmp i) b (aget best i)]

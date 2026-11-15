@@ -80,3 +80,36 @@
                             (vec (repeatedly 10 #(grid/random-e8-of-stratum 7 [1])))))]
       (is (= (draw 20261140) (draw 20261140)))
       (is (not= (draw 20261140) (draw 20261141))))))
+
+;; --- step 2 finish (claude-1 2026-11-15): the hinted fg-class equals a slow,
+;; obviously-correct reference: the min by `compare` over ALL 40,320
+;; conjugates, built naively from first principles (no shared code with
+;; grid/s8-relabellings). Guards against the type-hint change altering the
+;; result.
+
+(defn- all-perms
+  "All 40,320 permutations of 0..7, naive backtracking."
+  []
+  (letfn [(go [used perm]
+            (if (= 8 (count perm))
+              [(vec perm)]
+              (mapcat (fn [j]
+                        (when-not (used j)
+                          (go (conj used j) (conj perm j))))
+                      (range 8))))]
+    (vec (go #{} []))))
+
+(deftest fg-class-matches-slow-reference
+  (testing "5 seeded maps: hinted fg-class = min-by-compare over all conjugates"
+    (let [fs (ca/with-seed 20261123
+               (vec (repeatedly 5 (fn [] (vec (repeatedly 8 #(ca/rnd-int 8)))))))
+          ps (all-perms)
+          reference (fn [f]
+                      (reduce (fn [best p]
+                                (let [g (conj-g f p)]
+                                  (if (neg? (compare g best)) g best)))
+                              (mapv long (conj-g f (first ps)))
+                              (rest ps)))]
+      (is (= 40320 (count ps)))
+      (doseq [f fs]
+        (is (= (reference f) (grid/fg-class f)) (str "mismatch for f=" f))))))
