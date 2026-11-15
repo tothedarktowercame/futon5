@@ -61,7 +61,7 @@ inductive RecordKind
   | luCandidates | xiangReading | dogRecall | dogUse
   | maAlignment | maTension | houFocus
   | docChange | giraffeReading | activation | pass | ordering | ranking
-  | benefitLine | serves | needs | mention
+  | benefitLine | serves | needs | mention | introduction | attestation
 deriving DecidableEq, Repr
 
 /-- A handoff: WRITER produces KIND at EVENT (or outside the turn chain),
@@ -117,43 +117,92 @@ def consumable {α : Type} (c : Contract α) : Exchange α → Option α
   | .accepted v => if c.valid v then some v else none
   | _ => none
 
-/-! ## The GCC as a graph (as the loop builds it) -/
+/-! ## The GCC as a graph (as the loop builds it)
 
-/-- The GCC: records reference items (never evidence bodies); reads go
-through these references. -/
-structure GCC where
-  items : List Item
-  records : List Record
-  refs : Record → List Item
-
-/-- A GCC the loop built: every record points at a stored item, and any two
-items are co-referenced by some record (the loop ties related items —
-`needs`, `serves` — together through records). This is the hypothesis that
-makes point-to-point navigation true; an arbitrary record graph need not
-satisfy it. -/
-def LoopBuilt (g : GCC) : Prop :=
-  (∀ r ∈ g.records, ∃ i ∈ g.refs r, i ∈ g.items)
-  ∧ (∀ i ∈ g.items, ∀ j ∈ g.items, ∃ r ∈ g.records, i ∈ g.refs r ∧ j ∈ g.refs r)
-
-/-- A node of the GCC: an item or a record. -/
+Restated 2026-11-15 (claude-1 advice)
+OLD: GCC.records : List Arxana.Record; refs : Record → List Item.
+NEW: GCCRecord has a Circus RecordKind and optional source turn; endpoints
+have roles. This keeps ArxanaCore untouched: its record vocabulary does not
+encode the Circus handoffs. None means an explicitly out-of-turn source.
+-/
+structure GCCRecord where
+  id : Nat
+  kind : RecordKind
+  turn : Option TurnId
+  deriving DecidableEq, Repr
 inductive GNode
   | item (i : Item)
-  | record (r : Record)
-deriving Repr
+  | record (r : GCCRecord)
+  | entity (id : EntityId)
+  | benefitLine (id : Nat)
+  deriving DecidableEq, Repr
+inductive EndpointRole | item | benefitLine | entity | reading | subject
+  deriving DecidableEq, Repr
 
-/-- Membership: which nodes a GCC actually contains. -/
-def GCC.Mem (g : GCC) : GNode → Prop
-  | .item i => i ∈ g.items
-  | .record r => r ∈ g.records
-
-/-- Adjacency: a record is adjacent to each item it references
-(undirected). -/
-def GCC.adj (g : GCC) : GNode → GNode → Prop
-  | .record r, .item i => i ∈ g.refs r
-  | .item i, .record r => i ∈ g.refs r
+def endpointRoles : List EndpointRole := [.item, .benefitLine, .entity, .reading, .subject]
+def EndpointFits : EndpointRole → GNode → Prop
+  | .item, .item _ | .benefitLine, .benefitLine _ | .entity, .entity _ => True
+  | .reading, .record r => r.kind = .giraffeReading
+  | .subject, .record _ => True
   | _, _ => False
 
-/-- A path of at most `n` hops from `a` to `b`. -/
+inductive ReadingEdgeKind | dependsOn | unblocks | partOf | relatesTo
+  deriving DecidableEq, Repr
+structure ReadingEdge where
+  source : Item
+  target : Item
+  kind : ReadingEdgeKind
+  deriving DecidableEq, Repr
+structure AcceptedReading where
+  record : GCCRecord
+  edges : List ReadingEdge
+  deriving DecidableEq, Repr
+
+/-- A partial function provides at most one endpoint per role. Subject allows
+attestations to address records; reading specifically addresses a reading.
+Accepted reading payloads carry their own item edges, not extra needs records.
+The adapter must populate acceptedReadings from accepted, current sources. -/
+structure GCC where
+  items : List Item
+  records : List GCCRecord
+  entities : List EntityId
+  benefitLines : List Nat
+  endpoint : GCCRecord → EndpointRole → Option GNode
+  acceptedReadings : List AcceptedReading
+
+def GCC.memBool (g : GCC) : GNode → Bool
+  | .item i => g.items.contains i
+  | .record r => g.records.contains r
+  | .entity i => g.entities.contains i
+  | .benefitLine i => g.benefitLines.contains i
+def GCC.Mem (g : GCC) (n : GNode) : Prop := g.memBool n = true
+
+/-- The reading is the provenance node for its edges. Both incident items
+are traversable; dependency direction stays in the payload for GCC.needs. -/
+def GCC.incident (g : GCC) (r : GCCRecord) (n : GNode) : Bool :=
+  g.records.contains r && g.memBool n &&
+    (endpointRoles.any (fun role => g.endpoint r role == some n) ||
+      g.acceptedReadings.any (fun rd => rd.record == r && r.kind == .giraffeReading &&
+        rd.edges.any (fun edge => n == .item edge.source || n == .item edge.target)))
+
+/-- Derived exactly from accepted reading dependencies/unblocks, as in
+scripts/gcc_preview.py: unblocks reverses source/target into needs direction.
+RecordKind.needs remains an output label in wiring,
+but LoopBuilt forbids an independently stored needs record. -/
+def GCC.needs (g : GCC) (a b : Item) : Bool :=
+  g.items.contains a && g.items.contains b &&
+    g.acceptedReadings.any (fun rd => g.records.contains rd.record &&
+      rd.record.kind == .giraffeReading && rd.edges.any (fun edge =>
+        (edge.kind == .dependsOn && edge.source == a && edge.target == b) ||
+        (edge.kind == .unblocks && edge.source == b && edge.target == a)))
+
+/-- Undirected incidence, including record-to-record endpoints. Membership
+checks prevent references to absent nodes from manufacturing a path. -/
+def GCC.adj (g : GCC) (a b : GNode) : Prop :=
+  ((match a with | .record r => g.incident r b | _ => false) ||
+   (match b with | .record r => g.incident r a | _ => false)) = true
+
+/-- At MOST n hops: Reach.more pads without traversing an edge. -/
 inductive GCC.Reach (g : GCC) : Nat → GNode → GNode → Prop
   | refl (a : GNode) : g.Reach 0 a a
   | step (n : Nat) (a c b : GNode) (h : g.adj a c) (t : g.Reach n c b) :
@@ -161,13 +210,59 @@ inductive GCC.Reach (g : GCC) : Nat → GNode → GNode → Prop
   | more (n : Nat) (a b : GNode) (t : g.Reach n a b) :
       g.Reach (n + 1) a b
 
-/-- A path of `m` hops is a path of any larger length. -/
+/-- A path of at most m hops also has at most any larger number of hops. -/
 theorem GCC.Reach.pad {g : GCC} {a b : GNode} :
     ∀ {m n : Nat}, m ≤ n → g.Reach m a b → g.Reach n a b := by
   intro m n hn r
   induction hn with
   | refl => exact r
   | step _ ih => exact .more _ _ _ ih
+
+/-- A named turn-local set: touched stored items plus explicitly supplied
+focus items. This does not assert that focus bridges disconnected components. -/
+def turnItems (g : GCC) (t : TurnId) (focus : List Item) : List Item :=
+  g.items.filter fun i => focus.contains i ||
+    g.records.any (fun r => r.turn == some t && g.incident r (.item i))
+
+def Connected (g : GCC) (S : List Item) : Prop :=
+  (∀ i ∈ S, i ∈ g.items) ∧
+    ∀ a ∈ S, ∀ b ∈ S, ∃ n, g.Reach n (.item a) (.item b)
+
+/-- Kinds whose records are anchored to an item. Introduction and attestation
+are deliberately excluded: their endpoints may be entities or records only. -/
+def ItemReferencing : RecordKind → Prop
+  | .mention | .serves | .giraffeReading | .docChange | .activation | .houFocus => True
+  | _ => False
+
+/-! Restated 2026-11-15 (claude-1 advice)
+OLD LoopBuilt: every record references a stored item AND every pair of stored
+items shares a record (a clique in the item projection).
+NEW LoopBuilt g S d: item-referencing kinds have a stored item; endpoint roles
+are well typed and stored; needs is derived; S is connected; d is an explicitly
+ASSUMED measured snapshot bound on S. Neither a global clique nor a universal
+constant 4/5 is asserted. In use S = turnItems g turn focus; disconnected
+turn/focus sets cannot satisfy this hypothesis and require noPath handling.
+-/
+def LoopBuilt (g : GCC) (S : List Item) (d : Nat) : Prop :=
+  (∀ r ∈ g.records, ItemReferencing r.kind →
+    ∃ i ∈ g.items, g.incident r (.item i) = true) ∧
+  (∀ r ∈ g.records, r.kind ≠ .needs ∧
+    ∀ role n, g.endpoint r role = some n → EndpointFits role n ∧ g.Mem n) ∧
+  Connected g S ∧ (∀ a ∈ S, ∀ b ∈ S, g.Reach d (.item a) (.item b))
+
+/-- Explicit result for disconnected pairs. Outside S alone is insufficient:
+an excluded item might still lie in S's component. noPath requires actual
+absence of a path. This logical classifier is not an executable graph search. -/
+inductive Navigation (g : GCC) (a b : GNode)
+  | path (hops : Nat) (witness : g.Reach hops a b)
+  | noPath (disconnected : ¬∃ n, g.Reach n a b)
+noncomputable def navigate (g : GCC) (a b : GNode) : Navigation g a b := by
+  classical
+  exact if h : ∃ n, g.Reach n a b then .path h.choose h.choose_spec else .noPath h
+
+theorem navigate_noPath (g : GCC) (a b : GNode)
+    (h : ¬∃ n, g.Reach n a b) : navigate g a b = .noPath h := by
+  simp [navigate, h]
 
 /-! ## Benefit (virtual), orderings, ranking -/
 
@@ -371,70 +466,177 @@ theorem handoffs_follow_the_chain_of_mem {h : Handoff} (hh : h ∈ wiring)
     have hfm := firstOf_mem hfo
     exact ⟨w, hfm.1, hfm.2, hf0.1.1, hf0.1.2, hf0.2⟩
 
-/-! ### `gcc_navigable_in_five`
+/-! ### Snapshot-bounded navigation
 
-Restated (the draft was false for arbitrary graphs): the statement holds for
-a GCC *the loop built* — `LoopBuilt` above — and in fact four hops suffice. -/
+Restated 2026-11-15 (claude-1 advice)
+OLD gcc_navigable_in_four: any two GCC nodes in a LoopBuilt graph are reachable
+in at most four hops. OLD gcc_navigable_in_five: the same padded to five.
+NEW gcc_navigable_at_most_d: items in the named S have the measured bound d.
+NEW gcc_navigable_at_most_larger_bound: any bound n ≥ d also suffices on S.
+OLD reachable_items used the clique clause to claim two hops for every pair.
+NEW the item bound is supplied explicitly, with no fixed two-hop claim.
+Neither theorem asserts paths to isolated items or unrelated record nodes.
+Reach.more means “at most”, not exact length. The measured hypothesis is
+passed in, never inferred from the existence of a loop or from the corpus size.
+-/
+theorem gcc_navigable_at_most_d (g : GCC) (S : List Item) (d : Nat)
+    (hb : LoopBuilt g S d) (a b : Item) (ha : a ∈ S) (hbmem : b ∈ S) :
+    g.Reach d (.item a) (.item b) := hb.2.2.2 a ha b hbmem
 
-private theorem reachable_items {g : GCC} (hb : LoopBuilt g) {i j : Item}
-    (hi : i ∈ g.items) (hj : j ∈ g.items) :
-    g.Reach 2 (.item i) (.item j) := by
-  obtain ⟨r, _, hi1, hj1⟩ := hb.2 i hi j hj
-  exact .step 1 (.item i) (.record r) (.item j) hi1
-    (.step 0 (.record r) (.item j) (.item j) hj1 (.refl _))
+theorem gcc_navigable_at_most_larger_bound (g : GCC) (S : List Item) (d n : Nat)
+    (hb : LoopBuilt g S d) (bound : d ≤ n) (a b : Item)
+    (ha : a ∈ S) (hbmem : b ∈ S) : g.Reach n (.item a) (.item b) :=
+  GCC.Reach.pad bound (gcc_navigable_at_most_d g S d hb a b ha hbmem)
 
-/-- Key lemma (Joe, 2026-11-14): a loop-built GCC is navigable point to
-point in at most four hops (so five always suffices). -/
-theorem gcc_navigable_in_four (g : GCC) (hb : LoopBuilt g) (a b : GNode)
-    (ha : g.Mem a) (hbm : g.Mem b) :
-    g.Reach 4 a b := by
-  match a, b, ha, hbm with
-  | .item i, .item j, hi, hj =>
-    exact GCC.Reach.pad (by decide) (reachable_items hb hi hj)
-  | .item i, .record r, hi, hr =>
-    obtain ⟨j, hjr, hj⟩ := hb.1 r hr
-    obtain ⟨r', _, hi2, hj2⟩ := hb.2 i hi j hj
-    exact GCC.Reach.pad (by decide)
-      (.step 2 (.item i) (.record r') (.record r) hi2
-        (.step 1 (.record r') (.item j) (.record r) hj2
-          (.step 0 (.item j) (.record r) (.record r) hjr (.refl _))))
-  | .record r, .item j, hr, hj =>
-    obtain ⟨i, hir, hi⟩ := hb.1 r hr
-    obtain ⟨r', _, hi2, hj2⟩ := hb.2 i hi j hj
-    exact GCC.Reach.pad (by decide)
-      (.step 2 (.record r) (.item i) (.item j) hir
-        (.step 1 (.item i) (.record r') (.item j) hi2
-          (.step 0 (.record r') (.item j) (.item j) hj2 (.refl _))))
-  | .record r, .record r', hr, hr' =>
-    obtain ⟨i, hir, hi⟩ := hb.1 r hr
-    obtain ⟨j, hjr, hj⟩ := hb.1 r' hr'
-    obtain ⟨rc, _, hi2, hj2⟩ := hb.2 i hi j hj
-    exact .step 3 (.record r) (.item i) (.record r') hir
-      (.step 2 (.item i) (.record rc) (.record r') hi2
-        (.step 1 (.record rc) (.item j) (.record r') hj2
-          (.step 0 (.item j) (.record r') (.record r') hjr (.refl _))))
+/-- Turn-facing form: the caller must measure the ENTIRE touched-plus-focus
+set, not select a convenient connected subset of a disconnected turn. -/
+theorem gcc_turn_navigable_at_most_d (g : GCC) (turn : TurnId)
+    (focus : List Item) (d : Nat) (hb : LoopBuilt g (turnItems g turn focus) d)
+    (a b : Item) (ha : a ∈ turnItems g turn focus) (hbmem : b ∈ turnItems g turn focus) :
+    g.Reach d (.item a) (.item b) :=
+  gcc_navigable_at_most_d g _ d hb a b ha hbmem
 
-theorem gcc_navigable_in_five (g : GCC) (hb : LoopBuilt g) (a b : GNode)
-    (ha : g.Mem a) (hbm : g.Mem b) :
-    g.Reach 5 a b :=
-  GCC.Reach.pad (by decide) (gcc_navigable_in_four g hb a b ha hbm)
+/-! ## TEETH: connected local scope, disconnected corpus
+Invented identifiers, not corpus text. The corpus measurement motivates the
+shape only; no measured numeric bound is silently imported as a theorem. -/
+namespace GCCTeeth
+private def a : Item := ⟨1, .mission, "M-example-a", true⟩
+private def b : Item := ⟨2, .mission, "M-example-b", true⟩
+private def isolated : Item := ⟨3, .ticket, "T-isolated", true⟩
+private def reading : GCCRecord := ⟨1, .giraffeReading, some 7⟩
+private def sample : GCC :=
+  ⟨[a, b, isolated], [reading], [], [],
+    fun r role => if r == reading && role == .item then some (.item a) else none,
+    [⟨reading, [⟨a, b, .dependsOn⟩]⟩]⟩
+private def scope : List Item := [a, b]
 
-/-- The `LoopBuilt` hypothesis has teeth: a record-less GCC does not connect
-its items at any length. -/
-private def emptyGCC : GCC := ⟨[], [], fun _ => []⟩
+private theorem pair_bound : ∀ x ∈ scope, ∀ y ∈ scope,
+    sample.Reach 2 (.item x) (.item y) := by
+  intro x hx y hy
+  simp only [scope, List.mem_cons, List.not_mem_nil, or_false] at hx hy
+  rcases hx with rfl | rfl <;> rcases hy with rfl | rfl
+  · exact GCC.Reach.pad (by decide) (.refl _)
+  · exact .step 1 _ (.record reading) _ (by unfold GCC.adj; decide)
+      (.step 0 _ _ _ (by unfold GCC.adj; decide) (.refl _))
+  · exact .step 1 _ (.record reading) _ (by unfold GCC.adj; decide)
+      (.step 0 _ _ _ (by unfold GCC.adj; decide) (.refl _))
+  · exact GCC.Reach.pad (by decide) (.refl _)
+
+-- A named turn set genuinely has a small bound, despite an isolated stored item.
+example : turnItems sample 7 [] = scope := by decide
+private theorem locallyBuilt : LoopBuilt sample scope 2 := by
+  refine ⟨?_, ?_, ⟨?_, ?_⟩, pair_bound⟩
+  · intro r hr _
+    have heq : r = reading := by simpa [sample] using hr
+    subst r
+    exact ⟨a, by simp [sample], by decide⟩
+  · intro r hr
+    have heq : r = reading := by simpa [sample] using hr
+    subst r
+    refine ⟨by decide, ?_⟩
+    intro role n hn
+    cases role <;> simp [sample] at hn
+    subst n
+    exact ⟨trivial, by unfold GCC.Mem; decide⟩
+  · intro x hx
+    simp only [scope, List.mem_cons, List.not_mem_nil, or_false] at hx
+    rcases hx with rfl | rfl <;> simp [sample]
+  · intro x hx y hy
+    exact ⟨2, pair_bound x hx y hy⟩
+example : LoopBuilt sample scope 2 := locallyBuilt
+
+-- OLD LoopBuilt's clique clause fails: no record links a to the isolated item.
+example : ¬(∀ x ∈ sample.items, ∀ y ∈ sample.items,
+    ∃ r ∈ sample.records, sample.incident r (.item x) = true ∧
+      sample.incident r (.item y) = true) := by
+  intro h
+  obtain ⟨r, hr, _, hi⟩ := h a (by simp [sample]) isolated (by simp [sample])
+  have heq : r = reading := by simpa [sample] using hr
+  subst r
+  have no : sample.incident reading (.item isolated) = false := by decide
+  rw [no] at hi
+  cases hi
+
+private theorem no_incidence (r : GCCRecord) :
+    sample.incident r (.item isolated) = false := by
+  by_cases hr : r = reading
+  · subst r; decide
+  · simp [GCC.incident, sample, hr]
+private theorem isolated_no_adj (n : GNode) : ¬sample.adj (.item isolated) n := by
+  cases n <;> simp [GCC.adj, no_incidence]
+private theorem isolated_only {n : Nat} {x y : GNode}
+    (h : sample.Reach n x y) : x = .item isolated → y = .item isolated := by
+  induction h with
+  | refl => exact id
+  | step _ x c _ hadj _ _ =>
+    intro hx
+    subst x
+    exact False.elim (isolated_no_adj c hadj)
+  | more _ _ _ _ ih => exact ih
+private theorem disconnected : ¬∃ n, sample.Reach n (.item isolated) (.item a) := by
+  rintro ⟨n, h⟩
+  have impossible := isolated_only h rfl
+  exact (by decide : GNode.item a ≠ .item isolated) impossible
+-- noPath is proved for all hop counts, not inferred from a failed bounded search.
+example : navigate sample (.item isolated) (.item a) = .noPath disconnected :=
+  navigate_noPath _ _ _ disconnected
+-- Adding disconnected focus does not license trimming it out of the scope.
+example : ¬Connected sample (turnItems sample 7 [isolated]) := by
+  intro h
+  exact disconnected (h.2 isolated (by decide) a (by decide))
+-- The needs edge disappears if its accepted reading is absent.
+example : sample.needs a b = true ∧
+    ({ sample with acceptedReadings := [] } : GCC).needs a b = false := by decide
+-- Unblocks is reversed into dependency direction; it is not a second
+-- independent record with an unconstrained direction.
+example :
+    ({ sample with acceptedReadings := [⟨reading, [⟨a, b, .unblocks⟩]⟩] } : GCC).needs b a = true ∧
+    ({ sample with acceptedReadings := [⟨reading, [⟨a, b, .unblocks⟩]⟩] } : GCC).needs a b = false := by decide
+-- Membership in connected S does not itself justify an arbitrarily small d.
+example : ¬sample.Reach 0 (.item a) (.item b) := by
+  intro h
+  have eqZero : ∀ {x y : GNode}, sample.Reach 0 x y → x = y := by
+    intro x y hr
+    cases hr
+    rfl
+  exact (by decide : GNode.item a ≠ .item b) (eqZero h)
+-- An entity-only introduction is not incorrectly required to mention an item.
+private def introRecord : GCCRecord := ⟨2, .introduction, some 7⟩
+private def introduction : GCC :=
+  ⟨[], [introRecord], [9], [],
+    fun _ role => if role == .entity then some (.entity 9) else none, []⟩
+example : LoopBuilt introduction [] 0 := by
+  refine ⟨?_, ?_, ⟨?_, ?_⟩, ?_⟩
+  · intro r hr hi
+    have heq : r = introRecord := by simpa [introduction] using hr
+    subst r
+    cases hi
+  · intro r hr
+    have heq : r = introRecord := by simpa [introduction] using hr
+    subst r
+    refine ⟨by decide, ?_⟩
+    intro role n hn
+    cases role <;> simp [introduction] at hn
+    subst n
+    exact ⟨trivial, by unfold GCC.Mem; decide⟩
+  · simp
+  · simp
+  · simp
+end GCCTeeth
+
+/-- Retained from the earlier model: without edges Reach cannot change nodes. -/
+private def emptyGCC : GCC := ⟨[], [], [], [], fun _ _ => none, []⟩
 private def it0 : Item := ⟨0, .mission, "a", true⟩
 private def it1 : Item := ⟨1, .mission, "b", true⟩
-
 private theorem empty_reach : ∀ {n : Nat} {a b : GNode},
     emptyGCC.Reach n a b → a = b := by
   intro n a b h
   induction h with
   | refl => rfl
   | @step n' a' c' b' hadj _ _ =>
-    cases a' <;> cases c' <;> simp [GCC.adj, emptyGCC] at hadj
+    cases a' <;> cases c' <;> simp [GCC.adj, GCC.incident, emptyGCC] at hadj
   | @more n' a' b' t ih => exact ih
-
-example : ¬ emptyGCC.Reach 5 (.item it0) (.item it1) := by
+example : ¬emptyGCC.Reach 5 (.item it0) (.item it1) := by
   intro h
   exact absurd (GNode.item.inj (empty_reach h)) (by decide)
 
