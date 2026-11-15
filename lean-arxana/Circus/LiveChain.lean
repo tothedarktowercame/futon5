@@ -280,7 +280,6 @@ The mention-only premise records the causal scope; mentions never enter banding.
 theorem chain_meaningful_change (rows : List Monkey.PassRow) (ds : List Delivery)
     (mentions : ∀ d ∈ ds, d.source.key.slot = .known .mention) :
     Bands rows none = rows.map (fun r => (r.target, .unknown)) ∧
-    (∀ oldFocus newFocus, oldFocus = newFocus → Bands rows oldFocus = Bands rows newFocus) ∧
     (∀ cs i, i.deliveries = ds → (focused cs i).active = none →
       ∀ r ∈ (renderChain cs i).priorities,
         r.row.band = .unknown ∧ r.row.reason = some .focusRelationMissing) := by sorry
