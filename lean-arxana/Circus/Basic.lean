@@ -5,8 +5,8 @@ import ArxanaCore.Store
 Draft by claude-13, 2026-11-14, at Joe's request: "before we build anything
 concrete we need to build a logic model, maybe in Lean. What we put into
 VERIFY was a "reading" essentially, but we haven't yet verified the design."
-Statements only; every proof is `sorry` until Joe has read the statements
-(statement registry policy: statements are approved before they are proved).
+The approved statements in this module are now proved (2026-11-15).
+Later VERIFY modules retain their separate statement-registry obligations.
 
 Sources: futon3c `holes/missions/M-repl-circus.md` (§DERIVE, its 2026-11-14
 amendment on activation, the pot and mana), `holes/labs/M-repl-circus/
@@ -340,9 +340,8 @@ about them (`incremental_eq_rebuilt`, `quiescent_shows_nothing_new`,
 `top_ten_is_a_cascade`, and the primary theorem) live there too. -/
 
 /-! ## Statements for Joe to read (restated 2026-11-14; the vacuous or false
-drafts are replaced. Provable-now statements are proved; the rest carry real
-statements under `sorry` per the statement-registry policy, each with a
-witness that the statement has content). -/
+drafts are replaced. The approved statements below are proved, with concrete
+witnesses showing that their hypotheses have content). -/
 
 /-! ### `every_read_has_a_writer`
 
@@ -696,17 +695,134 @@ def related (inp : Inputs) (i j : EntityId) : Bool :=
     || (inp.serves i).any (fun b =>
           b.acceptedByOperator && (inp.serves j).contains b)
 
-/-- The coherence of a focus list: its number of ordered related pairs. -/
+/-- Counts ordered related pairs INCLUDING the diagonal. This is not the
+coherence measure; use coherence for distinct-ID focus quality. -/
 def relatedPairs (inp : Inputs) (F : List (EntityId × Nat)) : Nat :=
   F.foldl (fun acc x =>
     F.foldl (fun a y => a + (if related inp x.1 y.1 then 1 else 0)) acc) 0
 
+/-- Ordered pairs of entries with DISTINCT item IDs. Each head/tail pair is
+counted in both directions; diagonal and duplicate-ID pairs contribute zero. -/
+def coherence (inp : Inputs) : List (EntityId × Nat) → Nat
+  | [] => 0
+  | x :: xs =>
+    (xs.filter (fun y => x.1 != y.1 && related inp x.1 y.1)).length +
+    (xs.filter (fun y => y.1 != x.1 && related inp y.1 x.1)).length + coherence inp xs
+
+private theorem related_symm (inp : Inputs) (i j : EntityId) :
+    related inp i j = related inp j i := by
+  apply Bool.eq_iff_iff.mpr
+  simp only [related, Bool.or_eq_true, List.any_eq_true, Bool.and_eq_true,
+    List.contains_iff_mem]
+  constructor
+  · rintro ((h | h) | ⟨b, hb, ha, hj⟩)
+    · exact Or.inl (Or.inr h)
+    · exact Or.inl (Or.inl h)
+    · exact Or.inr ⟨b, hj, ha, hb⟩
+  · rintro ((h | h) | ⟨b, hb, ha, hi⟩)
+    · exact Or.inl (Or.inr h)
+    · exact Or.inl (Or.inl h)
+    · exact Or.inr ⟨b, hi, ha, hb⟩
+
+private theorem coherence_cons_related (inp : Inputs) (x : EntityId × Nat)
+    (xs : List (EntityId × Nat))
+    (different : ∀ y ∈ xs, x.1 ≠ y.1)
+    (linked : ∀ y ∈ xs, related inp x.1 y.1 = true) :
+    coherence inp (x :: xs) = xs.length + xs.length + coherence inp xs := by
+  have first : xs.filter (fun y => x.1 != y.1 && related inp x.1 y.1) = xs := by
+    apply List.filter_eq_self.mpr
+    intro y hy
+    simp [different y hy, linked y hy]
+  have second : xs.filter (fun y => y.1 != x.1 && related inp y.1 x.1) = xs := by
+    apply List.filter_eq_self.mpr
+    intro y hy
+    rw [related_symm inp y.1 x.1]
+    simp [Ne.symm (different y hy), linked y hy]
+  simp [coherence, first, second]
+
+/-- Pairwise-unrelated lists have zero coherence, including repeated IDs. -/
+theorem coherence_unrelated_zero (inp : Inputs) (G : List (EntityId × Nat))
+    (h : (G.map Prod.fst).Pairwise (fun i j => !related inp i j)) :
+    coherence inp G = 0 := by
+  induction G with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [List.map_cons, List.pairwise_cons] at h
+    have no : ∀ y ∈ xs, related inp x.1 y.1 = false := by
+      intro y hy
+      have hh := h.1 y.1 (List.mem_map.mpr ⟨y, hy, rfl⟩)
+      simpa using hh
+    have first : xs.filter (fun y => x.1 != y.1 && related inp x.1 y.1) = [] := by
+      apply List.filter_eq_nil_iff.mpr
+      intro y hy
+      simp [no y hy]
+    have second : xs.filter (fun y => y.1 != x.1 && related inp y.1 x.1) = [] := by
+      apply List.filter_eq_nil_iff.mpr
+      intro y hy
+      rw [related_symm inp y.1 x.1]
+      simp [no y hy]
+    simp [coherence, first, second, ih h.2]
+
+private theorem coherence_cons_of_pairwise (inp : Inputs) (x : EntityId × Nat)
+    (xs : List (EntityId × Nat)) (nd : ((x :: xs).map Prod.fst).Nodup)
+    (pr : ((x :: xs).map Prod.fst).Pairwise (fun i j => related inp i j)) :
+    coherence inp (x :: xs) = xs.length + xs.length + coherence inp xs := by
+  simp only [List.map_cons, List.nodup_cons] at nd
+  simp only [List.map_cons, List.pairwise_cons] at pr
+  apply coherence_cons_related
+  · intro y hy heq
+    exact nd.1 (heq ▸ List.mem_map.mpr ⟨y, hy, rfl⟩)
+  · intro y hy
+    exact pr.1 y.1 (List.mem_map.mpr ⟨y, hy, rfl⟩)
+
+/-- Three distinct pairwise-related items already contribute six ordered pairs. -/
+theorem coherence_related_at_least_six (inp : Inputs) (F : List (EntityId × Nat))
+    (size : 3 ≤ F.length) (nd : (F.map Prod.fst).Nodup)
+    (pr : (F.map Prod.fst).Pairwise (fun i j => related inp i j)) :
+    6 ≤ coherence inp F := by
+  cases F with
+  | nil => simp at size
+  | cons x xs =>
+    rw [coherence_cons_of_pairwise inp x xs nd pr]
+    have nd' := (List.nodup_cons.mp nd).2
+    have pr' := (List.pairwise_cons.mp pr).2
+    cases xs with
+    | nil => simp at size
+    | cons y ys =>
+      rw [coherence_cons_of_pairwise inp y ys nd' pr']
+      simp only [List.length_cons] at size ⊢
+      omega
+
+/-! Restated 2026-11-15 (claude-13 amendment)
+OLD: relatedPairs G < relatedPairs F under pairwise-unrelated G and at least
+three distinct pairwise-related F items. False: diagonal contributions of a
+long G can exceed F's six off-diagonal pairs.
+NEW: coherence G < coherence F under the SAME hypotheses. coherence excludes
+same-ID pairs; G scores zero and F at least six. No G.Nodup premise is added.
+-/
 theorem focus_coherence (inp : Inputs) (F G : List (EntityId × Nat))
     (hF : 3 ≤ F.length) (hnd : (F.map Prod.fst).Nodup)
     (hFrel : (F.map Prod.fst).Pairwise (fun i j => related inp i j))
     (hGrel : (G.map Prod.fst).Pairwise (fun i j => !related inp i j)) :
-    relatedPairs inp G < relatedPairs inp F := by
-  sorry
+    coherence inp G < coherence inp F := by
+  rw [coherence_unrelated_zero inp G hGrel]
+  have h := coherence_related_at_least_six inp F hF hnd hFrel
+  omega
+
+namespace CoherenceTeeth
+private def inp : Inputs :=
+  ⟨[], [], fun _ => 0,
+    fun i j => decide ((i < 3 ∧ j < 3 ∧ i ≠ j) ∨ (3 ≤ i ∧ i = j)),
+    fun _ => [], [], 0⟩
+private def F : List (EntityId × Nat) := [(0, 1), (1, 1), (2, 1)]
+private def G : List (EntityId × Nat) :=
+  [(3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1)]
+example : 3 ≤ F.length ∧ (F.map Prod.fst).Nodup ∧
+    (F.map Prod.fst).Pairwise (fun i j => related inp i j) ∧
+    (G.map Prod.fst).Pairwise (fun i j => !related inp i j) ∧
+    relatedPairs inp F = 6 ∧ relatedPairs inp G = 7 ∧
+    coherence inp F = 6 ∧ coherence inp G = 0 := by decide
+end CoherenceTeeth
 
 /-- The coherence statement has teeth: three items with no needs edges and
 no shared accepted benefit line score zero, so no focus over them can beat
