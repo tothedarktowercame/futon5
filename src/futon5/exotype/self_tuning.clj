@@ -110,6 +110,53 @@
   "Separates the softmax policy draw from propagator, blend, and apply draws."
   0x050F7A)
 
+;; --- P-008b §7 item 5: V1 mutation, step 5b-A (hit schedule only) -----------
+;; Rulings 2026-11-15 (lon-claude-4, on the plan in results/p008/
+;; e8-mutation-plan.txt): the mutation stream is keyed
+;;   mix-seed(mix-seed(seed XOR mutation-stream-tag) + t*width + i)
+;; NOT seed + t*width + i: the run seed is MIXED before the coordinates are
+;; added, so consecutive seeds get unrelated mutation schedules. The older
+;; keyed streams (policy, blend, apply, propagator-k) keep seed + t*width + i
+;; -- for consecutive seeds their noise fields are shifted copies (seed s+1
+;; at (t,i) = seed s at (t,i+1)), a known property of the SHEET reference;
+;; changing them would break G1 and every nesting hash.
+
+(def ^:private mutation-stream-tag
+  "Separates the mutation-rate draw from the policy, blend, apply, and
+  propagator-position streams."
+  0x0E8E8E)
+
+(defn mutation-draw-seed
+  "P-008b §7 item 5 (ruling 2026-11-15): mutation stream key. The seed is
+  mixed with the tag BEFORE the coordinates are added (unchecked arithmetic),
+  so consecutive run seeds give unrelated mutation schedules -- unlike the
+  existing streams, where seed s+1 at (t, i) repeats seed s at (t, i+1)."
+  [seed time width index]
+  (ca/mix-seed
+   (unchecked-add
+    (ca/mix-seed (bit-xor (long (or seed 0)) mutation-stream-tag))
+    (unchecked-add (unchecked-multiply (long (or time 0)) (long width))
+                   (long index)))))
+
+(defn mutation-hit?
+  "One rate draw for cell INDEX: a single (ca/rnd-int 10000) inside
+  ca/with-seed on the mutation stream key; hit iff the draw is below
+  round(10000*mu) (threshold 1 at mu 1e-4, 10 at mu 1e-3). Throws if
+  10000*mu is not integral (within 1e-9), or if :mu is missing while
+  mutation is configured."
+  [state index]
+  (when-not (contains? state :mu)
+    (throw (ex-info "mutation configured but :mu is missing" {:state-keys (keys state)})))
+  (let [mu (double (:mu state))
+        scaled (* 10000.0 mu)
+        threshold (Math/round scaled)]
+    (when-not (< (Math/abs (- scaled threshold)) 1e-9)
+      (throw (ex-info "mutation mu must make 10000*mu an integer"
+                      {:mu mu :scaled scaled})))
+    (ca/with-seed (mutation-draw-seed (:seed state) (:time state)
+                                      (count (:exotypes state)) index)
+      (< (ca/rnd-int 10000) threshold))))
+
 (defn clip-unit [x]
   (-> (double x) (max 0.0) (min 1.0)))
 
@@ -257,8 +304,25 @@
                                     lambda hunger))))
 
 (defn transmit [state]
-  (let [decisions (mapv #(cell-decision state %)
-                        (range (count (:exotypes state))))]
+  (let [mutation (:mutation state)
+        decisions (mapv #(cell-decision state %)
+                        (range (count (:exotypes state))))
+        ;; P-008b §7 item 5, step 5b-A: when mutation is configured, draw the
+        ;; per-cell hit AFTER the winner is chosen and record it on the
+        ;; decision. The exotype vector itself is NOT changed yet (this packet
+        ;; is the hit schedule only): :post = :pre, :op :none-yet. When
+        ;; :mutation is absent or nil, no draw happens and no key is added,
+        ;; so the output is identical to today.
+        decisions (if (nil? mutation)
+                    decisions
+                    (mapv (fn [decision]
+                            (if (mutation-hit? state (:index decision))
+                              (let [exotype (get-in decision [:winner :candidate-exotype])]
+                                (assoc decision
+                                       :mutation-hit {:pre exotype :post exotype
+                                                      :op :none-yet}))
+                              decision))
+                          decisions))]
     {:exotypes (mapv #(get-in % [:winner :candidate-exotype]) decisions)
      :lambdas (mapv :next-lambda decisions)
      :decisions decisions}))
@@ -361,7 +425,15 @@
       (contains? state :epistemic-coefficient)
       (assoc :epistemic-coefficient (double (:epistemic-coefficient state)))
       (contains? state :adoption-bonus)
-      (assoc :adoption-bonus (double (:adoption-bonus state))))))
+      (assoc :adoption-bonus (double (:adoption-bonus state)))
+      ;; P-008b §7 item 5, step 5b-A: mutation config is trajectory state in
+      ;; the same pattern -- dropped here would silently turn it off after the
+      ;; first step. :mu is passed through verbatim (not doubled): it is a
+      ;; rate, and mutation-hit? validates it.
+      (contains? state :mutation)
+      (assoc :mutation (:mutation state))
+      (contains? state :mu)
+      (assoc :mu (:mu state)))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))
