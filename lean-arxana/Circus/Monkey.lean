@@ -104,12 +104,28 @@ noncomputable def monkeyRun (i : RunInput) (result : ReaderResult) : Outcome := 
         else .written ⟨⟨i.outputId, .houFocus, some i.turn⟩, p.relations,
           i.readRecords, pin i.snapshot i.readRecords⟩
 
+private theorem written_guards (i : RunInput) (result : ReaderResult) (f : FocusRecord)
+    (h : monkeyRun i result = .written f) :
+    i.settled = true ∧ i.replyLanded = true ∧ EvidenceValid i ∧
+    ∃ p, Located i p ∧ f = ⟨⟨i.outputId, .houFocus, some i.turn⟩,
+      p.relations, i.readRecords, pin i.snapshot i.readRecords⟩ := by
+  unfold monkeyRun at h
+  split at h <;> try contradiction
+  split at h <;> try contradiction
+  cases result <;> simp only at h <;> try contradiction
+  split at h <;> try contradiction
+  split at h <;> simp_all
+  exact ⟨_, ‹Located i _›, h.symm⟩
+
 def WaitsForReply (i : RunInput) (out : Outcome) : Prop :=
   ∀ f, out = .written f → i.settled = true ∧ i.replyLanded = true
 /-- VERIFY obligation 2, "live operator turn through the chain": 猴 must wait
 for settlement AND the reply. A settled flag alone is not permission to write. -/
 theorem monkey_waits_for_reply (i : RunInput) (result : ReaderResult) :
-    WaitsForReply i (monkeyRun i result) := by sorry
+    WaitsForReply i (monkeyRun i result) := by
+  intro f h
+  have hg := written_guards i result f h
+  exact ⟨hg.1, hg.2.1⟩
 
 /-- Navigation is witnessed, not merely absence of an error. -/
 def Navigable (g : GCC) (a b : Item) : Prop :=
@@ -124,7 +140,26 @@ def FocusLocated (i : RunInput) (f : FocusRecord) : Prop :=
 locating it within the GCC. Unknown and disconnected targets are not focus. -/
 theorem focus_located_in_gcc (i : RunInput) (result : ReaderResult) (f : FocusRecord)
     (written : monkeyRun i result = .written f) :
-    f.record.kind = .houFocus ∧ f.record.turn = some i.turn ∧ FocusLocated i f := by sorry
+    f.record.kind = .houFocus ∧ f.record.turn = some i.turn ∧ FocusLocated i f := by
+  obtain ⟨_, _, _, p, located, rfl⟩ := written_guards i result f written
+  refine ⟨rfl, rfl, located.2.1, ?_⟩
+  intro target ht
+  have nonempty : focusItems i.snapshot.gcc p.relations ≠ [] := by
+    intro he; rw [he] at ht; cases ht
+  obtain ⟨anchor, ha⟩ := List.exists_mem_of_ne_nil _ (located.2.2.1 nonempty)
+  refine ⟨anchor, ha, ?_⟩
+  have ha' : anchor ∈ turnItems i.snapshot.gcc i.turn (focusItems i.snapshot.gcc p.relations) := by
+    simp only [turnItems, List.mem_filter, List.contains_nil, Bool.false_or] at ha
+    simp only [turnItems, List.mem_filter, Bool.or_eq_true]
+    exact ⟨ha.1, Or.inr ha.2⟩
+  have ht' : target ∈ turnItems i.snapshot.gcc i.turn (focusItems i.snapshot.gcc p.relations) := by
+    refine List.mem_filter.mpr ⟨(List.mem_filter.mp ht).1, ?_⟩
+    simp [ht]
+  have path := gcc_turn_navigable_at_most_d _ _ _ _ located.2.2.2 anchor target ha' ht'
+  have existsPath : ∃ n, i.snapshot.gcc.Reach n (.item anchor) (.item target) := ⟨_, path⟩
+  unfold Navigable navigate
+  simp only [dif_pos existsPath]
+  exact ⟨existsPath.choose, existsPath.choose_spec, rfl⟩
 
 /-- Add a focus annotation even if another Freshness reason has precedence.
 No stale/absent focus remains active, and focusVersion is cleared. -/
@@ -152,6 +187,26 @@ noncomputable def consume (cs : List Circus.Character) (snap : Snapshot)
           ((f.relations.filter (·.2 == .focus)).map (fun p => (p.1, 1)))))⟩
       else ⟨none, some .evidenceChanged, markFocus v .sourceChangedSincePass⟩
 
+private theorem pin_complete (snap : Snapshot) (rs : List GCCRecord)
+    (valid : ∀ r ∈ rs, r ∈ snap.gcc.records ∧ ∃ d, snap.digest r = some d) :
+    (pin snap rs).map Prod.fst = rs ∧
+    ∀ p ∈ pin snap rs, p.1 ∈ snap.gcc.records ∧ snap.digest p.1 = some p.2 := by
+  constructor
+  · induction rs with
+    | nil => rfl
+    | cons r rs ih =>
+      obtain ⟨_, d, hd⟩ := valid r (by simp)
+      have tail := ih (by intro q hq; exact valid q (by simp [hq]))
+      simpa [pin, hd] using congrArg (List.cons r) tail
+  · intro p hp
+    obtain ⟨r, hr, he⟩ := List.mem_filterMap.mp hp
+    cases hd : snap.digest r with
+    | none => simp [hd] at he
+    | some d =>
+      simp only [hd, Option.map_some, Option.some.injEq] at he
+      subst p
+      exact ⟨(valid r hr).1, hd⟩
+
 /-- VERIFY obligation 3, "pass's input digest ... newest focus": the pin's
 record list equals the audited read set exactly. Changing ANY pinned digest
 invalidates it and produces sourceChangedSincePass, never active focus. -/
@@ -161,7 +216,19 @@ theorem focus_pins_its_evidence (i : RunInput) (result : ReaderResult) (f : Focu
     (∀ later r d, (r, d) ∈ f.evidencePin → later.digest r ≠ some d →
       ¬PinFresh later f ∧ ∀ cs v,
         (consume cs later v (.written f)).active = none ∧
-        (consume cs later v (.written f)).view.header = some .sourceChangedSincePass) := by sorry
+        (consume cs later v (.written f)).view.header = some .sourceChangedSincePass) := by
+  have hg := written_guards i result f written
+  obtain ⟨p, _, hf⟩ := hg.2.2.2
+  refine ⟨by rw [hf], ?_, ?_⟩
+  · rw [hf]
+    exact pin_complete i.snapshot i.readRecords hg.2.2.1.2.2.2
+  · intro later r d mem changed
+    have stale : ¬PinFresh later f := by
+      intro h
+      exact changed (h.2 (r, d) mem).2
+    refine ⟨stale, ?_⟩
+    intro cs v
+    simp [consume, stale, markFocus]
 
 inductive Band | focus | associated | elsewhere | unknown
   deriving DecidableEq, Repr
@@ -221,11 +288,103 @@ def ProjectionCorrect (rows : List PassRow) (f : Option FocusRecord) (cutoff : N
     r.row.band = .unknown ∧ r.row.reason = some .focusRelationMissing) ∧
   (∀ index r, out[index]? = some r → r.withinCutoff = decide (index < cutoff))
 
+private theorem band_order_injective (a b : Band) : a.order = b.order ↔ a = b := by
+  cases a <;> cases b <;> decide
+
+private theorem rowLE_iff (a b : PriorityRow) : rowLE a b = true ↔
+    a.band.order < b.band.order ∨ (a.band.order = b.band.order ∧
+      (a.passRank < b.passRank ∨ (a.passRank = b.passRank ∧ a.sourceIndex ≤ b.sourceIndex))) := by
+  simp [rowLE, band_order_injective]
+
+private theorem rowLE_total (a b : PriorityRow) : rowLE a b = true ∨ rowLE b a = true := by
+  simp only [rowLE_iff]
+  omega
+
+private theorem rowLE_trans (a b c : PriorityRow)
+    (ab : rowLE a b = true) (bc : rowLE b c = true) : rowLE a c = true := by
+  simp only [rowLE_iff] at *
+  omega
+
+private theorem insert_perm (r : PriorityRow) (xs : List PriorityRow) :
+    (insertRow r xs).Perm (r :: xs) := by
+  induction xs with
+  | nil => exact .refl _
+  | cons x xs ih =>
+    simp only [insertRow]
+    split
+    · exact .refl _
+    · exact (ih.cons x).trans (.swap _ _ _)
+
+private theorem sort_perm (xs : List PriorityRow) : (sortRows xs).Perm xs := by
+  induction xs with
+  | nil => exact .refl _
+  | cons x xs ih => exact (insert_perm x _).trans (ih.cons x)
+
+private theorem insert_sorted (r : PriorityRow) (xs : List PriorityRow)
+    (sorted : xs.Pairwise (fun a b => rowLE a b = true)) :
+    (insertRow r xs).Pairwise (fun a b => rowLE a b = true) := by
+  induction xs with
+  | nil => simp [insertRow]
+  | cons x xs ih =>
+    obtain ⟨head, tail⟩ := List.pairwise_cons.mp sorted
+    simp only [insertRow]
+    split
+    next hr =>
+      apply List.pairwise_cons.mpr
+      refine ⟨?_, List.pairwise_cons.mpr ⟨head, tail⟩⟩
+      intro y hy
+      simp only [List.mem_cons] at hy
+      rcases hy with rfl | hy
+      · exact hr
+      · exact rowLE_trans r x y hr (head y hy)
+    next hr =>
+      apply List.pairwise_cons.mpr
+      refine ⟨?_, ih tail⟩
+      intro y hy
+      have mem := (insert_perm r xs).mem_iff.mp hy
+      simp only [List.mem_cons] at mem
+      rcases mem with rfl | mem
+      · exact (rowLE_total y x).resolve_left hr
+      · exact head y mem
+
+private theorem sort_sorted (xs : List PriorityRow) :
+    (sortRows xs).Pairwise (fun a b => rowLE a b = true) := by
+  induction xs with
+  | nil => exact .nil
+  | cons x xs ih => exact insert_sorted x _ ih
+
+private theorem projection_rows (rows : List PassRow) (f : Option FocusRecord) (cutoff : Nat) :
+    (priorityProjection rows f cutoff).map (·.row) = sortRows (rawRows rows f) := by
+  apply List.ext_getElem?
+  intro i
+  simp [priorityProjection, Option.map_map, Function.comp_def]
+
 /-- VERIFY obligation 2, "pass/priorities ... reaches the reader": Giraffe
 orders focus before associated before elsewhere before unknown, preserving
 pass rank within bands. Missing relation is explicitly unknown, never band 0. -/
 theorem giraffe_band_respects_focus (rows : List PassRow) (f : Option FocusRecord) (cutoff : Nat) :
-    ProjectionCorrect rows f cutoff (priorityProjection rows f cutoff) := by sorry
+    ProjectionCorrect rows f cutoff (priorityProjection rows f cutoff) := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [projection_rows]
+    exact sort_perm _
+  · rw [projection_rows]
+    exact sort_sorted _
+  · intro r hr missing
+    have mem : r.row ∈ (priorityProjection rows f cutoff).map (·.row) := List.mem_map.mpr ⟨r, hr, rfl⟩
+    rw [projection_rows] at mem
+    have raw := (sort_perm _).mem_iff.mp mem
+    simp only [rawRows, List.mem_mapIdx] at raw
+    obtain ⟨index, hi, he⟩ := raw
+    rw [← he] at missing ⊢
+    simp only at missing
+    simp [missing, band]
+  · intro index r hr
+    simp only [priorityProjection, List.getElem?_mapIdx] at hr
+    cases he : (sortRows (rawRows rows f))[index]? with
+    | none => simp [he] at hr
+    | some row =>
+      simp only [he, Option.map_some, Option.some.injEq] at hr
+      rw [← hr]
 
 def FailureVisible (why : Failure) (consumer : Consumer) : Prop :=
   consumer.active = none ∧ consumer.failure = some why ∧
@@ -236,7 +395,8 @@ split/retry/readiness/validation runs are typed absences with focusAbsent,
 not successful empty focus. A stale pin separately shows sourceChangedSincePass. -/
 theorem monkey_failure_is_typed (cs : List Circus.Character) (snap : Snapshot)
     (v : ViewState) (why : Failure) :
-    FailureVisible why (consume cs snap v (.failed why)) := by sorry
+    FailureVisible why (consume cs snap v (.failed why)) := by
+  simp [FailureVisible, consume, markFocus, render]
 
 /-! ## TEETH: bad producers fail the consumer contracts -/
 namespace Teeth
