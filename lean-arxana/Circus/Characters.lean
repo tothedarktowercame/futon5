@@ -21,8 +21,7 @@ handed to each character. The structures below are those records' content.)
   rank; items outside the pass last, by pending level).
 
 Reasons are modelled as TERMS (`Term`) with a `render` that reproduces the
-script's exact strings, so the vocabulary question (§ FINDINGS below, and the
-`hvoc` hypothesis of the primary theorem) can be asked precisely.
+display fragments. Source faithfulness is independent of vocabulary membership.
 
 ## Benefit monotonicity (Joe, 2026-11-14)
 
@@ -44,26 +43,10 @@ understanding of how the system works."
   small handoff) is ever listed (`questor_cost_gate`,
   `questor_never_lists_unready`); no unready item is ranked at all.
 
-## FINDINGS: the reason strings vs the operator's vocabulary
+## Computed reasons
+Computed values need no approval: typed terms must report the cited facts.
+The live check is futon3c scripts/giraffe_party_conformance.py.
 
-The operator's vocabulary as it stands = accepted benefit lines + Joe's
-introductions/word rules + the characters' names. The terms the four
-characters actually write are, term by term:
-
-* INSIDE: nothing unconditionally. The characters' names appear only as
-  substrings ("Giraffe pass rank 3"), not as terms.
-* OUTSIDE (computed): `unblocks %d item(s)`, `cone of %d behind it`,
-  `Giraffe pass rank %d`, `not in the Giraffe pass; pending level %d`,
-  `convergence %d`, `… halved)`, harm-line labels `on harm line H3`, feature
-  slugs `is m-formal-arxana`, and the fixed phrases `unfinished work within
-  two hops`, `ready (one small handoff)`, `names no scored feature`.
-
-So the primary theorem's `hvoc` hypothesis (every reason term ∈ v.terms) is
-NOT satisfied by the script's strings as written: the `example` under
-"FINDINGS, formally" exhibits the failure concretely. Extending the
-vocabulary with these computed phrases — or rendering reasons as vocabulary
-words around numbers — is a design decision for Joe, recorded here rather
-than routed around.
 -/
 
 namespace Circus.Characters
@@ -107,9 +90,8 @@ structure PassFacts where
   order : List EntityId
   unblocks : EntityId → Nat
   cone : EntityId → Nat
-
-def PassFacts.rank (pf : PassFacts) (x : EntityId) : Option Nat :=
-  pf.order.idxOf? x
+  /-- The pass's stored rank, not the zero-based position in order. -/
+  rank : EntityId → Option Nat
 
 /-- Thor's benefit is enabled through `needs`: the number of OPEN items that
 need `x`. (The script computes this over its own adjacency; the model makes
@@ -119,42 +101,7 @@ def unblocksOf (inp : Inputs) (x : EntityId) : Nat :=
 
 /-! ## Reason terms -/
 
-/-- The reason fragments the script writes, as terms. `.lit` is a plain
-vocabulary word; every other constructor is a COMPUTED term (a count, a rank,
-a label, a slug) — see the module FINDINGS. -/
-inductive Term
-  | lit (s : String)
-  | unblocksCount (n : Nat)
-  | coneCount (n : Nat)
-  | passRank (n : Nat)
-  | notInPass (level : Nat)
-  | harmLine (h : HarmLine)
-  | featureIs (f : FeatureId)
-  | convergence (n : Nat)
-  | withinTwoHops
-  | namesHalved (f : FeatureId) (n : Nat)
-  | readyOneHandoff
-  | noScoredFeature
-  | namesConv (f : FeatureId) (n : Nat)
-deriving DecidableEq, Repr
-
-/-- `render` reproduces the script's exact strings. -/
-def Term.render : Term → String
-  | .lit s => s
-  | .unblocksCount n => s!"unblocks {n} item(s)"
-  | .coneCount n => s!"cone of {n} behind it"
-  | .passRank n => s!"Giraffe pass rank {n}"
-  | .notInPass l => s!"not in the Giraffe pass; pending level {l}"
-  | .harmLine h => s!"on harm line {h}"
-  | .featureIs f => s!"is {f}"
-  | .convergence n => s!"convergence {n}"
-  | .withinTwoHops => "unfinished work within two hops"
-  | .namesHalved f n => s!"names {f} (convergence {n}, halved)"
-  | .readyOneHandoff => "ready (one small handoff)"
-  | .noScoredFeature => "names no scored feature"
-  | .namesConv f n => s!"names {f} (convergence {n})"
-
-/-- A computed term (everything but a literal) is a vocabulary finding. -/
+/-- Distinguish literal text from computed terms. -/
 def Term.isLiteral : Term → Bool
   | .lit _ => true
   | _ => false
@@ -166,7 +113,7 @@ def toEntries {α : Type} (who : Agent) (termsOf : α → List Term)
   | _, [] => []
   | p, x :: xs =>
     { item := itemOf x, priority := p,
-      reason := ⟨(termsOf x).map Term.render, who⟩ } ::
+      reason := ⟨(termsOf x).map Term.render, who, termsOf x, who⟩ } ::
       toEntries who termsOf itemOf (p - 1) xs
 
 theorem toEntries_items {α : Type} (who : Agent) (termsOf : α → List Term)
@@ -179,11 +126,10 @@ theorem toEntries_items {α : Type} (who : Agent) (termsOf : α → List Term)
 
 /-! ## Thor: the pass order (unblocks, then cone) -/
 
+/-- The producer defaults a missing rank to zero when rendering Thor. This
+is a reported default, not a reconstructed position in the pass order. -/
 def thorTerms (pf : PassFacts) (x : EntityId) : List Term :=
-  [.unblocksCount (pf.unblocks x), .coneCount (pf.cone x)] ++
-    (match pf.rank x with
-      | some r => [.passRank r]
-      | none => [])
+  [.unblocksCount (pf.unblocks x), .coneCount (pf.cone x), .passRank ((pf.rank x).getD 0)]
 
 /-- Thor's order: Giraffe's pass order, first `top` (`thor_order`). -/
 def thorOrder (pf : PassFacts) (top : Nat) : List Entry :=
@@ -230,7 +176,7 @@ def thyraRankLE (pf : PassFacts) (x y : EntityId) : Prop :=
     (match pf.rank y with | some r => r | none => 10 ^ 6)
 
 def thyraTerms (pf : PassFacts) (p : Pending) : List Term :=
-  [.harmLine (p.harm.getD ""), .withinTwoHops] ++
+  [.harmLine (p.harm.getD "")] ++
     (match pf.rank p.item with
       | some r => [.passRank r]
       | none => [.notInPass p.level])
@@ -306,7 +252,7 @@ def merlinKept (r : MerlinRow) : Bool :=
 
 def merlinTerms (r : MerlinRow) : List Term :=
   [.featureIs (r.feature.getD ""), .convergence r.own, .withinTwoHops] ++
-    (match r.namedBest with
+    (if r.named = 0 then [] else match r.namedBest with
       | some f => [.namesHalved f r.named]
       | none => [])
 
@@ -420,34 +366,149 @@ theorem thor_endgame_cover (inp : Inputs) (pf : PassFacts)
     rw [hmap]
     exact hx
 
-/-! ## FINDINGS, formally: the reason strings break `hvoc` -/
+/-! ## Source faithfulness (restated 2026-11-15)
+OLD: computed strings fail vocabulary membership.
+NEW: computed strings are welcome; their typed values must equal source facts.
+-/
 
-private def exPass : PassFacts := ⟨[3, 7], fun _ => 2, fun _ => 1⟩
+def thorFacts (pf : PassFacts) (x : EntityId) : ReasonFacts :=
+  { unblocks := pf.unblocks x, cone := pf.cone x, rank := some ((pf.rank x).getD 0) }
+def thyraFacts (pf : PassFacts) (p : Pending) : ReasonFacts :=
+  { rank := pf.rank p.item, level := p.level, harm := p.harm }
+def merlinFacts (r : MerlinRow) : ReasonFacts :=
+  { feature := r.feature, convergence := r.own,
+    named := r.namedBest.map (fun f => (f, r.named)), twoHopMetric := true }
+def questorFacts (best : Pending → Option (FeatureId × Nat)) (p : Pending) : ReasonFacts :=
+  { named := best p, ready := p.label == .readyOneHandoff }
 
-private def exVoc : Vocabulary := ⟨["Thor", "Giraffe", "harm reduction"]⟩
+theorem thor_terms_faithful (pf : PassFacts) (x : EntityId) :
+    ∀ t ∈ thorTerms pf x, t.faithful (thorFacts pf x) := by
+  intro t ht
+  simp [thorTerms] at ht
+  rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, thorFacts]
 
-/-- The exact bad case: Thor's first reason term is the computed string
-"unblocks 2 item(s)", which is not in the operator's vocabulary as it stands
-(accepted benefit lines + introductions + names). The primary theorem's
-`hvoc` hypothesis therefore FAILS for the script's real reason strings. -/
-example : ¬ (∀ t ∈ (thorTerms exPass 3).map Term.render, t ∈ exVoc.terms) := by
-  decide
+theorem thyra_terms_faithful (pf : PassFacts) (p : Pending) (harm : p.harm.isSome = true) :
+    ∀ t ∈ thyraTerms pf p, t.faithful (thyraFacts pf p) := by
+  intro t ht
+  cases hh : p.harm with
+  | none => simp [hh] at harm
+  | some h =>
+    cases hr : pf.rank p.item <;> simp [thyraTerms, hh, hr] at ht <;>
+      rcases ht with rfl | rfl
+    all_goals simp [Term.faithful, thyraFacts, hh, hr]
+
+theorem merlin_terms_faithful (r : MerlinRow) (kept : merlinKept r = true) :
+    ∀ t ∈ merlinTerms r, t.faithful (merlinFacts r) := by
+  intro t ht
+  have hf : r.feature.isSome = true := by
+    cases h : r.feature <;> simp_all [merlinKept]
+  cases h : r.feature with
+  | none => simp [h] at hf
+  | some f =>
+    by_cases hz : r.named = 0
+    · simp [merlinTerms, h, hz] at ht
+      rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, merlinFacts, h]
+    · cases hn : r.namedBest with
+      | none =>
+        simp [merlinTerms, h, hz, hn] at ht
+        rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, merlinFacts, h]
+      | some name =>
+        simp [merlinTerms, h, hz, hn] at ht
+        rcases ht with rfl | rfl | rfl | rfl <;> simp [Term.faithful, merlinFacts, h, hn]
+
+theorem questor_terms_faithful (best : Pending → Option (FeatureId × Nat))
+    (p : Pending) (ready : p.label = .readyOneHandoff) :
+    ∀ t ∈ questorTerms best p, t.faithful (questorFacts best p) := by
+  intro t ht
+  cases hb : best p with
+  | none =>
+    simp [questorTerms, hb] at ht
+    rcases ht with rfl | rfl <;> simp [Term.faithful, questorFacts, ready, hb]
+  | some pair =>
+    rcases pair with ⟨f,n⟩
+    simp [questorTerms, hb] at ht
+    rcases ht with rfl | rfl <;> simp [Term.faithful, questorFacts, ready, hb]
+
+/-- Every emitted entry renders faithful terms from the same source row.
+This connects the term proofs to the actual character output. -/
+theorem toEntries_faithful {α : Type} (who : Agent) (termsOf : α → List Term)
+    (itemOf : α → EntityId) (facts : α → ReasonFacts) (rows : List α)
+    (hfaith : ∀ x ∈ rows, ∀ t ∈ termsOf x, t.faithful (facts x)) :
+    ∀ priority e, e ∈ toEntries who termsOf itemOf priority rows →
+      ∃ x ∈ rows, e.item = itemOf x ∧
+        e.reason.explainable (fun _ _ => facts x) e.item := by
+  induction rows with
+  | nil => intro priority e he; cases he
+  | cons x xs ih =>
+    intro priority e he
+    rcases List.mem_cons.mp he with rfl | he
+    · exact ⟨x, List.mem_cons_self .., rfl, rfl, hfaith x (List.mem_cons_self ..)⟩
+    · obtain ⟨y, hy, hi, hf⟩ := ih
+        (fun y hy => hfaith y (List.mem_cons_of_mem _ hy)) (priority - 1) e he
+      exact ⟨y, List.mem_cons_of_mem _ hy, hi, hf⟩
+
+theorem thor_reasons_faithful (pf : PassFacts) (top : Nat) :
+    ∀ e ∈ thorOrder pf top, ∃ x ∈ pf.order.take top, e.item = x ∧
+      e.reason.explainable (fun _ _ => thorFacts pf x) e.item :=
+  toEntries_faithful .thor (thorTerms pf) id (thorFacts pf) _
+    (fun x _ => thor_terms_faithful pf x) top
+
+theorem thyra_reasons_faithful (pf : PassFacts) (ps : List Pending) (top : Nat) :
+    ∀ e ∈ thyraOrder pf ps top,
+      ∃ p ∈ (ps.filter fun p => p.harm.isSome).take top, e.item = p.item ∧
+        e.reason.explainable (fun _ _ => thyraFacts pf p) e.item := by
+  apply toEntries_faithful
+  intro p hp
+  exact thyra_terms_faithful pf p (List.mem_filter.mp (List.mem_of_mem_take hp)).2
+
+theorem merlin_reasons_faithful (rows : List MerlinRow) (top : Nat) :
+    ∀ e ∈ merlinOrder rows top,
+      ∃ r ∈ (rows.filter merlinKept).take top, e.item = r.item ∧
+        e.reason.explainable (fun _ _ => merlinFacts r) e.item := by
+  apply toEntries_faithful
+  intro r hr
+  exact merlin_terms_faithful r (List.mem_filter.mp (List.mem_of_mem_take hr)).2
+
+theorem questor_reasons_faithful (ps : List Pending)
+    (best : Pending → Option (FeatureId × Nat)) (top : Nat) :
+    ∀ e ∈ questorOrder ps best top,
+      ∃ p ∈ (ps.filter fun p => p.label == .readyOneHandoff).take top, e.item = p.item ∧
+        e.reason.explainable (fun _ _ => questorFacts best p) e.item := by
+  apply toEntries_faithful
+  intro p hp
+  apply questor_terms_faithful
+  simpa using (List.mem_filter.mp (List.mem_of_mem_take hp)).2
+
+-- TEETH: the rendered number itself is correct for its typed claim, but the
+-- claim is false of the pass. This is not explainable even with a familiar string.
+example : ¬ Reason.explainable (fun _ _ => { unblocks := 2 }) 17
+    ⟨["unblocks 3 item(s)"], .thor, [.unblocksCount 3], .thor⟩ := by
+  intro h
+  have bad := h.2 (.unblocksCount 3) (by simp)
+  change 3 = 2 at bad
+  omega
+
+/- OLD: rank := order.idxOf?, and Thyra emitted withinTwoHops.
+NEW: retain the pass's own rank; Thyra emits only harm and rank/level.
+These invented examples preserve the two producer/model counterexamples. -/
+private def exPass : PassFacts := ⟨[17], fun _ => 2, fun _ => 0, fun _ => some 1⟩
+private def exPending : Pending := ⟨17, .readyOneHandoff, [], some "H-toy", 1⟩
+example : exPass.order.idxOf? 17 = some 0 ∧ exPass.rank 17 = some 1 := by decide
+example : (thyraTerms exPass exPending).map Term.render =
+    ["on harm line H-toy", "Giraffe pass rank 1"] := by decide
+example : Term.withinTwoHops ∉ thyraTerms exPass exPending := by decide
 
 /-- Every term Thor writes is computed (not a literal vocabulary word). -/
 theorem thor_terms_all_computed (pf : PassFacts) (x : EntityId) :
     ∀ t ∈ thorTerms pf x, t.isLiteral = false := by
   intro t ht
-  unfold thorTerms at ht
-  rcases List.mem_append.mp ht with h | h
-  · rcases List.mem_cons.mp h with rfl | h
-    · rfl
-    · rcases List.mem_cons.mp h with rfl | h
-      · rfl
-      · cases h
-  · split at h
-    · rcases List.mem_cons.mp h with rfl | h
-      · rfl
-      · cases h
-    · cases h
+  simp [thorTerms] at ht
+  rcases ht with rfl | rfl | rfl <;> rfl
+
+-- Additional producer alignment: Thor defaults absent rank; Merlin suppresses
+-- the named phrase at zero even when the best-named feature exists.
+example : Term.passRank 0 ∈ thorTerms ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17 := by decide
+example : Term.namesHalved "toy" 0 ∉
+    merlinTerms ⟨17, .partly, some "own-toy", 2, 0, some "toy"⟩ := by decide
 
 end Circus.Characters

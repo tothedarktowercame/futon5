@@ -242,27 +242,29 @@ noncomputable def renderChain (cs : List Circus.Character) (i : ChainInput) : Mo
 qualified history remain Supersession's. No citation can hide a missing focus.
 The view's entries are the logical pass; priorities annotate/reorder that pass
 through Monkey.priorityProjection, not a newly inferred focus. -/
-def CitesBasis (vocab : Vocabulary) (corpus : Corpus) (store : Supersession.Store)
+def CitesBasis (basis : ReasonBasis) (corpus : Corpus) (store : Supersession.Store)
     (out : Mojira) : Prop :=
   ∃ c a, out.citation = some c ∧ c.corpusGeneration = corpus.generation ∧
     c.focusRecord.kind = .houFocus ∧ c.passId = store.run ∧
     out.reader.view.artifact = some a ∧ Freshness.Current out.reader.view a ∧
     a.entries ≠ [] ∧ (∀ e ∈ a.entries, Freshness.Consumable out.reader.view a e ∧
-      e.reason.explainable vocab) ∧ out.priorities ≠ []
-def ReaderOutcome (vocab : Vocabulary) (c : Corpus) (store : Supersession.Store) (out : Mojira) : Prop :=
-  CitesBasis vocab c store out ∨ out.notices ≠ []
+      e.reason.explainable basis e.item) ∧ out.priorities ≠ []
+def ReaderOutcome (basis : ReasonBasis) (c : Corpus) (store : Supersession.Store) (out : Mojira) : Prop :=
+  CitesBasis basis c store out ∨ out.notices ≠ []
 
 /-- VERIFY obligation 2, "One complete live chain": Mojira asks "what should
 Joe look at next, and why". Settlement/reply permit work, not guaranteed success.
 Missing decode, job, focus, publication or reading evidence is a visible absence.
-The vocabulary hypothesis is deliberately retained: pending Joe's decision:
-(a) approve each computed phrase once into the vocabulary, or (b) render reasons
-in his existing words. Today's computed strings do not discharge hvoc. -/
-theorem chain_turn_to_reader (cs : List Circus.Character) (i : ChainInput) (vocab : Vocabulary)
+OLD: reason strings belonged to approved vocabulary. NEW: typed reason values
+must be true of their cited basis; no approval step. Joe: "I think the reasons
+at any given point in time can just be stated, they don't have to be approved.
+We're talking about "explainable AI" not "by-fiat AI"".
+The live source-value check is futon3c scripts/giraffe_party_conformance.py. -/
+theorem chain_turn_to_reader (cs : List Circus.Character) (i : ChainInput) (basis : ReasonBasis)
     (reply : i.replyLanded = true) (kind : KindAgreement i.bridge) (ids : IdentityInjective i.bridge)
-    (hvoc : ∀ c ∈ cs, ∀ e ∈ c.order (focused cs i).view.loop.inputs,
-      ∀ t ∈ e.reason.terms, t ∈ vocab.terms) :
-    ReaderOutcome vocab i.corpus i.store (renderChain cs i) ∧
+    (hfaith : ∀ c ∈ cs, ∀ e ∈ c.order (focused cs i).view.loop.inputs,
+      e.reason.explainable basis e.item) :
+    ReaderOutcome basis i.corpus i.store (renderChain cs i) ∧
     (∀ citation, (renderChain cs i).citation = some citation → ∃ f,
       (focused cs i).active = some f ∧
       citation.sources = semanticRecords (collected cs i).delivered ∧
@@ -375,13 +377,13 @@ example : (bridgeGCC bridge corpus basis (ds ++ ds)).1.records = [record] ∧
 private def inp : Inputs := ⟨[a, b], [(1, 1)], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
 private def loop : State := ⟨0, inp, [], 0, 0⟩
 private def displayBasis : Freshness.DisplayBasis := ⟨1, 1, [(1, 1), (2, 1)], 1, 1, some 1⟩
-private def entry : Entry := ⟨1, 1, ⟨["example-reason"], .thor⟩⟩
+private def entry : Entry := ⟨1, 1, ⟨["example-reason"], .thor, [.lit "example-reason"], .thor⟩⟩
 private def artifact : Freshness.Artifact := ⟨1, 0, some displayBasis, [entry], [1]⟩
 private def view : Freshness.ViewState := { Freshness.initial loop displayBasis with artifact := some artifact }
 private def premature : Mojira := ⟨⟨view, []⟩,
   Monkey.priorityProjection [⟨1, some 1⟩] none 1, none, []⟩
 -- 2. A rendered row without a focus citation or a visible absence is not a chain outcome.
-example : ¬ReaderOutcome ⟨["example-reason"]⟩ corpus Supersession.empty premature := by
+example : ¬ReaderOutcome (fun _ _ => {}) corpus Supersession.empty premature := by
   intro h
   rcases h with ⟨c, ar, citation, _⟩ | notices
   · cases citation

@@ -273,19 +273,92 @@ structure BenefitLine where
   acceptedByOperator : Bool
 deriving DecidableEq, Repr
 
-/-- The vocabulary a reason may use: terms the operator made or accepted
-(introductions, word rules, accepted benefit lines) and the characters'
-names. Explainable = every term of every reason is in it. -/
-structure Vocabulary where
-  terms : List String
+/- Restated 2026-11-15 (Joe): OLD: every string belongs to Vocabulary.
+NEW: strings render typed terms whose values agree with the cited basis.
+"I think the reasons at any given point in time can just be stated, they don't
+have to be approved. We're talking about "explainable AI" not "by-fiat AI"". -/
+namespace Characters
+inductive Term
+  | lit (s : String)
+  | unblocksCount (n : Nat)
+  | coneCount (n : Nat)
+  | passRank (n : Nat)
+  | notInPass (level : Nat)
+  | harmLine (h : String)
+  | featureIs (f : String)
+  | convergence (n : Nat)
+  | withinTwoHops
+  | namesHalved (f : String) (n : Nat)
+  | readyOneHandoff
+  | noScoredFeature
+  | namesConv (f : String) (n : Nat)
+deriving DecidableEq, Repr
 
+/-- `render` reproduces the script's exact strings. -/
+def Term.render : Term → String
+  | .lit s => s
+  | .unblocksCount n => s!"unblocks {n} item(s)"
+  | .coneCount n => s!"cone of {n} behind it"
+  | .passRank n => s!"Giraffe pass rank {n}"
+  | .notInPass l => s!"not in the Giraffe pass; pending level {l}"
+  | .harmLine h => s!"on harm line {h}"
+  | .featureIs f => s!"is {f}"
+  | .convergence n => s!"convergence {n}"
+  | .withinTwoHops => "unfinished work within two hops"
+  | .namesHalved f n => s!"names {f} (convergence {n}, halved)"
+  | .readyOneHandoff => "ready (one small handoff)"
+  | .noScoredFeature => "names no scored feature"
+  | .namesConv f n => s!"names {f} (convergence {n})"
+
+
+/-- Source facts for one item at one pass. Optional fields preserve absence.
+withinTwoHops labels Merlin's convergence metric, not a claim that its count
+is positive. The numeric count is checked separately. -/
+structure ReasonFacts where
+  unblocks : Nat := 0
+  cone : Nat := 0
+  rank : Option Nat := none
+  level : Nat := 0
+  harm : Option String := none
+  feature : Option String := none
+  convergence : Nat := 0
+  named : Option (String × Nat) := none
+  ready : Bool := false
+  twoHopMetric : Bool := false
+
+def Term.faithful (f : ReasonFacts) : Term → Prop
+  | .lit _ => True
+  | .unblocksCount n => n = f.unblocks
+  | .coneCount n => n = f.cone
+  | .passRank n => f.rank = some n
+  | .notInPass n => f.rank = none ∧ n = f.level
+  | .harmLine h => f.harm = some h
+  | .featureIs x => f.feature = some x
+  | .convergence n => n = f.convergence
+  | .withinTwoHops => f.twoHopMetric = true
+  | .namesHalved x n => f.named = some (x, n)
+  | .readyOneHandoff => f.ready = true
+  | .noScoredFeature => f.named = none
+  | .namesConv x n => f.named = some (x, n)
+end Characters
+
+/-- Facts are keyed by the source character as well as the item: Merlin uses
+unfinished named features while Questor may use any scored named feature. -/
+abbrev ReasonBasis := Agent → EntityId → Characters.ReasonFacts
 structure Reason where
   terms : List String
   chosenBy : Agent
+  typed : List Characters.Term := []
+  /-- Source of the claims; party attribution may change chosenBy, never this. -/
+  source : Agent := chosenBy
 deriving Repr
 
-def Reason.explainable (v : Vocabulary) (r : Reason) : Prop :=
-  ∀ t ∈ r.terms, t ∈ v.terms
+/-- Rendered values must match the cited source facts at this time. Source
+extraction is checked live by futon3c scripts/giraffe_party_conformance.py;
+there is no vocabulary membership or approval condition. -/
+def Reason.explainable (basis : ReasonBasis) (item : EntityId) (r : Reason) : Prop :=
+  r.terms = r.typed.map Characters.Term.render ∧
+    ∀ t ∈ r.typed, t.faithful (basis r.source item)
 
 structure Entry where
   item : EntityId
@@ -655,7 +728,7 @@ private def cascadeInp : Inputs :=
   ⟨[], [], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
 
 private def plainEntry (i : EntityId) : Entry :=
-  ⟨i, 0, ⟨[], .giraffe⟩⟩
+  ⟨i, 0, ⟨[], .giraffe, [], .giraffe⟩⟩
 
 /-- The cascade statement has teeth: a second entry that neither needs an
 earlier one nor says why it stands alone is not a cascade. -/

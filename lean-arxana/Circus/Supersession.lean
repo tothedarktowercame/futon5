@@ -260,7 +260,7 @@ example : recover { rejected with rows := [] } 1 = .unexplored ∧
 
 private def inp : Inputs := ⟨[], [(1, 10)], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
 private def basis : DisplayBasis := ⟨1, 1, [(1, 10)], 1, 1, some 1⟩
-private def entry : Entry := ⟨1, 1, ⟨["old"], .thor⟩⟩
+private def entry : Entry := ⟨1, 1, ⟨["old"], .thor, [.lit "old"], .thor⟩⟩
 private def artifact : Artifact := ⟨1, 0, some basis, [entry], [1]⟩
 private def view : ViewState := { initial ⟨0, inp, [], 0, 0⟩ basis with artifact := some artifact }
 private def badReader : Reader := ⟨view, []⟩
@@ -319,7 +319,7 @@ private def inp : Inputs :=
 private def loop : State := ⟨0, inp, [], 0, 0⟩
 private def basis : DisplayBasis := ⟨1, 1, [(1, 1)], 1, 1, some 1⟩
 private def cs : List Circus.Character :=
-  [⟨.thor, fun _ => [⟨1, 1, ⟨["old reading"], .thor⟩⟩]⟩]
+  [⟨.thor, fun _ => [⟨1, 1, ⟨["old reading"], .thor, [.lit "old reading"], .thor⟩⟩]⟩]
 private def seed := initial loop basis
 private def begun := advance cs seed (.metadata 1 1 1 1 (some 1))
 private def published := advance cs begun (.refreshDone true)

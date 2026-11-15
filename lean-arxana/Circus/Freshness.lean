@@ -289,7 +289,7 @@ namespace Teeth
 private def inp : Inputs := ⟨[], [(1, 1)], fun _ => 0, fun _ _ => false, fun _ => [], [], 0⟩
 private def loop : State := ⟨0, inp, [], 0, 0⟩
 private def basis : DisplayBasis := ⟨1, 1, [(1, 1)], 1, 1, some 1⟩
-private def entry : Entry := ⟨1, 1, ⟨[], .thor⟩⟩
+private def entry : Entry := ⟨1, 1, ⟨[], .thor, [], .thor⟩⟩
 private def artifact : Artifact := ⟨1, 0, some basis, [entry], [1]⟩
 private def good : ViewState := { initial loop basis with artifact := some artifact }
 private def legacy : ViewState := { good with artifact := some { artifact with basis := none } }

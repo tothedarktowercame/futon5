@@ -31,14 +31,13 @@ def firstEntryFor (i : EntityId) : List Entry → Option Entry
   | e :: es => if e.item = i then some e else firstEntryFor i es
 
 /-- The reason a shown entry carries: the terms of the first character's own
-entry for that item (its accepted benefit lines, the operator's
-introductions/word rules — whatever vocabulary its `order` used), credited
+entry for that item, including its typed source claims, credited
 to the character that contributed the item this round. -/
 def reasonFor : List Character → Inputs → Agent → EntityId → Reason
-  | [], _, a, _ => ⟨[], a⟩
+  | [], _, a, _ => ⟨[], a, [], a⟩
   | c :: cs', inp, a, i =>
       match firstEntryFor i (c.order inp) with
-      | some e => ⟨e.reason.terms, a⟩
+      | some e => { e.reason with chosenBy := a }
       | none => reasonFor cs' inp a i
 
 /-- Turn a party round into shown entries: the first entry has the top
@@ -418,14 +417,14 @@ theorem entriesFrom_priority (r : Agent → EntityId → Reason) :
 
 theorem entriesFrom_reason (r : Agent → EntityId → Reason) :
     ∀ (l : List (Agent × EntityId)) (p : Nat) (e : Entry),
-      e ∈ entriesFrom p r l → ∃ a i, e.reason = r a i := by
+      e ∈ entriesFrom p r l → ∃ a i, e.item = i ∧ e.reason = r a i := by
   intro l
   induction l with
   | nil => intro p e he; cases he
   | cons x xs ih =>
     intro p e he
     rcases List.mem_cons.mp he with rfl | he'
-    · exact ⟨x.1, x.2, rfl⟩
+    · exact ⟨x.1, x.2, rfl, rfl⟩
     · exact ih (p - 1) e he'
 
 theorem firstEntryFor_some :
@@ -462,6 +461,23 @@ theorem reasonFor_terms (cs : List Character) (inp : Inputs) (a : Agent) (i : En
     · rw [reasonFor, hf] at ht
       obtain ⟨hmem, hitem⟩ := firstEntryFor_some i (c.order inp) e hf
       exact ⟨c, List.mem_cons_self .., e, hmem, hitem, ht⟩
+
+/-- Copying a reason changes attribution, not the typed claims or their basis. -/
+theorem reasonFor_faithful (cs : List Character) (inp : Inputs) (basis : ReasonBasis)
+    (a : Agent) (i : EntityId)
+    (hfaith : ∀ c ∈ cs, ∀ e ∈ c.order inp, e.reason.explainable basis e.item) :
+    (reasonFor cs inp a i).explainable basis i := by
+  induction cs with
+  | nil => simp [reasonFor, Reason.explainable]
+  | cons c cs ih =>
+    cases hf : firstEntryFor i (c.order inp) with
+    | none =>
+      simp only [reasonFor, hf]
+      exact ih (fun c hc => hfaith c (List.mem_cons_of_mem _ hc))
+    | some e =>
+      obtain ⟨he, hi⟩ := firstEntryFor_some i (c.order inp) e hf
+      have h := hfaith c (List.mem_cons_self ..) e he
+      simpa [reasonFor, hf, Reason.explainable, hi] using h
 
 /-! ### Coverage: open items are fresh -/
 
@@ -503,24 +519,23 @@ The hypotheses it needs about the characters (each says why it is here):
   It makes "at least ten when ten are open" true — and, in the endgame (Joe:
   "at least ten items isn't quite right if there are fewer than ten items
   remaining"), it makes part (b) show ALL remaining items.
-* `hvoc` — every term of every character's reason comes from the operator's
-  vocabulary (the item's accepted benefit lines, the operator's
-  introductions/word rules, or a name already in the vocabulary). This is
-  the whole content of "recognisable". (FINDING, step 5: the reason strings
-  `giraffe_party.py` actually writes do NOT satisfy this — see
-  `Circus.Characters`, "FINDINGS". The hypothesis models the vocabulary the
-  design must reach; the characters must be reworded to meet it.)
+* `hfaith` — each character's rendered terms match typed claims which are
+  true of the cited per-item basis. This replaces vocabulary membership.
+  OLD: terms must be approved words. NEW: computed values must be accurate.
+  Joe: "I think the reasons at any given point in time can just be stated,
+  they don't have to be approved. We're talking about "explainable AI" not
+  "by-fiat AI"".
 
 Priority order is rank in the party list, made numeric: the first party
 entry has priority `budgetTen`, each later one a step less (so priorities
 strictly descend along the shown list). -/
-theorem primary_up_to_date_top_ten (cs : List Character) (v : Vocabulary) (s : State)
+theorem primary_up_to_date_top_ten (cs : List Character) (basis : ReasonBasis) (s : State)
     (hs : s.shown = rebuild cs s.inputs)
     (hcover : ∃ c ∈ cs, ∃ l : List EntityId, l.Nodup
       ∧ l.length = min budgetTen ((s.inputs.items.filter (·.open_)).length)
       ∧ (∀ x ∈ l, ∃ it ∈ s.inputs.items, it.open_ = true ∧ it.id = x)
       ∧ (∀ x ∈ l, x ∈ (c.order s.inputs).map (·.item)))
-    (hvoc : ∀ c ∈ cs, ∀ e ∈ c.order s.inputs, ∀ t ∈ e.reason.terms, t ∈ v.terms) :
+    (hfaith : ∀ c ∈ cs, ∀ e ∈ c.order s.inputs, e.reason.explainable basis e.item) :
     -- current
     s.shown = rebuild cs s.inputs
     -- at least min 10 (open count) items are shown: the top ten, or in
@@ -530,7 +545,7 @@ theorem primary_up_to_date_top_ten (cs : List Character) (v : Vocabulary) (s : S
     ∧ (∀ i j (hij : i < j) (h₁ : j < s.shown.length),
          (s.shown.get ⟨i, Nat.lt_trans hij h₁⟩).priority ≥ (s.shown.get ⟨j, h₁⟩).priority)
     -- explainable
-    ∧ (∀ e ∈ s.shown, e.reason.explainable v) := by
+    ∧ (∀ e ∈ s.shown, e.reason.explainable basis e.item) := by
   refine ⟨hs, ?_, ?_, ?_⟩
   · obtain ⟨c, hc, l, hnd, hlen, _, hin⟩ := hcover
     have hfresh : FreshAvail [] (orderingsOf cs s.inputs)
@@ -568,12 +583,10 @@ theorem primary_up_to_date_top_ten (cs : List Character) (v : Vocabulary) (s : S
     omega
   · intro e he
     rw [hs, rebuild] at he
-    obtain ⟨a, i, hreason⟩ := entriesFrom_reason (reasonFor cs s.inputs)
+    obtain ⟨a, i, hitem, hreason⟩ := entriesFrom_reason (reasonFor cs s.inputs)
       (Retro.partyVote budgetTen [] (orderingsOf cs s.inputs)) budgetTen e he
-    intro t ht
-    obtain ⟨c, hc, e', he', hitem, hterms⟩ := reasonFor_terms cs s.inputs a i t (by
-      rw [← hreason]; exact ht)
-    exact hvoc c hc e' he' t hterms
+    rw [hreason, hitem]
+    exact reasonFor_faithful cs s.inputs basis a i hfaith
 
 /-! ### The Giraffe firing rule, as a corollary -/
 
