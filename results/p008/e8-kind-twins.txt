@@ -1,0 +1,57 @@
+# Keyword-kind twin test — P-008b §7 item 6 (ruling 2026-11-15, exotype main 5176228)
+
+SHEET reference. Predicate, exactly as written in the ruling:
+`(= (sigma-of kind) (s8->sigma (kind->s8 kind)))`.
+
+`s8->sigma` is private in grid.clj, so the evaluation script
+(results/p008/e8-kind-twins-repl.clj) reaches it through
+`#'futon5.exotype.grid/s8->sigma` and ALSO computes the public-path form
+`(= (sigma-of kind) (sigma-of (kind->s8 kind)))`, which is the same
+comparison: `sigma-of` on a keyword returns `(get propagators kind)`
+(grid.clj:169-177) and on a permutation vector routes through `s8->sigma`
+(grid.clj:171-173), so `sigma-of (kind->s8 kind)` IS `s8->sigma` of the
+twin. Both columns agree on every kind (the "same" column).
+
+The arms-discovery item-2 table (results/p008/e8-arms-plan.txt) used
+`(= (sigma-of twin) (get propagators kind))` — the public-path half of
+this predicate, i.e. the SAME comparison by the argument above. This
+report adds the direct private-var form and the has-sigma column.
+
+:even44 and :odd332 are NOT in `exotype-kinds` and no registered
+P-008b arm uses them (checked in e8-arms-plan.txt item 2: :e8-stratified
+draws End(8) vectors, :e8-bug adds the bug's 4 conjugate vectors,
+:e8-v1 starts from S8 vectors or the 12 kinds). They are included
+below for completeness, marked *.
+
+| kind       | has σ | kind->s8 vector      | (= (sigma-of kind) (s8->sigma (kind->s8 kind))) |
+|------------|-------|----------------------|-------------------------------------------------|
+| :builder   | yes   | [0 1 5 3 4 7 6 2]    | true |
+| :collapser | yes   | [5 0 1 4 2 3 7 6]    | true |
+| :chaos     | yes   | [2 1 5 7 0 4 3 6]    | true |
+| :identity  | yes   | [0 1 2 3 4 5 6 7]    | true |
+| :even4     | yes   | [1 0 4 5 2 3 7 6]    | true |
+| :even8     | yes   | [1 0 4 7 2 3 5 6]    | true |
+| :even1     | yes   | [7 0 1 4 2 3 5 6]    | true |
+| :odd53     | yes   | [2 0 1 4 7 3 5 6]    | true |
+| :fix2      | yes   | [0 1 7 4 2 3 5 6]    | true |
+| :fix3      | yes   | [0 1 2 4 7 3 5 6]    | true |
+| :fix4      | yes   | [0 1 2 7 4 3 5 6]    | true |
+| :fix6      | yes   | [0 1 2 3 4 5 7 6]    | true |
+| :even44 *  | yes   | [4 0 1 7 2 3 5 6]    | true |
+| :odd332 *  | yes   | [1 0 3 4 2 7 5 6]    | true |
+
+Immutable kinds (predicate false, or no σ): **0 of the 12** (and 0 of the
+14). Every kind has a σ and every twin is the same map as its kind.
+
+Branch of the ruling that applies: **the "kinds stay" branch** — at most
+2 immutable (here 0), so on a mutation hit a keyword kind is replaced by
+`kind->s8 kind` and that vector is mutated (option (b)); `:e8-v1` keeps
+"initial S8 or 12 kinds" — option (c), the S8-vector-start-only fallback,
+is NOT triggered.
+
+Test: test/futon5/exotype/e8_kind_twins_test.clj asserts the table (one
+assertion per kind, ruling predicate via the public-path form and the
+private-var form) plus a bad case: a deliberately wrong twin vector for
+:collapser fails the predicate.
+
+Reproduce: cd ~/worktrees/futon5/p008 && clojure -M results/p008/e8-kind-twins-repl.clj
