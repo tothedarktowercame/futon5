@@ -135,6 +135,36 @@ when `--kernel-context` is enabled. The loop is triadic: exotypes condition how
 genotypes update, phenotypes expose mismatches, and selection rewards exotypes
 that induce more informative genotype structure (not just surface outcomes).
 
+### Exotype grid: the observation table and menus
+
+The self-tuning exotype grid (`src/futon5/exotype/`) scores each named exotype
+with rows from a measured table, `resources/futon5/exotype/conditional-model.edn`.
+
+- **The table is not in git.** `resources/*` is gitignored, so a new clone or
+  worktree has no table and every run stops with "no derived rows for this
+  exotype". Either copy the file from the canonical checkout,
+
+  ```
+  mkdir -p resources/futon5/exotype
+  cp ~/code/futon5/resources/futon5/exotype/conditional-model.edn resources/futon5/exotype/
+  ```
+
+  or regenerate it with `clojure -M scripts/derive_conditional_model.clj`. The
+  file records the fingerprint of the code that produced it, and a regenerated
+  file can differ from the one earlier results were run with, so copy it when
+  comparing with those results.
+- **Menus.** A menu is a list of exotypes: named kinds (`:chaos`, ...) or
+  permutations of 0..7 written as vectors, where entry k is the position, in
+  `ca/truth-table-3` order, that position k is sent to. `metaca-state` in
+  `scripts/local_compressibility_grid.clj` takes a menu as an optional fourth
+  argument. Without one, nothing changes.
+- **Rows for a permutation vector** are measured for its menu on first use, by
+  the same procedure as the table (`efe/menu-model`). They depend on the menu
+  and on the measurement seeds (`efe/*menu-model-seeds*`). Named kinds always
+  read the table.
+- **Parity and smoke runs:** `clojure -M scripts/menu_parity_smoke.clj july 8 0.1 2026102014 300`
+  (modes `july`, `named`, `vectors`, `random`; see the header of the script).
+
 ### Xenotypes (Evaluator Population)
 
 Xenotypes evaluate exotypes over full MMCA runs, scoring edge-of-chaos behavior

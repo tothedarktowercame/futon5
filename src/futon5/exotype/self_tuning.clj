@@ -30,7 +30,7 @@
    made every trajectory-level comparison of those options invalid
    (TN-baldwin-reboot.md 57, found by codex-7)."
   #{:observation-model :apply-probability :rule-change-preference :chain-risk?
-    :epistemic-coefficient :adoption-bonus})
+    :epistemic-coefficient :adoption-bonus :menu})
 
 (def ^:private score-cache
   (delay
@@ -62,6 +62,31 @@
                                    (str (subs bits 0 di) value
                                         (subs bits (inc di))))))
                               (range 8))]))])))))
+
+(def ^:private general-transition-row
+  "The row of `genotype-transition-cache` for a permutation-vector exotype (a
+   general menu), computed on first use by the same formula and memoised."
+  (memoize
+   (fn [sigil exotype]
+     (let [truth-table (vec ca/truth-table-3)
+           bits (ca/bits-for sigil)
+           sigma (grid/sigma-of exotype)]
+       (mapv (fn [k]
+               (let [src (nth truth-table k)
+                     dst (get sigma src src)
+                     di (.indexOf ^java.util.List truth-table dst)
+                     value (if (= \0 (nth bits k)) \1 \0)]
+                 (ca/sigil-for
+                  (str (subs bits 0 di) value
+                       (subs bits (inc di))))))
+             (range 8))))))
+
+(defn- transition
+  "The rule SIGIL becomes when EXOTYPE writes at draw K."
+  [sigil exotype k]
+  (if (keyword? exotype)
+    (get-in @genotype-transition-cache [sigil exotype k])
+    (nth (general-transition-row sigil exotype) k)))
 
 (def ^:private blend-stream-tag
   "Matches `grid/apply-exotype-blend`: the blend coin is independent of the
@@ -278,7 +303,7 @@
                 (grid/blend-rule left sigil right)
                 (if apply?
                   (let [k (.nextInt (java.util.Random. (ca/mix-seed draw-seed)) 8)]
-                    (get-in @genotype-transition-cache [(str source) exotype k]))
+                    (transition (str source) exotype k))
                   sigil))))
            (range width) genotype exotypes))))
 
@@ -323,7 +348,11 @@
       (contains? state :epistemic-coefficient)
       (assoc :epistemic-coefficient (double (:epistemic-coefficient state)))
       (contains? state :adoption-bonus)
-      (assoc :adoption-bonus (double (:adoption-bonus state))))))
+      (assoc :adoption-bonus (double (:adoption-bonus state)))
+      ;; The menu is trajectory state: scoring a permutation-vector exotype
+      ;; reads the menu's measured rows. Absent stays absent.
+      (contains? state :menu)
+      (assoc :menu (:menu state)))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))

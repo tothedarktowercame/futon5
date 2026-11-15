@@ -103,14 +103,18 @@
            "--out" (assoc options :out value)
            (throw (ex-info (str "unknown option " option) {:option option}))))))))
 
-(defn- initial-components [seed]
-  (ca/with-seed seed
-    {:genotype (vec (ca/random-sigil-string width))
-     :phenotype (ca/random-phenotype-string width)
-     :exotypes (grid/initial-grid :heterogeneous-fixed width)}))
+(defn- initial-components
+  ([seed] (initial-components seed nil))
+  ([seed menu]
+   (ca/with-seed seed
+     {:genotype (vec (ca/random-sigil-string width))
+      :phenotype (ca/random-phenotype-string width)
+      :exotypes (if menu
+                  (grid/initial-grid :heterogeneous-fixed width menu)
+                  (grid/initial-grid :heterogeneous-fixed width))})))
 
-(defn- metaca-state [gamma kappa seed]
-  (let [{:keys [genotype phenotype exotypes]} (initial-components seed)]
+(defn- july-state [gamma kappa seed menu]
+  (let [{:keys [genotype phenotype exotypes]} (initial-components seed menu)]
     {:arm :efe-full
      :seed seed
      :time 0
@@ -126,6 +130,18 @@
      :blend-strength 0.0
      :apply-probability 1.0
      :policy-precision gamma}))
+
+(defn- metaca-state
+  "With MENU (a list of exotypes: named kinds, or permutations of 0..7 written
+   as vectors, see `grid/sigma-vector?`), cells start from that menu and adopt
+   among it, and the state carries it as :menu. Without MENU this is the July
+   state, unchanged."
+  ([gamma kappa seed] (july-state gamma kappa seed nil))
+  ([gamma kappa seed menu]
+   (if menu
+     (let [menu (grid/check-menu menu)]
+       (assoc (july-state gamma kappa seed menu) :menu menu))
+     (july-state gamma kappa seed nil))))
 
 (defn- checked-metaca-step [state]
   (let [advanced (tuning/step state)]

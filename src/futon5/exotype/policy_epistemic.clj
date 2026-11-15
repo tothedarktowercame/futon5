@@ -56,8 +56,8 @@
         double)))
 
 (defn- exact-pair-value [own candidate]
-  (let [a (gen/sigma-positional (get grid/propagators own))
-        b (gen/sigma-positional (get grid/propagators candidate))]
+  (let [a (gen/sigma-positional (grid/sigma-of own))
+        b (gen/sigma-positional (grid/sigma-of candidate))]
     (/ (reduce +
                (map-indexed
                 (fn [k ak]
@@ -76,11 +76,19 @@
               candidate grid/exotype-kinds]
           [[own candidate] (exact-pair-value own candidate)])))
 
+(def ^:private general-pair-value
+  (memoize (fn [own candidate] (exact-pair-value own candidate))))
+
 (defn pair-value
   "Expected fraction of the eight common draws for which CANDIDATE injects a
    rule divergence relative to OWN, averaged over all 256 rule bytes."
   [own candidate]
   (or (get pair-table [own candidate])
-      (throw (ex-info "policy epistemic pair is outside the selectable vocabulary"
-                      {:own own :candidate candidate
-                       :selectable grid/exotype-kinds}))))
+      ;; A pair with a permutation-vector exotype (a general menu) is computed
+      ;; by the same formula as the table and memoised. A named kind outside the
+      ;; selectable twelve is still an error.
+      (if (or (grid/sigma-vector? own) (grid/sigma-vector? candidate))
+        (general-pair-value own candidate)
+        (throw (ex-info "policy epistemic pair is outside the selectable vocabulary"
+                        {:own own :candidate candidate
+                         :selectable grid/exotype-kinds})))))

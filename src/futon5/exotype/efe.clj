@@ -21,6 +21,7 @@
    remain separately switchable and visible in every score."
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [futon5.ca.core :as ca]
             [futon5.exotype.chain-risk :as chain-risk]
             [futon5.exotype.grid :as grid]
             [futon5.exotype.policy-epistemic :as policy-epistemic]
@@ -243,6 +244,74 @@
      :diversity next-diversity
      :hunger next-hunger}))
 
+(def menu-model-config
+  "How a menu's rows are measured. The same procedure and sizes as
+   `scripts/derive_conditional_model.clj` uses for the shipped resource."
+  {:seeds [11 22 33 44 55 66 77 88 99 111 222 333]
+   :width 60 :steps 160})
+
+(def ^:dynamic *menu-model-seeds*
+  "The seeds a menu's rows are measured over. Bind it to measure with more
+   seeds; the default is the shipped resource's twelve. It is part of the
+   memoisation key, so two bindings never share rows."
+  (:seeds menu-model-config))
+
+(defn- measure-menu-model
+  ([menu] (measure-menu-model menu (:seeds menu-model-config)))
+  ([menu seeds]
+  (let [{:keys [width steps]} menu-model-config
+        rows (mapcat
+              (fn [seed]
+                (let [st (ca/with-seed seed
+                           {:arm :heterogeneous-fixed :seed seed :time 0
+                            :exotypes (vec (repeatedly width #(ca/rnd-nth menu)))
+                            :genotype (vec (ca/random-sigil-string width))
+                            :phenotype (ca/random-phenotype-string width)})]
+                  (loop [s (grid/step st) t 1 acc []]
+                    (if (= t steps)
+                      acc
+                      (let [nx (grid/step s)]
+                        (recur nx (inc t)
+                               (into acc
+                                     (for [i (range width)]
+                                       (let [o (local-observation s i)
+                                             o' (local-observation nx i)]
+                                         [(observation-bin (nth (:exotypes s) i) o)
+                                          {:activity (:activity o')
+                                           :diversity (:diversity o')
+                                           :hunger (if (:hungry? o') 1.0 0.0)}])))))))))
+              seeds)
+        mean (fn [g ch] (/ (reduce + (map #(get (second %) ch) g)) (double (count g))))
+        channels [:activity :diversity :hunger]]
+    {:menu menu
+     :config (assoc menu-model-config :seeds (vec seeds))
+     :sample-count (count rows)
+     :global (into {} (for [ch channels] [ch (mean rows ch)]))
+     :covered (set (map (comp first first) rows))
+     :bins (into {} (for [[k g] (group-by first rows)]
+                      [k (assoc (into {} (for [ch channels] [ch (mean g ch)]))
+                                :n (count g))]))})))
+
+(def ^:private menu-model*
+  (memoize (fn [menu seeds] (measure-menu-model (grid/check-menu menu) seeds))))
+
+(defn menu-model
+  "P(next local observation | exotype, current local observation) for the
+   exotypes of MENU, measured on a fixed heterogeneous grid drawn from MENU. This
+   is what the shipped resource is for the named kinds, made per menu, so that a
+   menu can be any list of permutations (exotype DESIGN-general 2b).
+
+   Two things to know when reading results:
+   - The rows of an exotype depend on the menu it was measured in (its
+     neighbours on the grid come from that menu).
+   - A NAMED kind in a menu still reads the shipped resource, so the July menu
+     scores exactly as before. Only permutation-vector entries read these rows.
+
+   Memoised per menu and seed list; one measurement is 60 cells x 160 steps
+   for each seed in `*menu-model-seeds*` (twelve by default)."
+  [menu]
+  (menu-model* menu *menu-model-seeds*))
+
 (defn covered-kinds
   "Exotypes for which the derived model actually has rows."
   []
@@ -271,13 +340,39 @@
   ([candidate-exotype observation]
    (predict candidate-exotype observation :derived))
   ([candidate-exotype observation model-kind]
+   (predict candidate-exotype observation model-kind nil))
+  ([candidate-exotype observation model-kind menu]
    ;; Reject unknown selectors rather than falling through to legacy. Model choice
    ;; materially changes results, so a typo like :dervied silently selecting the
    ;; known-worse model is a configuration defect, not a default. (codex-12 #4.)
    (when-not (#{:legacy :derived} model-kind)
      (throw (ex-info "unknown observation model" {:model-kind model-kind
                                                   :known #{:legacy :derived}})))
-   (if (= :derived model-kind)
+   (cond
+     ;; A permutation-vector exotype has no row in the shipped resource. Its
+     ;; rows come from the menu it belongs to; with no menu there is nothing to
+     ;; read, and that is an error, not a default (TN-baldwin-reboot.md 56).
+     (not (keyword? candidate-exotype))
+     (let [_ (when-not (= :derived model-kind)
+               (throw (ex-info "a permutation-vector exotype has only the derived model"
+                               {:exotype candidate-exotype :model-kind model-kind})))
+           m (if menu
+               (menu-model menu)
+               (throw (ex-info "a permutation-vector exotype needs the state's :menu to be scored"
+                               {:exotype candidate-exotype})))
+           _ (when-not (contains? (:covered m) candidate-exotype)
+               (throw (ex-info "exotype is not in the state's menu" {:exotype candidate-exotype
+                                                                     :menu menu})))
+           candidate (get-in m [:bins (observation-bin candidate-exotype observation)])
+           row (if (and candidate (>= (long (:n candidate)) min-bin-samples))
+                 candidate
+                 (:global m))]
+       {:rule-change (gen/rule-change-rate (grid/sigma-of candidate-exotype))
+        :activity (:activity row)
+        :diversity (:diversity row)
+        :hunger (:hunger row)})
+
+     (= :derived model-kind)
      (let [_ (when-not (kind-has-bins? candidate-exotype)
                (throw (ex-info "no derived rows for this exotype; re-derive the conditional model"
                                {:exotype candidate-exotype
@@ -307,6 +402,8 @@
         :activity (:activity row)
         :diversity (:diversity row)
         :hunger (:hunger row)})
+
+     :else
      (predict-legacy candidate-exotype observation))))
 
 
@@ -351,7 +448,8 @@
                       (:rule-change preferences)))
          apply-probability (double (get opts :apply-probability 1.0))
          raw-prediction (predict candidate-exotype observation
-                                 (get opts :observation-model :derived))
+                                 (get opts :observation-model :derived)
+                                 (:menu opts))
          prediction (if (== 1.0 apply-probability)
                       raw-prediction
                       (update raw-prediction :rule-change * apply-probability))
