@@ -118,12 +118,244 @@ def BridgeFaithful (b : Bridge) (c : Corpus) (basis : ComparisonBasis)
     (∃ why, inspect b c r = some (.error why) ∧ out.2.count why = 1)) ∧
   (∀ why ∈ out.2, ∃ r ∈ usableHeads basis ds, inspect b c r = some (.error why))
 
+private theorem head_facts (basis : ComparisonBasis) (ds : List Delivery) (r : SourceRecord)
+    (hr : r ∈ usableHeads basis ds) :
+    ∃ value, r.payload = .success value ∧ maximal (semanticRecords ds) r = true ∧
+      conflict (semanticRecords ds) r.key = false := by
+  have hf := (List.mem_filter.mp hr).2
+  cases hp : r.payload <;> simp only [hp] at hf <;> try contradiction
+  rename_i value
+  refine ⟨value, rfl, ?_⟩
+  have eq : (⟨r.key, r.revision, .success value⟩ : SourceRecord) = r := by
+    cases r; simp_all
+  simpa only [rebuildGraph, eq, Bool.and_eq_true, Bool.not_eq_true'] using hf
+
+private theorem head_key_unique (basis : ComparisonBasis) (ds : List Delivery)
+    (r q : SourceRecord) (hr : r ∈ usableHeads basis ds) (hq : q ∈ usableHeads basis ds)
+    (hk : r.key = q.key) : r = q := by
+  obtain ⟨rv, rp, rm, rc⟩ := head_facts basis ds r hr
+  obtain ⟨qv, qp, qm, _⟩ := head_facts basis ds q hq
+  have rm' := rm
+  have qm' := qm
+  simp only [maximal, Bool.and_eq_true, List.contains_iff_mem, List.all_eq_true] at rm' qm'
+  have le₁ := rm'.2 q qm'.1
+  have le₂ := qm'.2 r rm'.1
+  simp only [hk, bne_self_eq_false, Bool.false_or, decide_eq_true_eq] at le₁ le₂
+  have rev : r.revision = q.revision := Nat.le_antisymm le₂ le₁
+  have payload : r.payload = q.payload := by
+    by_cases he : r.payload = q.payload
+    · exact he
+    · have bad : conflict (semanticRecords ds) r.key = true := by
+        apply List.any_eq_true.mpr
+        refine ⟨r, rm'.1, ?_⟩
+        simp only [beq_self_eq_true, rm, Bool.true_and]
+        apply List.any_eq_true.mpr
+        exact ⟨q, qm'.1, by simp [hk, qm, Ne.symm he]⟩
+      rw [rc] at bad
+      cases bad
+  cases r; cases q; simp_all
+
+private theorem accepted_mem (b : Bridge) (c : Corpus) (basis : ComparisonBasis)
+    (ds : List Delivery) (r : SourceRecord) (d : Decoded) :
+    (r, d) ∈ accepted b c basis ds ↔ r ∈ usableHeads basis ds ∧ inspect b c r = some (.ok d) := by
+  unfold accepted
+  simp only [List.mem_filterMap]
+  constructor
+  · rintro ⟨q, hq, he⟩
+    cases hi : inspect b c q with
+    | none => simp [hi] at he
+    | some result =>
+      cases result with
+      | error why => simp [hi] at he
+      | ok value =>
+        simp only [hi, Option.some.injEq, Prod.mk.injEq] at he
+        obtain ⟨rfl, rfl⟩ := he
+        exact ⟨hq, hi⟩
+  · rintro ⟨hr, hi⟩
+    exact ⟨r, hr, by simp [hi]⟩
+
+private theorem accepted_unique (b : Bridge) (c : Corpus) (basis : ComparisonBasis)
+    (ds : List Delivery) (ids : IdentityInjective b)
+    (r q : SourceRecord) (d e : Decoded)
+    (hr : (r, d) ∈ accepted b c basis ds) (hq : (q, e) ∈ accepted b c basis ds)
+    (he : gccRecord b r d = gccRecord b q e) : r = q ∧ d = e := by
+  have rh := (accepted_mem b c basis ds r d).mp hr
+  have qh := (accepted_mem b c basis ds q e).mp hq
+  have hk := ids r.key q.key (congrArg GCCRecord.id he)
+  have eq := head_key_unique basis ds r q rh.1 qh.1 hk
+  subst q
+  have de : d = e := by rw [rh.2] at qh; exact Except.ok.inj (Option.some.inj qh.2)
+  exact ⟨rfl, de⟩
+
+private theorem inspect_valid (b : Bridge) (c : Corpus) (r : SourceRecord) (d : Decoded)
+    (hi : inspect b c r = some (.ok d)) : (d.endpoints.map Prod.fst).Nodup := by
+  unfold inspect at hi
+  split at hi <;> try (simp at hi)
+  split at hi <;> try (simp at hi)
+  split at hi <;> try (simp at hi)
+  split at hi <;> try (simp at hi)
+  subst d
+  rename_i valid known
+  simp only [Bool.not_eq_false] at valid
+  have hv := Bool.and_eq_true_iff.mp valid
+  exact of_decide_eq_true hv.1
+
+private theorem find_unique {α : Type} (xs : List α) (p : α → Bool) (x : α)
+    (mem : x ∈ xs) (yes : p x = true) (unique : ∀ y ∈ xs, p y = true → y = x) :
+    xs.find? p = some x := by
+  cases he : xs.find? p with
+  | none => exact False.elim (List.find?_eq_none.mp he x mem yes)
+  | some y =>
+    have eq := unique y (List.mem_of_find?_eq_some he) (List.find?_some he)
+    subst y
+    rfl
+
+private theorem role_unique (eps : List (EndpointRole × GNode))
+    (nd : (eps.map Prod.fst).Nodup) (a b : EndpointRole × GNode)
+    (ha : a ∈ eps) (hb : b ∈ eps) (eq : a.1 = b.1) : a = b := by
+  induction eps with
+  | nil => cases ha
+  | cons x xs ih =>
+    simp only [List.map_cons, List.nodup_cons] at nd
+    simp only [List.mem_cons] at ha hb
+    rcases ha with rfl | ha <;> rcases hb with rfl | hb
+    · rfl
+    · exact False.elim (nd.1 (List.mem_map.mpr ⟨b, hb, eq.symm⟩))
+    · exact False.elim (nd.1 (List.mem_map.mpr ⟨a, ha, eq⟩))
+    · exact ih nd.2 ha hb
+
+private theorem eraseDups_nodup {α : Type} [BEq α] [LawfulBEq α] (xs : List α) : xs.eraseDups.Nodup := by
+  cases xs with
+  | nil => simp
+  | cons x xs =>
+    rw [List.eraseDups_cons]
+    apply List.nodup_cons.mpr
+    refine ⟨by simp, eraseDups_nodup _⟩
+termination_by xs.length
+decreasing_by
+  have h := List.length_filter_le (fun b => !b == x) xs
+  simp only [List.length_cons]
+  omega
+
+private def absence_key : BridgeAbsence → LateWrites.Key
+  | .malformedPayload k | .unknownEndpoint k | .invalidEndpoints k => k
+
+private theorem inspect_error_key (b : Bridge) (c : Corpus) (r : SourceRecord) (why : BridgeAbsence)
+    (hi : inspect b c r = some (.error why)) :
+    absence_key why = r.key := by
+  cases why <;> simp only [absence_key] <;> unfold inspect at hi
+  all_goals split at hi <;> try (simp at hi)
+  all_goals split at hi <;> try (simp_all)
+  all_goals split at hi <;> try (simp_all)
+  all_goals split at hi <;> simp_all
+
+private theorem count_filterMap_unique {α β : Type} [BEq β] [LawfulBEq β]
+    (xs : List α) (nd : xs.Nodup) (f : α → Option β) (x : α) (y : β)
+    (mem : x ∈ xs) (yes : f x = some y)
+    (unique : ∀ z ∈ xs, f z = some y → z = x) : (xs.filterMap f).count y = 1 := by
+  induction xs with
+  | nil => cases mem
+  | cons z zs ih =>
+    obtain ⟨notmem, tail⟩ := List.nodup_cons.mp nd
+    by_cases eq : z = x
+    · subst z
+      have absent : y ∉ zs.filterMap f := by
+        rintro hy
+        obtain ⟨q, hq, hfy⟩ := List.mem_filterMap.mp hy
+        have hqx := unique q (by simp [hq]) hfy
+        subst q
+        exact notmem hq
+      simp [yes, List.count_eq_zero.mpr absent]
+    · have hx : x ∈ zs := (List.mem_cons.mp mem).resolve_left (Ne.symm eq)
+      have hy := ih tail hx (by intro q hq; exact unique q (by simp [hq]))
+      cases hf : f z with
+      | none => simpa [hf] using hy
+      | some value =>
+        have ne : value ≠ y := by
+          intro ev
+          subst value
+          exact eq (unique z (by simp) hf)
+        simpa [hf, ne, Ne.symm ne] using hy
+
 /-- VERIFY obligation 2, "meaningful GCC change": usable decoded heads have
 unique provenance; malformed/unknown/invalid endpoints are visible refusals.
 Injective IDs and slot-kind agreement are explicit producer contracts. -/
 theorem bridge_faithful (b : Bridge) (c : Corpus) (basis : ComparisonBasis)
     (ds : List Delivery) (kind : KindAgreement b) (ids : IdentityInjective b) :
-    BridgeFaithful b c basis ds (bridgeGCC b c basis ds) := by sorry
+    BridgeFaithful b c basis ds (bridgeGCC b c basis ds) := by
+  refine ⟨rfl, rfl, rfl, ?_, ?_, ?_⟩
+  · intro record hm
+    obtain ⟨⟨r, d⟩, hd, he⟩ := List.mem_map.mp hm
+    have hh := (accepted_mem b c basis ds r d).mp hd
+    refine ⟨r, d, hh.1, hh.2, he, ?_, ?_⟩
+    · intro ep hep
+      have findRow : (accepted b c basis ds).find? (fun p => gccRecord b p.1 p.2 == record) = some (r, d) := by
+        apply find_unique _ _ _ hd (by simpa using he)
+        intro p hp matchRecord
+        have hp' : gccRecord b p.1 p.2 = record := by simpa using matchRecord
+        have eq := accepted_unique b c basis ds ids p.1 r p.2 d hp hd (hp'.trans he.symm)
+        exact Prod.ext eq.1 eq.2
+      have findEndpoint : d.endpoints.find? (fun p => p.1 == ep.1) = some ep := by
+        apply find_unique _ _ _ hep (by simp)
+        intro p hp matchRole
+        exact role_unique d.endpoints (inspect_valid b c r d hh.2) p ep hp hep (by simpa using matchRole)
+      change ((accepted b c basis ds).find? _).bind _ = _
+      rw [findRow]
+      simp [findEndpoint]
+    · intro q e hq hqe hrec
+      exact accepted_unique b c basis ds ids q r e d
+        ((accepted_mem b c basis ds q e).mpr ⟨hq, hqe⟩) hd (hrec.trans he.symm)
+  · intro r hr notBuried
+    have success := head_facts basis ds r hr
+    have existsInspect : ∃ result, inspect b c r = some result := by
+      obtain ⟨value, hp, _⟩ := success
+      cases slot : r.key.slot with
+      | dogBuried => exact False.elim (notBuried slot)
+      | known k =>
+        simp only [inspect, slot, hp]
+        split
+        · exact ⟨_, rfl⟩
+        · split
+          · exact ⟨_, rfl⟩
+          · split <;> exact ⟨_, rfl⟩
+    obtain ⟨result, hi⟩ := existsInspect
+    cases result with
+    | ok d =>
+      apply Or.inl
+      refine ⟨d, hi, ?_⟩
+      exact List.mem_map.mpr ⟨(r,d), (accepted_mem b c basis ds r d).mpr ⟨hr,hi⟩, rfl⟩
+    | error why =>
+      apply Or.inr
+      refine ⟨why, hi, ?_⟩
+      change ((usableHeads basis ds).filterMap _).count why = 1
+      refine count_filterMap_unique _ ?_ _ r why hr (by simp [hi]) ?_
+      · exact (eraseDups_nodup (semanticRecords ds)).filter _
+      · intro q hq same
+        have iq : inspect b c q = some (.error why) := by
+          cases hqi : inspect b c q with
+          | none => simp [hqi] at same
+          | some res =>
+            cases res with
+            | ok d => simp [hqi] at same
+            | error why' =>
+              simp only [hqi, Option.some.injEq] at same
+              subst why'
+              rfl
+        exact head_key_unique basis ds q r hq hr
+          ((inspect_error_key b c q why iq).symm.trans (inspect_error_key b c r why hi))
+  · intro why hw
+    obtain ⟨r, hr, he⟩ := List.mem_filterMap.mp hw
+    refine ⟨r, hr, ?_⟩
+    cases hi : inspect b c r with
+    | none => simp [hi] at he
+    | some res =>
+      cases res with
+      | ok d => simp [hi] at he
+      | error why' =>
+        simp only [hi, Option.some.injEq] at he
+        subst why'
+        rfl
+
 
 /-- Enumerate the finite job inventory and delivered keys; query the existing
 absence predicate. A job never declared or delivered cannot be detected here.
@@ -252,6 +484,30 @@ def CitesBasis (basis : ReasonBasis) (corpus : Corpus) (store : Supersession.Sto
 def ReaderOutcome (basis : ReasonBasis) (c : Corpus) (store : Supersession.Store) (out : Mojira) : Prop :=
   CitesBasis basis c store out ∨ out.notices ≠ []
 
+private theorem active_focus_kind (cs : List Circus.Character) (i : ChainInput)
+    (f : Monkey.FocusRecord) (active : (focused cs i).active = some f) :
+    f.record.kind = .houFocus := by
+  unfold focused at active
+  cases ho : Monkey.monkeyRun (monkeyInput cs i) i.proposal with
+  | failed why => simp [ho, Monkey.consume] at active
+  | written focus =>
+    simp only [ho, Monkey.consume] at active
+    split at active
+    · simp only [Option.some.injEq] at active
+      subst f
+      exact (Monkey.focus_located_in_gcc _ _ _ ho).1
+    · cases active
+
+private theorem rebuild_faithful (cs : List Circus.Character) (inp : Inputs) (basis : ReasonBasis)
+    (hfaith : ∀ c ∈ cs, ∀ e ∈ c.order inp, e.reason.explainable basis e.item) :
+    ∀ e ∈ rebuild cs inp, e.reason.explainable basis e.item := by
+  intro e he
+  unfold rebuild at he
+  obtain ⟨a, i, hi, hr⟩ := entriesFrom_reason (reasonFor cs inp)
+    (Retro.partyVote budgetTen [] (orderingsOf cs inp)) budgetTen e he
+  rw [hr, hi]
+  exact reasonFor_faithful cs inp basis a i hfaith
+
 /-- VERIFY obligation 2, "One complete live chain": Mojira asks "what should
 Joe look at next, and why". Settlement/reply permit work, not guaranteed success.
 Missing decode, job, focus, publication or reading evidence is a visible absence.
@@ -269,7 +525,45 @@ theorem chain_turn_to_reader (cs : List Circus.Character) (i : ChainInput) (basi
       (focused cs i).active = some f ∧
       citation.sources = semanticRecords (collected cs i).delivered ∧
       citation.focusRecord = f.record ∧ citation.focusPin = f.evidencePin ∧
-      PassInputsMatch (bridged cs i).1 (focused cs i).view.loop.inputs) := by sorry
+      PassInputsMatch (bridged cs i).1 (focused cs i).view.loop.inputs) := by
+  classical
+  unfold renderChain
+  dsimp only
+  generalize herr : ((bridged cs i).2.map ChainAbsence.bridge ++
+    (jobAbsences i.basis (collected cs i).delivered).map (fun p => .job p.1 p.2) ++
+    ((focused cs i).failure.toList.map ChainAbsence.focus) ++
+    (if (ranked cs i).isEmpty then [.noRankedItems] else []) ++
+    (if PassInputsMatch (bridged cs i).1 (focused cs i).view.loop.inputs then [] else [.passInputMismatch])) = errors
+  split
+  next good =>
+    have matchInputs : PassInputsMatch (bridged cs i).1 (focused cs i).view.loop.inputs := by
+      by_cases hm : PassInputsMatch (bridged cs i).1 (focused cs i).view.loop.inputs
+      · exact hm
+      · have hx := herr.trans good.1
+        simp [hm] at hx
+    have nonempty : ranked cs i ≠ [] := by
+      intro he
+      have hx := herr.trans good.1
+      simp [he] at hx
+    obtain ⟨f, a, hf, ha, current, run, entries, ne, consumable⟩ := good.2
+    refine ⟨Or.inl ?_, ?_⟩
+    · refine ⟨⟨i.corpus.generation, semanticRecords (collected cs i).delivered,
+        f.record, f.evidencePin, i.store.run⟩, a, ?_, rfl,
+        active_focus_kind cs i f hf, rfl, ha, current, ne, ?_, nonempty⟩
+      · simp [hf]
+      · intro e he
+        exact ⟨consumable e he, rebuild_faithful cs _ basis hfaith e (entries ▸ he)⟩
+    · intro citation hc
+      simp only [hf, Option.map_some, Option.some.injEq] at hc
+      subst citation
+      exact ⟨f, hf, rfl, rfl, rfl, matchInputs⟩
+  next bad =>
+    constructor
+    · apply Or.inr
+      dsimp only
+      split <;> simp_all
+    · intro citation hc
+      cases hc
 
 /-- Focus-dependent bands come ONLY from a received fresh focus. Comparing the
 same pass targets before/after mention-only delivery with no new active focus
@@ -284,7 +578,24 @@ theorem chain_meaningful_change (rows : List Monkey.PassRow) (ds : List Delivery
     Bands rows none = rows.map (fun r => (r.target, .unknown)) ∧
     (∀ cs i, i.deliveries = ds → (focused cs i).active = none →
       ∀ r ∈ (renderChain cs i).priorities,
-        r.row.band = .unknown ∧ r.row.reason = some .focusRelationMissing) := by sorry
+        r.row.band = .unknown ∧ r.row.reason = some .focusRelationMissing) := by
+  classical
+  constructor
+  · apply List.ext_getElem?
+    intro index
+    simp [Bands, Monkey.rawRows, Monkey.band, Option.map_map, Function.comp_def]
+  · intro cs i deliveries inactive r hr
+    have he : (renderChain cs i).priorities = ranked cs i := by
+      unfold renderChain
+      dsimp only
+      generalize ((bridged cs i).2.map ChainAbsence.bridge ++
+    (jobAbsences i.basis (collected cs i).delivered).map (fun p => .job p.1 p.2) ++
+    ((focused cs i).failure.toList.map ChainAbsence.focus) ++
+    (if (ranked cs i).isEmpty then [.noRankedItems] else []) ++
+    (if PassInputsMatch (bridged cs i).1 (focused cs i).view.loop.inputs then [] else [.passInputMismatch])) = errors
+      split <;> rfl
+    rw [he] at hr
+    exact (Monkey.giraffe_band_respects_focus _ _ _).2.2.1 r hr (by simp [inactive])
 
 /-- VERIFY: "Exercise a correction or rejection ... reaches the reader".
 Uses the accepted Supersession correction path and the SAME Timely hypothesis.
@@ -300,7 +611,9 @@ theorem chain_correction_reaches_reader (cs : List Circus.Character) (out : Moji
     Supersession.CorrectionVisible store (Supersession.correct store correction)
       (Supersession.observeCorrection cs store out.reader.view correction) ∧
     Supersession.ReaderSafe (Supersession.correct store correction)
-      (Supersession.observeCorrection cs store out.reader.view correction) := by sorry
+      (Supersession.observeCorrection cs store out.reader.view correction) := by
+  have h := Supersession.correction_reaches_reader cs store out.reader.view correction T occurred observed timely
+  exact ⟨h.1, h.2, Supersession.reader_sees_replacement _ _⟩
 
 /-- VERIFY navigation: d is a measured snapshot HYPOTHESIS, never a constant.
 claude-1, 2026-11-15: corpus generation 1102dde4, futon1b watermark 3733,
@@ -310,7 +623,8 @@ These measurements are recorded evidence, not a proof about today's graph. -/
 theorem chain_navigation_bound (g : GCC) (turn : TurnId) (focus : List Item) (d : Nat)
     (measured : LoopBuilt g (turnItems g turn focus) d)
     (a b : Item) (ha : a ∈ turnItems g turn focus) (hb : b ∈ turnItems g turn focus) :
-    g.Reach d (.item a) (.item b) := by sorry
+    g.Reach d (.item a) (.item b) := by
+  exact gcc_turn_navigable_at_most_d g turn focus d measured a b ha hb
 
 
 /-! ## TEETH: invented defective bridges and consumers -/
