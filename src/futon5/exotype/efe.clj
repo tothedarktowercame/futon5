@@ -23,6 +23,7 @@
             [clojure.java.io :as io]
             [futon5.ca.core :as ca]
             [futon5.exotype.chain-risk :as chain-risk]
+            [futon5.exotype.exact-rows :as exact-rows]
             [futon5.exotype.grid :as grid]
             [futon5.exotype.policy-epistemic :as policy-epistemic]
             [futon5.exotype.selection :as selection]
@@ -342,6 +343,14 @@
   ([candidate-exotype observation model-kind]
    (predict candidate-exotype observation model-kind nil))
   ([candidate-exotype observation model-kind menu]
+   (predict candidate-exotype observation model-kind menu nil))
+  ([candidate-exotype observation model-kind menu rows]
+   ;; ROWS is nil (the measured rows: the shipped table for a named kind, the
+   ;; menu's table for a permutation vector) or :exact (`exact-rows`, for every
+   ;; exotype, named or not; no menu and no table is read).
+   (when-not (contains? #{nil :exact} rows)
+     (throw (ex-info "unknown observation rows" {:observation-rows rows
+                                                 :known #{nil :exact}})))
    ;; Reject unknown selectors rather than falling through to legacy. Model choice
    ;; materially changes results, so a typo like :dervied silently selecting the
    ;; known-worse model is a configuration defect, not a default. (codex-12 #4.)
@@ -349,6 +358,16 @@
      (throw (ex-info "unknown observation model" {:model-kind model-kind
                                                   :known #{:legacy :derived}})))
    (cond
+     (= :exact rows)
+     (let [_ (when-not (= :derived model-kind)
+               (throw (ex-info "exact rows replace the derived model only"
+                               {:model-kind model-kind})))
+           row (exact-rows/row candidate-exotype observation)]
+       {:rule-change (gen/rule-change-rate (grid/sigma-of candidate-exotype))
+        :activity (:activity row)
+        :diversity (:diversity row)
+        :hunger (:hunger row)})
+
      ;; A permutation-vector exotype has no row in the shipped resource. Its
      ;; rows come from the menu it belongs to; with no menu there is nothing to
      ;; read, and that is an error, not a default (TN-baldwin-reboot.md 56).
@@ -449,7 +468,8 @@
          apply-probability (double (get opts :apply-probability 1.0))
          raw-prediction (predict candidate-exotype observation
                                  (get opts :observation-model :derived)
-                                 (:menu opts))
+                                 (:menu opts)
+                                 (:observation-rows opts))
          prediction (if (== 1.0 apply-probability)
                       raw-prediction
                       (update raw-prediction :rule-change * apply-probability))

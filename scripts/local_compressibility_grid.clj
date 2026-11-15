@@ -141,7 +141,12 @@
    (if menu
      (let [menu (grid/check-menu menu)]
        (assoc (july-state gamma kappa seed menu) :menu menu))
-     (july-state gamma kappa seed nil))))
+     (july-state gamma kappa seed nil)))
+  ([gamma kappa seed menu observation-rows]
+   ;; OBSERVATION-ROWS :exact scores every exotype with `exact-rows` instead of
+   ;; a measured table; nil is the four-argument state.
+   (cond-> (metaca-state gamma kappa seed menu)
+     observation-rows (assoc :observation-rows observation-rows))))
 
 (defn- checked-metaca-step [state]
   (let [advanced (tuning/step state)]
