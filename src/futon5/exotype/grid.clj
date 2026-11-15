@@ -177,6 +177,22 @@
       (s8->sigma exotype))
     (get propagators exotype)))
 
+(defn assert-exotype-allowed!
+  "P-008b §7 item 3 (amended; lon-claude-4 ruling 2026-11-15): fail-closed
+   guard for the memoised S8 wrappers. A vector exotype that is not a
+   permutation of 0..7 throws (same message family as `s8->sigma`) unless
+   `*allow-end8?*` is bound true; keywords and permutations pass, returning
+   nil. Wrappers call this on every exotype argument BEFORE the memo lookup,
+   so a value cached under a flag-on call can never be served to a flag-off
+   caller."
+  [exotype]
+  (when (and (s8? exotype)
+             (not (perm? exotype))
+             (not *allow-end8?*))
+    (throw (ex-info "S8 exotype is not a permutation of 0..7 (End(8) needs *allow-end8?* true)"
+                    {:exotype exotype})))
+  nil)
+
 (defn kind->s8
   "The S8 vector of a named kind (same sigma, as data)."
   [kind]

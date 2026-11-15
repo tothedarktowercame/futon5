@@ -76,9 +76,17 @@
               candidate grid/exotype-kinds]
           [[own candidate] (exact-pair-value own candidate)])))
 
-(def ^:private s8-pair-value
+(def ^:private s8-pair-value-memo
   "P-008: exact pair value when either side is an S8 exotype, memoised."
   (memoize (fn [own candidate] (exact-pair-value own candidate))))
+
+(defn- s8-pair-value
+  "P-008b §7 item 3: guard BOTH exotypes before the memo lookup, so a cached
+   flag-on value is never served to a flag-off caller."
+  [own candidate]
+  (grid/assert-exotype-allowed! own)
+  (grid/assert-exotype-allowed! candidate)
+  (s8-pair-value-memo own candidate))
 
 (defn pair-value
   "Expected fraction of the eight common draws for which CANDIDATE injects a

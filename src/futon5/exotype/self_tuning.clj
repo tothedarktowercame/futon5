@@ -65,14 +65,20 @@
 
 ;; P-008: S8 exotypes bypass the 12-kind caches. Both functions below compute
 ;; exactly what the caches would hold, on demand, memoised per sigma.
-(def ^:private s8-score
+(def ^:private s8-score-memo
   (memoize
    (fn [candidate activity diversity]
      (efe/score-policy :efe-full candidate
                        {:activity activity :diversity diversity}
                        {:lambda 0.0}))))
 
-(def ^:private s8-transition
+(defn- s8-score
+  "P-008b §7 item 3: guard the exotype argument before the memo lookup."
+  [candidate activity diversity]
+  (grid/assert-exotype-allowed! candidate)
+  (s8-score-memo candidate activity diversity))
+
+(def ^:private s8-transition-memo
   (memoize
    (fn [sigil exotype k]
      (let [truth-table (vec ca/truth-table-3)
@@ -83,6 +89,12 @@
            di (.indexOf ^java.util.List truth-table dst)
            value (if (= \0 (nth bits k)) \1 \0)]
        (ca/sigil-for (str (subs bits 0 di) value (subs bits (inc di))))))))
+
+(defn- s8-transition
+  "P-008b §7 item 3: guard the exotype argument before the memo lookup."
+  [sigil exotype k]
+  (grid/assert-exotype-allowed! exotype)
+  (s8-transition-memo sigil exotype k))
 
 (def ^:private blend-stream-tag
   "Matches `grid/apply-exotype-blend`: the blend coin is independent of the

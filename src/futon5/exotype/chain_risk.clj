@@ -74,9 +74,16 @@
               byte (range 256)]
           [[kind byte] (nth column byte)])))
 
-(def ^:private s8-column
+(def ^:private s8-column-memo
   "P-008: chain-risk column for an S8 exotype, exact, memoised per sigma."
   (memoize (fn [kind] (kind-column kind))))
+
+(defn- s8-column
+  "P-008b §7 item 3: guard BEFORE the memo lookup, so a cached flag-on value
+   is never served to a flag-off caller (fail-closed regardless of cache)."
+  [kind]
+  (grid/assert-exotype-allowed! kind)
+  (s8-column-memo kind))
 
 (defn risk
   "Look up chain risk for KIND at integer BYTE."

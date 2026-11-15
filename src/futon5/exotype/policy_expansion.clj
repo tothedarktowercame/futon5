@@ -74,13 +74,20 @@
     ;; deliberately coupled; only the spatial degeneracy is removed.
     (.nextDouble (java.util.Random. (ca/mix-seed draw-seed)))))
 
-(def ^:private cached-score
+(def ^:private cached-score-memo
   ;; The frozen generative model reads a finite local observation. Caching its
   ;; pure score avoids recomputing identical Bernoulli KL/entropy terms in the
   ;; full grid; this cache is an implementation detail, not cell/model state.
   (memoize
    (fn [arm candidate-exotype observation score-options]
      (efe/score-policy arm candidate-exotype observation score-options))))
+
+(defn- cached-score
+  "P-008b §7 item 3: guard the exotype argument before the memo lookup, so a
+   cached flag-on value is never served to a flag-off caller."
+  [arm candidate-exotype observation score-options]
+  (grid/assert-exotype-allowed! candidate-exotype)
+  (cached-score-memo arm candidate-exotype observation score-options))
 
 (defn- sample-candidate [candidates probabilities* draw]
   (loop [candidate-index 0 cumulative 0.0]
