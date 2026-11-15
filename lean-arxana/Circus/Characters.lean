@@ -88,8 +88,8 @@ unblocks count and cone size (the fields `thor_order` reads; the ranks in
 `thyra_order`'s reason strings come from the same order). -/
 structure PassFacts where
   order : List EntityId
-  unblocks : EntityId → Nat
-  cone : EntityId → Nat
+  unblocks : EntityId → Option Nat
+  cone : EntityId → Option Nat
   /-- The pass's stored rank, not the zero-based position in order. -/
   rank : EntityId → Option Nat
 
@@ -126,10 +126,11 @@ theorem toEntries_items {α : Type} (who : Agent) (termsOf : α → List Term)
 
 /-! ## Thor: the pass order (unblocks, then cone) -/
 
-/-- The producer defaults a missing rank to zero when rendering Thor. This
-is a reported default, not a reconstructed position in the pass order. -/
+/-- Missing counts display zero with an explicit missing qualifier; missing
+rank is reported as absent, never reconstructed from pass position. -/
 def thorTerms (pf : PassFacts) (x : EntityId) : List Term :=
-  [.unblocksCount (pf.unblocks x), .coneCount (pf.cone x),
+  [match pf.unblocks x with | some n => .unblocksCount n | none => .unblocksMissing,
+    match pf.cone x with | some n => .coneCount n | none => .coneMissing,
     match pf.rank x with
     | some r => .passRank r
     | none => .noPassRank]
@@ -141,12 +142,15 @@ def thorOrder (pf : PassFacts) (top : Nat) : List Entry :=
 /-- The pass order is sorted by unblocks descending, cone breaking ties (the
 script's sort before the pass is handed to Thor). -/
 def passLE (pf : PassFacts) (a b : EntityId) : Prop :=
-  pf.unblocks b < pf.unblocks a ∨
-    (pf.unblocks a = pf.unblocks b ∧ pf.cone b ≤ pf.cone a)
+  (pf.unblocks b).getD 0 < (pf.unblocks a).getD 0 ∨
+    ((pf.unblocks a).getD 0 = (pf.unblocks b).getD 0 ∧
+      (pf.cone b).getD 0 ≤ (pf.cone a).getD 0)
 
 /-- THOR'S BENEFIT MONOTONICITY: never fewer unblocks above more, cone
 breaking ties — an item that unblocks strictly less never ranks above one
 that unblocks more. -/
+/- OLD: passLE compares mandatory Nat counts.
+NEW: Option field; order key is the 0 display default, including cone ties. -/
 theorem thor_monotone_unblocks (pf : PassFacts) (top : Nat)
     (hsorted : pf.order.Pairwise (passLE pf)) :
     (thorOrder pf top).Pairwise (fun e1 e2 => passLE pf e1.item e2.item) := by
@@ -156,6 +160,50 @@ theorem thor_monotone_unblocks (pf : PassFacts) (top : Nat)
   have h1 : (pf.order.take top).Pairwise (passLE pf) := List.Pairwise.take hsorted
   rw [← hmap, List.pairwise_map] at h1
   exact h1
+
+/-- Required numeric fields in a Giraffe reading's pass entry. -/
+inductive PassField | unblocks | cone
+  deriving DecidableEq, Repr
+structure ReadingViolation where
+  item : EntityId
+  field : PassField
+  deriving DecidableEq, Repr
+
+/-- Only entries in Thor's displayed slice are checked. Missing counts keep
+zero as the display/order default but remain typed reading-contract violations. -/
+def passViolations (pf : PassFacts) (top : Nat) : List ReadingViolation :=
+  (pf.order.take top).flatMap fun x =>
+    (if (pf.unblocks x).isNone then [⟨x, .unblocks⟩] else []) ++
+    (if (pf.cone x).isNone then [⟨x, .cone⟩] else [])
+
+private theorem violation_mem (pf : PassFacts) (top : Nat) (v : ReadingViolation) :
+    v ∈ passViolations pf top ↔ v.item ∈ pf.order.take top ∧
+      (match v.field with | .unblocks => pf.unblocks v.item = none | .cone => pf.cone v.item = none) := by
+  unfold passViolations
+  simp only [List.mem_flatMap]
+  constructor
+  · rintro ⟨x, hx, hv⟩
+    cases hu : pf.unblocks x <;> cases hc : pf.cone x <;>
+      simp [hu, hc] at hv
+    all_goals try (rcases hv with rfl | rfl <;> simp_all)
+    all_goals subst v; simp_all
+  · rintro ⟨hx, missing⟩
+    refine ⟨v.item, hx, ?_⟩
+    cases v with
+    | mk x field => cases field <;> simp_all
+
+/-- Missing unblocks and cone counts are precisely the violations for displayed
+items; every emitted violation belongs to that same displayed slice. -/
+theorem missing_count_is_violation (pf : PassFacts) (top : Nat) :
+    (∀ x ∈ pf.order.take top,
+      (pf.unblocks x = none ↔ ⟨x, .unblocks⟩ ∈ passViolations pf top) ∧
+      (pf.cone x = none ↔ ⟨x, .cone⟩ ∈ passViolations pf top)) ∧
+    (∀ v ∈ passViolations pf top, v.item ∈ pf.order.take top) := by
+  constructor
+  · intro x hx
+    simp [violation_mem, hx]
+  · intro v hv
+    exact ((violation_mem pf top v).mp hv).1
 
 /-! ## Thyra: harm lines, most ready first -/
 
@@ -384,11 +432,14 @@ def merlinFacts (r : MerlinRow) : ReasonFacts :=
 def questorFacts (best : Pending → Option (FeatureId × Nat)) (p : Pending) : ReasonFacts :=
   { named := best p, ready := p.label == .readyOneHandoff }
 
+/- OLD: count terms always report mandatory numeric values.
+NEW: optional counts report either the measured value or an explicit absence. -/
 theorem thor_terms_faithful (pf : PassFacts) (x : EntityId) :
     ∀ t ∈ thorTerms pf x, t.faithful (thorFacts pf x) := by
   intro t ht
-  cases hr : pf.rank x <;> simp [thorTerms, hr] at ht <;>
-    rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, thorFacts, hr]
+  cases hu : pf.unblocks x <;> cases hc : pf.cone x <;>
+    cases hr : pf.rank x <;> simp [thorTerms, hu, hc, hr] at ht <;>
+    rcases ht with rfl | rfl | rfl <;> simp [Term.faithful, thorFacts, hu, hc, hr]
 
 theorem thyra_terms_faithful (pf : PassFacts) (p : Pending) (harm : p.harm.isSome = true) :
     ∀ t ∈ thyraTerms pf p, t.faithful (thyraFacts pf p) := by
@@ -450,6 +501,8 @@ theorem toEntries_faithful {α : Type} (who : Agent) (termsOf : α → List Term
         (fun y hy => hfaith y (List.mem_cons_of_mem _ hy)) (priority - 1) e he
       exact ⟨y, List.mem_cons_of_mem _ hy, hi, hf⟩
 
+/- OLD: Thor reasons were faithful only to mandatory count fields.
+NEW: the same guarantee includes missing-count terms against optional facts. -/
 theorem thor_reasons_faithful (pf : PassFacts) (top : Nat) :
     ∀ e ∈ thorOrder pf top, ∃ x ∈ pf.order.take top, e.item = x ∧
       e.reason.explainable (fun _ _ => thorFacts pf x) e.item :=
@@ -484,17 +537,17 @@ theorem questor_reasons_faithful (ps : List Pending)
 
 -- TEETH: the rendered number itself is correct for its typed claim, but the
 -- claim is false of the pass. This is not explainable even with a familiar string.
-example : ¬ Reason.explainable (fun _ _ => { unblocks := 2 }) 17
+example : ¬ Reason.explainable (fun _ _ => { unblocks := some 2 }) 17
     ⟨["unblocks 3 item(s)"], .thor, [.unblocksCount 3], .thor⟩ := by
   intro h
   have bad := h.2 (.unblocksCount 3) (by simp)
-  change 3 = 2 at bad
-  omega
+  change some 2 = some 3 at bad
+  cases bad
 
 /- OLD: rank := order.idxOf?, and Thyra emitted withinTwoHops.
 NEW: retain the pass's own rank; Thyra emits only harm and rank/level.
 These invented examples preserve the two producer/model counterexamples. -/
-private def exPass : PassFacts := ⟨[17], fun _ => 2, fun _ => 0, fun _ => some 1⟩
+private def exPass : PassFacts := ⟨[17], fun _ => some 2, fun _ => some 0, fun _ => some 1⟩
 private def exPending : Pending := ⟨17, .readyOneHandoff, [], some "H-toy", 1⟩
 example : exPass.order.idxOf? 17 = some 0 ∧ exPass.rank 17 = some 1 := by decide
 example : (thyraTerms exPass exPending).map Term.render =
@@ -502,22 +555,43 @@ example : (thyraTerms exPass exPending).map Term.render =
 example : Term.withinTwoHops ∉ thyraTerms exPass exPending := by decide
 
 /-- Every term Thor writes is computed (not a literal vocabulary word). -/
+/- OLD: computed terms comprised numeric counts and rank or missing rank.
+NEW: missing-count claims are also computed, never unchecked literals. -/
 theorem thor_terms_all_computed (pf : PassFacts) (x : EntityId) :
     ∀ t ∈ thorTerms pf x, t.isLiteral = false := by
   intro t ht
-  cases hr : pf.rank x <;> simp [thorTerms, hr] at ht <;>
+  cases hu : pf.unblocks x <;> cases hc : pf.cone x <;>
+    cases hr : pf.rank x <;> simp [thorTerms, hu, hc, hr] at ht <;>
     rcases ht with rfl | rfl | rfl <;> rfl
 
 -- Thor with no pass rank says so (claude-13 review 2026-11-15: the producer
 -- printed "Giraffe pass rank 0", a false claim; producer and model fixed to
 -- "no Giraffe pass rank"). Merlin suppresses the named phrase at zero even
 -- when the best-named feature exists.
-example : Term.noPassRank ∈ thorTerms ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17 ∧
-    Term.passRank 0 ∉ thorTerms ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17 := by decide
+example : Term.noPassRank ∈ thorTerms ⟨[], fun _ => some 0, fun _ => some 0, fun _ => none⟩ 17 ∧
+    Term.passRank 0 ∉ thorTerms ⟨[], fun _ => some 0, fun _ => some 0, fun _ => none⟩ 17 := by decide
 -- TEETH: the old default would claim rank 0 against a basis with no rank.
-example : ¬ (Term.passRank 0).faithful (thorFacts ⟨[], fun _ => 0, fun _ => 0, fun _ => none⟩ 17) := by
+example : ¬ (Term.passRank 0).faithful (thorFacts ⟨[], fun _ => some 0, fun _ => some 0, fun _ => none⟩ 17) := by
   simp [Term.faithful, thorFacts]
 example : Term.namesHalved "toy" 0 ∉
     merlinTerms ⟨17, .partly, some "own-toy", 2, 0, some "toy"⟩ := by decide
+
+-- TEETH: a bare zero claims a measured count and is false when absent.
+example (pf : PassFacts) (x : EntityId) (missing : pf.unblocks x = none) :
+    ¬ (Term.unblocksCount 0).faithful (thorFacts pf x) := by
+  simp [Term.faithful, thorFacts, missing]
+example (pf : PassFacts) (x : EntityId) (missing : pf.cone x = none) :
+    ¬ (Term.coneCount 0).faithful (thorFacts pf x) := by
+  simp [Term.faithful, thorFacts, missing]
+private def missingConePass : PassFacts :=
+  ⟨[17], fun _ => some 2, fun _ => none, fun _ => some 1⟩
+example : ¬ (Term.unblocksCount 0).faithful
+    (thorFacts ⟨[23], fun _ => none, fun _ => some 0, fun _ => some 1⟩ 23) := by
+  simp [Term.faithful, thorFacts]
+example : passViolations missingConePass 1 = [⟨17, .cone⟩] := by decide
+example : passViolations exPass 1 = [] := by decide
+example : passViolations missingConePass 0 = [] := by decide
+example : (thorTerms missingConePass 17).map Term.render =
+    ["unblocks 2 item(s)", "cone of 0 behind it (count missing)", "Giraffe pass rank 1"] := by decide
 
 end Circus.Characters

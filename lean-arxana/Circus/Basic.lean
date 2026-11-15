@@ -282,6 +282,8 @@ inductive Term
   | lit (s : String)
   | unblocksCount (n : Nat)
   | coneCount (n : Nat)
+  | unblocksMissing
+  | coneMissing
   | passRank (n : Nat)
   | noPassRank
   | notInPass (level : Nat)
@@ -300,6 +302,8 @@ def Term.render : Term → String
   | .lit s => s
   | .unblocksCount n => s!"unblocks {n} item(s)"
   | .coneCount n => s!"cone of {n} behind it"
+  | .unblocksMissing => "unblocks 0 item(s) (count missing)"
+  | .coneMissing => "cone of 0 behind it (count missing)"
   | .passRank n => s!"Giraffe pass rank {n}"
   | .noPassRank => "no Giraffe pass rank"
   | .notInPass l => s!"not in the Giraffe pass; pending level {l}"
@@ -317,8 +321,8 @@ def Term.render : Term → String
 withinTwoHops labels Merlin's convergence metric, not a claim that its count
 is positive. The numeric count is checked separately. -/
 structure ReasonFacts where
-  unblocks : Nat := 0
-  cone : Nat := 0
+  unblocks : Option Nat := none
+  cone : Option Nat := none
   rank : Option Nat := none
   level : Nat := 0
   harm : Option String := none
@@ -330,8 +334,10 @@ structure ReasonFacts where
 
 def Term.faithful (f : ReasonFacts) : Term → Prop
   | .lit _ => True
-  | .unblocksCount n => n = f.unblocks
-  | .coneCount n => n = f.cone
+  | .unblocksCount n => f.unblocks = some n
+  | .coneCount n => f.cone = some n
+  | .unblocksMissing => f.unblocks = none
+  | .coneMissing => f.cone = none
   | .passRank n => f.rank = some n
   | .noPassRank => f.rank = none
   | .notInPass n => f.rank = none ∧ n = f.level

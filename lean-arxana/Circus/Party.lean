@@ -241,6 +241,8 @@ theorem rankScore_unranked [BEq C] [LawfulBEq C] (ranked : List C) (x : C)
 /-- Concrete step-5 transfer: on Thor's nonempty ranked menu, choice is its
 head and unblocks at least as many items as any later candidate. The other
 three rankings are still produced by their actual step-5 functions. -/
+/- OLD: the chosen item has at least the mandatory Nat unblocks count.
+NEW: Option field; order key is the 0 display default. All other premises stay. -/
 theorem thor_choice_unblocks (pf : Circus.Characters.PassFacts)
     (ps : List Circus.Characters.Pending) (rows : List Circus.Characters.MerlinRow)
     (best : Circus.Characters.Pending → Option (Circus.Characters.FeatureId × Nat))
@@ -253,7 +255,7 @@ theorem thor_choice_unblocks (pf : Circus.Characters.PassFacts)
     (flat : ∀ y ∈ x :: xs, G y = G x) :
     let chosen := choice (rankedScores (characterRankings pf ps rows best top))
       w β G ⟨x, xs⟩
-    chosen = x ∧ ∀ y ∈ xs, pf.unblocks y ≤ pf.unblocks chosen := by
+    chosen = x ∧ ∀ y ∈ xs, (pf.unblocks y).getD 0 ≤ (pf.unblocks chosen).getD 0 := by
   have first : FirstRanked (characterRankings pf ps rows best top .thor) ⟨x, xs⟩ x := by
     change FirstRanked ((Circus.Characters.thorOrder pf top).map Circus.Entry.item) _ _
     rw [head]
