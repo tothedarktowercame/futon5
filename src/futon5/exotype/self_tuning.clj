@@ -185,9 +185,19 @@
   a = (rnd-int 8), b0 = (rnd-int 7), b = b0+1 if b0 >= a else b0 (a
   uniform ordered pair of distinct values, i.e. a uniform transposition);
   :e8-point draws k = (rnd-int 8), j = (rnd-int 8). On no hit, no further
-  draws. A winner that is not a vector (one of the 12 keyword kinds) is not
-  mutated: the record is {:op {:kind :skipped-keyword}} (placeholder pending
-  the reviewer ruling). Returns nil on no hit, else {:pre :post :op}.
+  draws.
+
+  P-008b §7 item 6 (ruling 2026-11-15, exotype main 5176228): on a hit, a
+  winner that is a keyword kind is replaced by its S8 twin (grid/kind->s8)
+  and the operator is applied to THAT vector. The record carries :pre (the
+  keyword, so the readout can count kind->vector conversions),
+  :pre-vector (the twin), :post (the mutated twin) and :op as for vectors.
+  The fallback from the ruling: a keyword with no entry in
+  grid/propagators, or whose twin fails the map-equality predicate
+  ((grid/sigma-of kind) = (grid/sigma-of twin); a non-permutation twin
+  fails outright), is left as it is and recorded
+  {:pre kind :post kind :op {:kind :skipped-keyword}}; the rate draw still
+  happened. Returns nil on no hit, else {:pre :pre-vector? :post :op}.
   Throws if 10000*mu is not integral (within 1e-9), or if :mu is missing
   while mutation is configured."
   [state index exotype]
@@ -202,22 +212,29 @@
     (ca/with-seed (mutation-draw-seed (:seed state) (:time state)
                                       (count (:exotypes state)) index)
       (when (< (ca/rnd-int 10000) threshold)
-        (if-not (vector? exotype)
-          {:pre exotype :post exotype :op {:kind :skipped-keyword}}
-          (case (:mutation state)
-            :s8-transposition
-            (let [a (ca/rnd-int 8)
-                  b0 (ca/rnd-int 7)
-                  b (if (>= b0 a) (inc b0) b0)]
-              {:pre exotype
-               :post (apply-transposition exotype a b)
-               :op {:kind :s8-transposition :a a :b b}})
-            :e8-point
-            (let [k (ca/rnd-int 8)
-                  j (ca/rnd-int 8)]
-              {:pre exotype
-               :post (apply-point exotype k j)
-               :op {:kind :e8-point :k k :j j}})))))))
+        (letfn [(operator [v]
+                  (case (:mutation state)
+                    :s8-transposition
+                    (let [a (ca/rnd-int 8)
+                          b0 (ca/rnd-int 7)
+                          b (if (>= b0 a) (inc b0) b0)]
+                      {:post (apply-transposition v a b)
+                       :op {:kind :s8-transposition :a a :b b}})
+                    :e8-point
+                    (let [k (ca/rnd-int 8)
+                          j (ca/rnd-int 8)]
+                      {:post (apply-point v k j)
+                       :op {:kind :e8-point :k k :j j}})))]
+          (if (vector? exotype)
+            (merge {:pre exotype} (operator exotype))
+            (let [twin (when (contains? grid/propagators exotype)
+                         (grid/kind->s8 exotype))]
+              (if (and twin
+                       (grid/perm? twin)
+                       (= (grid/sigma-of exotype) (grid/sigma-of twin)))
+                (merge {:pre exotype :pre-vector twin} (operator twin))
+                {:pre exotype :post exotype
+                 :op {:kind :skipped-keyword}}))))))))
 
 (defn clip-unit [x]
   (-> (double x) (max 0.0) (min 1.0)))
@@ -383,10 +400,21 @@
         decisions (if (nil? mutation)
                     decisions
                     (mapv (fn [decision]
-                            (let [winner (get-in decision [:winner :candidate-exotype])]
-                              (if-let [hit (mutation-draw state (:index decision) winner)]
-                                (assoc decision :mutation-hit hit)
-                                decision)))
+                            ;; P-008b §7 item 6: :row-source records which model
+                            ;; row the WINNER's acting exotype was scored from --
+                            ;; :s8-predictor when it is a vector (routes through
+                            ;; efe/s8-predictor, fail-closed), :keyword-cache
+                            ;; when a keyword (conditional keyword bins). Computed
+                            ;; from the winner's own type; efe.clj untouched.
+                            ;; Added only when mutation is configured, so the
+                            ;; mutation-off pr-str surface is unchanged.
+                            (let [winner (get-in decision [:winner :candidate-exotype])
+                                  hit (mutation-draw state (:index decision) winner)]
+                              (cond-> (assoc decision
+                                             :row-source (if (grid/s8? winner)
+                                                           :s8-predictor
+                                                           :keyword-cache))
+                                hit (assoc :mutation-hit hit))))
                           decisions))]
     {:exotypes (mapv (fn [decision]
                        (if-let [hit (:mutation-hit decision)]

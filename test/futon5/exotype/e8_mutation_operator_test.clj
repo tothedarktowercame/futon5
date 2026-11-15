@@ -254,7 +254,10 @@
                                0 [0 0 1 2 3 4 5 6]))
             "transposition refuses a non-permutation winner")))))
 
-;; --- j: keyword winners are skipped and recorded ------------------------------
+;; --- j: keyword winners are CONVERTED to their S8 twin and mutated -------------
+;; (ruling 2026-11-15, exotype main 5176228: the :skipped-keyword placeholder
+;; for the 12 selectable kinds is removed; see e8-mutation-keyword-twin-test
+;; for the full coverage. This test now pins the operator-level expectation.)
 
 (deftest keyword-winner-is-skipped-and-recorded
   (with-fake-predictor
@@ -267,9 +270,16 @@
             after (st/step kw0)
             hits (filter :mutation-hit (:efe-decisions after))]
         (is (= small-width (count hits)) "at mu 1.0 every cell hits")
-        (is (every? #(= {:kind :skipped-keyword} (get-in % [:mutation-hit :op])) hits))
-        (is (every? #(keyword? (get-in % [:mutation-hit :pre])) hits))
-        (is (every? #(= (get-in % [:mutation-hit :pre])
-                        (get-in % [:mutation-hit :post])) hits))
-        (is (every? keyword? (:exotypes after))
-            "keyword winners are not mutated, so exotypes stay keywords")))))
+        (is (every? #(keyword? (get-in % [:mutation-hit :pre])) hits)
+            ":pre stays the keyword")
+        (is (every? #(= (grid/kind->s8 (get-in % [:mutation-hit :pre]))
+                        (get-in % [:mutation-hit :pre-vector])) hits)
+            ":pre-vector is the winner's twin")
+        (is (every? #(= (:post (:mutation-hit %))
+                        (st/apply-transposition (:pre-vector (:mutation-hit %))
+                                                (-> % :mutation-hit :op :a)
+                                                (-> % :mutation-hit :op :b)))
+                    hits)
+            ":post is the transposed twin, per the recorded :op pair")
+        (is (every? vector? (:exotypes after))
+            "converted cells are vector cells from the next step")))))
