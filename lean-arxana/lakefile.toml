@@ -7,3 +7,6 @@ name = "ArxanaCore"
 
 [[lean_lib]]
 name = "Circus"
+
+[[lean_lib]]
+name = "Blendoid"

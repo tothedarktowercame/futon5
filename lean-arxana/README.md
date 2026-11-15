@@ -12,6 +12,7 @@ only, no Mathlib. `lake build` checks every theorem.
 | `Read` | bounded reads terminate, never return more than `maxNodes` ids, never repeat an id (cyclic graphs included), and report truncation with a typed reason |
 | `Compose` | a composition passing the rank validator has no cycles; a self-loop is always refused |
 | `Projection` | every fragment names a claim in the store; layout changes leave the shown records unchanged; a new claim appears in every view that renders it; evidence does not change a view |
+| `Blendoid` (separate lib; exotype DESIGN-blendoid) | the 2015 blend's laws; Lemma A (subcubes closed under b); b = majority on M; Lemma B for any map; Theorem C for permutations of Fin n; operators are b-homomorphisms on M but not on the full cube; the subcube blendoid; table blends closed under restriction ("fractal"); majority over 3 cells is not same-game on M. Counts over S8 by `native_decide`; the count formula, the blendoid-level fractal isomorphism and same-game closure are stated only. Ledger at the end of the file. |
 
 Planted-bug check (2026-11-08): five design defects were each introduced in a
 scratch copy — key drops roles, last-writer merge, assessment rewrites
