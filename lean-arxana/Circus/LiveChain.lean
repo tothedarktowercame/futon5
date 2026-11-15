@@ -619,7 +619,14 @@ theorem chain_correction_reaches_reader (cs : List Circus.Character) (out : Moji
 claude-1, 2026-11-15: corpus generation 1102dde4, futon1b watermark 3733,
 convention A (benefit line is its own node), diameter 18 Reach hops over the
 largest component (463 of 656 items); 184 isolated items require typed noPath.
-These measurements are recorded evidence, not a proof about today's graph. -/
+These measurements are recorded evidence, not a proof about today's graph.
+CAVEAT (claude-13 / codex-13, 2026-11-15): measure.py:160-164 joined a
+multi-item turn through ONE hub node (item-hub-item = 2 hops). This model has
+no such hub: an endpoint is a partial function per role (Basic.lean:162-186),
+so separate item-only mentions give noPath between the turn's items, and a
+shared entity endpoint would give 4 hops. The 18 is therefore not yet a
+measurement of this model; re-measuring needs the mention endpoint contract
+and a saved inventory+readings snapshot (~/notes/codex-13/nav-remeasure/). -/
 theorem chain_navigation_bound (g : GCC) (turn : TurnId) (focus : List Item) (d : Nat)
     (measured : LoopBuilt g (turnItems g turn focus) d)
     (a b : Item) (ha : a ∈ turnItems g turn focus) (hb : b ∈ turnItems g turn focus) :
