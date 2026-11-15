@@ -141,14 +141,17 @@ def Accepted (cs : List Circus.Character) (b : Bridge) (hash : ReplaySnapshot �
 
 /-- VERIFY obligation 5: "The implementing agent's account alone is not the
 completion witness"; "scope and bounds checked ... any remaining failures".
-Scope/bounds are recorded claims, not evidence of additional unchecked scope. -/
-theorem implementer_account_not_witness (cs : List Circus.Character) (b : Bridge)
+Scope/bounds are recorded claims, not evidence of additional unchecked scope.
+Restated by claude-13 in review: the earlier conclusion repeated the definition
+of Accepted word for word. This one says what acceptance buys: if the receipt's
+replay digest is that of an actual run, an accepted report's claimed output IS
+that run's output, so an implementer cannot get a forged output accepted. -/
+theorem implementer_account_not_witness (cs : List Circus.Character) (i : ChainInput)
     (hash : ReplaySnapshot → Nat) (lookup : Lookup) (r : ClosureReport)
-    (accepted : Accepted cs b hash lookup r) :
-    r.reproducer ≠ r.implementer ∧
-    r.outcome = reproduce cs b hash lookup r.receipt ∧
-    r.outcome = .ok r.receipt.output ∧
-    ∀ notice ∈ r.receipt.output.notices, notice ∈ r.remainingFailures := by sorry
+    (recorded : r.receipt.replayDigest = hash (snapshot i))
+    (faithful : DigestFaithful hash lookup (snapshot i))
+    (accepted : Accepted cs i.bridge hash lookup r) :
+    r.receipt.output = observe (renderChain cs i) := by sorry
 
 /- Live-store conformance: mapping corpus/source evidence to futon1b, passes to
 Giraffe run storage, rendered output to party.json, and deliveries to the turn
