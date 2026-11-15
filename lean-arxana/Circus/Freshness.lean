@@ -178,17 +178,280 @@ inductive Reachable (cs : List Character) : ViewState → Prop
   | next {s : ViewState} (h : Reachable cs s) (e : InputEvent) :
       Reachable cs (advance cs s e)
 
+@[simp] theorem render_artifact (s : ViewState) : (render s).artifact = s.artifact := rfl
+@[simp] theorem render_sources (s : ViewState) : (render s).sources = s.sources := rfl
+@[simp] theorem render_failed (s : ViewState) : (render s).failed = s.failed := rfl
+@[simp] theorem render_loop (s : ViewState) : (render s).loop = s.loop := rfl
+@[simp] theorem render_reason (s : ViewState) (i : EntityId) : reason (render s) i = reason s i := rfl
+@[simp] theorem render_readingMatches (s : ViewState) (i : EntityId) :
+    readingMatches (render s) i = readingMatches s i := rfl
+
+/-- A failed item has a banner even when no ranked entry mentions it. -/
+theorem render_failure (s : ViewState) (i : EntityId) (hi : i ∈ s.failed) :
+    Visible (render s) i .readingFailedAfterMaxAttempts := by
+  unfold Visible render
+  apply List.mem_append_right
+  exact List.mem_map.mpr ⟨i, hi, rfl⟩
+
+/-- Render always makes basis staleness visible, including an empty artifact. -/
+theorem render_resolved (s : ViewState) :
+    (∃ a, (render s).artifact = some a ∧ Current (render s) a) ∨
+      (render s).header.isSome = true := by
+  cases h : s.artifact with
+  | none => right; simp [render, h]; split <;> rfl
+  | some a =>
+    by_cases hc : a.basis = some s.sources
+    · left; exact ⟨a, h, hc⟩
+    · right; simp [render, h, hc]; split <;> rfl
+
+/-- A renderer annotates every nonconsumable entry, not just failed requests. -/
+theorem render_safe (s : ViewState) : DisplaySafe (render s) := by
+  intro a ha e he
+  change s.artifact = some a at ha
+  cases hr : reason s e.item with
+  | some why =>
+    right
+    refine ⟨why, ?_⟩
+    unfold Visible render
+    apply List.mem_append_left
+    simp only [ha]
+    exact List.mem_filterMap.mpr ⟨e, he, by simp [hr]⟩
+  | none =>
+    left
+    have facts : ¬ e.item ∈ s.failed ∧ readingMatches s e.item = true ∧
+        a.basis = some s.sources := by
+      simp only [reason, ha] at hr
+      split at hr <;> try simp_all
+      split at hr <;> try simp_all
+      split at hr <;> try simp_all
+      split at hr <;> try simp_all
+      split at hr <;> try simp_all
+    refine ⟨ha, he, facts.2.2, facts.2.1, hr, ?_⟩
+    intro why hw
+    simp only [Visible, render, ha, List.mem_append] at hw
+    rcases hw with hw | hw
+    · obtain ⟨other, _, ho⟩ := List.mem_filterMap.mp hw
+      cases hother : reason s other.item with
+      | none => simp [hother] at ho
+      | some r =>
+        simp only [hother, Option.map_some, Option.some.injEq, Prod.mk.injEq] at ho
+        have hn := hr
+        rw [← ho.1, hother] at hn
+        cases hn
+    · obtain ⟨j, hj, heq⟩ := List.mem_map.mp hw
+      exact facts.1 ((Prod.mk.inj heq).1 ▸ hj)
+
+@[simp] theorem notify_failed (s : ViewState) : (notify s).failed = s.failed := by
+  cases h : s.inFlight <;> simp [notify, h]
+@[simp] theorem finish_failed (cs : List Character) (ok : Bool) (s : ViewState) :
+    (finish cs ok s).failed = s.failed := by
+  cases h : s.inFlight <;> simp [finish, h]
+  split <;> simp
+
+@[simp] theorem notify_loop (s : ViewState) : (notify s).loop = s.loop := by
+  cases h : s.inFlight <;> simp [notify, h]
+@[simp] theorem notify_sources (s : ViewState) : (notify s).sources = s.sources := by
+  cases h : s.inFlight <;> simp [notify, h]
+@[simp] theorem finish_loop (cs : List Character) (ok : Bool) (s : ViewState) :
+    (finish cs ok s).loop = s.loop := by
+  cases h : s.inFlight <;> simp [finish, h]
+  split <;> simp
+@[simp] theorem finish_sources (cs : List Character) (ok : Bool) (s : ViewState) :
+    (finish cs ok s).sources = s.sources := by
+  cases h : s.inFlight <;> simp [finish, h]
+  split <;> simp
+
+@[simp] theorem notify_readingMatches (s : ViewState) (i : EntityId) :
+    readingMatches (notify s) i = readingMatches s i := by simp [readingMatches]
+@[simp] theorem finish_readingMatches (cs : List Character) (ok : Bool)
+    (s : ViewState) (i : EntityId) : readingMatches (finish cs ok s) i = readingMatches s i := by
+  simp [readingMatches]
+
+theorem readingMatches_iff (s : ViewState) (i : EntityId) :
+    readingMatches s i = true ↔ ∃ v, (i, v) ∈ s.sources.documents ∧
+      (i, v) ∈ s.loop.inputs.readings := by
+  simp only [readingMatches, List.any_eq_true, Prod.exists, Bool.and_eq_true,
+    beq_iff_eq, List.contains_iff_mem]
+  constructor
+  · rintro ⟨j, v, hd, he, hr⟩
+    subst j
+    exact ⟨v, hd, hr⟩
+  · rintro ⟨v, hd, hr⟩
+    exact ⟨i, v, hd, rfl, hr⟩
+
+/-- Every transition ends at the same annotation boundary. -/
+theorem advance_rendered (cs : List Character) (s : ViewState) (e : InputEvent) :
+    ∃ raw, advance cs s e = render raw := by
+  cases e with
+  | logical event =>
+    cases event with
+    | readingLanded i v => simp only [advance]; split <;> exact ⟨_, rfl⟩
+    | turn t ev => cases ev <;> exact ⟨_, rfl⟩
+    | docChange i v => exact ⟨_, rfl⟩
+    | focus w => exact ⟨_, rfl⟩
+    | tick => exact ⟨_, rfl⟩
+  | refreshDone ok =>
+    simp only [advance, finish]
+    cases s.inFlight <;> exact ⟨_, rfl⟩
+  | _ => exact ⟨_, rfl⟩
+
+/-- Coverage must hold at capture time as well as at publication time. -/
+def InventoryInvariant (s : ViewState) : Prop :=
+  InventoryCovers s.loop.inputs s.sources ∧
+  (∀ captured, s.inFlight = some captured → InventoryCovers captured.inputs captured.basis) ∧
+  BasisComplete s
+
+theorem render_inventory (s : ViewState) (h : InventoryInvariant s) :
+    InventoryInvariant (render s) := h
+
+theorem transfer_inventory (s t : ViewState) (h : InventoryInvariant s)
+    (covers : InventoryCovers t.loop.inputs t.sources)
+    (flight : t.inFlight = s.inFlight) (artifact : t.artifact = s.artifact) :
+    InventoryInvariant t := by
+  refine ⟨covers, ?_, ?_⟩
+  · intro captured hc
+    exact h.2.1 captured (flight ▸ hc)
+  · intro a ha
+    exact h.2.2 a (artifact ▸ ha)
+
+theorem notify_inventory (s : ViewState) (h : InventoryInvariant s) :
+    InventoryInvariant (notify s) := by
+  cases hf : s.inFlight with
+  | none =>
+    simp only [notify, hf]
+    refine ⟨h.1, ?_, h.2.2⟩
+    intro captured hc
+    have he : captured = ⟨s.sources, s.loop.inputs⟩ := by
+      simpa [notify, hf] using hc.symm
+    subst captured
+    exact h.1
+  | some captured =>
+    simp only [notify, hf]
+    exact transfer_inventory s _ h h.1 hf.symm rfl
+
+theorem artifact_inventory (captured : Capture)
+    (covered : InventoryCovers captured.inputs captured.basis) :
+    ∀ i ∈ captured.inputs.items.map Item.id, ∃ digest, (i, digest) ∈ captured.basis.documents := by
+  intro i hi
+  obtain ⟨item, hm, rfl⟩ := List.mem_map.mp hi
+  exact covered item hm
+
+theorem finish_inventory (cs : List Character) (ok : Bool) (s : ViewState)
+    (h : InventoryInvariant s) : InventoryInvariant (finish cs ok s) := by
+  cases hf : s.inFlight with
+  | none => simpa [finish, hf] using render_inventory s h
+  | some captured =>
+    let next := { s with inFlight := none, refreshFailed := !ok, artifact := if ok then some { runId := captured.basis.runId, generatedAt := s.loop.now, basis := some captured.basis, entries := rebuild cs captured.inputs, readItems := captured.inputs.items.map Item.id } else s.artifact }
+    have hn : InventoryInvariant next := by
+      refine ⟨h.1, ?_, ?_⟩
+      · intro c hc; cases hc
+      · intro a ha
+        cases ok with
+        | false => exact h.2.2 a ha
+        | true =>
+          have he : a = { runId := captured.basis.runId, generatedAt := s.loop.now, basis := some captured.basis, entries := rebuild cs captured.inputs, readItems := captured.inputs.items.map Item.id } := by
+            simpa [next] using ha.symm
+          subst a
+          exact ⟨captured.basis, rfl, rfl,
+            artifact_inventory captured (h.2.1 captured hf)⟩
+    simp only [finish, hf]
+    change InventoryInvariant (render (if s.dirty then notify { next with dirty := false } else next))
+    apply render_inventory
+    split
+    · exact notify_inventory _ hn
+    · exact hn
+
+@[simp] theorem applyEvent_items (inp : Inputs) (e : Event) :
+    (applyEvent inp e).items = inp.items := by
+  cases e with
+  | turn t ev => cases ev <;> rfl
+  | _ => rfl
+
+/-- Replacing a document digest preserves coverage, including the changed item. -/
+theorem replace_document_covers (inp : Inputs) (basis : DisplayBasis)
+    (h : InventoryCovers inp basis) (i : EntityId) (v : Nat) :
+    InventoryCovers inp { basis with documents := (i,v) :: basis.documents.filter (fun p => p.1 != i) } := by
+  intro item hi
+  by_cases he : item.id = i
+  · exact ⟨v, by simp [he]⟩
+  · obtain ⟨digest, hd⟩ := h item hi
+    exact ⟨digest, by simp [List.mem_filter, he, hd]⟩
+
+theorem advance_inventory (cs : List Character) (s : ViewState) (e : InputEvent)
+    (h : InventoryInvariant s) : InventoryInvariant (advance cs s e) := by
+  cases e with
+  | logical ev =>
+    cases ev with
+    | readingLanded i v =>
+      simp only [advance]
+      split
+      · apply render_inventory
+        apply notify_inventory
+        apply transfer_inventory s _ h ?_ rfl rfl
+        simpa only [InventoryCovers, step, applyEvent_items] using h.1
+      · exact render_inventory s h
+    | docChange i v =>
+      apply render_inventory
+      apply notify_inventory
+      refine transfer_inventory s _ h ?_ ?_ ?_
+      all_goals try rfl
+      simpa only [InventoryCovers, step, applyEvent_items] using
+        replace_document_covers s.loop.inputs s.sources h.1 i v
+    | turn t ev =>
+      cases ev <;> apply render_inventory <;> apply notify_inventory <;>
+        apply transfer_inventory s _ h ?_ rfl rfl
+      all_goals simpa only [InventoryCovers, step, applyEvent_items] using h.1
+    | focus weights =>
+      apply render_inventory
+      apply notify_inventory
+      apply transfer_inventory s _ h ?_ rfl rfl
+      simpa only [InventoryCovers, step, applyEvent_items] using h.1
+    | tick =>
+      apply render_inventory
+      apply notify_inventory
+      apply transfer_inventory s _ h ?_ rfl rfl
+      simpa only [InventoryCovers, step, applyEvent_items] using h.1
+  | metadata run pass pending lex focus =>
+    apply render_inventory
+    apply notify_inventory
+    exact transfer_inventory s _ h h.1 rfl rfl
+  | leaveOpen i =>
+    apply render_inventory
+    refine transfer_inventory s _ h ?_ ?_ ?_
+    all_goals try rfl
+    intro item hi
+    exact h.1 item (List.mem_filter.mp hi).1
+  | refreshDone ok => exact finish_inventory cs ok s h
+  | _ =>
+    apply render_inventory
+    exact transfer_inventory s _ h h.1 rfl rfl
+
 /-- Obligation 3: "Check current item/document digests, the pass's input digest
 and the focus version used for priorities." Published artifacts carry their
 complete read inventory; a run id and generated_at alone are insufficient. -/
 theorem display_basis_complete (cs : List Character) (s : ViewState)
-    (reachable : Reachable cs s) : BasisComplete s := by sorry
+    (reachable : Reachable cs s) : BasisComplete s := by
+  have invariant : InventoryInvariant s := by
+    induction reachable with
+    | initial loop basis covers unique =>
+      apply render_inventory
+      refine ⟨covers, ?_, ?_⟩
+      · intro c hc; cases hc
+      · intro a ha; cases ha
+    | next reached event ih => exact advance_inventory cs _ event ih
+  exact invariant.2.2
 
 /-- Objection 5: "show how the consumer sees that condition instead of treating
 it as current knowledge." Every reachable displayed entry is consumable or
 visibly qualified by a closed-set stale reason. -/
 theorem display_current_or_typed_stale (cs : List Character) (s : ViewState)
-    (reachable : Reachable cs s) : DisplaySafe s := by sorry
+    (reachable : Reachable cs s) : DisplaySafe s := by
+  cases reachable with
+  | initial loop basis covers unique => exact render_safe _
+  | next h e =>
+    obtain ⟨raw, hr⟩ := advance_rendered cs _ e
+    rw [hr]
+    exact render_safe raw
 
 structure Observation where
   observedAt : Time
@@ -231,6 +494,55 @@ def observations (T : Time) (cs : List Character) (s : ViewState) :
     let next := advance cs s e.event
     ⟨e.observedAt, e.occurredAt + T, next⟩ :: observations T cs next es
 
+/-- Source notifications during a flight retain its capture and set one dirty bit. -/
+theorem source_during_flight (cs : List Character) (s : ViewState) (e : InputEvent)
+    (captured : Capture) (flight : s.inFlight = some captured) (source : IsSourceEvent e) :
+    (advance cs s e).inFlight = some captured ∧ (advance cs s e).dirty = true ∧
+      (advance cs s e).regenerations = s.regenerations := by
+  cases e with
+  | logical ev => cases ev <;> simp_all [IsSourceEvent, advance, notify, render]
+  | metadata run pass pending lex focus => simp [advance, notify, render, flight]
+  | _ => cases source
+
+theorem burst_source_flight (cs : List Character) (events : List InputEvent)
+    (captured : Capture) (s : ViewState) (flight : s.inFlight = some captured)
+    (source : ∀ e ∈ events, IsSourceEvent e) :
+    (burst cs s events).inFlight = some captured ∧
+    (burst cs s events).regenerations = s.regenerations ∧
+    (events ≠ [] → (burst cs s events).dirty = true) := by
+  induction events generalizing s with
+  | nil => simp [burst, flight]
+  | cons e es ih =>
+    have hstep := source_during_flight cs s e captured flight (source e (by simp))
+    have htail := ih (advance cs s e) hstep.1 (fun e he => source e (by simp [he]))
+    refine ⟨htail.1, htail.2.1.trans hstep.2.2, ?_⟩
+    intro _
+    cases es with
+    | nil => exact hstep.2.1
+    | cons e es => exact htail.2.2 (by simp)
+
+/-- Exactly the latest capture is installed by the one queued follow-up. -/
+theorem two_successful_finishes (cs : List Character) (s : ViewState) (captured : Capture)
+    (flight : s.inFlight = some captured) (dirty : s.dirty = true) :
+    (finish cs true (finish cs true s)).regenerations = s.regenerations + 1 ∧
+    ∃ a, (finish cs true (finish cs true s)).artifact = some a ∧ a.basis = some s.sources := by
+  simp [finish, notify, render, flight, dirty]
+
+theorem timely_observations (cs : List Character) (T : Time) (trace : List TimedEvent)
+    (s : ViewState) (bounds : ∀ e ∈ trace, e.observedAt ≤ e.occurredAt + T) :
+    ∀ o ∈ observations T cs s trace, DeadlineMet o := by
+  induction trace generalizing s with
+  | nil => simp [observations]
+  | cons e es ih =>
+    intro o ho
+    rcases List.mem_cons.mp ho with rfl | ho
+    · refine ⟨bounds e (by simp), ?_⟩
+      obtain ⟨raw, hr⟩ := advance_rendered cs s e.event
+      change Resolved (advance cs s e.event)
+      rw [hr]
+      exact render_resolved raw
+    · exact ih (advance cs s e.event) (fun e he => bounds e (by simp [he])) o ho
+
 /-- Joe: "party.json is kept up to date"; obligation 3: "numerical deadlines
 ... priority freshness." Every observation of a timely delivered trace shows
 current basis or typed staleness, with the deadline measured from the source
@@ -244,7 +556,14 @@ theorem party_kept_up_to_date (cs : List Character) (s : ViewState)
     (∀ o ∈ observations T cs s trace, DeadlineMet o) ∧
     (∀ events, s.inFlight.isSome = true →
       (∀ e ∈ events, IsSourceEvent e) → events ≠ [] →
-      BurstGuarantee cs s events) := by sorry
+      BurstGuarantee cs s events) := by
+  constructor
+  · exact timely_observations cs T trace s (fun e he => (timely.2 e he).2)
+  · intro events hf hs hne
+    obtain ⟨captured, hc⟩ := Option.isSome_iff_exists.mp hf
+    have hb := burst_source_flight cs events captured s hc hs
+    have done := two_successful_finishes cs (burst cs s events) captured hb.1 (hb.2.2 hne)
+    exact ⟨by simp only [done.1, hb.2.1, Nat.le_refl], done.2⟩
 
 /-- This is the digest-checked landing admitted to the old logical model. -/
 def MatchingLanding (s : ViewState) (i : EntityId) : InputEvent → Prop
@@ -265,7 +584,44 @@ theorem stalled_is_not_healthy (cs : List Character) (s : ViewState)
     ((advance cs s (.requeue i)).requests.map fun q => (q.firstRequested, q.deadline)) =
       (s.requests.map fun q => (q.firstRequested, q.deadline)) ∧
     (∀ e, ¬MatchingLanding s i e → readingMatches (advance cs s e) i = true →
-      readingMatches s i = true) := by sorry
+      readingMatches s i = true) := by
+  refine ⟨rfl, rfl, rfl, rfl, ?_, ?_, ?_⟩
+  · simp only [advance, render, List.map_map]
+    apply List.map_congr_left
+    intro q hq
+    simp only [Function.comp_apply]
+    split <;> rfl
+  · simp only [advance, render, List.map_map]
+    apply List.map_congr_left
+    intro q hq
+    simp only [Function.comp_apply]
+    split <;> rfl
+  · intro e hn hnew
+    cases e with
+    | logical ev =>
+      cases ev with
+      | readingLanded j v =>
+        by_cases hc : (j, v) ∈ s.sources.documents
+        · have hne : j ≠ i := fun he => hn ⟨he, by simpa using hc⟩
+          simp only [advance, show s.sources.documents.contains (j, v) = true by simpa using hc,
+            if_true, render_readingMatches, notify_readingMatches] at hnew
+          obtain ⟨w, hd, hr⟩ := (readingMatches_iff _ _).mp hnew
+          have old : (i, w) ∈ s.loop.inputs.readings := by
+            simpa [step, applyEvent, hne, Ne.symm hne] using hr
+          exact (readingMatches_iff _ _).mpr ⟨w, hd, old⟩
+        · simpa [advance, hc] using hnew
+      | docChange j v =>
+        simp only [advance, render_readingMatches, notify_readingMatches] at hnew
+        obtain ⟨w, hd, hr⟩ := (readingMatches_iff _ _).mp hnew
+        have old : (i, w) ∈ s.loop.inputs.readings ∧ i ≠ j := by
+          simpa [step, applyEvent] using hr
+        have doc : (i, w) ∈ s.sources.documents := by
+          simpa [old.2] using hd
+        exact (readingMatches_iff _ _).mpr ⟨w, doc, old.1⟩
+      | turn t ev => cases ev <;> simpa [advance, readingMatches, step, applyEvent] using hnew
+      | _ => simpa [advance, readingMatches, step, applyEvent] using hnew
+    | refreshDone ok => simpa [advance] using hnew
+    | _ => simpa [advance, readingMatches] using hnew
 
 def Releases (s : ViewState) (i : EntityId) : InputEvent → Prop
   | .logical (.readingLanded j v) => j = i ∧ s.sources.documents.contains (j, v) = true
@@ -279,7 +635,30 @@ theorem terminal_failure_is_visible (cs : List Character) (s : ViewState)
     (i : EntityId) (e : InputEvent) (failed : i ∈ s.failed)
     (noRelease : ¬Releases s i e) :
     i ∈ (advance cs s e).failed ∧
-      Visible (advance cs s e) i .readingFailedAfterMaxAttempts := by sorry
+      Visible (advance cs s e) i .readingFailedAfterMaxAttempts := by
+  have persists : i ∈ (advance cs s e).failed := by
+    cases e with
+    | logical ev =>
+      cases ev with
+      | readingLanded j v =>
+        by_cases hc : (j, v) ∈ s.sources.documents
+        · have hne : i ≠ j := by
+            intro eq
+            exact noRelease ⟨eq.symm, by simpa using hc⟩
+          simpa [advance, hc, List.mem_filter, hne] using failed
+        · simpa [advance, hc] using failed
+      | turn t ev => cases ev <;> simpa [advance] using failed
+      | _ => simpa [advance] using failed
+    | leaveOpen j =>
+      have hne : i ≠ j := fun eq => noRelease eq.symm
+      simpa [advance, List.mem_filter, hne] using failed
+    | exhausted j => simp [advance, failed]
+    | refreshDone ok => simpa [advance] using failed
+    | _ => simpa [advance] using failed
+  refine ⟨persists, ?_⟩
+  obtain ⟨raw, hr⟩ := advance_rendered cs s e
+  rw [hr] at persists ⊢
+  exact render_failure raw i persists
 
 /-! ## TEETH: bad producers outside Reachable violate the contracts
 A reachable counterexample would contradict a main statement, not validate it.
