@@ -220,6 +220,25 @@
                (aset a j t)
                (nth frame (aget a i))))))))
 
+(defn e8-stratified-row
+  "P-008b §4 item 7 (exotype c1/e8frame ba9694d): the E8-2 initial exotype
+  row — THE builder the wired arm calls, not a test-private one. Menu =
+  (frame-draw frame seed) in slot order (draw i goes to kind slot i in
+  grid/exotype-kinds order). Placement matches the SCORED keyword path
+  exactly (scripts/local_compressibility_grid.clj initial-components):
+  one ca/with-seed scope on the RAW run seed, genotype draw
+  (random-sigil-string width) then phenotype draw (random-phenotype-string
+  width) first, then one ca/rnd-nth per cell over the menu — the same
+  stream position grid/initial-grid :heterogeneous-fixed occupies in the
+  scored state. frame-draw is keyed independently (0x57A712), so the menu
+  is unaffected by the enclosing scope."
+  [frame seed width]
+  (ca/with-seed seed
+    (ca/random-sigil-string width)
+    (ca/random-phenotype-string width)
+    (let [menu (frame-draw frame seed)]
+      (vec (repeatedly width #(ca/rnd-nth menu))))))
+
 (defn apply-transposition
   "P-008b §7 item 5, step 5b-B: p′ = τ∘p for τ = (a b). In the futon5 vector
   p[i] is the IMAGE of neighbourhood i, so composing on the left by τ swaps
