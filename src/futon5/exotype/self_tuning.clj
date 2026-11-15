@@ -30,7 +30,7 @@
    made every trajectory-level comparison of those options invalid
    (TN-baldwin-reboot.md 57, found by codex-7)."
   #{:observation-model :apply-probability :rule-change-preference :chain-risk?
-    :epistemic-coefficient :adoption-bonus :menu})
+    :epistemic-coefficient :adoption-bonus :menu :observation-rows})
 
 (def ^:private score-cache
   (delay
@@ -352,7 +352,9 @@
       ;; The menu is trajectory state: scoring a permutation-vector exotype
       ;; reads the menu's measured rows. Absent stays absent.
       (contains? state :menu)
-      (assoc :menu (:menu state)))))
+      (assoc :menu (:menu state))
+      (contains? state :observation-rows)
+      (assoc :observation-rows (:observation-rows state)))))
 
 (defn run-steps [state steps]
   (nth (iterate step state) steps))

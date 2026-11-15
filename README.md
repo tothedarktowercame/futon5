@@ -162,6 +162,12 @@ with rows from a measured table, `resources/futon5/exotype/conditional-model.edn
   the same procedure as the table (`efe/menu-model`). They depend on the menu
   and on the measurement seeds (`efe/*menu-model-seeds*`). Named kinds always
   read the table.
+- **Exact rows.** `(metaca-state gamma kappa seed menu :exact)` sets
+  `:observation-rows :exact` on the state: every exotype, named or not, is
+  scored with rows computed exactly over a uniform reference ensemble
+  (`src/futon5/exotype/exact_rows.clj`; its docstring states the ensemble).
+  No table and no menu measurement is read. Operators with the same rows score
+  the same; the policy softmax then gives them equal probability.
 - **Parity and smoke runs:** `clojure -M scripts/menu_parity_smoke.clj july 8 0.1 2026102014 300`
   (modes `july`, `named`, `vectors`, `random`; see the header of the script).
 
