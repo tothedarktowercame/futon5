@@ -1,0 +1,232 @@
+# E8 arms plan — step 6a, DISCOVERY ONLY (no source changes)
+
+Branch p008-s8-vocabulary, head 8f7df85. Written for claude-1's step-6a
+packet (PROGRAMME.md §4 Q3, SHEET reference). Design: DESIGN-P008b.md §6
+(GE1, GE2), §7 item 6, §8 (E8-1..E8-3) at exotype main (pulled
+2026-11-15). REPL computations for items 2 and 4 are in
+results/p008/e8-arms-repl.clj in this worktree (run with
+`clojure -M results/p008/e8-arms-repl.clj`); their output is quoted below.
+
+## 1. How an arm is defined today
+
+- The July engine builds its initial grid in `initial-components`
+  (scripts/local_compressibility_grid.clj:106-110):
+  `:exotypes (grid/initial-grid :heterogeneous-fixed width)` inside
+  `ca/with-seed seed`. So the ONLY thing that reaches the vocabulary is
+  the ARM KEYWORD passed to `grid/initial-grid`.
+- `grid/initial-grid` (src/futon5/exotype/grid.clj:490-500) is a plain
+  `case` over `arms` (grid.clj:24: `[:uniform-fixed :heterogeneous-fixed
+  :conformist :boring-triggered :s8-uniform :s8-stratified]`); unknown
+  arm throws with the available list. Vocabularies: `:uniform-fixed` =
+  all `:builder`; the three July transmitting arms = seeded
+  `ca/rnd-nth exotype-kinds` (the 12 keywords); `:s8-uniform` =
+  `random-s8`; `:s8-stratified` = `random-s8-of-type` over
+  `ca/rnd-nth cycle-types`.
+- How an arm NAME reaches it today: it doesn't flow through state — the
+  scripts pick it. scripts/p008/s8smoke.clj:14 re-initialises a state's
+  exotypes by re-calling `initial-grid :s8-uniform` under a re-bound
+  `ca/*rng*`; scripts/p008/g1b_one.clj:38-40 instead maps the engine's
+  keyword grid through `grid/kind->s8` (`(update (metaca-state ...) :exotypes
+  #(mapv grid/kind->s8 %))`) and installs a per-kind s8-predictor. So an
+  E8 arm can be realised with NO source change by re-initialising
+  `:exotypes` the way s8smoke does.
+- Smallest existing arm template: b3menu.clj (exotype branch
+  c1/complementB1, scripts/b3menu.clj:1-40) — loads the engine by
+  string-replace, then `alter-var-root #'grid/propagators assoc :odd53
+  sigma-star` plus a re-built `pe/pair-table`; a menu arm is an override
+  script, not engine code. For initial-grid arms the smaller template is
+  s8smoke.clj (one re-association of `:exotypes`).
+
+## 2. Keyword kinds and vector twins (COMPUTED, see e8-arms-repl.clj)
+
+The 12 selectable kinds are `exotype-kinds` (grid.clj:12-16):
+:builder :collapser :chaos :identity :even4 :even8 :even1 :odd53 :fix2
+:fix3 :fix4 :fix6. `propagators` (grid.clj:38-104) has 14 keys — the 12
+plus :even44 and :odd332 (cycle-type controls, "NOT in `exotype-kinds`"
+per their comments, grid.clj:92-93 and :121). Every propagator is built
+by `gen/positional-sigma->neighbourhood-sigma` from a POSITIONAL
+permutation string through `elisp-table`, so all 14 are bijections of the
+8 neighbourhoods by construction. Computed with
+`(= (grid/sigma-of (grid/kind->s8 k)) (get grid/propagators k))`:
+
+| kind       | twin vector          | exact twin | permutation | cycle type      |
+|------------|----------------------|-----------|-------------|-----------------|
+| :builder   | [0 1 5 3 4 7 6 2]    | true      | true        | [3 1 1 1 1 1]   |
+| :collapser | [5 0 1 4 2 3 7 6]    | true      | true        | [6 2]           |
+| :chaos     | [2 1 5 7 0 4 3 6]    | true      | true        | [4 3 1]         |
+| :identity  | [0 1 2 3 4 5 6 7]    | true      | true        | [1^8]           |
+| :even4     | [1 0 4 5 2 3 7 6]    | true      | true        | [2 2 2 2]       |
+| :even8     | [1 0 4 7 2 3 5 6]    | true      | true        | [4 2 2]         |
+| :even1     | [7 0 1 4 2 3 5 6]    | true      | true        | [8]             |
+| :odd53     | [2 0 1 4 7 3 5 6]    | true      | true        | [5 3]           |
+| :fix2      | [0 1 7 4 2 3 5 6]    | true      | true        | [6 1 1]         |
+| :fix3      | [0 1 2 4 7 3 5 6]    | true      | true        | [5 1 1 1]       |
+| :fix4      | [0 1 2 7 4 3 5 6]    | true      | true        | [4 1 1 1 1]     |
+| :fix6      | [0 1 2 3 4 5 7 6]    | true      | true        | [2 1 1 1 1 1 1] |
+| :even44 *  | [4 0 1 7 2 3 5 6]    | true      | true        | [4 4]           |
+| :odd332 *  | [1 0 3 4 2 7 5 6]    | true      | true        | [3 3 2]         |
+
+(*) not in `exotype-kinds`. So: **all 14 kinds have exact vector twins,
+and every twin is a permutation** — no kind is a non-injective map, and
+none is unrepresentable. (This is why `kind->s8` exists at all,
+grid.clj:196-199, and why the g1b_one per-kind predictor works.) For
+mutation this means: a keyword exotype ALWAYS has an S8 vector it could
+be mutated as, so `:skipped-keyword` is a policy choice, not a
+mathematical necessity — that is lon-claude-4's pending ruling.
+
+## 3. :e8-stratified
+
+§4 allocation (DESIGN-P008b.md:145-152), quoted:
+
+> **Allocation.** S8 used ∝ √(class size) with a minimum of 2 per class. With 951
+> classes that minimum alone is ≥ 1,902 maps, which is too many. Instead:
+> - stratify by (rank, cycle-part partition), i.e. the cycle type of f restricted to its
+>   recurrent set;
+> - allocate ∝ √(stratum size), minimum 2;
+> - the packet enumerates the strata and states the total, aiming for about 150.
+> - The bug's class is always included, along with its mirror and complement
+>   conjugates (Γ caveat below).
+
+What exists: `random-e8-of-stratum` (grid.clj:466-478) — "Uniform draw
+from the stratum (rank, cycle-part) of §4's allocation... Members are
+enumerated exhaustively (one cached 8^8 pass per stratum), so the draw is
+exactly uniform over the stratum", drawing with `ca/rnd-int` under
+`ca/*rng*`; `e8-stratum-members` (grid.clj:418-463) + the packed `e8-strata`
+cache (:394) and `cycle-parts-of` (:401). Missing: (a) the STRATA LIST
+with sizes and the √-allocation counts (the "packet enumerates the
+strata and states the total" step — nobody has run the enumeration
+totals yet); (b) the per-cell seed stream for choosing a stratum then a
+member (the existing streams are all `seed + t*width + i`-keyed or the
+mutation form; an initial-grid draw only needs a one-off `ca/with-seed`
+over the run seed, as `initial-components` does — no per-step stream
+needed since the grid is drawn once); (c) an `initial-grid` arm keyword
+(could be done script-side per item 1).
+
+## 4. :e8-bug
+
+Design definition of Γ (DESIGN-P008b.md:163-165): "Γ caveat. Γ = ⟨mirror,
+complement⟩ is not a symmetry kind by kind. Of the 14 propagators, only
+identity and even4 commute with complement, and only identity and builder
+commute with mirror (Zone check, 2026-11-15)." And §12(a) (373-376):
+"The Γ-conjugates of the bug are S8-conjugates: c and m are themselves
+permutations of the 8 neighbourhoods. So the bug and all its conjugates
+are one functional-graph class."
+
+Computed (e8-arms-repl.clj, quoted output):
+- bug vector via the elisp shim (`positional-sigma->neighbourhood-sigma
+  [0 0 1 2 3 4 5 6] elisp-table`, then `gen/sigma-positional`):
+  **[1 2 4 5 3 6 7 7]**, not a permutation (7 is a fixed point with a
+  second preimage; 0 has none) — matches §1's k ↦ max(k−1,0) shape.
+- complement permutation (bit flip) = [7 6 5 4 3 2 1 0]; mirror
+  (bit-order reverse) = [0 4 2 6 1 5 3 7].
+- conjugates g∘bug∘g⁻¹ for g ∈ {id, c, m, c∘m}: 4 DISTINCT vectors —
+  id [1 2 4 5 3 6 7 7], c [0 0 1 4 2 3 5 6], m [4 6 1 7 2 3 5 7],
+  cm [0 2 4 5 0 6 1 3] — and `fg-class` maps ALL FOUR to the same
+  canonical [0 0 1 2 3 4 5 6]. So ":e8-bug" adds **4 distinct maps,
+  1 functional-graph class**, one class-level row (as §12(a) says).
+  (Note for the record: my first conjugation formula dropped the outer
+  g and produced four DIFFERENT fg-classes — that was wrong and the
+  fg-class check caught it; the corrected f′ = g∘f∘g⁻¹ is what the table
+  above reports.)
+- Mixed keyword-plus-vector menus: nothing in engine code builds one
+  (`initial-grid` is all-keyword or all-vector). The nearest existing
+  pattern is b3menu.clj's `alter-var-root #'grid/propagators assoc
+  :odd53 ...` (a keyword menu override), and the e8 tests build mixed
+  grids by hand. So :e8-bug is a script-side initial grid: 12 kinds per
+  `exotype-kinds` plus the 4 bug-conjugate vectors, with the predictor
+  extended to score vector exotypes by class row.
+
+## 5. :e8-v1 and the mutation-only baseline
+
+"Neutral exotype transmission: hold/left/right adoption chosen uniformly,
+independent of EFE" (DESIGN-P008b.md:321-323) touches one place: the
+winner choice in `cell-decision` (src/futon5/exotype/self_tuning.clj:345-352):
+
+  winner (if probabilities (sample-policy candidates probabilities
+           (ca/with-mixed-seed (bit-xor selection-seed policy-stream-tag)
+                               (ca/rnd))) (first (sort-by :total candidates)))
+
+The neutral baseline replaces the softmax sample by a uniform draw over
+the three adoption candidates {hold, adopt-left, adopt-right} (blend is
+a fourth candidate only when `:blend-action?` is set; the design says
+hold/left/right, so under the baseline blend must be excluded from the
+choice — flag this to the reviewer). Needs a NEW keyed stream, one draw
+`(ca/rnd-int 3)` per cell per step, proposed in the mutation stream's
+form (ruling 557c393 keying, seed mixed before coordinates so adjacent
+run seeds are unrelated):
+
+  baseline-stream-tag = 0xB45E1E (say; any unused 3-byte tag beside
+  0x050F7A/0x0B1E4D/0x0A7711/0x0E8E8E)
+  baseline-draw-seed(seed,t,w,i) = mix-seed(mix-seed(seed ⊕ tag) + t·w + i)
+
+Must stay UNCHANGED: candidates/scores are still computed (the decision
+record keeps them — the readout compares selection, not information);
+genotype/phenotype dynamics; the mutation schedule itself (same
+mutation stream, same μ); the softmax path when the baseline flag is
+off. Implementation shape: a `:neutral-transmission?` state key threaded
+like `:mutation` (step's `contains?` pattern, self_tuning.clj:425-433).
+
+## 6. GE1
+
+Exists already: `scripts/p008/g1b.clj` — "check byte-identity with the
+keyword path over the G1 runs (beta 10/12, kappa 0.1, seeds
+2026102000-017, T = 1500)" — i.e. exactly GE1's grid: 2 betas × 18
+seeds = 36 paired runs, summary line "G1B-SUMMARY matches / 36". The
+kw-vs-s8 twin test is also re-run inside
+e8_mutation_schedule_test/off-is-byte-identical-g1 (single seed, both
+hashes equal the recorded G1 hash 957e93e21609fb79). What GE1 still
+needs: nothing new to RUN for identity (g1b did it) — but GE1 as a gate
+should be re-run on the head that adds the arms code (initial-grid arm
+wiring touches nothing in the step path, so the existing g1b.clj rerun
+is the gate). Cost: 36 runs × T=1500; wall time measured 62-122 s per
+1500-step run depending on load → roughly 40-75 min on 2 JVMs.
+
+## 7. Timing-run instrumentation (§12(e))
+
+§12(e) text (DESIGN-P008b.md:436-443): fg-class costs ~14 ms warm;
+"brute force is adequate for the mutation arms"; "AHU becomes required
+before any arm where the timing run logs distinct-f counts and fg-class
+time per arm" shows > 10^4 distinct maps or fg-class above 10% of wall.
+Collection point — script-side, no engine edit (per the ground rules):
+the timing run wraps `grid/fg-class` with `alter-var-root
+#'grid/fg-class` timing-and-count decorator (same pattern as b3menu's
+overrides) and, per step, accumulates `(count (distinct (:exotypes st)))`
+off the stepped state plus total wall time; the criterion is evaluated
+per arm at the end. fg-class itself is grid.clj:366 (canonical form over
+all 40,320 conjugating permutations; not memoized — every distinct-map
+timing is a real call).
+
+## 8. Tests per arm (list only), and design-vs-code frictions
+
+Tests:
+- :e8-stratified: allocation totals match the √-rule table; per-seed
+  grids reproducible; every drawn map has the stratum it was drawn from;
+  bug's class present.
+- :e8-bug: the 4 conjugate vectors are distinct and fg-class-equal;
+  mixed menu scores keyword and vector cells in one grid; keyword cells
+  untouched by vector-side machinery; G1 hash unchanged when arm unused.
+- :e8-v1: initial 12-kinds grid == engine grid (identity with
+  initial-grid :heterogeneous-fixed under the same seed); initial
+  S8-kind grid == kind->s8 image; mutation-on/-off schedule equality
+  (already covered); predictor rejects nothing it should accept.
+- baseline: uniform adoption frequencies within 4 SE over a seeded run;
+  decisions still carry candidates/scores; genotype/phenotype equal the
+  neutral-EXOTYPE-only expectation; softmax path byte-identical when
+  flag off.
+
+Frictions found:
+1. §8's baseline says "hold/left/right" while the engine has a fourth
+   candidate (:blend) whenever `:blend-action?` is true — the baseline's
+   candidate set needs a ruling (see item 5).
+2. The bug's twin must go through BOTH shims (elisp-table then
+   sigma-positional); the resulting vector [1 2 4 5 3 6 7 7] is not the
+   display-order [0 0 1 2 3 4 5 6], so any hard-coded bug in a test
+   should use the computed vector, not the paper's.
+3. Γ's mirror/complement are defined on BIT STRINGS in the design (the
+   Zone check) but act as neighbourhood permutations here; the computed
+   c=[7..0], m=[0 4 2 6 1 5 3 7] should be pinned in a test since two
+   plausible "mirror" definitions exist (bit-reverse vs reflection).
+4. Nothing today mixes keyword and vector exotypes in ONE grid in
+   engine code; :e8-bug needs it, and the score-cache path
+  (`cache-shaping-options`, `s8-predictor`) has only been exercised
+   all-vector (tests) or all-keyword (engine).
