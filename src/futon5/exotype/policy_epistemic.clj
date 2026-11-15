@@ -56,8 +56,8 @@
         double)))
 
 (defn- exact-pair-value [own candidate]
-  (let [a (gen/sigma-positional (get grid/propagators own))
-        b (gen/sigma-positional (get grid/propagators candidate))]
+  (let [a (gen/sigma-positional (grid/sigma-of own))
+        b (gen/sigma-positional (grid/sigma-of candidate))]
     (/ (reduce +
                (map-indexed
                 (fn [k ak]
@@ -76,11 +76,17 @@
               candidate grid/exotype-kinds]
           [[own candidate] (exact-pair-value own candidate)])))
 
+(def ^:private s8-pair-value
+  "P-008: exact pair value when either side is an S8 exotype, memoised."
+  (memoize (fn [own candidate] (exact-pair-value own candidate))))
+
 (defn pair-value
   "Expected fraction of the eight common draws for which CANDIDATE injects a
    rule divergence relative to OWN, averaged over all 256 rule bytes."
   [own candidate]
-  (or (get pair-table [own candidate])
+  (or (if (or (grid/s8? own) (grid/s8? candidate))
+        (s8-pair-value own candidate)
+        (get pair-table [own candidate]))
       (throw (ex-info "policy epistemic pair is outside the selectable vocabulary"
                       {:own own :candidate candidate
                        :selectable grid/exotype-kinds}))))

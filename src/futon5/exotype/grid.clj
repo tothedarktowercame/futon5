@@ -21,7 +21,8 @@
   (even4/even8/even1) and the rate axis (odd53/fix2/fix3/fix4/fix6)."
   [:builder :collapser :chaos :identity
    :even4 :even8 :even1 :odd53 :fix2 :fix3 :fix4 :fix6])
-(def arms [:uniform-fixed :heterogeneous-fixed :conformist :boring-triggered])
+(def arms [:uniform-fixed :heterogeneous-fixed :conformist :boring-triggered
+           :s8-uniform :s8-stratified])
 
 (def ^:private elisp-table
   ["000" "001" "010" "100" "011" "101" "110" "111"])
@@ -104,6 +105,68 @@
    :odd332 (gen/positional-sigma->neighbourhood-sigma
             (positional "12045376") elisp-table)})  ; (3,3,2)   rate 0.5000  0 immune bytes
 
+;; --- P-008: open S8 vocabulary (exotype DESIGN-P008.md) -------------------
+;; An S8 exotype is a vector P of 8 longs: P[k] is the `ca/truth-table-3` index of
+;; the neighbourhood sigma sends truth-table-3[k] to. Keywords stay the July
+;; vocabulary and take EXACTLY the old code paths (G1 byte identity).
+
+(defn s8?
+  "Is EXOTYPE an S8 vector rather than a named kind?"
+  [exotype]
+  (vector? exotype))
+
+(def ^:private s8->sigma
+  (memoize
+   (fn [p]
+     (let [tt (vec ca/truth-table-3)]
+       (when-not (= (sort p) (range 8))
+         (throw (ex-info "S8 exotype is not a permutation of 0..7" {:exotype p})))
+       (into {} (map-indexed (fn [k j] [(nth tt k) (nth tt (long j))]) p))))))
+
+(defn sigma-of
+  "Neighbourhood map for EXOTYPE: a named kind (looked up in `propagators`) or an
+   S8 vector (converted). The single access point for sigma under P-008."
+  [exotype]
+  (if (s8? exotype) (s8->sigma exotype) (get propagators exotype)))
+
+(defn kind->s8
+  "The S8 vector of a named kind (same sigma, as data)."
+  [kind]
+  (let [tt (vec ca/truth-table-3) sigma (get propagators kind)]
+    (mapv #(long (.indexOf ^java.util.List tt (get sigma (nth tt %) (nth tt %)))) (range 8))))
+
+(defn- random-s8 []
+  (let [a (long-array (range 8))]
+    (doseq [i (range 7 0 -1)]
+      (let [j (ca/rnd-int (inc i)) t (aget a i)]
+        (aset a i (aget a j)) (aset a j t)))
+    (vec a)))
+
+(def cycle-types
+  "The 22 partitions of 8, largest part first."
+  (letfn [(parts [n mx] (if (zero? n) [[]]
+                          (for [k (range (min n mx) 0 -1) r (parts (- n k) k)] (cons k r))))]
+    (mapv vec (parts 8 8))))
+
+(defn cycle-type
+  "Cycle type of an S8 vector, as a descending vector."
+  [p]
+  (loop [seen #{} k 0 acc []]
+    (cond (= k 8) (vec (sort > acc))
+          (seen k) (recur seen (inc k) acc)
+          :else (let [cyc (loop [j k c []]
+                            (if (and (seq c) (= j k)) c (recur (long (nth p j)) (conj c j))))]
+                  (recur (into seen cyc) (inc k) (conj acc (count cyc)))))))
+
+(defn- random-s8-of-type [partition]
+  (let [order (random-s8) p (long-array 8)]
+    (loop [ps partition off 0]
+      (when (seq ps)
+        (let [n (first ps) cyc (subvec order off (+ off n))]
+          (doseq [i (range n)] (aset p (long (nth cyc i)) (long (nth cyc (mod (inc i) n)))))
+          (recur (rest ps) (+ off n)))))
+    (vec p)))
+
 (defn boring?
   "The three-bit circular phenotype neighbourhood is uniform."
   [phenotype index]
@@ -117,6 +180,8 @@
   [arm width]
   (case arm
     :uniform-fixed (vec (repeat width :builder))
+    :s8-uniform (vec (repeatedly width random-s8))
+    :s8-stratified (vec (repeatedly width #(random-s8-of-type (ca/rnd-nth cycle-types))))
     (:heterogeneous-fixed :conformist :boring-triggered)
     (vec (repeatedly width #(ca/rnd-nth exotype-kinds)))
     (throw (ex-info "unknown exotype-grid arm" {:arm arm :available arms}))))
@@ -134,7 +199,7 @@
   "Advance exotypes synchronously under ARM. No policy reads global state."
   [arm grid phenotype]
   (case arm
-    (:uniform-fixed :heterogeneous-fixed) grid
+    (:uniform-fixed :heterogeneous-fixed :s8-uniform :s8-stratified) grid
     :conformist
     (mapv #(local-majority grid %) (range (count grid)))
     :boring-triggered
@@ -153,7 +218,7 @@
   ([sigil exotype draw-seed]
    (ca/with-mixed-seed draw-seed
      (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str sigil))
-                                       (get propagators exotype)))))
+                                       (sigma-of exotype)))))
   ([sigil neighbour-sigil exotype q draw-seed]
    (when-not (<= 0.0 (double q) 1.0)
      (throw (ex-info "transfer fraction must be in [0,1]" {:transfer-fraction q})))
@@ -164,7 +229,7 @@
                       neighbour-sigil
                       sigil)]
          (ca/sigil-for (#'gen/rule-permute (ca/bits-for (str source))
-                                           (get propagators exotype))))))))
+                                           (sigma-of exotype))))))))
 
 (defn blend-rule
   "Deterministically blend LEFT and RIGHT around CENTRE, following the 2014

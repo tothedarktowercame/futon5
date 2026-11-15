@@ -63,6 +63,27 @@
                                         (subs bits (inc di))))))
                               (range 8))]))])))))
 
+;; P-008: S8 exotypes bypass the 12-kind caches. Both functions below compute
+;; exactly what the caches would hold, on demand, memoised per sigma.
+(def ^:private s8-score
+  (memoize
+   (fn [candidate activity diversity]
+     (efe/score-policy :efe-full candidate
+                       {:activity activity :diversity diversity}
+                       {:lambda 0.0}))))
+
+(def ^:private s8-transition
+  (memoize
+   (fn [sigil exotype k]
+     (let [truth-table (vec ca/truth-table-3)
+           sigma (grid/sigma-of exotype)
+           bits (ca/bits-for sigil)
+           src (nth truth-table k)
+           dst (get sigma src src)
+           di (.indexOf ^java.util.List truth-table dst)
+           value (if (= \0 (nth bits k)) \1 \0)]
+       (ca/sigil-for (str (subs bits 0 di) value (subs bits (inc di))))))))
+
 (def ^:private blend-stream-tag
   "Matches `grid/apply-exotype-blend`: the blend coin is independent of the
    propagator-position draw."
@@ -180,9 +201,12 @@
                                   (assoc :adoption?
                                          (and (not= source index)
                                               (not= candidate own-exotype)))))
-                               (if-let [base (get @score-cache
-                                                 [candidate (:activity observation)
-                                                  (:diversity observation)])]
+                               (if-let [base (if (grid/s8? candidate)
+                                               (s8-score candidate (:activity observation)
+                                                         (:diversity observation))
+                                               (get @score-cache
+                                                    [candidate (:activity observation)
+                                                     (:diversity observation)]))]
                                  base
                                  (throw (ex-info "exotype absent from the score cache"
                                                  {:exotype candidate
@@ -278,7 +302,9 @@
                 (grid/blend-rule left sigil right)
                 (if apply?
                   (let [k (.nextInt (java.util.Random. (ca/mix-seed draw-seed)) 8)]
-                    (get-in @genotype-transition-cache [(str source) exotype k]))
+                    (if (grid/s8? exotype)
+                      (s8-transition (str source) exotype k)
+                      (get-in @genotype-transition-cache [(str source) exotype k])))
                   sigil))))
            (range width) genotype exotypes))))
 

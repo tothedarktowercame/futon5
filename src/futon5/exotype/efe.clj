@@ -141,7 +141,7 @@
           (for [[kind _] legacy-baseline-channels]
             [kind {:activity (:activity (get derived kind))
                    :diversity (:diversity (get derived kind))
-                   :rule-change (gen/rule-change-rate (get grid/propagators kind))}]))))
+                   :rule-change (gen/rule-change-rate (grid/sigma-of kind))}]))))
 
 (def preferences
   "C is local: conservative own-rule change and, load-bearingly, low hunger.
@@ -256,6 +256,9 @@
   [kind]
   (contains? (covered-kinds) kind))
 
+(defonce ^{:doc "P-008: (fn [s8-exotype observation] -> {:activity :diversity :hunger}). nil = S8 disabled."}
+  s8-predictor (atom nil))
+
 (defn predict
   "Apply the model to CANDIDATE-EXOTYPE and a local observation.
 
@@ -277,7 +280,17 @@
    (when-not (#{:legacy :derived} model-kind)
      (throw (ex-info "unknown observation model" {:model-kind model-kind
                                                   :known #{:legacy :derived}})))
-   (if (= :derived model-kind)
+   (cond
+     ;; P-008: an S8 exotype has no per-kind bins. Its activity / diversity /
+     ;; hunger come from the installed pooled predictor; rule-change stays exact.
+     (and (= :derived model-kind) (grid/s8? candidate-exotype))
+     (let [f (or @s8-predictor
+                 (throw (ex-info "S8 exotype but no pooled predictor installed (efe/s8-predictor)"
+                                 {:exotype candidate-exotype})))
+           row (f candidate-exotype observation)]
+       {:rule-change (gen/rule-change-rate (grid/sigma-of candidate-exotype))
+        :activity (:activity row) :diversity (:diversity row) :hunger (:hunger row)})
+     (= :derived model-kind)
      (let [_ (when-not (kind-has-bins? candidate-exotype)
                (throw (ex-info "no derived rows for this exotype; re-derive the conditional model"
                                {:exotype candidate-exotype
@@ -303,10 +316,11 @@
        ;; miss for a kind with NO bins at all is now an error, not a default;
        ;; per-bin misses for a covered kind remain a legitimate sparse-data
        ;; fallback, which is what `min-bin-samples` is for.
-       {:rule-change (gen/rule-change-rate (get grid/propagators candidate-exotype))
+       {:rule-change (gen/rule-change-rate (grid/sigma-of candidate-exotype))
         :activity (:activity row)
         :diversity (:diversity row)
         :hunger (:hunger row)})
+     :else
      (predict-legacy candidate-exotype observation))))
 
 

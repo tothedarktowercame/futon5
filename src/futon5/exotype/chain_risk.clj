@@ -29,7 +29,7 @@
             (range 8))))
 
 (defn- positional [kind]
-  (gen/sigma-positional (get grid/propagators kind)))
+  (gen/sigma-positional (grid/sigma-of kind)))
 
 (defn- successor [positions byte draw]
   (let [source-bit (bit-and (bit-shift-right byte draw) 1)
@@ -74,9 +74,15 @@
               byte (range 256)]
           [[kind byte] (nth column byte)])))
 
+(def ^:private s8-column
+  "P-008: chain-risk column for an S8 exotype, exact, memoised per sigma."
+  (memoize (fn [kind] (kind-column kind))))
+
 (defn risk
   "Look up chain risk for KIND at integer BYTE."
   [kind byte]
-  (or (get table [kind byte])
+  (or (if (grid/s8? kind)
+        (nth (s8-column kind) byte)
+        (get table [kind byte]))
       (throw (ex-info "chain-risk lookup outside the cached table"
                       {:kind kind :byte byte}))))
