@@ -155,6 +155,47 @@
     (unchecked-add (unchecked-multiply (long (or time 0)) (long width))
                    (long index)))))
 
+(def ^:private frame-stream-tag
+  "P-008b §4 E8-2 per-run draw (ruling item 4, exotype origin/main 8538186):
+  the frame-draw stream tag, 0x57A712, distinct from 0x050F7A / 0x0B1E4D /
+  0x0A7711 / 0x0E8E8E / 0xB45E1E."
+  0x57A712)
+
+(defn frame-draw-key
+  "P-008b §4 item 4: the scope key for the i-th draw (i = 0..11) of the
+  E8-2 per-run vocabulary draw, mix-seed(mix-seed(seed XOR 0x57A712) + i)."
+  [seed i]
+  (ca/mix-seed
+   (unchecked-add
+    (ca/mix-seed (bit-xor (long (or seed 0)) frame-stream-tag))
+    (long i))))
+
+(defn frame-draw
+  "P-008b §4 item 4 (exotype origin/main 8538186): the E8-2 per-run draw.
+  FRAME is the 299-map sampling frame as a vector, in frame-file row order
+  (results/p008/e8-frame-300.edn on exotype c1/e8frame; it is passed as an
+  argument, not read here). Partial Fisher-Yates: a = [0..n-1]; for
+  i = 0..11, inside its own scope keyed (frame-draw-key seed i):
+  j = i + (ca/rnd-int (n - i)); swap a[i], a[j]; draw i = frame[a[i]].
+  Without replacement by construction (ruling item 1). Returns the 12 drawn
+  maps in slot order: draw i goes to kind slot i in grid/exotype-kinds
+  order (ruling item 6). Placement is NOT this function's concern (ruling
+  item 7: :heterogeneous-fixed, unchanged). Throws if the frame has fewer
+  than 12 entries."
+  [frame seed]
+  (let [n (count frame)]
+    (when (< n 12)
+      (throw (ex-info "frame too small for a 12-map vocabulary draw"
+                      {:frame-size n})))
+    (let [a (long-array (range n))]
+      (vec (for [i (range 12)]
+             (let [j (+ i (ca/with-seed (frame-draw-key seed i)
+                            (ca/rnd-int (- n i))))
+                   t (aget a i)]
+               (aset a i (aget a j))
+               (aset a j t)
+               (nth frame (aget a i))))))))
+
 (defn apply-transposition
   "P-008b §7 item 5, step 5b-B: p′ = τ∘p for τ = (a b). In the futon5 vector
   p[i] is the IMAGE of neighbourhood i, so composing on the left by τ swaps

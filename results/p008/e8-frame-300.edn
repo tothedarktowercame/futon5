@@ -1,0 +1,1657 @@
+{:convention "futon5 index (Wolfram) order; index(f) = sum_k f(k)*8^(7-k)",
+ :seed 2026115300,
+ :alpha 0.004743959,
+ :rule
+ "n_s = min(max(2, round-half-up(alpha*sqrt(size_s))), size_s); total 299 (cap binds on [8 [1 1 1 1 1 1 1 1]])",
+ :total 299,
+ :visit-order
+ [{:stratum [1 [1]], :size 8, :n 2}
+  {:stratum [2 [1]], :size 3528, :n 2}
+  {:stratum [2 [1 1]], :size 1792, :n 2}
+  {:stratum [2 [2]], :size 1792, :n 2}
+  {:stratum [3 [1]], :size 101136, :n 2}
+  {:stratum [3 [2]], :size 70896, :n 2}
+  {:stratum [3 [1 1]], :size 70896, :n 2}
+  {:stratum [3 [2 1]], :size 40824, :n 2}
+  {:stratum [3 [3]], :size 27216, :n 2}
+  {:stratum [3 [1 1 1]], :size 13608, :n 2}
+  {:stratum [4 [1]], :size 588000, :n 4}
+  {:stratum [4 [1 1]], :size 478800, :n 3}
+  {:stratum [4 [2]], :size 478800, :n 3}
+  {:stratum [4 [2 1]], :size 441000, :n 3}
+  {:stratum [4 [3]], :size 294000, :n 3}
+  {:stratum [4 [1 1 1]], :size 147000, :n 2}
+  {:stratum [4 [3 1]], :size 143360, :n 2}
+  {:stratum [4 [4]], :size 107520, :n 2}
+  {:stratum [4 [2 1 1]], :size 107520, :n 2}
+  {:stratum [4 [2 2]], :size 53760, :n 2}
+  {:stratum [4 [1 1 1 1]], :size 17920, :n 2}
+  {:stratum [5 [2 1]], :size 977760, :n 5}
+  {:stratum [5 [1]], :size 940800, :n 5}
+  {:stratum [5 [2]], :size 840000, :n 4}
+  {:stratum [5 [1 1]], :size 840000, :n 4}
+  {:stratum [5 [3]], :size 651840, :n 4}
+  {:stratum [5 [3 1]], :size 546560, :n 4}
+  {:stratum [5 [4]], :size 409920, :n 3}
+  {:stratum [5 [2 1 1]], :size 409920, :n 3}
+  {:stratum [5 [1 1 1]], :size 325920, :n 3}
+  {:stratum [5 [4 1]], :size 210000, :n 2}
+  {:stratum [5 [2 2]], :size 204960, :n 2}
+  {:stratum [5 [5]], :size 168000, :n 2}
+  {:stratum [5 [3 2]], :size 140000, :n 2}
+  {:stratum [5 [3 1 1]], :size 140000, :n 2}
+  {:stratum [5 [2 2 1]], :size 105000, :n 2}
+  {:stratum [5 [2 1 1 1]], :size 70000, :n 2}
+  {:stratum [5 [1 1 1 1]], :size 68320, :n 2}
+  {:stratum [5 [1 1 1 1 1]], :size 7000, :n 2}
+  {:stratum [6 [2 1]], :size 544320, :n 4}
+  {:stratum [6 [1]], :size 423360, :n 3}
+  {:stratum [6 [2]], :size 403200, :n 3}
+  {:stratum [6 [1 1]], :size 403200, :n 3}
+  {:stratum [6 [3 1]], :size 403200, :n 3}
+  {:stratum [6 [3]], :size 362880, :n 3}
+  {:stratum [6 [2 1 1]], :size 302400, :n 3}
+  {:stratum [6 [4]], :size 302400, :n 3}
+  {:stratum [6 [4 1]], :size 277200, :n 2}
+  {:stratum [6 [5]], :size 221760, :n 2}
+  {:stratum [6 [3 2]], :size 184800, :n 2}
+  {:stratum [6 [3 1 1]], :size 184800, :n 2}
+  {:stratum [6 [1 1 1]], :size 181440, :n 2}
+  {:stratum [6 [2 2]], :size 151200, :n 2}
+  {:stratum [6 [5 1]], :size 145152, :n 2}
+  {:stratum [6 [2 2 1]], :size 138600, :n 2}
+  {:stratum [6 [3 2 1]], :size 120960, :n 2}
+  {:stratum [6 [6]], :size 120960, :n 2}
+  {:stratum [6 [2 1 1 1]], :size 92400, :n 2}
+  {:stratum [6 [4 2]], :size 90720, :n 2}
+  {:stratum [6 [4 1 1]], :size 90720, :n 2}
+  {:stratum [6 [1 1 1 1]], :size 50400, :n 2}
+  {:stratum [6 [2 2 1 1]], :size 45360, :n 2}
+  {:stratum [6 [3 3]], :size 40320, :n 2}
+  {:stratum [6 [3 1 1 1]], :size 40320, :n 2}
+  {:stratum [6 [2 1 1 1 1]], :size 15120, :n 2}
+  {:stratum [6 [2 2 2]], :size 15120, :n 2}
+  {:stratum [6 [1 1 1 1 1]], :size 9240, :n 2}
+  {:stratum [6 [1 1 1 1 1 1]], :size 1008, :n 2}
+  {:stratum [7 [2 1]], :size 60480, :n 2}
+  {:stratum [7 [3 1]], :size 53760, :n 2}
+  {:stratum [7 [4 1]], :size 50400, :n 2}
+  {:stratum [7 [5 1]], :size 48384, :n 2}
+  {:stratum [7 [6 1]], :size 47040, :n 2}
+  {:stratum [7 [3]], :size 40320, :n 2}
+  {:stratum [7 [2]], :size 40320, :n 2}
+  {:stratum [7 [5]], :size 40320, :n 2}
+  {:stratum [7 [1]], :size 40320, :n 2}
+  {:stratum [7 [3 2 1]], :size 40320, :n 2}
+  {:stratum [7 [2 1 1]], :size 40320, :n 2}
+  {:stratum [7 [1 1]], :size 40320, :n 2}
+  {:stratum [7 [4]], :size 40320, :n 2}
+  {:stratum [7 [7]], :size 40320, :n 2}
+  {:stratum [7 [6]], :size 40320, :n 2}
+  {:stratum [7 [4 2 1]], :size 35280, :n 2}
+  {:stratum [7 [3 2]], :size 33600, :n 2}
+  {:stratum [7 [3 1 1]], :size 33600, :n 2}
+  {:stratum [7 [4 1 1]], :size 30240, :n 2}
+  {:stratum [7 [4 2]], :size 30240, :n 2}
+  {:stratum [7 [5 2]], :size 28224, :n 2}
+  {:stratum [7 [5 1 1]], :size 28224, :n 2}
+  {:stratum [7 [2 2 1]], :size 25200, :n 2}
+  {:stratum [7 [4 3]], :size 23520, :n 2}
+  {:stratum [7 [3 2 1 1]], :size 23520, :n 2}
+  {:stratum [7 [1 1 1]], :size 20160, :n 2}
+  {:stratum [7 [2 2]], :size 20160, :n 2}
+  {:stratum [7 [2 1 1 1]], :size 16800, :n 2}
+  {:stratum [7 [3 3 1]], :size 15680, :n 2}
+  {:stratum [7 [2 2 1 1]], :size 15120, :n 2}
+  {:stratum [7 [3 1 1 1]], :size 13440, :n 2}
+  {:stratum [7 [3 3]], :size 13440, :n 2}
+  {:stratum [7 [3 2 2]], :size 11760, :n 2}
+  {:stratum [7 [4 1 1 1]], :size 11760, :n 2}
+  {:stratum [7 [1 1 1 1]], :size 6720, :n 2}
+  {:stratum [7 [2 2 2 1]], :size 5880, :n 2}
+  {:stratum [7 [2 2 1 1 1]], :size 5880, :n 2}
+  {:stratum [7 [2 2 2]], :size 5040, :n 2}
+  {:stratum [7 [2 1 1 1 1]], :size 5040, :n 2}
+  {:stratum [7 [3 1 1 1 1]], :size 3920, :n 2}
+  {:stratum [7 [1 1 1 1 1]], :size 1680, :n 2}
+  {:stratum [7 [2 1 1 1 1 1]], :size 1176, :n 2}
+  {:stratum [7 [1 1 1 1 1 1]], :size 336, :n 2}
+  {:stratum [7 [1 1 1 1 1 1 1]], :size 56, :n 2}
+  {:stratum [8 [7 1]], :size 5760, :n 2}
+  {:stratum [8 [8]], :size 5040, :n 2}
+  {:stratum [8 [5 2 1]], :size 4032, :n 2}
+  {:stratum [8 [4 3 1]], :size 3360, :n 2}
+  {:stratum [8 [6 1 1]], :size 3360, :n 2}
+  {:stratum [8 [6 2]], :size 3360, :n 2}
+  {:stratum [8 [5 3]], :size 2688, :n 2}
+  {:stratum [8 [4 2 1 1]], :size 2520, :n 2}
+  {:stratum [8 [3 2 2 1]], :size 1680, :n 2}
+  {:stratum [8 [5 1 1 1]], :size 1344, :n 2}
+  {:stratum [8 [4 4]], :size 1260, :n 2}
+  {:stratum [8 [4 2 2]], :size 1260, :n 2}
+  {:stratum [8 [3 2 1 1 1]], :size 1120, :n 2}
+  {:stratum [8 [3 3 1 1]], :size 1120, :n 2}
+  {:stratum [8 [3 3 2]], :size 1120, :n 2}
+  {:stratum [8 [4 1 1 1 1]], :size 420, :n 2}
+  {:stratum [8 [2 2 2 1 1]], :size 420, :n 2}
+  {:stratum [8 [2 2 1 1 1 1]], :size 210, :n 2}
+  {:stratum [8 [3 1 1 1 1 1]], :size 112, :n 2}
+  {:stratum [8 [2 2 2 2]], :size 105, :n 2}
+  {:stratum [8 [2 1 1 1 1 1 1]], :size 28, :n 2}
+  {:stratum [8 [1 1 1 1 1 1 1 1]], :size 1, :n 1}],
+ :entries
+ [{:source :e8-stratified,
+   :stratum [1 [1]],
+   :n 2,
+   :vector [4 4 4 4 4 4 4 4],
+   :fg-class [0 0 0 0 0 0 0 0]}
+  {:source :e8-stratified,
+   :stratum [1 [1]],
+   :n 2,
+   :vector [1 1 1 1 1 1 1 1],
+   :fg-class [0 0 0 0 0 0 0 0]}
+  {:source :e8-stratified,
+   :stratum [2 [1]],
+   :n 2,
+   :vector [2 2 2 6 2 6 2 2],
+   :fg-class [0 0 0 0 0 0 1 1]}
+  {:source :e8-stratified,
+   :stratum [2 [1]],
+   :n 2,
+   :vector [4 7 7 4 4 7 7 4],
+   :fg-class [0 0 0 0 1 1 1 1]}
+  {:source :e8-stratified,
+   :stratum [2 [1 1]],
+   :n 2,
+   :vector [4 1 4 1 4 1 4 4],
+   :fg-class [0 0 0 0 0 5 5 5]}
+  {:source :e8-stratified,
+   :stratum [2 [1 1]],
+   :n 2,
+   :vector [1 1 4 1 4 1 1 4],
+   :fg-class [0 0 0 0 0 5 5 5]}
+  {:source :e8-stratified,
+   :stratum [2 [2]],
+   :n 2,
+   :vector [4 2 4 2 2 4 4 2],
+   :fg-class [1 0 0 0 0 1 1 1]}
+  {:source :e8-stratified,
+   :stratum [2 [2]],
+   :n 2,
+   :vector [7 7 7 6 6 7 7 6],
+   :fg-class [1 0 0 0 0 0 1 1]}
+  {:source :e8-stratified,
+   :stratum [3 [1]],
+   :n 2,
+   :vector [3 6 3 1 6 3 6 6],
+   :fg-class [0 0 0 0 1 4 4 4]}
+  {:source :e8-stratified,
+   :stratum [3 [1]],
+   :n 2,
+   :vector [1 7 1 1 1 2 1 7],
+   :fg-class [0 0 1 1 1 1 1 2]}
+  {:source :e8-stratified,
+   :stratum [3 [2]],
+   :n 2,
+   :vector [2 5 5 2 2 2 4 5],
+   :fg-class [1 0 0 0 0 1 1 2]}
+  {:source :e8-stratified,
+   :stratum [3 [2]],
+   :n 2,
+   :vector [3 5 3 4 3 4 4 3],
+   :fg-class [1 0 0 0 0 1 1 5]}
+  {:source :e8-stratified,
+   :stratum [3 [1 1]],
+   :n 2,
+   :vector [2 6 2 3 3 6 3 6],
+   :fg-class [0 0 0 1 1 1 6 6]}
+  {:source :e8-stratified,
+   :stratum [3 [1 1]],
+   :n 2,
+   :vector [1 1 6 1 6 6 6 2],
+   :fg-class [0 0 0 0 1 5 5 5]}
+  {:source :e8-stratified,
+   :stratum [3 [2 1]],
+   :n 2,
+   :vector [4 4 2 4 5 4 4 2],
+   :fg-class [0 0 3 2 2 2 2 2]}
+  {:source :e8-stratified,
+   :stratum [3 [2 1]],
+   :n 2,
+   :vector [7 7 7 7 0 5 5 0],
+   :fg-class [0 0 3 2 2 2 2 3]}
+  {:source :e8-stratified,
+   :stratum [3 [3]],
+   :n 2,
+   :vector [6 6 6 6 1 6 7 1],
+   :fg-class [1 2 0 0 0 0 0 2]}
+  {:source :e8-stratified,
+   :stratum [3 [3]],
+   :n 2,
+   :vector [6 5 6 0 6 0 5 0],
+   :fg-class [1 2 0 0 0 1 1 2]}
+  {:source :e8-stratified,
+   :stratum [3 [1 1 1]],
+   :n 2,
+   :vector [0 0 6 4 4 6 6 6],
+   :fg-class [0 0 0 0 4 4 6 6]}
+  {:source :e8-stratified,
+   :stratum [3 [1 1 1]],
+   :n 2,
+   :vector [3 3 7 3 4 7 3 7],
+   :fg-class [0 0 0 0 4 4 4 7]}
+  {:source :e8-stratified,
+   :stratum [4 [1]],
+   :n 4,
+   :vector [1 1 5 0 6 0 0 5],
+   :fg-class [0 0 1 1 1 2 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [1]],
+   :n 4,
+   :vector [4 0 7 4 7 5 4 5],
+   :fg-class [0 0 1 1 2 2 2 4]}
+  {:source :e8-stratified,
+   :stratum [4 [1]],
+   :n 4,
+   :vector [3 5 2 2 0 3 2 0],
+   :fg-class [0 0 0 1 1 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [4 [1]],
+   :n 4,
+   :vector [1 3 5 3 0 1 3 1],
+   :fg-class [0 0 0 1 1 1 3 4]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1]],
+   :n 3,
+   :vector [0 4 3 6 4 0 0 4],
+   :fg-class [0 0 0 1 3 5 5 5]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1]],
+   :n 3,
+   :vector [5 4 5 7 6 5 7 7],
+   :fg-class [0 0 0 1 3 5 5 5]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1]],
+   :n 3,
+   :vector [6 5 4 5 4 4 5 7],
+   :fg-class [0 0 0 1 1 1 3 7]}
+  {:source :e8-stratified,
+   :stratum [4 [2]],
+   :n 3,
+   :vector [4 4 6 1 6 6 4 2],
+   :fg-class [1 0 0 0 1 1 2 4]}
+  {:source :e8-stratified,
+   :stratum [4 [2]],
+   :n 3,
+   :vector [4 3 3 0 0 6 0 0],
+   :fg-class [1 0 0 0 0 2 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [2]],
+   :n 3,
+   :vector [2 0 0 2 3 1 1 2],
+   :fg-class [1 0 0 0 1 2 4 4]}
+  {:source :e8-stratified,
+   :stratum [4 [2 1]],
+   :n 3,
+   :vector [1 2 3 2 3 5 5 2],
+   :fg-class [0 0 3 2 2 2 3 4]}
+  {:source :e8-stratified,
+   :stratum [4 [2 1]],
+   :n 3,
+   :vector [3 7 7 5 5 5 5 2],
+   :fg-class [0 0 0 0 1 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [4 [2 1]],
+   :n 3,
+   :vector [4 3 7 3 0 7 0 0],
+   :fg-class [0 0 3 2 2 2 4 4]}
+  {:source :e8-stratified,
+   :stratum [4 [3]],
+   :n 3,
+   :vector [1 6 1 0 6 1 0 5],
+   :fg-class [1 2 0 0 0 1 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [3]],
+   :n 3,
+   :vector [3 5 0 1 5 3 1 3],
+   :fg-class [1 2 0 0 0 1 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [3]],
+   :n 3,
+   :vector [1 7 3 1 1 3 4 3],
+   :fg-class [1 2 0 0 0 1 1 5]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1 1]],
+   :n 2,
+   :vector [3 5 2 3 6 3 6 2],
+   :fg-class [0 0 0 1 4 4 6 6]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1 1]],
+   :n 2,
+   :vector [0 4 4 2 4 6 6 0],
+   :fg-class [0 0 0 1 4 4 6 6]}
+  {:source :e8-stratified,
+   :stratum [4 [3 1]],
+   :n 2,
+   :vector [7 0 2 2 0 0 7 5],
+   :fg-class [0 0 3 4 2 2 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [3 1]],
+   :n 2,
+   :vector [7 0 7 0 0 1 6 1],
+   :fg-class [0 2 3 1 1 1 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [4]],
+   :n 2,
+   :vector [7 4 4 4 0 0 0 1],
+   :fg-class [1 2 3 0 0 0 1 1]}
+  {:source :e8-stratified,
+   :stratum [4 [4]],
+   :n 2,
+   :vector [1 3 1 5 5 2 5 3],
+   :fg-class [1 2 3 0 0 0 2 3]}
+  {:source :e8-stratified,
+   :stratum [4 [2 1 1]],
+   :n 2,
+   :vector [2 6 2 3 1 2 1 3],
+   :fg-class [0 0 0 3 3 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [4 [2 1 1]],
+   :n 2,
+   :vector [2 2 1 2 4 4 6 1],
+   :fg-class [0 0 2 4 3 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [4 [2 2]],
+   :n 2,
+   :vector [2 5 0 5 0 1 2 2],
+   :fg-class [1 0 0 0 1 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [4 [2 2]],
+   :n 2,
+   :vector [4 6 6 0 0 0 1 1],
+   :fg-class [1 0 0 0 5 4 4 5]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1 1 1]],
+   :n 2,
+   :vector [0 0 0 7 4 0 6 7],
+   :fg-class [0 0 0 0 4 4 6 7]}
+  {:source :e8-stratified,
+   :stratum [4 [1 1 1 1]],
+   :n 2,
+   :vector [0 3 5 3 4 5 5 3],
+   :fg-class [0 0 0 3 3 3 6 7]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1]],
+   :n 5,
+   :vector [4 6 4 3 2 0 4 4],
+   :fg-class [0 2 1 1 1 1 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1]],
+   :n 5,
+   :vector [4 7 2 7 0 4 5 5],
+   :fg-class [0 2 1 1 3 3 4 4]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1]],
+   :n 5,
+   :vector [4 1 0 0 5 4 1 6],
+   :fg-class [0 0 1 4 3 3 5 5]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1]],
+   :n 5,
+   :vector [6 2 3 3 0 6 5 0],
+   :fg-class [0 0 1 4 3 3 5 5]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1]],
+   :n 5,
+   :vector [6 3 2 4 3 3 4 0],
+   :fg-class [0 2 1 1 1 2 5 6]}
+  {:source :e8-stratified,
+   :stratum [5 [1]],
+   :n 5,
+   :vector [6 2 6 3 0 0 7 3],
+   :fg-class [0 0 1 2 2 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [1]],
+   :n 5,
+   :vector [6 1 5 7 5 1 5 2],
+   :fg-class [0 0 1 1 1 2 3 5]}
+  {:source :e8-stratified,
+   :stratum [5 [1]],
+   :n 5,
+   :vector [4 1 1 7 1 2 3 4],
+   :fg-class [0 0 0 1 1 2 3 6]}
+  {:source :e8-stratified,
+   :stratum [5 [1]],
+   :n 5,
+   :vector [4 0 3 0 7 0 6 6],
+   :fg-class [0 0 1 2 3 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [1]],
+   :n 5,
+   :vector [2 6 5 5 6 5 0 3],
+   :fg-class [0 0 0 1 2 3 5 5]}
+  {:source :e8-stratified,
+   :stratum [5 [2]],
+   :n 4,
+   :vector [2 0 3 6 2 7 3 3],
+   :fg-class [1 0 0 0 2 2 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [2]],
+   :n 4,
+   :vector [7 5 6 4 0 6 4 0],
+   :fg-class [1 0 0 2 2 3 3 5]}
+  {:source :e8-stratified,
+   :stratum [5 [2]],
+   :n 4,
+   :vector [4 7 5 1 1 0 7 1],
+   :fg-class [1 0 0 0 1 2 5 6]}
+  {:source :e8-stratified,
+   :stratum [5 [2]],
+   :n 4,
+   :vector [2 4 1 7 1 0 2 2],
+   :fg-class [1 0 0 2 2 2 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1]],
+   :n 4,
+   :vector [5 6 5 3 0 5 4 0],
+   :fg-class [0 0 0 1 1 3 5 7]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1]],
+   :n 4,
+   :vector [0 2 6 0 6 3 0 7],
+   :fg-class [0 0 0 1 1 2 3 7]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1]],
+   :n 4,
+   :vector [3 1 2 5 1 2 4 4],
+   :fg-class [0 0 1 1 4 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1]],
+   :n 4,
+   :vector [7 4 2 2 5 6 7 7],
+   :fg-class [0 0 0 1 3 4 6 6]}
+  {:source :e8-stratified,
+   :stratum [5 [3]],
+   :n 4,
+   :vector [5 0 5 4 1 1 1 3],
+   :fg-class [1 2 0 0 0 2 3 6]}
+  {:source :e8-stratified,
+   :stratum [5 [3]],
+   :n 4,
+   :vector [5 0 5 4 6 4 3 6],
+   :fg-class [1 2 0 0 1 3 3 5]}
+  {:source :e8-stratified,
+   :stratum [5 [3]],
+   :n 4,
+   :vector [3 7 1 7 7 2 7 0],
+   :fg-class [1 2 0 0 0 0 3 6]}
+  {:source :e8-stratified,
+   :stratum [5 [3]],
+   :n 4,
+   :vector [7 0 3 7 6 0 7 2],
+   :fg-class [1 2 0 0 0 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [3 1]],
+   :n 4,
+   :vector [4 4 4 4 6 5 1 3],
+   :fg-class [0 2 3 1 1 1 1 4]}
+  {:source :e8-stratified,
+   :stratum [5 [3 1]],
+   :n 4,
+   :vector [0 2 3 1 2 6 0 0],
+   :fg-class [0 0 0 1 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [5 [3 1]],
+   :n 4,
+   :vector [0 5 6 1 1 4 5 6],
+   :fg-class [0 2 3 1 1 2 5 5]}
+  {:source :e8-stratified,
+   :stratum [5 [3 1]],
+   :n 4,
+   :vector [6 6 1 2 4 6 2 3],
+   :fg-class [0 2 3 1 1 1 2 6]}
+  {:source :e8-stratified,
+   :stratum [5 [4]],
+   :n 3,
+   :vector [6 4 6 1 2 0 1 0],
+   :fg-class [1 2 3 0 0 1 4 4]}
+  {:source :e8-stratified,
+   :stratum [5 [4]],
+   :n 3,
+   :vector [7 6 7 2 5 2 2 4],
+   :fg-class [1 2 3 0 0 0 1 4]}
+  {:source :e8-stratified,
+   :stratum [5 [4]],
+   :n 3,
+   :vector [3 2 5 1 1 4 4 1],
+   :fg-class [1 2 3 0 0 0 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1 1]],
+   :n 3,
+   :vector [6 6 2 7 1 6 5 7],
+   :fg-class [0 0 2 4 3 3 3 5]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1 1]],
+   :n 3,
+   :vector [3 4 2 3 2 6 5 2],
+   :fg-class [0 0 0 1 4 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1 1]],
+   :n 3,
+   :vector [7 6 0 3 6 5 7 6],
+   :fg-class [0 1 3 2 2 2 3 6]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1]],
+   :n 3,
+   :vector [4 1 7 1 2 5 5 7],
+   :fg-class [0 0 1 2 4 4 6 6]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1]],
+   :n 3,
+   :vector [0 1 7 1 4 0 7 5],
+   :fg-class [0 0 1 2 2 5 5 7]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1]],
+   :n 3,
+   :vector [0 1 7 3 3 6 0 1],
+   :fg-class [0 0 1 3 3 4 6 6]}
+  {:source :e8-stratified,
+   :stratum [5 [4 1]],
+   :n 2,
+   :vector [2 0 6 6 1 0 1 7],
+   :fg-class [0 2 3 4 1 1 2 3]}
+  {:source :e8-stratified,
+   :stratum [5 [4 1]],
+   :n 2,
+   :vector [4 0 5 5 5 7 6 0],
+   :fg-class [0 2 3 4 1 1 1 3]}
+  {:source :e8-stratified,
+   :stratum [5 [2 2]],
+   :n 2,
+   :vector [7 7 5 5 7 3 2 0],
+   :fg-class [1 0 0 0 5 4 4 6]}
+  {:source :e8-stratified,
+   :stratum [5 [2 2]],
+   :n 2,
+   :vector [3 3 4 0 5 4 4 6],
+   :fg-class [1 0 0 0 2 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [5 [5]],
+   :n 2,
+   :vector [7 3 3 0 3 7 4 6],
+   :fg-class [1 2 3 4 0 0 0 2]}
+  {:source :e8-stratified,
+   :stratum [5 [5]],
+   :n 2,
+   :vector [3 2 5 2 0 4 5 0],
+   :fg-class [1 2 3 4 0 0 1 3]}
+  {:source :e8-stratified,
+   :stratum [5 [3 2]],
+   :n 2,
+   :vector [2 6 0 7 2 7 7 1],
+   :fg-class [1 0 0 4 5 3 3 3]}
+  {:source :e8-stratified,
+   :stratum [5 [3 2]],
+   :n 2,
+   :vector [3 4 3 2 5 1 5 2],
+   :fg-class [1 0 0 1 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [5 [3 1 1]],
+   :n 2,
+   :vector [7 7 3 3 0 5 0 6],
+   :fg-class [0 0 2 4 5 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [3 1 1]],
+   :n 2,
+   :vector [6 6 7 0 0 5 3 7],
+   :fg-class [0 0 2 4 5 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [5 [2 2 1]],
+   :n 2,
+   :vector [6 0 6 5 5 4 0 7],
+   :fg-class [0 2 1 1 2 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [5 [2 2 1]],
+   :n 2,
+   :vector [1 3 5 1 3 2 1 7],
+   :fg-class [0 2 1 1 1 2 7 6]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1 1 1]],
+   :n 2,
+   :vector [3 6 3 3 7 5 1 7],
+   :fg-class [0 0 0 3 3 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [5 [2 1 1 1]],
+   :n 2,
+   :vector [0 1 2 2 6 6 7 6],
+   :fg-class [0 0 2 3 5 4 4 4]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1 1]],
+   :n 2,
+   :vector [5 1 2 0 2 5 6 0],
+   :fg-class [0 0 1 1 4 4 6 7]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1 1]],
+   :n 2,
+   :vector [4 1 6 4 4 5 7 7],
+   :fg-class [0 0 0 3 3 4 6 7]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1 1 1]],
+   :n 2,
+   :vector [3 1 4 3 4 5 3 7],
+   :fg-class [0 0 0 3 3 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [5 [1 1 1 1 1]],
+   :n 2,
+   :vector [3 1 2 3 4 2 3 7],
+   :fg-class [0 0 0 3 3 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1]],
+   :n 4,
+   :vector [1 2 2 6 0 7 7 5],
+   :fg-class [0 0 1 2 5 4 4 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1]],
+   :n 4,
+   :vector [7 0 1 7 6 3 4 7],
+   :fg-class [0 0 0 1 2 3 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1]],
+   :n 4,
+   :vector [7 6 0 5 2 3 0 7],
+   :fg-class [0 0 1 1 2 3 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1]],
+   :n 4,
+   :vector [4 4 0 5 3 5 7 6],
+   :fg-class [0 0 1 2 2 3 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [1]],
+   :n 3,
+   :vector [0 2 7 6 3 4 0 4],
+   :fg-class [0 0 1 2 3 3 4 6]}
+  {:source :e8-stratified,
+   :stratum [6 [1]],
+   :n 3,
+   :vector [4 6 1 3 3 4 5 2],
+   :fg-class [0 0 1 1 2 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [6 [1]],
+   :n 3,
+   :vector [5 4 1 6 3 7 6 6],
+   :fg-class [0 0 0 1 2 3 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [2]],
+   :n 3,
+   :vector [7 3 1 0 6 7 7 5],
+   :fg-class [1 0 0 0 2 3 4 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2]],
+   :n 3,
+   :vector [5 4 6 1 2 4 7 6],
+   :fg-class [1 0 0 2 3 3 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [2]],
+   :n 3,
+   :vector [3 3 3 0 7 2 4 1],
+   :fg-class [1 0 0 0 2 3 4 6]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1]],
+   :n 3,
+   :vector [6 1 3 3 3 4 2 5],
+   :fg-class [0 0 0 1 2 3 4 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1]],
+   :n 3,
+   :vector [0 1 0 4 7 2 0 6],
+   :fg-class [0 0 0 1 2 3 5 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1]],
+   :n 3,
+   :vector [4 3 3 5 6 5 1 7],
+   :fg-class [0 0 1 1 2 4 5 7]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1]],
+   :n 3,
+   :vector [4 3 0 5 6 7 6 3],
+   :fg-class [0 0 1 2 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1]],
+   :n 3,
+   :vector [5 5 1 0 7 4 6 5],
+   :fg-class [0 2 3 1 1 1 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1]],
+   :n 3,
+   :vector [3 0 4 3 6 6 7 5],
+   :fg-class [0 0 1 4 5 3 3 6]}
+  {:source :e8-stratified,
+   :stratum [6 [3]],
+   :n 3,
+   :vector [6 0 0 7 3 2 2 1],
+   :fg-class [1 2 0 0 1 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [6 [3]],
+   :n 3,
+   :vector [6 3 1 2 0 7 7 2],
+   :fg-class [1 2 0 0 3 3 4 6]}
+  {:source :e8-stratified,
+   :stratum [6 [3]],
+   :n 3,
+   :vector [1 5 3 7 0 3 1 2],
+   :fg-class [1 2 0 0 3 4 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1]],
+   :n 3,
+   :vector [2 2 1 3 0 1 5 7],
+   :fg-class [0 1 3 2 2 3 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1]],
+   :n 3,
+   :vector [3 5 6 3 4 0 2 3],
+   :fg-class [0 0 0 1 3 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1]],
+   :n 3,
+   :vector [3 1 2 0 3 4 4 6],
+   :fg-class [0 1 3 2 2 4 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [4]],
+   :n 3,
+   :vector [1 2 6 5 0 6 0 3],
+   :fg-class [1 2 3 0 0 1 4 6]}
+  {:source :e8-stratified,
+   :stratum [6 [4]],
+   :n 3,
+   :vector [1 7 7 6 0 1 2 4],
+   :fg-class [1 2 3 0 0 1 5 6]}
+  {:source :e8-stratified,
+   :stratum [6 [4]],
+   :n 3,
+   :vector [6 3 0 6 0 1 5 2],
+   :fg-class [1 2 3 0 0 4 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [4 1]],
+   :n 2,
+   :vector [1 3 3 5 4 0 2 3],
+   :fg-class [0 2 3 4 1 1 1 5]}
+  {:source :e8-stratified,
+   :stratum [6 [4 1]],
+   :n 2,
+   :vector [5 5 1 2 0 3 2 7],
+   :fg-class [0 2 3 4 1 1 3 5]}
+  {:source :e8-stratified,
+   :stratum [6 [5]],
+   :n 2,
+   :vector [3 6 1 1 7 0 5 3],
+   :fg-class [1 2 3 4 0 0 1 5]}
+  {:source :e8-stratified,
+   :stratum [6 [5]],
+   :n 2,
+   :vector [3 5 4 4 1 0 1 2],
+   :fg-class [1 2 3 4 0 0 1 5]}
+  {:source :e8-stratified,
+   :stratum [6 [3 2]],
+   :n 2,
+   :vector [2 0 1 6 5 7 5 5],
+   :fg-class [1 0 0 0 2 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [6 [3 2]],
+   :n 2,
+   :vector [5 4 7 6 2 0 2 6],
+   :fg-class [1 0 3 4 2 2 3 6]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1 1]],
+   :n 2,
+   :vector [0 5 0 5 4 7 2 3],
+   :fg-class [0 0 1 3 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1 1]],
+   :n 2,
+   :vector [1 7 1 3 5 2 6 2],
+   :fg-class [0 1 3 4 2 2 3 5]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1]],
+   :n 2,
+   :vector [0 4 4 7 6 5 6 2],
+   :fg-class [0 0 1 1 2 4 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1]],
+   :n 2,
+   :vector [0 7 6 3 5 5 4 6],
+   :fg-class [0 0 1 2 2 3 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2]],
+   :n 2,
+   :vector [3 2 6 6 7 1 3 4],
+   :fg-class [1 0 0 1 2 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2]],
+   :n 2,
+   :vector [4 3 6 1 0 0 7 0],
+   :fg-class [1 0 0 0 2 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [5 1]],
+   :n 2,
+   :vector [2 4 1 0 3 5 3 4],
+   :fg-class [0 2 3 4 5 1 1 2]}
+  {:source :e8-stratified,
+   :stratum [6 [5 1]],
+   :n 2,
+   :vector [0 4 7 6 7 1 1 3],
+   :fg-class [0 2 3 4 5 1 1 3]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2 1]],
+   :n 2,
+   :vector [5 6 2 6 3 7 1 5],
+   :fg-class [0 2 1 1 3 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2 1]],
+   :n 2,
+   :vector [4 2 1 0 0 0 3 7],
+   :fg-class [0 2 1 1 1 3 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [3 2 1]],
+   :n 2,
+   :vector [1 5 7 3 5 1 2 6],
+   :fg-class [0 2 1 1 2 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [6 [3 2 1]],
+   :n 2,
+   :vector [1 4 2 2 0 7 1 5],
+   :fg-class [0 0 3 2 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [6 [6]],
+   :n 2,
+   :vector [4 2 6 1 3 4 0 1],
+   :fg-class [1 2 3 4 5 0 0 2]}
+  {:source :e8-stratified,
+   :stratum [6 [6]],
+   :n 2,
+   :vector [3 7 1 5 2 4 1 3],
+   :fg-class [1 2 3 4 5 0 0 2]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1 1]],
+   :n 2,
+   :vector [5 1 2 6 7 0 6 1],
+   :fg-class [0 0 1 3 3 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1 1]],
+   :n 2,
+   :vector [2 2 0 3 4 0 5 7],
+   :fg-class [0 1 2 4 3 3 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [4 2]],
+   :n 2,
+   :vector [3 5 4 1 7 6 3 4],
+   :fg-class [1 0 0 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [6 [4 2]],
+   :n 2,
+   :vector [1 0 0 7 6 6 3 5],
+   :fg-class [1 0 0 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [6 [4 1 1]],
+   :n 2,
+   :vector [5 7 1 2 7 5 6 3],
+   :fg-class [0 0 2 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [6 [4 1 1]],
+   :n 2,
+   :vector [0 0 7 2 4 6 3 6],
+   :fg-class [0 0 2 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1 1]],
+   :n 2,
+   :vector [0 1 5 3 4 0 7 5],
+   :fg-class [0 0 1 1 2 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1 1]],
+   :n 2,
+   :vector [0 7 2 3 5 5 7 4],
+   :fg-class [0 0 1 2 2 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2 1 1]],
+   :n 2,
+   :vector [3 1 2 0 3 6 5 3],
+   :fg-class [0 1 3 2 2 2 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2 1 1]],
+   :n 2,
+   :vector [2 0 0 3 5 4 6 0],
+   :fg-class [0 1 3 2 2 2 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [3 3]],
+   :n 2,
+   :vector [5 3 0 0 6 3 7 4],
+   :fg-class [1 2 0 0 1 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [6 [3 3]],
+   :n 2,
+   :vector [3 6 1 7 7 2 2 0],
+   :fg-class [1 2 0 0 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1 1 1]],
+   :n 2,
+   :vector [0 1 5 7 4 7 2 2],
+   :fg-class [0 1 2 4 5 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [6 [3 1 1 1]],
+   :n 2,
+   :vector [3 1 2 5 4 7 7 3],
+   :fg-class [0 1 2 4 5 3 3 4]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1 1 1]],
+   :n 2,
+   :vector [6 1 5 3 4 2 6 6],
+   :fg-class [0 0 0 3 4 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 1 1 1 1]],
+   :n 2,
+   :vector [0 3 2 1 1 5 6 3],
+   :fg-class [0 1 2 3 5 4 4 5]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2 2]],
+   :n 2,
+   :vector [3 7 7 0 7 6 5 2],
+   :fg-class [1 0 0 0 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [2 2 2]],
+   :n 2,
+   :vector [1 0 7 4 3 0 7 2],
+   :fg-class [1 0 0 4 3 3 7 6]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1 1 1]],
+   :n 2,
+   :vector [7 0 2 6 4 5 6 7],
+   :fg-class [0 0 1 3 3 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1 1 1]],
+   :n 2,
+   :vector [0 2 2 3 4 5 5 1],
+   :fg-class [0 0 1 3 3 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1 1 1 1]],
+   :n 2,
+   :vector [0 4 2 3 4 5 2 7],
+   :fg-class [0 0 2 2 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [6 [1 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 1 7 4 5 6 7],
+   :fg-class [0 0 2 2 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1]],
+   :n 2,
+   :vector [2 6 3 2 0 1 4 7],
+   :fg-class [0 2 1 1 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1]],
+   :n 2,
+   :vector [0 5 6 4 2 7 2 3],
+   :fg-class [0 2 1 1 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1]],
+   :n 2,
+   :vector [6 7 0 3 5 7 1 4],
+   :fg-class [0 2 3 1 1 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1]],
+   :n 2,
+   :vector [7 5 1 6 4 2 0 2],
+   :fg-class [0 2 3 1 1 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 1]],
+   :n 2,
+   :vector [7 4 6 3 0 4 1 5],
+   :fg-class [0 2 3 4 1 1 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 1]],
+   :n 2,
+   :vector [7 1 6 5 2 0 5 3],
+   :fg-class [0 2 3 4 1 1 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [5 1]],
+   :n 2,
+   :vector [1 2 6 3 7 0 4 1],
+   :fg-class [0 2 3 4 5 1 1 6]}
+  {:source :e8-stratified,
+   :stratum [7 [5 1]],
+   :n 2,
+   :vector [1 2 4 3 5 0 7 3],
+   :fg-class [0 0 1 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [7 [6 1]],
+   :n 2,
+   :vector [0 5 1 7 3 4 5 2],
+   :fg-class [0 2 3 4 5 6 1 1]}
+  {:source :e8-stratified,
+   :stratum [7 [6 1]],
+   :n 2,
+   :vector [2 4 3 1 6 5 0 1],
+   :fg-class [0 2 3 4 5 6 1 1]}
+  {:source :e8-stratified,
+   :stratum [7 [3]],
+   :n 2,
+   :vector [5 3 3 4 2 1 0 6],
+   :fg-class [1 2 0 0 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3]],
+   :n 2,
+   :vector [6 7 5 2 0 4 1 6],
+   :fg-class [1 2 0 0 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2]],
+   :n 2,
+   :vector [2 7 4 5 6 1 3 1],
+   :fg-class [1 0 0 2 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2]],
+   :n 2,
+   :vector [6 5 1 0 3 4 7 6],
+   :fg-class [1 0 0 2 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [5]],
+   :n 2,
+   :vector [4 2 5 6 3 0 5 1],
+   :fg-class [1 2 3 4 0 0 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [5]],
+   :n 2,
+   :vector [6 4 1 2 0 7 2 3],
+   :fg-class [1 2 3 4 0 0 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [1]],
+   :n 2,
+   :vector [7 4 5 1 2 0 3 7],
+   :fg-class [0 0 1 2 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [1]],
+   :n 2,
+   :vector [4 3 7 5 6 0 2 7],
+   :fg-class [0 0 1 2 3 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2 1]],
+   :n 2,
+   :vector [4 6 1 7 0 5 3 6],
+   :fg-class [0 2 1 4 5 3 3 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2 1]],
+   :n 2,
+   :vector [3 6 7 0 4 1 5 4],
+   :fg-class [0 0 1 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1]],
+   :n 2,
+   :vector [6 4 2 7 1 5 3 1],
+   :fg-class [0 1 3 2 2 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1]],
+   :n 2,
+   :vector [1 5 2 4 3 6 6 0],
+   :fg-class [0 0 1 2 3 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1]],
+   :n 2,
+   :vector [1 1 5 6 3 4 0 7],
+   :fg-class [0 0 1 2 3 4 5 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1]],
+   :n 2,
+   :vector [0 5 4 1 3 0 2 7],
+   :fg-class [0 0 1 2 3 4 5 7]}
+  {:source :e8-stratified,
+   :stratum [7 [4]],
+   :n 2,
+   :vector [3 6 4 2 0 1 4 5],
+   :fg-class [1 2 3 0 0 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4]],
+   :n 2,
+   :vector [5 6 3 7 2 1 0 6],
+   :fg-class [1 2 3 0 0 4 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [7]],
+   :n 2,
+   :vector [6 2 7 5 6 1 3 0],
+   :fg-class [1 2 3 4 5 6 0 0]}
+  {:source :e8-stratified,
+   :stratum [7 [7]],
+   :n 2,
+   :vector [5 7 6 1 6 4 3 0],
+   :fg-class [1 2 3 4 5 6 0 0]}
+  {:source :e8-stratified,
+   :stratum [7 [6]],
+   :n 2,
+   :vector [1 2 7 5 0 1 3 6],
+   :fg-class [1 2 3 4 5 0 0 6]}
+  {:source :e8-stratified,
+   :stratum [7 [6]],
+   :n 2,
+   :vector [2 6 5 1 0 1 4 3],
+   :fg-class [1 2 3 4 5 0 0 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 2 1]],
+   :n 2,
+   :vector [3 1 4 2 0 7 0 5],
+   :fg-class [0 2 1 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [7 [4 2 1]],
+   :n 2,
+   :vector [3 1 5 2 7 0 7 4],
+   :fg-class [0 2 1 1 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2]],
+   :n 2,
+   :vector [7 3 1 2 6 0 4 1],
+   :fg-class [1 0 3 4 2 2 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2]],
+   :n 2,
+   :vector [5 6 0 1 7 2 0 4],
+   :fg-class [1 0 3 4 2 2 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1 1]],
+   :n 2,
+   :vector [2 6 2 3 1 0 4 5],
+   :fg-class [0 0 1 2 4 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1 1]],
+   :n 2,
+   :vector [5 1 6 3 5 7 4 0],
+   :fg-class [0 1 3 4 2 2 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 1 1]],
+   :n 2,
+   :vector [7 1 4 5 0 6 6 2],
+   :fg-class [0 0 1 3 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [7 [4 1 1]],
+   :n 2,
+   :vector [2 4 7 3 7 0 6 5],
+   :fg-class [0 1 3 4 5 2 2 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 2]],
+   :n 2,
+   :vector [1 0 3 6 5 6 7 4],
+   :fg-class [1 0 3 4 5 2 2 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 2]],
+   :n 2,
+   :vector [2 5 4 5 6 1 0 3],
+   :fg-class [1 0 0 2 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [7 [5 2]],
+   :n 2,
+   :vector [4 7 3 6 5 2 4 1],
+   :fg-class [1 0 3 4 5 6 2 2]}
+  {:source :e8-stratified,
+   :stratum [7 [5 2]],
+   :n 2,
+   :vector [7 6 1 5 0 3 4 1],
+   :fg-class [1 0 3 4 5 6 2 2]}
+  {:source :e8-stratified,
+   :stratum [7 [5 1 1]],
+   :n 2,
+   :vector [0 1 4 6 3 3 7 2],
+   :fg-class [0 1 3 4 5 6 2 2]}
+  {:source :e8-stratified,
+   :stratum [7 [5 1 1]],
+   :n 2,
+   :vector [1 3 0 5 0 2 6 7],
+   :fg-class [0 1 3 4 5 6 2 2]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 1]],
+   :n 2,
+   :vector [4 1 5 1 0 2 7 3],
+   :fg-class [0 0 1 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 1]],
+   :n 2,
+   :vector [1 4 5 4 3 2 6 0],
+   :fg-class [0 2 1 1 3 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [4 3]],
+   :n 2,
+   :vector [5 3 7 6 7 4 1 0],
+   :fg-class [1 2 0 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [7 [4 3]],
+   :n 2,
+   :vector [6 0 5 2 2 4 7 1],
+   :fg-class [1 2 0 0 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2 1 1]],
+   :n 2,
+   :vector [2 1 0 5 3 4 3 7],
+   :fg-class [0 1 3 2 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2 1 1]],
+   :n 2,
+   :vector [4 1 2 5 0 6 3 1],
+   :fg-class [0 0 2 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1]],
+   :n 2,
+   :vector [4 7 0 1 3 5 6 7],
+   :fg-class [0 0 1 2 3 4 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1]],
+   :n 2,
+   :vector [0 3 6 3 2 1 5 7],
+   :fg-class [0 0 1 2 3 4 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2]],
+   :n 2,
+   :vector [4 6 3 2 7 2 1 5],
+   :fg-class [1 0 0 2 3 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2]],
+   :n 2,
+   :vector [3 5 6 0 7 4 1 4],
+   :fg-class [1 0 0 2 3 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1 1]],
+   :n 2,
+   :vector [7 6 2 3 1 5 1 4],
+   :fg-class [0 1 2 4 3 3 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1 1]],
+   :n 2,
+   :vector [0 1 7 4 6 5 2 2],
+   :fg-class [0 1 2 4 3 3 5 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 3 1]],
+   :n 2,
+   :vector [0 6 3 7 3 1 5 2],
+   :fg-class [0 2 3 1 1 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [3 3 1]],
+   :n 2,
+   :vector [1 2 0 6 3 5 4 1],
+   :fg-class [0 2 3 1 1 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 1 1]],
+   :n 2,
+   :vector [2 7 0 3 6 5 4 4],
+   :fg-class [0 1 3 2 2 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 1 1]],
+   :n 2,
+   :vector [3 4 5 0 1 6 6 7],
+   :fg-class [0 0 1 3 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1 1 1]],
+   :n 2,
+   :vector [0 6 4 3 7 1 6 2],
+   :fg-class [0 0 1 3 4 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1 1 1]],
+   :n 2,
+   :vector [2 0 1 3 6 5 0 7],
+   :fg-class [0 1 2 4 5 3 3 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 3]],
+   :n 2,
+   :vector [2 5 6 4 6 7 0 1],
+   :fg-class [1 2 0 0 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [3 3]],
+   :n 2,
+   :vector [3 4 1 5 2 0 3 6],
+   :fg-class [1 2 0 0 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2 2]],
+   :n 2,
+   :vector [2 7 3 4 2 6 5 1],
+   :fg-class [1 0 3 2 5 6 4 4]}
+  {:source :e8-stratified,
+   :stratum [7 [3 2 2]],
+   :n 2,
+   :vector [4 5 1 6 0 2 3 0],
+   :fg-class [1 0 0 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [4 1 1 1]],
+   :n 2,
+   :vector [5 1 0 3 4 7 0 6],
+   :fg-class [0 1 2 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [7 [4 1 1 1]],
+   :n 2,
+   :vector [4 1 2 0 6 5 7 0],
+   :fg-class [0 1 2 4 5 6 3 3]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1]],
+   :n 2,
+   :vector [0 4 2 3 7 6 6 5],
+   :fg-class [0 0 1 2 3 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1]],
+   :n 2,
+   :vector [0 2 6 3 1 5 0 7],
+   :fg-class [0 0 1 2 3 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 2 1]],
+   :n 2,
+   :vector [2 0 0 7 4 6 5 3],
+   :fg-class [0 2 1 1 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 2 1]],
+   :n 2,
+   :vector [7 1 4 0 2 6 5 0],
+   :fg-class [0 2 1 1 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 1 1 1]],
+   :n 2,
+   :vector [5 1 4 3 2 0 6 1],
+   :fg-class [0 0 2 3 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 1 1 1]],
+   :n 2,
+   :vector [2 1 0 2 7 5 6 4],
+   :fg-class [0 1 2 4 3 3 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 2]],
+   :n 2,
+   :vector [2 7 0 4 5 4 3 1],
+   :fg-class [1 0 0 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 2 2]],
+   :n 2,
+   :vector [5 7 6 4 3 0 3 1],
+   :fg-class [1 0 0 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1 1 1]],
+   :n 2,
+   :vector [0 6 0 3 4 5 1 2],
+   :fg-class [0 0 1 3 4 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1 1 1]],
+   :n 2,
+   :vector [1 0 2 2 4 5 3 7],
+   :fg-class [0 0 1 3 4 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1 1 1 1]],
+   :n 2,
+   :vector [6 1 2 3 7 0 5 7],
+   :fg-class [0 0 2 3 4 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [3 1 1 1 1]],
+   :n 2,
+   :vector [0 1 5 2 7 3 6 7],
+   :fg-class [0 0 2 3 4 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 5 3 4 6 4 7],
+   :fg-class [0 0 1 2 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1 1]],
+   :n 2,
+   :vector [5 1 2 4 0 5 6 7],
+   :fg-class [0 0 1 2 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 2 5 4 3 4 7],
+   :fg-class [0 0 2 3 4 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [7 [2 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 5 5 4 3 6 7],
+   :fg-class [0 1 2 3 4 6 5 5]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 2 4 4 5 6 3],
+   :fg-class [0 0 1 3 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 2 3 4 5 7 3],
+   :fg-class [0 0 1 3 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1 1 1 1]],
+   :n 2,
+   :vector [6 1 2 3 4 5 6 7],
+   :fg-class [0 0 2 3 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [7 [1 1 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 0 3 4 5 6 7],
+   :fg-class [0 0 2 3 4 5 6 7]}
+  {:source :e8-stratified,
+   :stratum [8 [7 1]],
+   :n 2,
+   :vector [5 6 0 3 1 7 2 4],
+   :fg-class [0 2 3 4 5 6 7 1]}
+  {:source :e8-stratified,
+   :stratum [8 [7 1]],
+   :n 2,
+   :vector [6 0 1 2 4 7 5 3],
+   :fg-class [0 2 3 4 5 6 7 1]}
+  {:source :e8-stratified,
+   :stratum [8 [8]],
+   :n 2,
+   :vector [7 2 4 6 0 3 1 5],
+   :fg-class [1 2 3 4 5 6 7 0]}
+  {:source :e8-stratified,
+   :stratum [8 [8]],
+   :n 2,
+   :vector [6 0 3 1 7 4 5 2],
+   :fg-class [1 2 3 4 5 6 7 0]}
+  {:source :e8-stratified,
+   :stratum [8 [5 2 1]],
+   :n 2,
+   :vector [4 0 5 3 2 1 7 6],
+   :fg-class [0 2 1 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [8 [5 2 1]],
+   :n 2,
+   :vector [7 6 5 3 0 2 4 1],
+   :fg-class [0 2 1 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [8 [4 3 1]],
+   :n 2,
+   :vector [5 3 0 6 4 7 1 2],
+   :fg-class [0 2 3 1 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [4 3 1]],
+   :n 2,
+   :vector [2 0 3 1 6 4 5 7],
+   :fg-class [0 2 3 1 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [6 1 1]],
+   :n 2,
+   :vector [1 4 2 0 5 7 6 3],
+   :fg-class [0 1 3 4 5 6 7 2]}
+  {:source :e8-stratified,
+   :stratum [8 [6 1 1]],
+   :n 2,
+   :vector [1 5 6 2 4 3 0 7],
+   :fg-class [0 1 3 4 5 6 7 2]}
+  {:source :e8-stratified,
+   :stratum [8 [6 2]],
+   :n 2,
+   :vector [3 2 5 4 1 0 7 6],
+   :fg-class [1 0 3 4 5 6 7 2]}
+  {:source :e8-stratified,
+   :stratum [8 [6 2]],
+   :n 2,
+   :vector [4 7 0 6 1 2 3 5],
+   :fg-class [1 0 3 4 5 6 7 2]}
+  {:source :e8-stratified,
+   :stratum [8 [5 3]],
+   :n 2,
+   :vector [1 2 4 6 7 3 5 0],
+   :fg-class [1 2 0 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [8 [5 3]],
+   :n 2,
+   :vector [4 7 5 2 3 0 1 6],
+   :fg-class [1 2 0 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [8 [4 2 1 1]],
+   :n 2,
+   :vector [5 6 4 3 1 0 2 7],
+   :fg-class [0 1 3 2 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [4 2 1 1]],
+   :n 2,
+   :vector [0 1 4 6 5 7 3 2],
+   :fg-class [0 1 3 2 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [3 2 2 1]],
+   :n 2,
+   :vector [4 1 3 7 0 6 5 2],
+   :fg-class [0 2 1 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 2 2 1]],
+   :n 2,
+   :vector [7 2 1 5 0 3 6 4],
+   :fg-class [0 2 1 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [5 1 1 1]],
+   :n 2,
+   :vector [0 3 2 4 5 7 6 1],
+   :fg-class [0 1 2 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [8 [5 1 1 1]],
+   :n 2,
+   :vector [4 1 2 0 6 5 7 3],
+   :fg-class [0 1 2 4 5 6 7 3]}
+  {:source :e8-stratified,
+   :stratum [8 [4 4]],
+   :n 2,
+   :vector [6 4 5 1 7 0 2 3],
+   :fg-class [1 2 3 0 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [4 4]],
+   :n 2,
+   :vector [3 5 7 2 1 6 4 0],
+   :fg-class [1 2 3 0 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [4 2 2]],
+   :n 2,
+   :vector [7 5 0 6 2 1 3 4],
+   :fg-class [1 0 3 2 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [4 2 2]],
+   :n 2,
+   :vector [2 6 0 7 1 4 5 3],
+   :fg-class [1 0 3 2 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [3 2 1 1 1]],
+   :n 2,
+   :vector [0 5 2 4 7 1 6 3],
+   :fg-class [0 1 2 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 2 1 1 1]],
+   :n 2,
+   :vector [0 1 5 4 3 6 2 7],
+   :fg-class [0 1 2 4 3 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 3 1 1]],
+   :n 2,
+   :vector [0 1 4 5 7 6 3 2],
+   :fg-class [0 1 3 4 2 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 3 1 1]],
+   :n 2,
+   :vector [1 4 6 3 0 2 5 7],
+   :fg-class [0 1 3 4 2 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 3 2]],
+   :n 2,
+   :vector [4 7 5 1 0 6 2 3],
+   :fg-class [1 0 3 4 2 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 3 2]],
+   :n 2,
+   :vector [5 4 3 7 6 0 1 2],
+   :fg-class [1 0 3 4 2 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [4 1 1 1 1]],
+   :n 2,
+   :vector [7 0 1 3 4 5 6 2],
+   :fg-class [0 1 2 3 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [4 1 1 1 1]],
+   :n 2,
+   :vector [0 1 5 3 2 6 4 7],
+   :fg-class [0 1 2 3 5 6 7 4]}
+  {:source :e8-stratified,
+   :stratum [8 [2 2 2 1 1]],
+   :n 2,
+   :vector [6 1 4 5 2 3 0 7],
+   :fg-class [0 1 3 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [2 2 2 1 1]],
+   :n 2,
+   :vector [1 0 6 3 7 5 2 4],
+   :fg-class [0 1 3 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [2 2 1 1 1 1]],
+   :n 2,
+   :vector [0 1 4 7 2 5 6 3],
+   :fg-class [0 1 2 3 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [2 2 1 1 1 1]],
+   :n 2,
+   :vector [0 1 4 6 2 5 3 7],
+   :fg-class [0 1 2 3 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [3 1 1 1 1 1]],
+   :n 2,
+   :vector [3 1 2 5 4 0 6 7],
+   :fg-class [0 1 2 3 4 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [3 1 1 1 1 1]],
+   :n 2,
+   :vector [0 1 3 6 4 5 2 7],
+   :fg-class [0 1 2 3 4 6 7 5]}
+  {:source :e8-stratified,
+   :stratum [8 [2 2 2 2]],
+   :n 2,
+   :vector [5 6 4 7 2 0 1 3],
+   :fg-class [1 0 3 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [2 2 2 2]],
+   :n 2,
+   :vector [2 6 0 7 5 4 1 3],
+   :fg-class [1 0 3 2 5 4 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [2 1 1 1 1 1 1]],
+   :n 2,
+   :vector [5 1 2 3 4 0 6 7],
+   :fg-class [0 1 2 3 4 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [2 1 1 1 1 1 1]],
+   :n 2,
+   :vector [0 6 2 3 4 5 1 7],
+   :fg-class [0 1 2 3 4 5 7 6]}
+  {:source :e8-stratified,
+   :stratum [8 [1 1 1 1 1 1 1 1]],
+   :n 1,
+   :vector [0 1 2 3 4 5 6 7],
+   :fg-class [0 1 2 3 4 5 6 7]}
+  {:source :bug-class,
+   :gamma :id,
+   :vector [1 2 4 5 3 6 7 7],
+   :fg-class [0 0 1 2 3 4 5 6],
+   :stratum [7 [1]]}
+  {:source :bug-class,
+   :gamma :c,
+   :vector [0 0 1 4 2 3 5 6],
+   :fg-class [0 0 1 2 3 4 5 6],
+   :stratum [7 [1]]}
+  {:source :bug-class,
+   :gamma :m,
+   :vector [4 6 1 7 2 3 5 7],
+   :fg-class [0 0 1 2 3 4 5 6],
+   :stratum [7 [1]]}
+  {:source :bug-class,
+   :gamma :cm,
+   :vector [0 2 4 5 0 6 1 3],
+   :fg-class [0 0 1 2 3 4 5 6],
+   :stratum [7 [1]]}]}
