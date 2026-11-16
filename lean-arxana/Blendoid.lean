@@ -260,6 +260,321 @@ theorem single_never_kept {n : Nat} (σ τ : Fin n → Fin n)
   have := halt a₀ v₀ v₀ (by simp) (by simp [hfix])
   cases v₀ <;> simp at this
 
+/-! ### Defects (ams-claude-1: exotype results/s9-boundary-moves.txt, scripts/s9_defects.py)
+
+σ is a map on `Fin n` (injective, or a permutation where stated). A *defect* of R
+is a position k with `R k = R (σ k)`. The write `w σ s` sets `R (σ s) := ¬ R s`. -/
+
+section Defects
+
+/-- Sum over a list of a `Nat`-valued function. -/
+theorem lsum_le {β : Type} (l : List β) (f g : β → Nat) (h : ∀ k, f k ≤ g k) :
+    (l.map f).sum ≤ (l.map g).sum := by
+  induction l with
+  | nil => simp
+  | cons x xs ih => simp only [List.map_cons, List.sum_cons]; exact Nat.add_le_add (h x) ih
+
+theorem lsum_add {β : Type} (l : List β) (f g : β → Nat) :
+    (l.map (fun k => f k + g k)).sum = (l.map f).sum + (l.map g).sum := by
+  induction l with
+  | nil => simp
+  | cons x xs ih => simp only [List.map_cons, List.sum_cons, ih]; omega
+
+theorem lsum_eq_zero {β : Type} (l : List β) (f : β → Nat) :
+    (l.map f).sum = 0 ↔ ∀ x ∈ l, f x = 0 := by
+  induction l with
+  | nil => simp
+  | cons x xs ih => simp only [List.map_cons, List.sum_cons, List.mem_cons]; constructor
+                    · intro h y hy
+                      rcases hy with rfl | hy
+                      · omega
+                      · exact ih.1 (by omega) y hy
+                    · intro h
+                      have h1 := h x (Or.inl rfl)
+                      have h2 := ih.2 (fun y hy => h y (Or.inr hy))
+                      omega
+
+theorem lsum_zero {β : Type} [DecidableEq β] (l : List β) (a : β) (c : Nat) (ha : a ∉ l) :
+    (l.map (fun k => if k = a then c else 0)).sum = 0 :=
+  (lsum_eq_zero _ _).2 fun x hx => by
+    have : x ≠ a := fun h => ha (h ▸ hx)
+    simp [this]
+
+theorem lsum_single {β : Type} [DecidableEq β] (l : List β) (hl : l.Nodup) (a : β) (c : Nat)
+    (ha : a ∈ l) : (l.map (fun k => if k = a then c else 0)).sum = c := by
+  induction l with
+  | nil => simp at ha
+  | cons x xs ih =>
+    obtain ⟨hxn, hnd⟩ := List.nodup_cons.1 hl
+    by_cases hx : x = a
+    · subst hx
+      simp [lsum_zero xs x c hxn]
+    · have hxs : a ∈ xs := by
+        rcases List.mem_cons.1 ha with h | h
+        · exact absurd h.symm hx
+        · exact h
+      simp only [List.map_cons, List.sum_cons, if_neg hx, ih hnd hxs, Nat.zero_add]
+
+variable {n : Nat}
+
+/-- Sum over `Fin n`. -/
+def fsum (f : Fin n → Nat) : Nat := ((List.finRange n).map f).sum
+
+/-- Exchange: if `f` plus `c` at `s` is pointwise below `g` plus `d` at `t`, then
+`fsum f + c ≤ fsum g + d`. -/
+theorem fsum_exchange (f g : Fin n → Nat) (s t : Fin n) (c d : Nat)
+    (h : ∀ k, f k + (if k = s then c else 0) ≤ g k + (if k = t then d else 0)) :
+    fsum f + c ≤ fsum g + d := by
+  have h1 := lsum_le (List.finRange n) (fun k => f k + (if k = s then c else 0))
+    (fun k => g k + (if k = t then d else 0)) h
+  rw [lsum_add, lsum_add, lsum_single _ (nodup_finRange n) s c (List.mem_finRange s),
+    lsum_single _ (nodup_finRange n) t d (List.mem_finRange t)] at h1
+  exact h1
+
+theorem le_fsum (f : Fin n → Nat) (k : Fin n) : f k ≤ fsum f := by
+  have := fsum_exchange (fun _ => 0) f k k (f k) 0 (fun j => by
+    by_cases hj : j = k
+    · subst hj; simp
+    · simp [hj])
+  simp [fsum] at this ⊢
+  omega
+
+theorem fsum_eq_zero (f : Fin n → Nat) : fsum f = 0 ↔ ∀ k, f k = 0 := by
+  unfold fsum; rw [lsum_eq_zero]; simp [List.mem_finRange]
+
+/-- Defect indicator at k: bit k equals bit σ k. -/
+def dI (σ : Fin n → Fin n) (R : Fin n → Bool) (k : Fin n) : Nat :=
+  if R k = R (σ k) then 1 else 0
+
+/-- The defect count `#{k : R k = R (σ k)}`. -/
+def defects (σ : Fin n → Fin n) (R : Fin n → Bool) : Nat := fsum (dI σ R)
+
+/-- R alternates along σ: no defects anywhere. -/
+def Alternating (σ : Fin n → Fin n) (R : Fin n → Bool) : Prop := ∀ k, R (σ k) = !R k
+
+theorem dI_zero_iff (σ : Fin n → Fin n) (R : Fin n → Bool) (k : Fin n) :
+    dI σ R k = 0 ↔ R (σ k) = !R k := by
+  unfold dI; cases R k <;> cases R (σ k) <;> simp
+
+theorem defects_zero_iff (σ : Fin n → Fin n) (R : Fin n → Bool) :
+    defects σ R = 0 ↔ Alternating σ R := by
+  unfold defects Alternating; rw [fsum_eq_zero]; simp only [dI_zero_iff]
+
+/-- A write changes R iff it is applied at a defect. -/
+theorem w_eq_self_iff (σ : Fin n → Fin n) (s : Fin n) (R : Fin n → Bool) :
+    w σ s R = R ↔ R (σ s) = !R s := by
+  constructor
+  · intro h; have := congrFun h (σ s); simp only [w, if_pos rfl] at this
+    cases h1 : R s <;> cases h2 : R (σ s) <;> simp_all
+  · intro h; funext k; unfold w; split
+    · next hk => subst hk; exact h.symm
+    · rfl
+
+/-- Zero defects iff every write leaves R unchanged (R is a fixed point). -/
+theorem defects_zero_iff_fixed (σ : Fin n → Fin n) (R : Fin n → Bool) :
+    defects σ R = 0 ↔ ∀ s, w σ s R = R := by
+  rw [defects_zero_iff]; simp only [w_eq_self_iff]; rfl
+
+/-- Local picture: a write at a defect s with σ s ≠ s removes the defect at s and
+toggles the one at σ s (so it removes it, or moves the defect from s to σ s). -/
+theorem write_local (σ : Fin n → Fin n) (hinj : ∀ a b, σ a = σ b → a = b)
+    (s : Fin n) (R : Fin n → Bool) (hd : R s = R (σ s)) (hs : σ s ≠ s) :
+    dI σ (w σ s R) s = 0 ∧ dI σ (w σ s R) (σ s) = 1 - dI σ R (σ s) := by
+  have h2 : σ (σ s) ≠ σ s := fun h => hs (hinj _ _ h)
+  have h3 : s ≠ σ s := fun h => hs h.symm
+  refine ⟨?_, ?_⟩
+  · simp only [dI, w, if_neg h3, if_pos rfl]; cases R s <;> simp
+  · simp only [dI, w, if_neg h2, if_pos rfl]; rw [← hd]
+    cases R s <;> cases R (σ (σ s)) <;> simp
+
+/-- **1. Monotone.** A write never raises the defect count (σ injective). -/
+theorem defects_mono (σ : Fin n → Fin n) (hinj : ∀ a b, σ a = σ b → a = b)
+    (s : Fin n) (R : Fin n → Bool) : defects σ (w σ s R) ≤ defects σ R := by
+  -- away from s and σ s nothing changes
+  have hfar : ∀ k, k ≠ s → k ≠ σ s → dI σ (w σ s R) k = dI σ R k := by
+    intro k hks hkt
+    have : σ k ≠ σ s := fun h => hks (hinj _ _ h)
+    simp only [dI, w, if_neg hkt, if_neg this]
+  by_cases hd : R s = R (σ s)
+  · by_cases hs : σ s = s
+    · -- fixed point: dI is unchanged everywhere
+      have := fsum_exchange (dI σ (w σ s R)) (dI σ R) s s 0 0 (fun k => by
+        by_cases hk : k = s
+        · subst hk; simp [dI, hs]
+        · have hkt : k ≠ σ s := by rw [hs]; exact hk
+          simp [hfar k hk hkt])
+      exact Nat.le_of_add_le_add_right this
+    · obtain ⟨h1, h2⟩ := write_local σ hinj s R hd hs
+      have hds : dI σ R s = 1 := by simp [dI, hd]
+      have := fsum_exchange (dI σ (w σ s R)) (dI σ R) s (σ s) 1 1 (fun k => by
+        by_cases hk : k = s
+        · subst hk; simp [h1, hds, Ne.symm hs]
+        · by_cases hkt : k = σ s
+          · subst hkt; simp [hk, h2]; omega
+          · simp [hfar k hk hkt, hk, hkt])
+      exact Nat.le_of_add_le_add_right this
+  · -- not a defect: the write does nothing
+    have : w σ s R = R := (w_eq_self_iff σ s R).2 (by cases h : R s <;> simp_all)
+    rw [this]; exact Nat.le_refl _
+
+/-- Reachability by writes. -/
+inductive Reach (σ : Fin n → Fin n) : (Fin n → Bool) → (Fin n → Bool) → Prop
+  | refl (R : Fin n → Bool) : Reach σ R R
+  | step (s : Fin n) (R R' : Fin n → Bool) : Reach σ (w σ s R) R' → Reach σ R R'
+
+/-- 1'. Defects never rise along any write sequence. -/
+theorem defects_reach_mono (σ : Fin n → Fin n) (hinj : ∀ a b, σ a = σ b → a = b)
+    {R R' : Fin n → Bool} (h : Reach σ R R') : defects σ R' ≤ defects σ R := by
+  induction h with
+  | refl => exact Nat.le_refl _
+  | step s R R' _ ih => exact Nat.le_trans ih (defects_mono σ hinj s R)
+
+/-- **2 (connection to Theorem C).** For a permutation, zero defects iff the point
+subcube `{R}` is kept. -/
+theorem defects_zero_iff_kept (σ τ : Fin n → Fin n) (hστ : ∀ a, σ (τ a) = a)
+    (hτσ : ∀ a, τ (σ a) = a) (R : Fin n → Bool) :
+    defects σ R = 0 ↔ Keeps σ (fun k => some (R k)) := by
+  rw [defects_zero_iff, theoremC σ τ hστ hτσ]
+  constructor
+  · intro h; refine ⟨fun _ => rfl, ?_⟩
+    intro a u v hu hv; simp at hu hv; subst hu; subst hv; exact h a
+  · rintro ⟨_, h⟩ k; exact h k (R k) (R (σ k)) rfl rfl
+
+/-- Mismatch count against a colouring c. -/
+def mis (c R : Fin n → Bool) : Nat := fsum (fun k => if R k = c k then 0 else 1)
+
+/-- **2, ⇐.** If some colouring alternates along σ (σ a permutation), every R reaches
+a rule with zero defects. -/
+theorem reach_zero_of_alt (σ τ : Fin n → Fin n) (_hστ : ∀ a, σ (τ a) = a)
+    (hτσ : ∀ a, τ (σ a) = a) (c : Fin n → Bool) (hc : Alternating σ c) :
+    ∀ R, ∃ R', Reach σ R R' ∧ defects σ R' = 0 := by
+  have hinj : ∀ a b, σ a = σ b → a = b := fun a b h => by
+    have := congrArg τ h; simpa [hτσ] using this
+  suffices H : ∀ m R, mis c R ≤ m → ∃ R', Reach σ R R' ∧ defects σ R' = 0 from
+    fun R => H _ R (Nat.le_refl _)
+  intro m
+  induction m with
+  | zero => ?_
+  | succ m ih => ?_
+  all_goals
+    intro R hm
+    by_cases halt : Alternating σ R
+    · exact ⟨R, Reach.refl R, (defects_zero_iff σ R).2 halt⟩
+    -- find s agreeing with c whose successor disagrees
+    have hex : ∃ s, R s = c s ∧ R (σ s) ≠ c (σ s) := by
+      refine Classical.byContradiction fun hno => halt ?_
+      have hfwd : ∀ a, R a = c a → R (σ a) = c (σ a) := fun a ha =>
+        Classical.byContradiction fun hne => hno ⟨a, ha, hne⟩
+      have hback := onto_of_into σ hinj (fun a => R a = c a) hfwd
+      intro k
+      by_cases hk : R k = c k
+      · rw [hfwd k hk, hc k, hk]
+      · have hk' : R (σ k) ≠ c (σ k) := fun h => by
+          obtain ⟨b', hb, hσb⟩ := hback (σ k) h
+          rw [hinj _ _ hσb] at hb; exact hk hb
+        have e1 : R k = !c k := by cases h1 : R k <;> cases h2 : c k <;> simp_all
+        have e2 : R (σ k) = !c (σ k) := by
+          cases h1 : R (σ k) <;> cases h2 : c (σ k) <;> simp_all
+        rw [e2, hc k, e1]
+    obtain ⟨s, hs1, hs2⟩ := hex
+    have hσs : σ s ≠ s := fun h => hs2 (by rw [h]; exact hs1)
+    -- the write at s fixes the mismatch at σ s and touches nothing else
+    have hdec : mis c (w σ s R) + 1 ≤ mis c R + 0 := by
+      apply fsum_exchange _ _ (σ s) (σ s) 1 0
+      intro k
+      by_cases hk : k = σ s
+      · subst hk
+        simp only [w, if_pos rfl, hs1, ← hc s]
+        simp [hs2]
+      · simp [w, hk]
+    first
+    | omega
+    | obtain ⟨R', hr, hz⟩ := ih (w σ s R) (by omega)
+      exact ⟨R', Reach.step s R R' hr, hz⟩
+
+/-- **2.** For a permutation σ: every R reaches zero defects iff some colouring
+alternates along σ. -/
+theorem reach_zero_iff (σ τ : Fin n → Fin n) (hστ : ∀ a, σ (τ a) = a)
+    (hτσ : ∀ a, τ (σ a) = a) :
+    (∀ R, ∃ R', Reach σ R R' ∧ defects σ R' = 0) ↔ ∃ c, Alternating σ c := by
+  constructor
+  · intro h
+    obtain ⟨R', _, hz⟩ := h (fun _ => false)
+    exact ⟨R', (defects_zero_iff σ R').1 hz⟩
+  · rintro ⟨c, hc⟩; exact reach_zero_of_alt σ τ hστ hτσ c hc
+
+/-- Iterate: `it σ m k = σ^m k`. -/
+def it (σ : Fin n → Fin n) : Nat → Fin n → Fin n
+  | 0, k => k
+  | m + 1, k => σ (it σ m k)
+
+/-- "Every cycle of σ is even", read as: every return time is even. (Return times of
+k are the multiples of its cycle length, so this is the same as every cycle
+length being even; that equivalence is not proved here.) -/
+def EvenCycles (σ : Fin n → Fin n) : Prop := ∀ k m, it σ m k = k → m % 2 = 0
+
+/-- Along an alternating R, `R (it σ j k)` flips with the parity of j. -/
+theorem alt_iterate (σ : Fin n → Fin n) (R : Fin n → Bool) (k : Fin n) :
+    ∀ m, (∀ j, j < m → R (σ (it σ j k)) = !R (it σ j k)) →
+      R (it σ m k) = if m % 2 = 0 then R k else !R k := by
+  intro m
+  induction m with
+  | zero => intro _; simp [it]
+  | succ m ih =>
+    intro h
+    rw [it, h m (Nat.lt_succ_self m),
+      ih (fun j hj => h j (Nat.lt_succ_of_lt hj))]
+    rcases Nat.mod_two_eq_zero_or_one m with hm | hm
+    · have : (m + 1) % 2 = 1 := by omega
+      simp [hm, this]
+    · have : (m + 1) % 2 = 0 := by omega
+      simp [hm, this]
+
+/-- **3.** On a cycle of odd return time, every R has a defect. So the defect count
+never reaches zero, along any write sequence. -/
+theorem odd_cycle_defect (σ : Fin n → Fin n) (R : Fin n → Bool) (k : Fin n) (m : Nat)
+    (hret : it σ m k = k) (hodd : m % 2 = 1) :
+    ∃ j, j < m ∧ dI σ R (it σ j k) = 1 := by
+  refine Classical.byContradiction fun hno => ?_
+  have hall : ∀ j, j < m → R (σ (it σ j k)) = !R (it σ j k) := by
+    intro j hj
+    have : dI σ R (it σ j k) ≠ 1 := fun h => hno ⟨j, hj, h⟩
+    have h0 : dI σ R (it σ j k) = 0 := by unfold dI at *; split <;> simp_all
+    exact (dI_zero_iff σ R _).1 h0
+  have := alt_iterate σ R k m hall
+  rw [hret, if_neg (by omega)] at this
+  cases h : R k <;> simp [h] at this
+
+/-- 2, ⇒ half of the parity reading: an alternating colouring forces every cycle
+even. -/
+theorem evenCycles_of_alt (σ : Fin n → Fin n) (c : Fin n → Bool) (hc : Alternating σ c) :
+    EvenCycles σ := by
+  intro k m hret
+  refine Classical.byContradiction fun hne => ?_
+  obtain ⟨j, _, hj⟩ := odd_cycle_defect σ c k m hret (by omega)
+  have := (dI_zero_iff σ c (it σ j k)).2 (hc _)
+  omega
+
+/-- **3, consequences.** With an odd cycle, every R has at least one defect, and so
+some write changes it: the rule never stops changing. -/
+theorem odd_cycle_never_still (σ : Fin n → Fin n) (k : Fin n) (m : Nat)
+    (hret : it σ m k = k) (hodd : m % 2 = 1) (R : Fin n → Bool) :
+    1 ≤ defects σ R ∧ ∃ s, w σ s R ≠ R := by
+  obtain ⟨j, _, hj⟩ := odd_cycle_defect σ R k m hret hodd
+  refine ⟨hj ▸ le_fsum _ _, it σ j k, fun h => ?_⟩
+  have := (w_eq_self_iff σ _ R).1 h
+  have h0 := (dI_zero_iff σ R _).2 this
+  omega
+
+/-- **STATED, NOT PROVED.** The converse parity bridge: if every cycle is even, some
+colouring alternates along σ. With `reach_zero_iff` and `evenCycles_of_alt` this
+would give the bell's form "zero reachable from every R iff every cycle is even". -/
+def EvenCyclesAlternate : Prop :=
+  ∀ (n : Nat) (σ τ : Fin n → Fin n), (∀ a, σ (τ a) = a) → (∀ a, τ (σ a) = a) →
+    EvenCycles σ → ∃ c, Alternating σ c
+
+end Defects
+
 /-! ## 5. Operators on the median object -/
 
 /-- The write operator commutes with bitwise majority, on every rule. -/
@@ -618,6 +933,25 @@ PROVED (structural; axioms at most propext, Quot.sound, Classical.choice):
 * `theoremC` (for permutations of Fin n, any n): kept iff σ maps D onto D and
   swaps the 0-set and the 1-set of v. Uses a pigeonhole lemma
   (`onto_of_into`). `single_never_kept`: single-bit subcubes are never kept.
+* Defects (§4, after Theorem C; found by ams-claude-1, exotype
+  results/s9-boundary-moves.txt, checked there over 387 operators and 792,576
+  writes). defects_σ(R) = #{k : R k = R (σ k)}.
+  - `defects_mono` (σ injective): a write never raises the count;
+    `defects_reach_mono`: nor does any write sequence. `write_local`: a write at
+    a defect s with σ s ≠ s removes the defect at s and toggles the one at σ s.
+  - `defects_zero_iff_fixed`: zero defects iff every write leaves R unchanged;
+    `w_eq_self_iff`: a write changes R iff it is applied at a defect.
+  - `defects_zero_iff_kept` (σ a permutation, via `theoremC`): zero defects iff
+    the point subcube {R} is kept; so zero-defect rules are kept rules.
+  - `reach_zero_iff` (σ a permutation): every R reaches zero defects by writes
+    iff some colouring alternates along σ. The ⇐ direction is a descent on the
+    mismatch count against the colouring, using the pigeonhole `onto_of_into`.
+  - `evenCycles_of_alt`: an alternating colouring forces every return time to be
+    even (`EvenCycles`).
+  - `odd_cycle_defect`: if σ^m k = k with m odd, then EVERY R has a defect at
+    some σ^j k, j < m. So each odd cycle holds a defect in every state, hence
+    for ever. `odd_cycle_never_still`: with an odd cycle, defects ≥ 1 and some
+    write changes R, in every state.
 * `w_hom_on_M`: every operator that keeps M is a b-homomorphism on M.
 * `w_not_hom_full` / `operators_not_structure_maps`: off M this fails, already
   on the full cube. So DESIGN §5's "operators are structure maps" is FALSE for
@@ -642,6 +976,13 @@ STATED ONLY (a `def … : Prop`, not proved):
 * `CountFormula`: keepable iff balanced, with (k!)² · (8 − 2k)! keepers.
 * `FractalBlendoid`: the blendoid-level isomorphism (only the object-level
   bijection and the operation transport are proved).
+* `EvenCyclesAlternate`: every cycle even ⇒ some colouring alternates. With
+  `reach_zero_iff` and `evenCycles_of_alt` this would give "zero reachable
+  from every R iff every cycle is even" exactly as in the bell; as it stands
+  the ⇐ direction is proved only from an alternating colouring. Also not
+  proved: that `EvenCycles` (all return times even) equals "all cycle lengths
+  even", and the count form "at least one defect PER odd cycle" summed over
+  distinct odd cycles (proved: each odd cycle contains a defect in every state).
 * `SameGame`: same-game closure, as a predicate; no κ other than a projection is
   shown to satisfy it. Classifying the κ on M is NOT done.
 
