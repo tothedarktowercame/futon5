@@ -187,6 +187,40 @@ noncomputable def consume (cs : List Circus.Character) (snap : Snapshot)
           ((f.relations.filter (·.2 == .focus)).map (fun p => (p.1, 1)))))⟩
       else ⟨none, some .evidenceChanged, markFocus v .sourceChangedSincePass⟩
 
+/-- Published fixed-arity links must agree exactly with the header. The supplied
+link list is complete for this header: every stored houFocusRelation addressing
+it occurs once, with an item endpoint and the corresponding relation payload.
+The header is not item-bearing; each link is. -/
+structure FocusLink where
+  record : GCCRecord
+  item : Item
+  relation : Relation
+  deriving DecidableEq, Repr
+
+def HeaderLinkAgreement (g : GCC) (f : FocusRecord) (links : List FocusLink) : Prop :=
+  f.record ∈ g.records ∧ f.record.kind = .houFocus ∧
+  (links.map (·.record)).Nodup ∧
+  (links.map (fun l => (l.item.id, l.relation))).Perm f.relations ∧
+  (∀ l ∈ links, l.record ∈ g.records ∧ l.record.kind = .houFocusRelation ∧
+    l.item ∈ g.items ∧ g.endpoint l.record .item = some (.item l.item) ∧
+    g.endpoint l.record .subject = some (.record f.record)) ∧
+  (∀ r ∈ g.records, r.kind = .houFocusRelation →
+    g.endpoint r .subject = some (.record f.record) → ∃ l ∈ links, l.record = r)
+
+/-- Storage readers validate the complete link set before the existing pin
+and freshness guard. consume still models the pre-publication boundary. -/
+noncomputable def consumePublished (cs : List Circus.Character) (snap : Snapshot)
+    (v : ViewState) (f : FocusRecord) (links : List FocusLink) : Consumer := by
+  classical
+  exact if HeaderLinkAgreement snap.gcc f links then consume cs snap v (.written f)
+    else consume cs snap v (.failed .invalidEvidence)
+
+theorem disagreeing_links_refused (cs : List Circus.Character) (snap : Snapshot)
+    (v : ViewState) (f : FocusRecord) (links : List FocusLink)
+    (bad : ¬HeaderLinkAgreement snap.gcc f links) :
+    (consumePublished cs snap v f links).active = none := by
+  simp [consumePublished, bad, consume]
+
 private theorem pin_complete (snap : Snapshot) (rs : List GCCRecord)
     (valid : ∀ r ∈ rs, r ∈ snap.gcc.records ∧ ∃ d, snap.digest r = some d) :
     (pin snap rs).map Prod.fst = rs ∧
@@ -397,6 +431,65 @@ theorem monkey_failure_is_typed (cs : List Circus.Character) (snap : Snapshot)
     (v : ViewState) (why : Failure) :
     FailureVisible why (consume cs snap v (.failed why)) := by
   simp [FailureVisible, consume, markFocus, render]
+
+/-! The published header/link embedding preserves LoopBuilt. -/
+namespace PublishedExample
+private def a : Item := ⟨901, .mission, "M-toy-a", true⟩
+private def b : Item := ⟨902, .mission, "M-toy-b", true⟩
+private def field : GCCRecord := ⟨1, .turnText, some 7⟩
+private def header : GCCRecord := ⟨2, .houFocus, some 7⟩
+private def ma : GCCRecord := ⟨3, .mention, some 7⟩
+private def mb : GCCRecord := ⟨4, .mention, some 7⟩
+private def la : GCCRecord := ⟨5, .houFocusRelation, some 7⟩
+private def lb : GCCRecord := ⟨6, .houFocusRelation, some 7⟩
+private def graph : GCC :=
+  ⟨[a,b], [field,header,ma,mb,la,lb], [], [], fun r role =>
+    match role with
+    | .item => if r.id == 3 || r.id == 5 then some (.item a)
+        else if r.id == 4 || r.id == 6 then some (.item b) else none
+    | .subject => if r.id == 2 || r.id == 3 || r.id == 4 then some (.record field)
+        else if r.id == 5 || r.id == 6 then some (.record header) else none
+    | _ => none, []⟩
+private theorem ab : graph.Reach 4 (.item a) (.item b) := by
+  exact .step 3 _ (.record ma) _ (by unfold GCC.adj; decide)
+    (.step 2 _ (.record field) _ (by unfold GCC.adj; decide)
+      (.step 1 _ (.record mb) _ (by unfold GCC.adj; decide)
+        (.step 0 _ (.item b) _ (by unfold GCC.adj; decide) (.refl _))))
+private theorem ba : graph.Reach 4 (.item b) (.item a) := by
+  exact .step 3 _ (.record mb) _ (by unfold GCC.adj; decide)
+    (.step 2 _ (.record field) _ (by unfold GCC.adj; decide)
+      (.step 1 _ (.record ma) _ (by unfold GCC.adj; decide)
+        (.step 0 _ (.item a) _ (by unfold GCC.adj; decide) (.refl _))))
+private theorem bounds : ∀ x ∈ [a,b], ∀ y ∈ [a,b], graph.Reach 4 (.item x) (.item y) := by
+  intro x hx y hy
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hx hy
+  rcases hx with rfl | rfl <;> rcases hy with rfl | rfl
+  · exact .more _ _ _ (.more _ _ _ (.more _ _ _ (.more _ _ _ (.refl _))))
+  · exact ab
+  · exact ba
+  · exact .more _ _ _ (.more _ _ _ (.more _ _ _ (.more _ _ _ (.refl _))))
+example : turnItems graph 7 [] = [a,b] := by decide
+example : LoopBuilt graph (turnItems graph 7 []) 4 := by
+  change LoopBuilt graph [a,b] 4
+  refine ⟨?_, ?_, ⟨?_, ?_⟩, bounds⟩
+  · intro r hr hi
+    simp only [graph, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl | rfl | rfl | rfl | rfl
+    · cases hi
+    · cases hi
+    · exact ⟨a, by simp [graph], by decide⟩
+    · exact ⟨b, by simp [graph], by decide⟩
+    · exact ⟨a, by simp [graph], by decide⟩
+    · exact ⟨b, by simp [graph], by decide⟩
+  · intro r hr
+    simp only [graph, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl | rfl | rfl | rfl | rfl <;>
+      refine ⟨by decide, ?_⟩ <;> intro role n hn <;> cases role <;>
+      simp [graph, field, header, ma, mb, la, lb] at hn <;> subst n <;>
+      simp [EndpointFits, GCC.Mem, GCC.memBool, graph, field, header, ma, mb, la, lb]
+  · intro x hx; exact hx
+  · intro x hx y hy; exact ⟨4, bounds x hx y hy⟩
+end PublishedExample
 
 /-! ## TEETH: bad producers fail the consumer contracts -/
 namespace Teeth

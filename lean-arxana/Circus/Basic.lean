@@ -59,7 +59,7 @@ deriving DecidableEq, Repr
 /-- The kinds of record that change hands. -/
 inductive RecordKind
   | luCandidates | xiangReading | dogRecall | dogUse
-  | maAlignment | maTension | houFocus
+  | maAlignment | maTension | houFocus | houFocusRelation
   | docChange | giraffeReading | activation | pass | ordering | ranking
   | benefitLine | serves | needs | mention | introduction | attestation | turnText
 deriving DecidableEq, Repr
@@ -229,9 +229,10 @@ def Connected (g : GCC) (S : List Item) : Prop :=
     ∀ a ∈ S, ∀ b ∈ S, ∃ n, g.Reach n (.item a) (.item b)
 
 /-- Kinds whose records are anchored to an item. Introduction and attestation
-are deliberately excluded: their endpoints may be entities or records only. -/
+and focus headers are deliberately excluded: their endpoints may be entities
+or records only. Focus relation links carry the item endpoint. -/
 def ItemReferencing : RecordKind → Prop
-  | .mention | .serves | .giraffeReading | .docChange | .activation | .houFocus => True
+  | .mention | .serves | .giraffeReading | .docChange | .activation | .houFocusRelation => True
   | _ => False
 
 /-! Restated 2026-11-15 (claude-1 advice)
