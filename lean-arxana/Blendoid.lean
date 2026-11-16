@@ -919,6 +919,40 @@ theorem maj3_not_sameGame : ¬ SameGame 3 maj3 M := by
   have := congrFun (h cellsL cellsC cellsR hL hC hR) 2
   revert this; decide
 
+/-! ## 10. Pinned walls (exotype results/s18-pinned-walls.txt, DESIGN-general §8.1)
+
+Scores are rationals, lower is better. A cell with operator A in bin b scores
+`hold = T A b`; adopting the neighbour's operator B scores `T B b − κ · X A B`.
+A wall between an A-cell in bin b and a B-cell in bin b' is *pinned* iff on both
+sides holding is no worse than adopting. -/
+
+section Pinned
+variable {Op Bin : Type}
+
+/-- The wall is pinned: hold ≤ adopt on both sides. -/
+def Pinned (T : Op → Bin → Rat) (X : Op → Op → Rat) (κ : Rat) (A B : Op) (b b' : Bin) : Prop :=
+  T A b ≤ T B b - κ * X A B ∧ T B b' ≤ T A b' - κ * X B A
+
+/-- **S18 (2), proved.** A pinned wall (X symmetric) has total score gap at least
+2κX across the two bins. -/
+theorem pinned_gap (T : Op → Bin → Rat) (X : Op → Op → Rat) (κ : Rat) (A B : Op)
+    (b b' : Bin) (hsym : X B A = X A B) (h : Pinned T X κ A B b b') :
+    2 * (κ * X A B) ≤ (T B b - T A b) + (T A b' - T B b') := by
+  obtain ⟨h1, h2⟩ := h
+  rw [hsym] at h2
+  grind
+
+/-- **S18 (1), proved.** In the same bin no wall is pinned, for any T, any κ > 0
+and any A, B with X A B > 0 (X symmetric). -/
+theorem not_pinned_same_bin (T : Op → Bin → Rat) (X : Op → Op → Rat) (κ : Rat) (A B : Op)
+    (b : Bin) (hsym : X B A = X A B) (hκ : 0 < κ) (hX : 0 < X A B) :
+    ¬ Pinned T X κ A B b b := by
+  intro h
+  have hg := pinned_gap T X κ A B b b hsym h
+  have hp : 0 < κ * X A B := Rat.mul_pos hκ hX
+  grind
+end Pinned
+
 /-! ## Ledger: what is proved, what is computed, what is only stated
 
 PROVED (structural; axioms at most propext, Quot.sound, Classical.choice):
@@ -963,6 +997,11 @@ PROVED (structural; axioms at most propext, Quot.sound, Classical.choice):
   `restr_ext`. Table blends are closed under restriction to subcubes.
 * Same game: `sameGame_proj` (sanity); `maj3_not_sameGame` (bitwise majority
   over 3 cells is not a same-game coarse-graining on M).
+
+* Pinned walls (§10, S18): `pinned_gap`: a pinned wall has
+  (T(B,b) − T(A,b)) + (T(A,b') − T(B,b')) ≥ 2κX (X symmetric; any T, κ, X);
+  `not_pinned_same_bin`: with b = b', κ > 0 and X(A,B) > 0 no wall is pinned.
+  Over `Rat`, by `grind`. Not formalised: the S18 data themselves.
 
 COMPUTED (`native_decide`, which trusts the compiler):
 * `S8_length`, `S8_perms`, `S8_distinct`: the enumeration has 40320 distinct
