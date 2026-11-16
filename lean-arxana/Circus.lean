@@ -10,3 +10,4 @@ import Circus.Supersession
 import Circus.Monkey
 import Circus.LiveChain
 import Circus.Reproduction
+import Circus.Cascade
