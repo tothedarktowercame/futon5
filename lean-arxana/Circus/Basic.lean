@@ -61,7 +61,7 @@ inductive RecordKind
   | luCandidates | xiangReading | dogRecall | dogUse
   | maAlignment | maTension | houFocus
   | docChange | giraffeReading | activation | pass | ordering | ranking
-  | benefitLine | serves | needs | mention | introduction | attestation
+  | benefitLine | serves | needs | mention | introduction | attestation | turnText
 deriving DecidableEq, Repr
 
 /-- A handoff: WRITER produces KIND at EVENT (or outside the turn chain),

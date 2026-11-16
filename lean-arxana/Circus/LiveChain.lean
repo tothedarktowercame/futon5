@@ -28,14 +28,15 @@ structure Bridge where
   decode : Slot → String → Option Decoded
   recordId : LateWrites.Key → Nat
 /-- Named, independently ingested scope inventory. Record endpoints can name
-accepted-reading records in this inventory; other record references are unknown
-until the corpus supplies them. The bridge never manufactures inventory nodes. -/
+accepted-reading records or separately inventoried turnText records; other
+record references are unknown until the corpus supplies them. The bridge never manufactures inventory nodes. -/
 structure Corpus where
   generation : Nat
   items : List Item
   entities : List EntityId
   benefitLines : List Nat
   acceptedReadings : List AcceptedReading
+  turnTexts : List GCCRecord := []
   deriving DecidableEq, Repr
 inductive BridgeAbsence
   | malformedPayload (key : LateWrites.Key)
@@ -47,7 +48,8 @@ def knownNode (c : Corpus) : GNode → Bool
   | .item i => c.items.contains i
   | .entity i => c.entities.contains i
   | .benefitLine i => c.benefitLines.contains i
-  | .record r => c.acceptedReadings.any (·.record == r)
+  | .record r => c.acceptedReadings.any (·.record == r) ||
+      (r.kind == .turnText && c.turnTexts.contains r)
 def fits : EndpointRole → GNode → Bool
   | .item, .item _ | .entity, .entity _ | .benefitLine, .benefitLine _ => true
   | .reading, .record r => r.kind == .giraffeReading
@@ -620,13 +622,13 @@ claude-1, 2026-11-15: corpus generation 1102dde4, futon1b watermark 3733,
 convention A (benefit line is its own node), diameter 18 Reach hops over the
 largest component (463 of 656 items); 184 isolated items require typed noPath.
 These measurements are recorded evidence, not a proof about today's graph.
-CAVEAT (claude-13 / codex-13, 2026-11-15): measure.py:160-164 joined a
-multi-item turn through ONE hub node (item-hub-item = 2 hops). This model has
-no such hub: an endpoint is a partial function per role (Basic.lean:162-186),
-so separate item-only mentions give noPath between the turn's items, and a
-shared entity endpoint would give 4 hops. The 18 is therefore not yet a
-measurement of this model; re-measuring needs the mention endpoint contract
-and a saved inventory+readings snapshot (~/notes/codex-13/nav-remeasure/). -/
+Embedding (2026-11-16): each exact turn field is a turnText record, named
+by its evidence ref id. Mention v2 decodes to an item endpoint plus a subject
+endpoint naming that turnText. The turnText is independently inventoried in
+Corpus.turnTexts and delivered as a usable head; it is never manufactured by
+a mention. Two co-mentioned items are four Reach hops apart. Operator and
+reply fields have distinct turnText records and no implicit join. The historic
+18-hop measurement above remains a different encoding, not a bound here. -/
 theorem chain_navigation_bound (g : GCC) (turn : TurnId) (focus : List Item) (d : Nat)
     (measured : LoopBuilt g (turnItems g turn focus) d)
     (a b : Item) (ha : a ∈ turnItems g turn focus) (hb : b ∈ turnItems g turn focus) :
@@ -634,11 +636,47 @@ theorem chain_navigation_bound (g : GCC) (turn : TurnId) (focus : List Item) (d 
   exact gcc_turn_navigable_at_most_d g turn focus d measured a b ha hb
 
 
+/-- The published mention-v2 embedding: field-reference identity names the
+turnText record; its content digest belongs in the snapshot's evidence pin.
+This decoder helper does not mint the field record or assert its presence. -/
+def decodeTurnMention (item : Item) (field : GCCRecord) : Option Decoded :=
+  if field.kind == .turnText then
+    some ⟨.mention, [(.item, .item item), (.subject, .record field)]⟩
+  else none
+
+namespace TurnTextExample
+private def a : Item := ⟨101, .mission, "M-toy-a", true⟩
+private def b : Item := ⟨102, .mission, "M-toy-b", true⟩
+private def field : GCCRecord := ⟨1, .turnText, some 7⟩
+private def ma : GCCRecord := ⟨2, .mention, some 7⟩
+private def mb : GCCRecord := ⟨3, .mention, some 7⟩
+private def decoder : Slot → String → Option Decoded
+  | .known .turnText, _ => some ⟨.turnText, []⟩
+  | .known .mention, "a" => decodeTurnMention a field
+  | .known .mention, "b" => decodeTurnMention b field
+  | _, _ => none
+private def bridge : Bridge := ⟨decoder, fun k =>
+  if k.slot == .known .turnText then 1 else if k.animal == .xiang then 2 else 3⟩
+-- Distinct source keys are required, as documented at this module's head.
+private def deliveries : List Delivery :=
+  [⟨⟨⟨7, .operator, .known .turnText⟩, 1, .success "text"⟩, ⟨1, 1, "toy"⟩⟩,
+   ⟨⟨⟨7, .xiang, .known .mention⟩, 1, .success "a"⟩, ⟨1, 1, "toy"⟩⟩,
+   ⟨⟨⟨7, .operator, .known .mention⟩, 1, .success "b"⟩, ⟨1, 1, "toy"⟩⟩]
+private def corpus : Corpus := ⟨1, [a, b], [], [], [], [field]⟩
+private def graph := (bridgeGCC bridge corpus ⟨[], 1⟩ deliveries).1
+example : graph.Reach 4 (.item a) (.item b) := by
+  exact .step 3 _ (.record ma) _ (by unfold GCC.adj; decide)
+    (.step 2 _ (.record field) _ (by unfold GCC.adj; decide)
+      (.step 1 _ (.record mb) _ (by unfold GCC.adj; decide)
+        (.step 0 _ (.item b) _ (by unfold GCC.adj; decide) (.refl _))))
+example : (bridgeGCC bridge corpus ⟨[], 1⟩ deliveries).2 = [] := by decide
+end TurnTextExample
+
 /-! ## TEETH: invented defective bridges and consumers -/
 namespace Teeth
 private def a : Item := ⟨1, .mission, "M-example-a", true⟩
 private def b : Item := ⟨2, .ticket, "T-example-b", true⟩
-private def corpus : Corpus := ⟨1, [a, b], [], [], []⟩
+private def corpus : Corpus := ⟨1, [a, b], [], [], [], []⟩
 private def source : SourceRecord := ⟨⟨7, .xiang, .known .mention⟩, 1, .success "example"⟩
 private def ds : List Delivery := [⟨source, ⟨1, 1, "example-job"⟩⟩]
 private def basis : ComparisonBasis := ⟨[], 1⟩
