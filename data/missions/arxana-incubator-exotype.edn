@@ -1,0 +1,188 @@
+;; M-arxana-incubator — wiring diagram (DERIVE, claude-5, 2026-11-17).
+;;
+;; Mission: futon4/holes/missions/M-arxana-incubator.md
+;; Types:   futon4/holes/labs/M-arxana-incubator/DERIVE-1-types.md
+;;          (E1 source, E2 manifestation revision, E3 content, E4 projection,
+;;           E5 evaluation, E6 typed absence; R1 span ref, R2 edit, R3 supersede v2,
+;;           R4 link, R5 requirement, R6 nip, R7 alignment)
+;;
+;; The loop: the landscape and the manifestations are registered as sources
+;; (lazily, on first reference); Nipper proposes spans for failing requirements;
+;; Joe accepts nips and writes content and edits; a projection composes spans,
+;; content and scoped edits; evaluators check requirements against projections
+;; and pinned manifestations; the requirement list (met / failing / stale /
+;; unknown) goes back to Joe and to Nipper. Renderers produce the existing views,
+;; the Mozilla form text, and alignment margin notes.
+;;
+;; TIMESCALE:
+;;   :social  — per turn / per keystroke-commit: registration, local evaluation,
+;;              the requirement list (DERIVE-1 I5 locality: computable from a
+;;              record and its direct endpoints at write time).
+;;   :medium  — an editing session: Nipper, editing, projection, rendering,
+;;              global evaluation (retrieval, whole-projection checks).
+;;   :slow    — manifestations move by commits (paper, Lean, Clojure, results).
+;;   :glacial — the forms and schemas requirements come from (Mozilla questions,
+;;              LOI fields and limits, plop-alignment-v1). Constraint input.
+;;
+;; INVARIANT ANALYSIS:
+;;   I3 (timescale ordering): nothing writes to I-forms (the only constraint).
+;;   I4 (exogeneity): requirements are read from I-forms, never written back by
+;;      the loop; a requirement's criterion changes only from outside (Joe, or a
+;;      new form), so the loop cannot satisfy a requirement by weakening it.
+;;   I6 (closure): no single component carries every output. A-project feeds the
+;;      rendered outputs; the requirement list and typed absences have paths that
+;;      do not pass through it.
+
+{:mission/id :arxana-incubator
+ :mission/state :greenfield
+
+ :ports
+ {:input
+  [{:id :I-landscape :name "Evidence Landscape (operator turns)"
+    :type :xtdb-entity
+    :source "futon1b evidence (:evidence/id) + 象 records (created_at); 23,146 turns 2026-02-18..11-11 and after"
+    :timescale :social}
+
+   {:id :I-manifestations :name "Manifestations at commits"
+    :type :artifact-revision
+    :source "paper (p4ng/plop-2026), Lean, Clojure, result files; arxana_revisions pinned to 40-hex commits"
+    :timescale :slow}
+
+   {:id :I-operator :name "Joe (and later Murch, Rob): acceptances, typing, edits"
+    :type :operator-input
+    :source "futon4a Emacs views, Mojira"
+    :timescale :social}
+
+   {:id :I-forms :name "Forms and schemas requirements come from"
+    :type :config
+    :source "~/mozilla-incubator.txt (150-word fields, Joe 2026-11-17); futon7/holes/mozilla/LOI-draft-1.md; p4ng plop-alignment-v1"
+    :timescale :glacial
+    :constraint true}]
+
+  :output
+  [{:id :O-views :name "Views (variants JSON for Emacs and Mojira vd)"
+    :type :rendered-text
+    :consumer "futon4a-variants-diff / -edition; Mojira vd"
+    :spec-ref "DERIVE-1-types.md §6 Views"
+    :timescale :medium}
+
+   {:id :O-form-text :name "Form text (one field per answer, within its limit)"
+    :type :rendered-text
+    :consumer "Mozilla web forms (Joe submits)"
+    :spec-ref "WORKPACKAGES.md WP2; DERIVE-1 D7"
+    :timescale :medium}
+
+   {:id :O-alignment-notes :name "Alignment margin notes"
+    :type :rendered-text
+    :consumer "PLoP 2026 paper HTML (as inject-plop-alignment.py does today)"
+    :spec-ref "DERIVE-1-types.md R7; mission IDENTIFY later test case"
+    :timescale :medium}
+
+   {:id :O-requirement-list :name "Requirement list: met / failing / stale / unknown"
+    :type :requirement-list
+    :consumer "Joe (Emacs, Mojira)"
+    :spec-ref "DERIVE-1-types.md R5, E5, D3, D4"
+    :timescale :social}
+
+   {:id :O-absences :name "Typed absences"
+    :type :typed-absence
+    :consumer "Joe; the requirement list; VERIFY"
+    :spec-ref "DERIVE-1-types.md E6, I8"
+    :timescale :social}]}
+
+ :components
+ [{:id :A-register :name "A-register: sources and spans"
+   :type :abstract-role
+   :ref "DERIVE-1 E1, E2, R1; data flow 1-2"
+   :accepts #{:xtdb-entity :artifact-revision}
+   :produces #{:source-span :typed-absence}
+   :timescale :social}
+
+  {:id :A-requirements :name "A-requirements: requirement list"
+   :type :abstract-role
+   :ref "DERIVE-1 R5, E5, D3, D4"
+   :accepts #{:config :evaluation}
+   :produces #{:requirement :requirement-list}
+   :timescale :social}
+
+  {:id :A-nipper :name "A-nipper: propose spans for failing requirements"
+   :type :abstract-role
+   :ref "DERIVE-1 R6; WP7, WP8; ~/notes/zai-13/nipper-design-2026-11-17.md"
+   :accepts #{:source-span :requirement}
+   :produces #{:nip}
+   :timescale :medium}
+
+  {:id :A-edit :name "A-edit: accept nips, write content and scoped edits"
+   :type :abstract-role
+   :ref "DERIVE-1 E3, R2, R3, I7; WP9"
+   :accepts #{:operator-input :nip :source-span}
+   :produces #{:clusion}
+   :timescale :medium}
+
+  {:id :A-project :name "A-project: compose projections"
+   :type :abstract-role
+   :ref "DERIVE-1 E4, I2, I3, D2"
+   :accepts #{:clusion :source-span}
+   :produces #{:projection}
+   :timescale :medium}
+
+  {:id :A-eval-local :name "A-eval-local: checks at write time"
+   :type :abstract-role
+   :ref "DERIVE-1 I4, I5, D8 (span digests, endpoints, word limits, N/N-1)"
+   :accepts #{:projection :requirement :clusion}
+   :produces #{:evaluation :typed-absence}
+   :timescale :social}
+
+  {:id :A-eval-global :name "A-eval-global: checks on demand"
+   :type :abstract-role
+   :ref "DERIVE-1 I4, I5 (retrieval, whole projection, Lean/Clojure status)"
+   :accepts #{:projection :requirement :artifact-revision}
+   :produces #{:evaluation}
+   :timescale :medium}
+
+  {:id :A-render :name "A-render: views, form text, margin notes"
+   :type :abstract-role
+   :ref "DERIVE-1 data flow 6"
+   :accepts #{:projection}
+   :produces #{:rendered-text}
+   :timescale :medium}]
+
+ :edges
+ [;; Registration
+  {:from :I-landscape      :to :A-register     :type :xtdb-entity}
+  {:from :I-manifestations :to :A-register     :type :artifact-revision}
+  {:from :A-register       :to :O-absences     :type :typed-absence}
+
+  ;; Requirements come only from outside (I4)
+  {:from :I-forms          :to :A-requirements :type :config}
+  {:from :A-requirements   :to :O-requirement-list :type :requirement-list}
+
+  ;; Nipper proposes against failing requirements
+  {:from :A-register       :to :A-nipper       :type :source-span}
+  {:from :A-requirements   :to :A-nipper       :type :requirement}
+
+  ;; Writing
+  {:from :I-operator       :to :A-edit         :type :operator-input}
+  {:from :A-nipper         :to :A-edit         :type :nip}
+  {:from :A-register       :to :A-edit         :type :source-span}
+
+  ;; Projection
+  {:from :A-edit           :to :A-project      :type :clusion}
+  {:from :A-register       :to :A-project      :type :source-span}
+
+  ;; Evaluation
+  {:from :A-edit           :to :A-eval-local   :type :clusion}
+  {:from :A-project        :to :A-eval-local   :type :projection}
+  {:from :A-requirements   :to :A-eval-local   :type :requirement}
+  {:from :A-project        :to :A-eval-global  :type :projection}
+  {:from :A-requirements   :to :A-eval-global  :type :requirement}
+  {:from :I-manifestations :to :A-eval-global  :type :artifact-revision}
+  {:from :A-eval-local     :to :A-requirements :type :evaluation}
+  {:from :A-eval-global    :to :A-requirements :type :evaluation}
+  {:from :A-eval-local     :to :O-absences     :type :typed-absence}
+
+  ;; Rendering
+  {:from :A-project        :to :A-render       :type :projection}
+  {:from :A-render         :to :O-views        :type :rendered-text}
+  {:from :A-render         :to :O-form-text    :type :rendered-text}
+  {:from :A-render         :to :O-alignment-notes :type :rendered-text}]}
