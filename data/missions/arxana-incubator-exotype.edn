@@ -21,8 +21,17 @@
 ;;   :medium  — an editing session: Nipper, editing, projection, rendering,
 ;;              global evaluation (retrieval, whole-projection checks).
 ;;   :slow    — manifestations move by commits (paper, Lean, Clojure, results).
-;;   :glacial — the forms and schemas requirements come from (Mozilla questions,
-;;              LOI fields and limits, plop-alignment-v1). Constraint input.
+;;   :glacial — where requirements come from: the Mozilla forms, the PLoP 2026
+;;              paper and its alignment schema, and any other target (Joe,
+;;              2026-11-17: "forms are not the only constraint, that's just
+;;              circumstantial to Mozilla, but e.g. PLoP 2026 is an equally valid
+;;              use case"). Constraint input.
+;;
+;; REVISED 2026-11-17 after Joe's review: requirements may be formal (checked) or
+;; informal (attested by a person: "all are addressed well"); a requirement or
+;; 'clusion is withdrawn by unwiring it, not by editing it; Nipper reads minus40
+;; memories as well as the landscape; how Nipper relates to requirements is TBD
+;; (to discuss with zai-13), so the A-requirements -> A-nipper edge is provisional.
 ;;
 ;; INVARIANT ANALYSIS:
 ;;   I3 (timescale ordering): nothing writes to I-forms (the only constraint).
@@ -53,9 +62,14 @@
     :source "futon4a Emacs views, Mojira"
     :timescale :social}
 
-   {:id :I-forms :name "Forms and schemas requirements come from"
+   {:id :I-memories :name "minus40 memories"
+    :type :xtdb-entity
+    :source "minus40 store (m40_find / m40_near / m40_asof); Nipper reads it with the landscape (Joe 2026-11-17)"
+    :timescale :social}
+
+   {:id :I-forms :name "Requirement sources (Mozilla forms, PLoP 2026 paper, ...)"
     :type :config
-    :source "~/mozilla-incubator.txt (150-word fields, Joe 2026-11-17); futon7/holes/mozilla/LOI-draft-1.md; p4ng plop-alignment-v1"
+    :source "~/mozilla-incubator.txt (150-word fields); futon7/holes/mozilla/LOI-draft-1.md; p4ng plop-2026 + plop-alignment-v1"
     :timescale :glacial
     :constraint true}]
 
@@ -98,17 +112,17 @@
    :produces #{:source-span :typed-absence}
    :timescale :social}
 
-  {:id :A-requirements :name "A-requirements: requirement list"
+  {:id :A-requirements :name "A-requirements: requirement list (formal and attested)"
    :type :abstract-role
-   :ref "DERIVE-1 R5, E5, D3, D4"
-   :accepts #{:config :evaluation}
+   :ref "DERIVE-1 R5, E5, D3, D4 (evaluator kinds incl. :attestation)"
+   :accepts #{:config :evaluation :operator-input}
    :produces #{:requirement :requirement-list}
    :timescale :social}
 
-  {:id :A-nipper :name "A-nipper: propose spans for failing requirements"
+  {:id :A-nipper :name "A-nipper: propose spans from the landscape and memories"
    :type :abstract-role
    :ref "DERIVE-1 R6; WP7, WP8; ~/notes/zai-13/nipper-design-2026-11-17.md"
-   :accepts #{:source-span :requirement}
+   :accepts #{:source-span :requirement :xtdb-entity}
    :produces #{:nip}
    :timescale :medium}
 
@@ -157,9 +171,15 @@
   {:from :I-forms          :to :A-requirements :type :config}
   {:from :A-requirements   :to :O-requirement-list :type :requirement-list}
 
-  ;; Nipper proposes against failing requirements
+  ;; Nipper reads the landscape (via registered spans) and minus40 memories.
+  ;; Its relation to requirements is TBD (Joe, 2026-11-17): provisional edge.
   {:from :A-register       :to :A-nipper       :type :source-span}
+  {:from :I-memories       :to :A-nipper       :type :xtdb-entity}
   {:from :A-requirements   :to :A-nipper       :type :requirement}
+
+  ;; Informal requirements are attested by a person ("all are addressed well"),
+  ;; and Joe can withdraw a requirement by unwiring it.
+  {:from :I-operator       :to :A-requirements :type :operator-input}
 
   ;; Writing
   {:from :I-operator       :to :A-edit         :type :operator-input}
