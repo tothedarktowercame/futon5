@@ -33,6 +33,13 @@
 ;; memories as well as the landscape; how Nipper relates to requirements is TBD
 ;; (to discuss with zai-13), so the A-requirements -> A-nipper edge is provisional.
 ;;
+;; REVISED 2026-11-17 (ARGUE, the war-machine side; Joe: "The additions sound very
+;; useful"): dissemination outward and back. O-published carries material out in open
+;; formats readable without Arxana (exteriority, Axiom I); I-returns brings others'
+;; edits, reviews and attestations back, attributed (T6). Nipper gains a following seed:
+;; material that recurs in the landscape and is in no projection (Prop VIII), so the
+;; landscape can propose what no requirement asked for.
+;;
 ;; INVARIANT ANALYSIS:
 ;;   I3 (timescale ordering): nothing writes to I-forms (the only constraint).
 ;;   I4 (exogeneity): requirements are read from I-forms, never written back by
@@ -67,6 +74,11 @@
     :source "minus40 store (m40_find / m40_near / m40_asof); Nipper reads it with the landscape (Joe 2026-11-17)"
     :timescale :social}
 
+   {:id :I-returns :name "Returns: others' edits, reviews, attestations"
+    :type :operator-input
+    :source "Murch, Rob, reviewers, Mozilla: annotations on published pages, review comments, attestations"
+    :timescale :medium}
+
    {:id :I-forms :name "Requirement sources (Mozilla forms, PLoP 2026 paper, ...)"
     :type :config
     :source "~/mozilla-incubator.txt (150-word fields); futon7/holes/mozilla/LOI-draft-1.md; p4ng plop-2026 + plop-alignment-v1"
@@ -90,6 +102,12 @@
     :type :rendered-text
     :consumer "PLoP 2026 paper HTML (as inject-plop-alignment.py does today)"
     :spec-ref "DERIVE-1-types.md R7; mission IDENTIFY later test case"
+    :timescale :medium}
+
+   {:id :O-published :name "Published material (open formats, readable without Arxana)"
+    :type :rendered-text
+    :consumer "others: readers, reviewers, collaborators, funders (submitted forms, pages, papers)"
+    :spec-ref "M-arxana-incubator ARGUE, the war-machine side (exteriority)"
     :timescale :medium}
 
    {:id :O-requirement-list :name "Requirement list: met / failing / stale / unknown"
@@ -119,10 +137,10 @@
    :produces #{:requirement :requirement-list}
    :timescale :social}
 
-  {:id :A-nipper :name "A-nipper: propose spans from the landscape and memories"
+  {:id :A-nipper :name "A-nipper: propose spans (memory, gap and following seeds)"
    :type :abstract-role
    :ref "DERIVE-1 R6; WP7, WP8; ~/notes/zai-13/nipper-design-2026-11-17.md"
-   :accepts #{:source-span :requirement :xtdb-entity}
+   :accepts #{:source-span :requirement :xtdb-entity :projection}
    :produces #{:nip}
    :timescale :medium}
 
@@ -205,4 +223,12 @@
   {:from :A-project        :to :A-render       :type :projection}
   {:from :A-render         :to :O-views        :type :rendered-text}
   {:from :A-render         :to :O-form-text    :type :rendered-text}
-  {:from :A-render         :to :O-alignment-notes :type :rendered-text}]}
+  {:from :A-render         :to :O-alignment-notes :type :rendered-text}
+
+  ;; Dissemination outward and back (ARGUE, war-machine side)
+  {:from :A-render         :to :O-published    :type :rendered-text}
+  {:from :I-returns        :to :A-edit         :type :operator-input}
+  {:from :I-returns        :to :A-requirements :type :operator-input}
+
+  ;; Following seed: recurring landscape material in no projection (Prop VIII)
+  {:from :A-project        :to :A-nipper       :type :projection}]}
