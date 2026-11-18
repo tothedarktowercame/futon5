@@ -8,6 +8,7 @@ import Circus.Freshness
 import Circus.LateWrites
 import Circus.Supersession
 import Circus.Monkey
+import Circus.MaReading
 import Circus.LiveChain
 import Circus.Reproduction
 import Circus.Cascade
