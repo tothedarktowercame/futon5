@@ -12,3 +12,4 @@ import Circus.MaReading
 import Circus.LiveChain
 import Circus.Reproduction
 import Circus.Cascade
+import Circus.Incremental
