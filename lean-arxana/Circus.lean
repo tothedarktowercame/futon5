@@ -14,3 +14,4 @@ import Circus.Reproduction
 import Circus.Cascade
 import Circus.Incremental
 import Circus.AnyKey
+import Circus.Navigable
