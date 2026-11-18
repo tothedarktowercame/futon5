@@ -63,6 +63,27 @@ theorem missing_edge {S U : Kind → Kind → Prop} {a b : Kind}
     Reach S 1 a b ∧ ¬∃ n, Reach U n a b := by
   exact ⟨.step 0 a b b edge (.refl b), absent⟩
 
+/-- A set of kinds that contains `a` and that no UI move leaves cannot reach a
+kind outside it, at any bound. This is the witness a certificate gives for an
+unreachable pair: the closed set (for example, everything the UI reaches from
+`a`), with the schema edge that leaves it. -/
+theorem closed_blocks {U : Kind → Kind → Prop} (C : Kind → Prop)
+    (closed : ∀ x y, C x → U x y → C y) :
+    ∀ {n a b}, Reach U n a b → C a → C b := by
+  intro n a b path
+  induction path with
+  | refl => exact id
+  | step _ a c b edge _ ih => exact fun ha => ih (closed a c ha edge)
+  | more _ _ _ _ ih => exact ih
+
+/-- A schema edge that leaves a UI-closed set containing `a` is a real gap:
+one schema step, never reachable through the UI. -/
+theorem gap_of_closed {S U : Kind → Kind → Prop} (C : Kind → Prop)
+    (closed : ∀ x y, C x → U x y → C y) {a b : Kind}
+    (ha : C a) (hb : ¬C b) (edge : S a b) :
+    Reach S 1 a b ∧ ¬∃ n, Reach U n a b :=
+  ⟨.step 0 a b b edge (.refl b), fun ⟨_, path⟩ => hb (closed_blocks C closed path ha)⟩
+
 /-- If every UI move is realised by some schema path, a UI path cannot
 fabricate schema connectivity. Its schema bound may grow by varying amounts. -/
 theorem ui_only_within_schema {S U : Kind → Kind → Prop} {n : Nat} {a b : Kind}
@@ -158,6 +179,11 @@ def missingUI : K → K → Bool
 
 example : reachBool schema 1 .turn .mission = true := by decide
 example : reachBool missingUI 4 .turn .mission = false := by decide
+-- The same gap at every bound, from a closed set: {turn} is closed under missingUI.
+example : Reach (fun x y => schema x y = true) 1 .turn .mission ∧
+    ¬∃ n, Reach (fun x y => missingUI x y = true) n .turn .mission :=
+  gap_of_closed (fun k => k = .turn) (by intro x y hx h; subst hx; cases y <;> simp_all [missingUI])
+    rfl (by decide) rfl
 
 def hubUI (a b : K) : Bool :=
   missingUI a b || decide (b = .home) || decide (a = .home)
@@ -181,6 +207,7 @@ end Teeth
 
 #print axioms cover_bound
 #print axioms missing_edge
+#print axioms gap_of_closed
 #print axioms ui_only_within_schema
 #print axioms exact
 #print axioms hub
