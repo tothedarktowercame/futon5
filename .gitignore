@@ -28,3 +28,6 @@ data/nonstarter.db
 # deletion has to be committed for the rule below to take effect.
 pod-eigs/target/
 node_modules/
+
+# Generated renders in the throwaway WYSIWYG sandbox (see its README)
+holes/tech-notes/paper/html-build/wysiwyg/sandbox/apm-*/
