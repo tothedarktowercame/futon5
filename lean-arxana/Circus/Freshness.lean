@@ -117,7 +117,8 @@ def BasisComplete (s : ViewState) : Prop :=
   ∀ a, s.artifact = some a → ∃ b, a.basis = some b ∧ a.runId = b.runId ∧
     ∀ i ∈ a.readItems, ∃ digest, (i, digest) ∈ b.documents
 
-def notify (s : ViewState) : ViewState :=
+def notify (s : ViewState) (changed : Bool := true) : ViewState :=
+  if !changed then s else
   match s.inFlight with
   | none => { s with inFlight := some ⟨s.sources, s.loop.inputs⟩, dirty := false, regenerations := s.regenerations + 1 }
   | some _ => { s with dirty := true }
@@ -142,21 +143,49 @@ inductive InputEvent
   | leaveOpen (item : EntityId)
   | refreshDone (ok : Bool)
 
+/-- Input notifications exclude completion and queue/lifecycle events. -/
+def IsInputNotification : InputEvent → Prop
+  | .logical _ | .metadata .. => True
+  | _ => False
+
+/-- Decidable change detection for the fields these notifications can write.
+Settled turns increment activation on every focused item, so an empty focus is
+exactly their no-change case. A focus notification changes the focus version.
+Document/reading replacement uses the same list representation as `applyEvent`.
+No function equality or duplicate inventory is stored. -/
+def changes (s : ViewState) : InputEvent → Bool
+  | .logical (.readingLanded i v) =>
+      s.sources.documents.contains (i, v) &&
+        ((i, v) :: s.loop.inputs.readings.filter (fun p => p.1 != i) != s.loop.inputs.readings)
+  | .logical (.docChange i v) =>
+      ((i, v) :: s.sources.documents.filter (fun p => p.1 != i) != s.sources.documents) ||
+      (s.loop.inputs.readings.filter (fun p => p.1 != i) != s.loop.inputs.readings)
+  | .logical (.focus _) => true
+  | .logical (.turn _ .settled) => !s.loop.inputs.focus.isEmpty
+  | .logical _ => false
+  | .metadata run pass pending lex focus =>
+      { s.sources with runId := run, passInputs := pass, pendingIndex := pending, lexicon := lex, focusVersion := focus } != s.sources
+  | _ => false
+
+/-- The event changes sources or ranking inputs; equivalence to the actual
+`advance` effect is proved by `unchanged_iff_effect_unchanged`. -/
+def Changes (s : ViewState) (e : InputEvent) : Prop := changes s e = true
+
 /-- A matching landing is a new completion, including a retry of the same
 source digest; "newer" means later completion, not a greater hash value. -/
 def advance (cs : List Character) (s : ViewState) : InputEvent → ViewState
   | .logical (.readingLanded i v) =>
     if s.sources.documents.contains (i, v) then
-      render (notify { s with loop := step cs s.loop (.readingLanded i v), failed := s.failed.filter (· != i), requests := s.requests.map fun q => if q.item == i then { q with state := .landed } else q })
+      render (notify { s with loop := step cs s.loop (.readingLanded i v), failed := s.failed.filter (· != i), requests := s.requests.map fun q => if q.item == i then { q with state := .landed } else q } (changes s (.logical (.readingLanded i v))))
     else render s
   | .logical (.docChange i v) =>
-    render (notify { s with loop := step cs s.loop (.docChange i v), sources := { s.sources with documents := (i, v) :: s.sources.documents.filter (fun p => p.1 != i) } })
+    render (notify { s with loop := step cs s.loop (.docChange i v), sources := { s.sources with documents := (i, v) :: s.sources.documents.filter (fun p => p.1 != i) } } (changes s (.logical (.docChange i v))))
   | .logical (.focus weights) => render (notify { s with
       loop := step cs s.loop (.focus weights)
-      sources := { s.sources with focusVersion := some (s.sources.focusVersion.getD 0 + 1) } })
-  | .logical e => render (notify { s with loop := step cs s.loop e })
+      sources := { s.sources with focusVersion := some (s.sources.focusVersion.getD 0 + 1) } } (changes s (.logical (.focus weights))))
+  | .logical e => render (notify { s with loop := step cs s.loop e } (changes s (.logical e)))
   | .metadata run pass pending lex focus =>
-    render (notify { s with sources := { s.sources with runId := run, passInputs := pass, pendingIndex := pending, lexicon := lex, focusVersion := focus } })
+    render (notify { s with sources := { s.sources with runId := run, passInputs := pass, pendingIndex := pending, lexicon := lex, focusVersion := focus } } (changes s (.metadata run pass pending lex focus)))
   | .request q => render { s with requests := q :: s.requests }
   | .renew i lease => render { s with requests := s.requests.map fun q =>
       if q.item == i then { q with state := .claimed, leaseUntil := lease } else q }
@@ -241,17 +270,17 @@ theorem render_safe (s : ViewState) : DisplaySafe (render s) := by
     · obtain ⟨j, hj, heq⟩ := List.mem_map.mp hw
       exact facts.1 ((Prod.mk.inj heq).1 ▸ hj)
 
-@[simp] theorem notify_failed (s : ViewState) : (notify s).failed = s.failed := by
-  cases h : s.inFlight <;> simp [notify, h]
+@[simp] theorem notify_failed (s : ViewState) (changed : Bool := true) : (notify s changed).failed = s.failed := by
+  cases changed <;> cases h : s.inFlight <;> simp [notify, h]
 @[simp] theorem finish_failed (cs : List Character) (ok : Bool) (s : ViewState) :
     (finish cs ok s).failed = s.failed := by
   cases h : s.inFlight <;> simp [finish, h]
   split <;> simp
 
-@[simp] theorem notify_loop (s : ViewState) : (notify s).loop = s.loop := by
-  cases h : s.inFlight <;> simp [notify, h]
-@[simp] theorem notify_sources (s : ViewState) : (notify s).sources = s.sources := by
-  cases h : s.inFlight <;> simp [notify, h]
+@[simp] theorem notify_loop (s : ViewState) (changed : Bool := true) : (notify s changed).loop = s.loop := by
+  cases changed <;> cases h : s.inFlight <;> simp [notify, h]
+@[simp] theorem notify_sources (s : ViewState) (changed : Bool := true) : (notify s changed).sources = s.sources := by
+  cases changed <;> cases h : s.inFlight <;> simp [notify, h]
 @[simp] theorem finish_loop (cs : List Character) (ok : Bool) (s : ViewState) :
     (finish cs ok s).loop = s.loop := by
   cases h : s.inFlight <;> simp [finish, h]
@@ -261,8 +290,8 @@ theorem render_safe (s : ViewState) : DisplaySafe (render s) := by
   cases h : s.inFlight <;> simp [finish, h]
   split <;> simp
 
-@[simp] theorem notify_readingMatches (s : ViewState) (i : EntityId) :
-    readingMatches (notify s) i = readingMatches s i := by simp [readingMatches]
+@[simp] theorem notify_readingMatches (s : ViewState) (changed : Bool := true) (i : EntityId) :
+    readingMatches (notify s changed) i = readingMatches s i := by simp [readingMatches]
 @[simp] theorem finish_readingMatches (cs : List Character) (ok : Bool)
     (s : ViewState) (i : EntityId) : readingMatches (finish cs ok s) i = readingMatches s i := by
   simp [readingMatches]
@@ -314,20 +343,23 @@ theorem transfer_inventory (s t : ViewState) (h : InventoryInvariant s)
   · intro a ha
     exact h.2.2 a (artifact ▸ ha)
 
-theorem notify_inventory (s : ViewState) (h : InventoryInvariant s) :
-    InventoryInvariant (notify s) := by
-  cases hf : s.inFlight with
-  | none =>
-    simp only [notify, hf]
-    refine ⟨h.1, ?_, h.2.2⟩
-    intro captured hc
-    have he : captured = ⟨s.sources, s.loop.inputs⟩ := by
-      simpa [notify, hf] using hc.symm
-    subst captured
-    exact h.1
-  | some captured =>
-    simp only [notify, hf]
-    exact transfer_inventory s _ h h.1 hf.symm rfl
+theorem notify_inventory (s : ViewState) (changed : Bool := true) (h : InventoryInvariant s) :
+    InventoryInvariant (notify s changed) := by
+  cases changed with
+  | false => exact h
+  | true =>
+    cases hf : s.inFlight with
+    | none =>
+      simp only [notify, hf]
+      refine ⟨h.1, ?_, h.2.2⟩
+      intro captured hc
+      have he : captured = ⟨s.sources, s.loop.inputs⟩ := by
+        simpa [notify, hf] using hc.symm
+      subst captured
+      exact h.1
+    | some captured =>
+      simp only [notify, hf]
+      exact transfer_inventory s _ h h.1 hf.symm rfl
 
 theorem artifact_inventory (captured : Capture)
     (covered : InventoryCovers captured.inputs captured.basis) :
@@ -358,7 +390,7 @@ theorem finish_inventory (cs : List Character) (ok : Bool) (s : ViewState)
     change InventoryInvariant (render (if s.dirty then notify { next with dirty := false } else next))
     apply render_inventory
     split
-    · exact notify_inventory _ hn
+    · exact notify_inventory _ true hn
     · exact hn
 
 @[simp] theorem applyEvent_items (inp : Inputs) (e : Event) :
@@ -494,32 +526,126 @@ def observations (T : Time) (cs : List Character) (s : ViewState) :
     let next := advance cs s e.event
     ⟨e.observedAt, e.occurredAt + T, next⟩ :: observations T cs next es
 
-/-- Source notifications during a flight retain its capture and set one dirty bit. -/
+private theorem fold_bump_ge (ps : List (EntityId × Nat)) (f : EntityId → Nat) (x : EntityId) :
+    f x ≤ (ps.foldl (fun acc p => bump acc p.1) f) x := by
+  induction ps generalizing f with
+  | nil => exact Nat.le_refl _
+  | cons p ps ih =>
+    apply Nat.le_trans ?_ (ih (bump f p.1))
+    simp only [bump]; split <;> simp_all
+
+private theorem fold_bump_eq_iff (ps : List (EntityId × Nat)) (f : EntityId → Nat) :
+    ps.foldl (fun acc p => bump acc p.1) f = f ↔ ps = [] := by
+  cases ps with
+  | nil => simp
+  | cons p ps =>
+    simp only [List.foldl_cons, List.cons_ne_nil, iff_false]
+    intro h
+    have hg := fold_bump_ge ps (bump f p.1) p.1
+    rw [h] at hg
+    simp [bump] at hg
+    omega
+
+/-- The computable detector is exactly change of sources or loop inputs. -/
+theorem unchanged_iff_effect_unchanged (cs : List Character) (s : ViewState) (e : InputEvent)
+    (input : IsInputNotification e) :
+    ¬ Changes s e ↔ (advance cs s e).sources = s.sources ∧
+      (advance cs s e).loop.inputs = s.loop.inputs := by
+  cases hi : s.loop.inputs with
+  | mk items readings activation needs serves focus mana =>
+    cases hb : s.sources with
+    | mk runId passInputs documents pendingIndex lexicon focusVersion =>
+      cases e with
+      | logical ev =>
+        cases ev with
+        | readingLanded i v =>
+          simp only [Changes, changes, advance]
+          split <;> simp_all [step, applyEvent, Inputs.mk.injEq]
+        | docChange i v =>
+          simp [hb, Changes, changes, advance, step, applyEvent, hi, Inputs.mk.injEq]
+          intro _
+          constructor
+          · intro h a b hab hai; subst a; exact h b hab
+          · intro h b hb; exact h i b hb rfl
+        | focus w =>
+          simp [hb, Changes, changes, advance, step, applyEvent, hi, Inputs.mk.injEq]
+          cases focusVersion <;> simp
+        | turn t ev =>
+          cases ev <;> simp [hb, Changes, changes, advance, step, applyEvent, hi, Inputs.mk.injEq,
+            fold_bump_eq_iff]
+        | tick => simp [hb, hi, Changes, changes, advance, step, applyEvent]
+      | metadata run pass pending lex focus => simp [hb, hi, Changes, changes, advance]
+      | _ => cases input
+
+/-- A real source change during a flight retains its capture and sets dirty.
+CL-56: the old statement incorrectly required identical notifications to dirty it. -/
 theorem source_during_flight (cs : List Character) (s : ViewState) (e : InputEvent)
-    (captured : Capture) (flight : s.inFlight = some captured) (source : IsSourceEvent e) :
+    (captured : Capture) (flight : s.inFlight = some captured) (source : IsSourceEvent e)
+    (changed : Changes s e) :
     (advance cs s e).inFlight = some captured ∧ (advance cs s e).dirty = true ∧
       (advance cs s e).regenerations = s.regenerations := by
+  have hc := changed
+  unfold Changes at hc
   cases e with
   | logical ev => cases ev <;> simp_all [IsSourceEvent, advance, notify, render]
-  | metadata run pass pending lex focus => simp [advance, notify, render, flight]
+  | metadata run pass pending lex focus => simp [advance, notify, render, flight, hc]
   | _ => cases source
 
+/-- Quiescence concerns notifications, not completion of an already dirty run. -/
+theorem unchanged_event_no_regeneration (cs : List Character) (s : ViewState) (e : InputEvent)
+    (input : IsInputNotification e) (unchanged : ¬Changes s e) :
+    (advance cs s e).regenerations = s.regenerations ∧
+    (advance cs s e).dirty = s.dirty := by
+  have hc : changes s e = false := by simpa [Changes] using unchanged
+  cases e with
+  | logical ev =>
+    cases ev <;> simp only [advance] <;> try (split <;> simp [notify, render, hc])
+    all_goals simp [notify, render, hc]
+  | metadata run pass pending lex focus => simp [advance, notify, render, hc]
+  | _ => cases input
+
+/-- Test each event against the state at which it is delivered. -/
+def BurstChanges (cs : List Character) : ViewState → List InputEvent → Prop
+  | _, [] => False
+  | s, e :: es => Changes s e ∨ BurstChanges cs (advance cs s e) es
+
+/-- Every source notification retains the capture; only changes set dirty. -/
+theorem source_flight_accounting (cs : List Character) (s : ViewState) (e : InputEvent)
+    (captured : Capture) (flight : s.inFlight = some captured) (source : IsSourceEvent e) :
+    (advance cs s e).inFlight = some captured ∧
+    (advance cs s e).regenerations = s.regenerations ∧
+    (advance cs s e).dirty = (s.dirty || changes s e) := by
+  cases e with
+  | logical ev =>
+    cases ev <;> simp_all only [IsSourceEvent, advance]
+    all_goals simp only [notify]; split <;> simp_all [render]
+  | metadata run pass pending lex focus =>
+    simp only [advance, notify, flight]
+    cases hc : changes s (.metadata run pass pending lex focus) <;> simp [render]
+  | _ => cases source
+
+/-- Unchanged source events preserve dirty; a real change sets it.
+CL-56 replaces the old nonempty-burst premise with an actual change (or an
+already dirty flight). -/
 theorem burst_source_flight (cs : List Character) (events : List InputEvent)
     (captured : Capture) (s : ViewState) (flight : s.inFlight = some captured)
     (source : ∀ e ∈ events, IsSourceEvent e) :
     (burst cs s events).inFlight = some captured ∧
     (burst cs s events).regenerations = s.regenerations ∧
-    (events ≠ [] → (burst cs s events).dirty = true) := by
+    (s.dirty = true ∨ BurstChanges cs s events → (burst cs s events).dirty = true) := by
   induction events generalizing s with
-  | nil => simp [burst, flight]
+  | nil => simp [burst, BurstChanges, flight]
   | cons e es ih =>
-    have hstep := source_during_flight cs s e captured flight (source e (by simp))
-    have htail := ih (advance cs s e) hstep.1 (fun e he => source e (by simp [he]))
-    refine ⟨htail.1, htail.2.1.trans hstep.2.2, ?_⟩
-    intro _
-    cases es with
-    | nil => exact hstep.2.1
-    | cons e es => exact htail.2.2 (by simp)
+    have hs := source_flight_accounting cs s e captured flight (source e (by simp))
+    have ht := ih (advance cs s e) hs.1 (fun x hx => source x (by simp [hx]))
+    refine ⟨ht.1, ht.2.1.trans hs.2.1, ?_⟩
+    intro hc
+    apply ht.2.2
+    rcases hc with hd | hc
+    · left; simp [hs.2.2, hd]
+    · rcases hc with hc | hc
+      · left; simp [hs.2.2, show changes s e = true from hc]
+      · exact Or.inr hc
 
 /-- Exactly the latest capture is installed by the one queued follow-up. -/
 theorem two_successful_finishes (cs : List Character) (s : ViewState) (captured : Capture)
@@ -547,22 +673,24 @@ theorem timely_observations (cs : List Character) (T : Time) (trace : List Timed
 ... priority freshness." Every observation of a timely delivered trace shows
 current basis or typed staleness, with the deadline measured from the source
 event, not a renewal. Covers source changes even when no mint follows.
-Separately, a nonempty burst during one flight, followed by quiescence and
+Separately, a burst containing a real change during one flight, followed by quiescence and
 two SUCCESSFUL completions, publishes its last inventory with one follow-up
-at most. Failure promises visibility, not successful regeneration. -/
+at most. Failure promises visibility, not successful regeneration.
+CL-56: nonempty alone is no longer sufficient to force dirty; the burst
+clause now assumes BurstChanges. Timely/display safety is unchanged. -/
 theorem party_kept_up_to_date (cs : List Character) (s : ViewState)
     (reachable : Reachable cs s) (T : Time) (trace : List TimedEvent)
     (timely : Timely T trace) :
     (∀ o ∈ observations T cs s trace, DeadlineMet o) ∧
     (∀ events, s.inFlight.isSome = true →
-      (∀ e ∈ events, IsSourceEvent e) → events ≠ [] →
+      (∀ e ∈ events, IsSourceEvent e) → BurstChanges cs s events →
       BurstGuarantee cs s events) := by
   constructor
   · exact timely_observations cs T trace s (fun e he => (timely.2 e he).2)
   · intro events hf hs hne
     obtain ⟨captured, hc⟩ := Option.isSome_iff_exists.mp hf
     have hb := burst_source_flight cs events captured s hc hs
-    have done := two_successful_finishes cs (burst cs s events) captured hb.1 (hb.2.2 hne)
+    have done := two_successful_finishes cs (burst cs s events) captured hb.1 (hb.2.2 (Or.inr hne))
     exact ⟨by simp only [done.1, hb.2.1, Nat.le_refl], done.2⟩
 
 /-- This is the digest-checked landing admitted to the old logical model. -/
@@ -660,6 +788,33 @@ theorem terminal_failure_is_visible (cs : List Character) (s : ViewState)
   rw [hr] at persists ⊢
   exact render_failure raw i persists
 
+/-- Replaying identical metadata does not start or queue regeneration. -/
+theorem identical_metadata_quiescent (cs : List Character) (s : ViewState) :
+    let e := InputEvent.metadata s.sources.runId s.sources.passInputs
+      s.sources.pendingIndex s.sources.lexicon s.sources.focusVersion
+    (advance cs s e).regenerations = s.regenerations ∧
+      (advance cs s e).dirty = s.dirty := by
+  apply unchanged_event_no_regeneration cs s _ (by trivial)
+  simp [Changes, changes]
+
+/-- An unchanged notification during a clean flight cannot queue a follow-up.
+The completed capture may still publish; that is not a new regeneration. -/
+theorem identical_metadata_no_followup (cs : List Character) (s : ViewState)
+    (captured : Capture) (hf : s.inFlight = some captured) (hd : s.dirty = false) :
+    let e := InputEvent.metadata s.sources.runId s.sources.passInputs
+      s.sources.pendingIndex s.sources.lexicon s.sources.focusVersion
+    (finish cs true (finish cs true (advance cs s e))).regenerations = s.regenerations := by
+  simp [advance, changes, notify, render, finish, hf, hd]
+
+/-- Completion is deliberately outside notification quiescence: dirty work
+requires its follow-up even though completion does not change the inputs. -/
+theorem dirty_completion_regenerates (cs : List Character) (s : ViewState)
+    (captured : Capture) (hf : s.inFlight = some captured) (hd : s.dirty = true) :
+    (advance cs s (.refreshDone true)).sources = s.sources ∧
+    (advance cs s (.refreshDone true)).loop.inputs = s.loop.inputs ∧
+    (advance cs s (.refreshDone true)).regenerations = s.regenerations + 1 := by
+  simp [advance, finish, notify, render, hf, hd]
+
 /-! ## TEETH: bad producers outside Reachable violate the contracts
 A reachable counterexample would contradict a main statement, not validate it.
 All fixtures are invented. These examples use no unproved main statement.
@@ -673,6 +828,13 @@ private def artifact : Artifact := ⟨1, 0, some basis, [entry], [1]⟩
 private def good : ViewState := { initial loop basis with artifact := some artifact }
 private def legacy : ViewState := { good with artifact := some { artifact with basis := none } }
 private def changed : ViewState := { good with sources := { basis with documents := [(1, 2)] } }
+
+-- CL-56: identical document/landing values and metadata are quiet; a changed
+-- digest is not. These are finite invented fixtures, checked by reduction.
+example : ¬Changes good (.logical (.readingLanded 1 1)) ∧
+    ¬Changes { good with loop := { loop with inputs := { inp with readings := [] } } }
+      (.logical (.docChange 1 1)) ∧
+    Changes good (.logical (.docChange 1 2)) := by unfold Changes; decide
 
 -- 1. The legacy run-id-only shape cannot provide a complete read inventory.
 example : ¬BasisComplete legacy := by

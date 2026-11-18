@@ -527,7 +527,8 @@ private def loop : State := ⟨0, inp, [], 0, 0⟩
 private def basis : DisplayBasis := ⟨1, 1, [(1, 1)], 1, 1, some 1⟩
 private def cs : List Circus.Character :=
   [⟨.thor, fun _ => [⟨1, 1, ⟨["old reading"], .thor, [.lit "old reading"], .thor⟩⟩]⟩]
-private def seed := initial loop basis
+-- CL-56: the first publication is triggered by a real version change.
+private def seed := initial loop { basis with runId := 0 }
 private def begun := advance cs seed (.metadata 1 1 1 1 (some 1))
 private def published := advance cs begun (.refreshDone true)
 private def changed := advance cs published (.metadata 2 2 1 1 (some 1))
