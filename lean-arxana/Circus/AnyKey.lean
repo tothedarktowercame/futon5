@@ -169,6 +169,83 @@ theorem costRet_rises_iff {old new : Table Target Key} (h : Extension old new)
     simp [ho, hn] at hl
   all_goals simp [ho, hn, hc, hl]
 
+/-! ## The per-key rule reaches the same result
+
+`reaches` above is stated for `run`. These lemmas fold `step` key by key, the way
+`mojira--maybe-exit` sees the input, and show that it ends at the same target. -/
+
+def Table.typeKeys (q : Table Target Key) (xs : List (Input Key)) : Prompt Target Key :=
+  xs.foldl q.step {}
+
+private theorem hasLonger_of_proper (q : Table Target Key) {t : Target}
+    (ht : t ∈ q.targets) {s : List Key} (hp : s <+: q.code t) (hne : s ≠ q.code t) :
+    q.hasLonger s = true :=
+  List.any_eq_true.mpr ⟨t, ht, decide_eq_true ⟨hp, hne⟩⟩
+
+/-- One key typed on an open prompt whose contents stay a prefix of `t`'s code. -/
+private theorem stepKey (q : Table Target Key) {t : Target} (ht : t ∈ q.targets)
+    (pre : List Key) (k : Key) (hp : pre ++ [k] <+: q.code t) :
+    q.step ⟨pre, none⟩ (.key k) =
+      ⟨pre ++ [k], if pre ++ [k] = q.code t ∧ q.hasLonger (pre ++ [k]) = false
+                   then some t else none⟩ := by
+  simp only [Table.step, Option.isSome_none, Bool.false_eq_true, if_false]
+  by_cases he : pre ++ [k] = q.code t
+  · rw [he, q.decode_code t ht]
+    cases hl : q.hasLonger (q.code t) <;> simp [hl]
+  · have hl := hasLonger_of_proper q ht hp he
+    cases hd : q.decode (pre ++ [k]) <;> simp [hd, hl, he]
+
+/-- Typing the rest `xs` of a target's code on an open prompt holding `pre`: the
+prompt stays open on every proper prefix and ends holding `pre ++ xs`, exited at `t`
+exactly when that is the whole code, it is not empty, and nothing extends it. -/
+theorem typeRest (q : Table Target Key) {t : Target} (ht : t ∈ q.targets) :
+    ∀ (xs pre : List Key), pre ++ xs <+: q.code t →
+      (xs.map Input.key).foldl q.step ⟨pre, none⟩ =
+        ⟨pre ++ xs, if xs ≠ [] ∧ pre ++ xs = q.code t ∧ q.hasLonger (pre ++ xs) = false
+                    then some t else none⟩ := by
+  intro xs
+  induction xs with
+  | nil => intro pre _; simp
+  | cons k rest ih =>
+    intro pre hp
+    have hp1 : pre ++ [k] <+: q.code t :=
+      (List.prefix_append (pre ++ [k]) rest).trans (by simpa using hp)
+    simp only [List.map_cons, List.foldl_cons]
+    rw [stepKey q ht pre k hp1]
+    cases rest with
+    | nil => simp
+    | cons k2 rest2 =>
+      have hne : pre ++ [k] ≠ q.code t := by
+        intro e
+        have hl := hp.length_le
+        rw [← e] at hl
+        simp at hl
+      simp only [hne, false_and, if_false]
+      have := ih (pre ++ [k]) (by simpa using hp)
+      simpa using this
+
+/-- Typing a target's keys one at a time, with RET where `keysRet` adds it, ends the
+prompt at that target. The one exception the per-key rule has is a lone empty code
+(no key is typed, nothing extends it, so the prompt never exits); it is excluded. -/
+theorem stepsReach (q : Table Target Key) {t : Target} (ht : t ∈ q.targets)
+    (hne : q.code t ≠ [] ∨ q.hasLonger (q.code t) = true) :
+    (q.typeKeys (q.keysRet t)).result = some t := by
+  have hall := typeRest q ht (q.code t) [] (by simp)
+  cases hl : q.hasLonger (q.code t)
+  · have hc : q.code t ≠ [] := by
+      rcases hne with h | h
+      · exact h
+      · simp [hl] at h
+    simp [Table.typeKeys, Table.keysRet, hl, hall, hc]
+  · simp [Table.typeKeys, Table.keysRet, hl, List.foldl_append, hall, Table.step,
+      q.decode_code t ht]
+
+/-- The per-key rule and the batch `run` agree on every target's keys. -/
+theorem steps_eq_run (q : Table Target Key) {t : Target} (ht : t ∈ q.targets)
+    (hne : q.code t ≠ [] ∨ q.hasLonger (q.code t) = true) :
+    (q.typeKeys (q.keysRet t)).result = (q.run (q.keysRet t)).result := by
+  rw [stepsReach q ht hne, (reaches q ht).1]
+
 /-! ## Teeth -/
 namespace Teeth
 
@@ -242,6 +319,12 @@ example : ambiguousTable.costNoRet .short = 2 := by decide
 example : (ambiguousTable.run (ambiguousTable.keysRet .short)).result = some .short := by decide
 example : sixTable.costNoRet .short = 5 := by decide
 example : sixTable.costRet .short = 6 := by decide
+-- Key by key: "c1" alone leaves the prompt open because "c13" extends it; RET
+-- then exits at c1, and "c13" exits on its last key with no RET.
+example : (ambiguousTable.typeKeys (ambiguousTable.keysNoRet .short)).result = none := by decide
+example : (ambiguousTable.typeKeys (ambiguousTable.keysRet .short)).result = some .short := by decide
+example : (ambiguousTable.typeKeys (ambiguousTable.keysRet .long)).result = some .long := by decide
+example : (ambiguousTable.keysRet .long).length = 3 := by decide
 
 end Teeth
 
@@ -252,5 +335,6 @@ end Teeth
 #print axioms anyKeyFive
 #print axioms stableNoRet
 #print axioms costRet_rises_iff
+#print axioms stepsReach
 
 end Circus.AnyKey
